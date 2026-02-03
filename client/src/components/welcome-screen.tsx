@@ -66,7 +66,7 @@ export function WelcomeScreen() {
           <VideoInline 
             videoId="8ELHatzdtAk"
             title="Introduction to Sacred Texts"
-            className="max-w-xl mx-auto shadow-lg"
+            className="max-w-xl mx-auto"
           />
         </div>
 
