@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Globe, MessageSquare, ChevronDown, User, Loader2, X } from "lucide-react";
+import { Globe, MessageSquare, ChevronDown, User, Loader2, Play } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { VideoInline } from "@/components/video-popup";
 import type { Explanation, VerseTranslation } from "@shared/schema";
 
 interface TranslationPanelProps {
@@ -196,6 +197,20 @@ function PanelContent({
               ))}
             </div>
           )}
+        </div>
+
+        <Separator />
+
+        <div className="space-y-3">
+          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2" data-testid="heading-panel-explanatory-videos">
+            <Play className="h-3 w-3" />
+            Explanatory Videos
+          </h3>
+          <VideoInline
+            videoId="8ELHatzdtAk"
+            title="Introduction to Isha Upanishad"
+            className="w-full"
+          />
         </div>
       </div>
     </ScrollArea>

@@ -62,7 +62,10 @@ export function WelcomeScreen() {
           ))}
         </div>
 
-        <div className="mt-6 sm:mt-8">
+        <div className="mt-6 sm:mt-8 space-y-3">
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider" data-testid="heading-explanatory-videos">
+            Explanatory Videos
+          </h2>
           <VideoInline 
             videoId="8ELHatzdtAk"
             title="Introduction to Sacred Texts"
