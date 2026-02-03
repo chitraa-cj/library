@@ -11,6 +11,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { WelcomeScreen } from "@/components/welcome-screen";
 import { BookReader } from "@/components/book-reader";
 import { TranslationPanel } from "@/components/translation-panel";
+import { VideoPopup } from "@/components/video-popup";
 import { useIsMobile } from "@/hooks/use-mobile";
 import NotFound from "@/pages/not-found";
 
@@ -57,7 +58,13 @@ function Home() {
                 Sacred Texts Library
               </span>
             </div>
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <VideoPopup 
+                videoId="8ELHatzdtAk"
+                title="Introduction to Sacred Texts"
+              />
+              <ThemeToggle />
+            </div>
           </header>
           <main className="flex flex-1 overflow-hidden">
             {selectedBookId ? (

@@ -1,5 +1,6 @@
 import { BookOpen, Globe, MessageSquareText, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { VideoInline } from "@/components/video-popup";
 
 const features = [
   {
@@ -59,6 +60,14 @@ export function WelcomeScreen() {
               </div>
             </Card>
           ))}
+        </div>
+
+        <div className="mt-6 sm:mt-8">
+          <VideoInline 
+            videoId="8ELHatzdtAk"
+            title="Introduction to Sacred Texts"
+            className="max-w-xl mx-auto shadow-lg"
+          />
         </div>
 
         <div className="pt-4">
