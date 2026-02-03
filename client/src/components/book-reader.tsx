@@ -66,15 +66,19 @@ export function BookReader({
   const startIdx = currentPage * versesPerPage;
   const currentVerses = verses.slice(startIdx, startIdx + versesPerPage);
 
-  const getTranslation = (verse: any): string => {
+  const getTranslation = (verse: any, langCode: string): string => {
     const translation = verse.translations?.find(
-      (t: VerseTranslation) => t.languageCode === selectedLanguage
+      (t: VerseTranslation) => t.languageCode === langCode
     );
-    return translation?.content || verse.translations?.[0]?.content || "";
+    return translation?.content || "";
+  };
+
+  const getOriginalDevanagari = (verse: any): string => {
+    return getTranslation(verse, "devanagari");
   };
 
   const handleVerseClick = (verse: any) => {
-    const content = getTranslation(verse);
+    const content = getTranslation(verse, selectedLanguage);
     onVerseSelect(verse.id, content);
   };
 
@@ -106,17 +110,19 @@ export function BookReader({
       <ScrollArea className="flex-1">
         <div className="max-w-3xl mx-auto px-4 sm:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
           {currentVerses.map((verse: any) => {
-            const content = getTranslation(verse);
+            const originalText = getOriginalDevanagari(verse);
+            const translatedText = getTranslation(verse, selectedLanguage);
             const isSelected = verse.id === selectedVerseId;
+            const showTranslation = selectedLanguage !== "devanagari" && translatedText;
             
             return (
               <div
                 key={verse.id}
                 onClick={() => handleVerseClick(verse)}
-                className={`group p-3 sm:p-5 rounded-md border transition-all cursor-pointer ${
+                className={`group p-3 sm:p-5 rounded-md border cursor-pointer hover-elevate active-elevate-2 ${
                   isSelected 
                     ? "border-primary bg-primary/5" 
-                    : "border-transparent hover:border-border hover:bg-muted/30"
+                    : "border-transparent"
                 }`}
                 data-testid={`verse-${verse.verseNumber}`}
               >
@@ -124,15 +130,25 @@ export function BookReader({
                   <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded shrink-0">
                     {verse.verseNumber}
                   </span>
-                  <div className="flex-1 space-y-2 min-w-0">
+                  <div className="flex-1 space-y-3 min-w-0">
                     {verse.sectionTitle && (
                       <p className="text-xs font-medium text-primary uppercase tracking-wider">
                         {verse.sectionTitle}
                       </p>
                     )}
-                    <p className="font-serif text-base sm:text-lg leading-relaxed whitespace-pre-wrap break-words">
-                      {content}
-                    </p>
+                    <div className="space-y-3">
+                      <p className="font-serif text-base sm:text-lg leading-relaxed whitespace-pre-wrap break-words" data-testid={`text-original-${verse.verseNumber}`}>
+                        {originalText}
+                      </p>
+                      {showTranslation && (
+                        <div className="pt-2 border-t border-border/50">
+                          <p className="text-xs text-muted-foreground mb-1" data-testid={`label-script-${verse.verseNumber}`}>In selected script:</p>
+                          <p className="font-serif text-sm sm:text-base leading-relaxed whitespace-pre-wrap break-words text-muted-foreground" data-testid={`text-script-${verse.verseNumber}`}>
+                            {translatedText}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">
                       Click to view translations and explanations
                     </p>
