@@ -443,8 +443,8 @@ export async function seedDatabase() {
 
   const book = await storage.createBook({
     slug: "isha-upanishad-bhashya",
-    title: "ईशावास्योपनिषद्भाष्यम् (Isha Upanishad Bhashya)",
-    author: "Sri Shankaracharya (श्रीमच्छङ्करभगवत्पूज्यपादविरचितम्)",
+    title: "Isha Upanishad",
+    author: "Sri Shankaracharya",
     description: `The Isha Upanishad (ईशावास्योपनिषद्) is one of the shortest and most celebrated Upanishads. This text presents Shankaracharya's Bhashya (commentary) on the 18 mantras, providing deep philosophical insights into Advaita Vedanta.
 
 Source: https://advaitasharada.sringeri.net/display/bhashya/Isha/
