@@ -140,9 +140,7 @@ export function BookReader({
         <div className="max-w-3xl mx-auto px-4 sm:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
           {currentVerses.map((verse: any) => {
             const originalText = getOriginalDevanagari(verse);
-            const translatedText = getTranslation(verse, selectedLanguage);
             const isSelected = verse.id === selectedVerseId;
-            const showTranslation = selectedLanguage !== "devanagari" && translatedText;
             
             return (
               <div
@@ -169,14 +167,6 @@ export function BookReader({
                       <p className="font-serif text-base sm:text-lg leading-relaxed whitespace-pre-wrap break-words" data-testid={`text-original-${verse.verseNumber}`}>
                         {originalText}
                       </p>
-                      {showTranslation && (
-                        <div className="pt-2 border-t border-border/50">
-                          <p className="text-xs text-muted-foreground mb-1" data-testid={`label-script-${verse.verseNumber}`}>In selected script:</p>
-                          <p className="font-serif text-sm sm:text-base leading-relaxed whitespace-pre-wrap break-words text-muted-foreground" data-testid={`text-script-${verse.verseNumber}`}>
-                            {translatedText}
-                          </p>
-                        </div>
-                      )}
                       <VerseExplanation verseId={verse.id} languageCode={selectedLanguage} />
                     </div>
                   </div>
