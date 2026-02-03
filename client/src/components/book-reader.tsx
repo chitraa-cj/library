@@ -5,13 +5,42 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
-import type { BookWithDetails, Verse, VerseTranslation } from "@shared/schema";
+import type { BookWithDetails, Verse, VerseTranslation, Explanation } from "@shared/schema";
 
 interface BookReaderProps {
   bookId: string;
   selectedLanguage: string;
   onVerseSelect: (verseId: string, content: string) => void;
   selectedVerseId: string | null;
+}
+
+// Component to fetch and display explanation for a verse
+function VerseExplanation({ verseId, languageCode }: { verseId: string; languageCode: string }) {
+  const { data: explanations, isLoading } = useQuery<Explanation[]>({
+    queryKey: ["/api/verses", verseId, "explanations"],
+  });
+
+  if (isLoading) {
+    return <Skeleton className="h-20 w-full mt-3" />;
+  }
+
+  // Filter explanations by selected language
+  const explanation = explanations?.find(e => e.languageCode === languageCode);
+  
+  if (!explanation) {
+    return null;
+  }
+
+  return (
+    <div className="mt-4 pt-4 border-t border-border/50" data-testid={`explanation-${verseId}`}>
+      <p className="text-xs text-muted-foreground mb-2 font-medium">
+        {explanation.authorName} {explanation.authorTitle && `- ${explanation.authorTitle}`}
+      </p>
+      <p className="font-serif text-sm sm:text-base leading-relaxed whitespace-pre-wrap break-words text-foreground/90">
+        {explanation.content}
+      </p>
+    </div>
+  );
 }
 
 export function BookReader({ 
@@ -148,13 +177,8 @@ export function BookReader({
                           </p>
                         </div>
                       )}
+                      <VerseExplanation verseId={verse.id} languageCode={selectedLanguage} />
                     </div>
-                    <p className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity hidden sm:block">
-                      Click to view translations and explanations
-                    </p>
-                    <p className="text-xs text-primary sm:hidden">
-                      Tap to view more
-                    </p>
                   </div>
                 </div>
               </div>
