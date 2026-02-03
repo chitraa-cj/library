@@ -94,57 +94,6 @@ function PanelContent({
         <Separator />
 
         <div className="space-y-3">
-          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Translations in Other Scripts
-          </h3>
-          {translationsLoading ? (
-            <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            </div>
-          ) : translations.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No other translations available</p>
-          ) : (
-            <div className="space-y-2">
-              {translations
-                .filter((t) => t.languageCode !== currentLanguage)
-                .map((translation) => {
-                  const langInfo = SUPPORTED_LANGUAGES.find(
-                    (l) => l.code === translation.languageCode
-                  );
-                  return (
-                    <Collapsible key={translation.id}>
-                      <CollapsibleTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-between p-3 h-auto"
-                          data-testid={`button-translation-${translation.languageCode}`}
-                        >
-                          <span className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-xs">
-                              {langInfo?.nativeName || translation.languageCode}
-                            </Badge>
-                            <span className="text-sm">{langInfo?.name}</span>
-                          </span>
-                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        <Card className="p-3 mt-1 ml-2">
-                          <p className="font-serif text-sm leading-relaxed whitespace-pre-wrap">
-                            {translation.content}
-                          </p>
-                        </Card>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  );
-                })}
-            </div>
-          )}
-        </div>
-
-        <Separator />
-
-        <div className="space-y-3">
           <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
             <MessageSquare className="h-3 w-3" />
             Scholarly Explanations
