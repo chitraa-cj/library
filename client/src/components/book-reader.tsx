@@ -32,11 +32,11 @@ function VerseExplanation({ verseId, languageCode }: { verseId: string; language
   }
 
   return (
-    <div className="mt-5 pt-5 border-t border-amber-300/40 dark:border-amber-800/40" data-testid={`explanation-${verseId}`}>
-      <p className="text-xs text-amber-700/70 dark:text-amber-400/60 mb-3 font-medium italic">
-        {explanation.authorName} {explanation.authorTitle && `— ${explanation.authorTitle}`}
+    <div className="mt-4 pt-4 border-t border-border/50" data-testid={`explanation-${verseId}`}>
+      <p className="text-xs text-muted-foreground mb-2 font-medium">
+        {explanation.authorName} {explanation.authorTitle && `- ${explanation.authorTitle}`}
       </p>
-      <p className="font-serif text-sm sm:text-base leading-loose whitespace-pre-wrap break-words text-amber-900/80 dark:text-amber-200/80 tracking-wide">
+      <p className="font-serif text-sm sm:text-base leading-relaxed whitespace-pre-wrap break-words text-foreground/90">
         {explanation.content}
       </p>
     </div>
@@ -62,24 +62,17 @@ export function BookReader({
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex flex-col min-w-0 bg-gradient-to-br from-amber-50/30 via-orange-50/20 to-amber-100/30 dark:from-amber-950/20 dark:via-stone-950/30 dark:to-amber-950/20 p-2 sm:p-6">
-        <div className="flex-1 max-w-4xl mx-auto w-full">
-          <div className="h-full bg-gradient-to-b from-amber-50 via-orange-50/80 to-amber-100/90 dark:from-stone-900 dark:via-stone-900/95 dark:to-stone-800 rounded-sm sm:rounded-md shadow-xl border border-amber-200/50 dark:border-amber-900/30 p-6 sm:p-12">
-            <div className="space-y-6 animate-pulse">
-              <div className="text-center space-y-3">
-                <Skeleton className="h-4 w-24 mx-auto bg-amber-200/50" />
-                <Skeleton className="h-8 sm:h-10 w-2/3 mx-auto bg-amber-200/50" />
-                <Skeleton className="h-4 w-1/3 mx-auto bg-amber-200/50" />
+      <div className="flex-1 p-4 sm:p-8">
+        <div className="max-w-3xl mx-auto space-y-6">
+          <Skeleton className="h-10 sm:h-12 w-3/4" />
+          <Skeleton className="h-5 sm:h-6 w-1/2" />
+          <div className="space-y-4 mt-8">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="space-y-2">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-16 sm:h-20 w-full" />
               </div>
-              <div className="space-y-6 mt-8">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="space-y-3">
-                    <Skeleton className="h-5 w-8 bg-amber-200/50" />
-                    <Skeleton className="h-20 sm:h-24 w-full bg-amber-200/50" />
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>
@@ -119,120 +112,102 @@ export function BookReader({
   };
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 bg-gradient-to-br from-amber-50/30 via-orange-50/20 to-amber-100/30 dark:from-amber-950/20 dark:via-stone-950/30 dark:to-amber-950/20 p-2 sm:p-6">
-      <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full">
-        <div className="relative flex-1 flex flex-col bg-gradient-to-b from-amber-50 via-orange-50/80 to-amber-100/90 dark:from-stone-900 dark:via-stone-900/95 dark:to-stone-800 rounded-sm sm:rounded-md shadow-xl border border-amber-200/50 dark:border-amber-900/30 overflow-hidden">
-          <div className="absolute left-0 top-0 bottom-0 w-3 sm:w-6 bg-gradient-to-r from-amber-800/20 via-amber-700/10 to-transparent dark:from-amber-900/40 dark:via-amber-900/20 dark:to-transparent" />
-          <div className="absolute left-[3px] sm:left-[6px] top-0 bottom-0 w-[2px] sm:w-1 bg-amber-900/30 dark:bg-amber-700/40" />
-          
-          <div className="relative z-10 px-6 sm:px-12 py-4 sm:py-8 border-b border-amber-200/60 dark:border-amber-900/40">
-            <div className="text-center space-y-2 sm:space-y-3">
-              <div className="flex items-center justify-center gap-3 text-amber-700/60 dark:text-amber-500/50">
-                <span className="h-px flex-1 max-w-12 bg-current" />
-                <span className="text-xs tracking-[0.3em] uppercase font-medium">{book.category}</span>
-                <span className="h-px flex-1 max-w-12 bg-current" />
-              </div>
-              <h1 className="font-serif text-2xl sm:text-3xl font-semibold tracking-wide text-amber-950 dark:text-amber-100">
+    <div className="flex-1 flex flex-col min-w-0">
+      <div className="border-b border-border px-4 sm:px-8 py-4 sm:py-6 bg-card/50">
+        <div className="max-w-3xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
+            <div className="space-y-1 sm:space-y-2 min-w-0">
+              <h1 className="font-serif text-xl sm:text-2xl font-semibold tracking-tight truncate">
                 {book.title}
               </h1>
               {book.author && (
-                <p className="text-sm text-amber-800/70 dark:text-amber-300/60 italic">{book.author}</p>
-              )}
-              {book.description && (
-                <p className="text-xs sm:text-sm text-amber-900/60 dark:text-amber-200/50 mt-2 leading-relaxed max-w-xl mx-auto line-clamp-2 sm:line-clamp-none">
-                  {book.description}
-                </p>
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">{book.author}</p>
               )}
             </div>
+            <Badge variant="secondary" className="shrink-0 self-start">
+              {book.category}
+            </Badge>
           </div>
-
-          <ScrollArea className="flex-1">
-            <div className="px-6 sm:px-12 py-6 sm:py-8 space-y-6 sm:space-y-8">
-              {currentVerses.map((verse: any, index: number) => {
-                const originalText = getOriginalDevanagari(verse);
-                const isSelected = verse.id === selectedVerseId;
-                
-                return (
-                  <div key={verse.id}>
-                    <div
-                      onClick={() => handleVerseClick(verse)}
-                      className={`group cursor-pointer transition-all duration-200 ${
-                        isSelected 
-                          ? "bg-amber-100/50 dark:bg-amber-900/20 -mx-3 px-3 py-2 rounded-md" 
-                          : ""
-                      }`}
-                      data-testid={`verse-${verse.verseNumber}`}
-                    >
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-3">
-                          <span className="text-amber-700/80 dark:text-amber-400/70 font-serif text-lg sm:text-xl font-semibold">
-                            {verse.verseNumber}
-                          </span>
-                          {verse.sectionTitle && (
-                            <span className="text-xs font-medium text-amber-700/60 dark:text-amber-400/50 uppercase tracking-wider border-l border-amber-300 dark:border-amber-700 pl-3">
-                              {verse.sectionTitle}
-                            </span>
-                          )}
-                        </div>
-                        <div className="pl-0 sm:pl-2 space-y-4">
-                          <p className="font-serif text-lg sm:text-xl leading-loose whitespace-pre-wrap break-words text-amber-950 dark:text-amber-100 tracking-wide" data-testid={`text-original-${verse.verseNumber}`}>
-                            {originalText}
-                          </p>
-                          <VerseExplanation verseId={verse.id} languageCode={selectedLanguage} />
-                        </div>
-                      </div>
-                    </div>
-                    {index < currentVerses.length - 1 && (
-                      <div className="flex items-center justify-center py-4 sm:py-6">
-                        <div className="flex items-center gap-2 text-amber-600/40 dark:text-amber-600/30">
-                          <span className="h-px w-8 bg-current" />
-                          <span className="text-xs">॰</span>
-                          <span className="h-px w-8 bg-current" />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </ScrollArea>
-
-          {totalPages > 1 && (
-            <div className="relative z-10 px-6 sm:px-12 py-3 sm:py-4 border-t border-amber-200/60 dark:border-amber-900/40 bg-gradient-to-t from-amber-100/50 to-transparent dark:from-stone-800/50 dark:to-transparent">
-              <div className="flex items-center justify-between gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
-                  disabled={currentPage === 0}
-                  data-testid="button-prev-page"
-                  className="text-amber-800 dark:text-amber-300 hover:bg-amber-200/50 dark:hover:bg-amber-900/30"
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  <span className="hidden sm:inline">Previous</span>
-                </Button>
-                <div className="flex items-center gap-2 text-amber-800/70 dark:text-amber-400/60">
-                  <span className="text-xs tracking-wider uppercase">Page</span>
-                  <span className="font-serif text-sm">{currentPage + 1}</span>
-                  <span className="text-xs">of</span>
-                  <span className="font-serif text-sm">{totalPages}</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
-                  disabled={currentPage >= totalPages - 1}
-                  data-testid="button-next-page"
-                  className="text-amber-800 dark:text-amber-300 hover:bg-amber-200/50 dark:hover:bg-amber-900/30"
-                >
-                  <span className="hidden sm:inline">Next</span>
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-            </div>
+          {book.description && (
+            <p className="text-xs sm:text-sm text-muted-foreground mt-3 sm:mt-4 leading-relaxed line-clamp-3 sm:line-clamp-none">
+              {book.description}
+            </p>
           )}
         </div>
       </div>
+
+      <ScrollArea className="flex-1">
+        <div className="max-w-3xl mx-auto px-4 sm:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
+          {currentVerses.map((verse: any) => {
+            const originalText = getOriginalDevanagari(verse);
+            const isSelected = verse.id === selectedVerseId;
+            
+            return (
+              <div
+                key={verse.id}
+                onClick={() => handleVerseClick(verse)}
+                className={`group p-3 sm:p-5 rounded-md border cursor-pointer hover-elevate active-elevate-2 ${
+                  isSelected 
+                    ? "border-primary bg-primary/5" 
+                    : "border-transparent"
+                }`}
+                data-testid={`verse-${verse.verseNumber}`}
+              >
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded shrink-0">
+                    {verse.verseNumber}
+                  </span>
+                  <div className="flex-1 space-y-3 min-w-0">
+                    {verse.sectionTitle && (
+                      <p className="text-xs font-medium text-primary uppercase tracking-wider">
+                        {verse.sectionTitle}
+                      </p>
+                    )}
+                    <div className="space-y-3">
+                      <p className="font-serif text-base sm:text-lg leading-relaxed whitespace-pre-wrap break-words" data-testid={`text-original-${verse.verseNumber}`}>
+                        {originalText}
+                      </p>
+                      <VerseExplanation verseId={verse.id} languageCode={selectedLanguage} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </ScrollArea>
+
+      {totalPages > 1 && (
+        <div className="border-t border-border px-4 sm:px-8 py-3 sm:py-4 bg-card/50">
+          <div className="max-w-3xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+              disabled={currentPage === 0}
+              data-testid="button-prev-page"
+              className="px-2 sm:px-3"
+            >
+              <ChevronLeft className="h-4 w-4 sm:mr-1" />
+              <span className="hidden sm:inline">Previous</span>
+            </Button>
+            <span className="text-xs sm:text-sm text-muted-foreground">
+              {currentPage + 1} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
+              disabled={currentPage >= totalPages - 1}
+              data-testid="button-next-page"
+              className="px-2 sm:px-3"
+            >
+              <span className="hidden sm:inline">Next</span>
+              <ChevronRight className="h-4 w-4 sm:ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
