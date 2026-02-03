@@ -37,6 +37,7 @@ const SUPPORTED_LANGUAGES = [
   { code: "kannada", name: "Kannada", nativeName: "ಕನ್ನಡ" },
   { code: "telugu", name: "Telugu", nativeName: "తెలుగు" },
   { code: "tamil", name: "Tamil", nativeName: "தமிழ்" },
+  { code: "english", name: "English", nativeName: "English" },
 ];
 
 function PanelContent({
