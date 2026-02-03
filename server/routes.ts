@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { testStrapiConnection, STRAPI_URL } from "./strapi";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -70,6 +71,19 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching languages:", error);
       res.status(500).json({ error: "Failed to fetch languages" });
+    }
+  });
+
+  app.get("/api/strapi/status", async (req, res) => {
+    try {
+      const status = await testStrapiConnection();
+      res.json({
+        ...status,
+        strapiUrl: STRAPI_URL,
+      });
+    } catch (error) {
+      console.error("Error testing Strapi connection:", error);
+      res.status(500).json({ connected: false, message: "Failed to test connection" });
     }
   });
 
