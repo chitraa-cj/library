@@ -26,16 +26,16 @@ const features = [
 
 export function WelcomeScreen() {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gradient-to-b from-background to-muted/30">
-      <div className="max-w-2xl text-center space-y-8">
-        <div className="space-y-4">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-4">
-            <BookOpen className="w-10 h-10 text-primary" />
+    <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 bg-gradient-to-b from-background to-muted/30">
+      <div className="max-w-2xl text-center space-y-6 sm:space-y-8">
+        <div className="space-y-3 sm:space-y-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary/10 mb-2 sm:mb-4">
+            <BookOpen className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
           </div>
-          <h1 className="font-serif text-4xl font-semibold tracking-tight">
+          <h1 className="font-serif text-2xl sm:text-4xl font-semibold tracking-tight">
             Sacred Texts Library
           </h1>
-          <p className="text-lg text-muted-foreground max-w-md mx-auto">
+          <p className="text-sm sm:text-lg text-muted-foreground max-w-md mx-auto">
             Explore the timeless wisdom of ancient scriptures with translations and scholarly explanations
           </p>
         </div>
@@ -63,7 +63,8 @@ export function WelcomeScreen() {
 
         <div className="pt-4">
           <p className="text-sm text-muted-foreground">
-            Select a text from the sidebar to begin reading
+            <span className="hidden sm:inline">Select a text from the sidebar to begin reading</span>
+            <span className="sm:hidden">Tap the menu icon to browse texts</span>
           </p>
         </div>
       </div>

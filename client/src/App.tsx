@@ -11,6 +11,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { WelcomeScreen } from "@/components/welcome-screen";
 import { BookReader } from "@/components/book-reader";
 import { TranslationPanel } from "@/components/translation-panel";
+import { useIsMobile } from "@/hooks/use-mobile";
 import NotFound from "@/pages/not-found";
 
 function Home() {
@@ -18,16 +19,22 @@ function Home() {
   const [selectedLanguage, setSelectedLanguage] = useState("devanagari");
   const [selectedVerseId, setSelectedVerseId] = useState<string | null>(null);
   const [selectedContent, setSelectedContent] = useState("");
+  const [showTranslationPanel, setShowTranslationPanel] = useState(false);
+  const isMobile = useIsMobile();
 
   const handleVerseSelect = (verseId: string, content: string) => {
     setSelectedVerseId(verseId);
     setSelectedContent(content);
+    if (isMobile) {
+      setShowTranslationPanel(true);
+    }
   };
 
   const handleBookSelect = (bookId: string) => {
     setSelectedBookId(bookId);
     setSelectedVerseId(null);
     setSelectedContent("");
+    setShowTranslationPanel(false);
   };
 
   const sidebarStyle = {
@@ -43,7 +50,7 @@ function Home() {
           onSelectBook={handleBookSelect}
         />
         <div className="flex flex-col flex-1 min-w-0">
-          <header className="flex items-center justify-between gap-4 px-4 py-3 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-10">
+          <header className="flex items-center justify-between gap-4 px-3 sm:px-4 py-2 sm:py-3 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-10">
             <div className="flex items-center gap-2">
               <SidebarTrigger data-testid="button-sidebar-toggle" />
               <span className="font-serif text-sm text-muted-foreground hidden sm:block">
@@ -66,6 +73,8 @@ function Home() {
                   selectedContent={selectedContent}
                   currentLanguage={selectedLanguage}
                   onLanguageChange={setSelectedLanguage}
+                  open={showTranslationPanel}
+                  onOpenChange={setShowTranslationPanel}
                 />
               </>
             ) : (

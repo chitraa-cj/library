@@ -14,6 +14,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import type { Book } from "@shared/schema";
 
@@ -31,6 +32,14 @@ const categoryIcons: Record<string, string> = {
 
 export function AppSidebar({ selectedBookId, onSelectBook }: AppSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const handleBookSelect = (bookId: string) => {
+    onSelectBook(bookId);
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   const { data: books = [], isLoading } = useQuery<Book[]>({
     queryKey: ["/api/books"],
@@ -96,7 +105,7 @@ export function AppSidebar({ selectedBookId, onSelectBook }: AppSidebarProps) {
                     {categoryBooks.map((book) => (
                       <SidebarMenuItem key={book.id}>
                         <SidebarMenuButton
-                          onClick={() => onSelectBook(book.id)}
+                          onClick={() => handleBookSelect(book.id)}
                           className={`mx-2 rounded-md transition-colors ${
                             selectedBookId === book.id
                               ? "bg-sidebar-accent text-sidebar-accent-foreground"
