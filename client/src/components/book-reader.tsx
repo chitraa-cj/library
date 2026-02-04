@@ -1,34 +1,16 @@
-import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, User, Globe } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { BookOpen } from "lucide-react";
 import type { BookWithDetails, Verse, VerseTranslation, Explanation } from "@shared/schema";
-
-interface CommentaryOption {
-  authorName: string;
-  authorTitle: string | null;
-  languageCodes: string[];
-}
-
-interface CommentaryOptions {
-  authors: CommentaryOption[];
-  languages: { code: string; name: string }[];
-}
 
 interface BookReaderProps {
   bookId: string;
-  selectedLanguage: string;
   onVerseSelect: (verseId: string, content: string) => void;
   selectedVerseId: string | null;
+  selectedAuthor: string | null;
+  selectedCommentaryLanguage: string | null;
 }
 
 function VerseExplanation({ 
@@ -76,85 +58,14 @@ function VerseExplanation({
 
 export function BookReader({ 
   bookId, 
-  selectedLanguage, 
   onVerseSelect,
-  selectedVerseId 
+  selectedVerseId,
+  selectedAuthor,
+  selectedCommentaryLanguage
 }: BookReaderProps) {
-  const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
-  const [selectedCommentaryLanguage, setSelectedCommentaryLanguage] = useState<string | null>(null);
-  const [initialized, setInitialized] = useState(false);
-
   const { data: book, isLoading, error } = useQuery<BookWithDetails>({
     queryKey: ["/api/books", bookId],
   });
-
-  const { data: commentaryOptions, isLoading: isLoadingOptions } = useQuery<CommentaryOptions>({
-    queryKey: ["/api/books", bookId, "commentary-options"],
-  });
-
-  useEffect(() => {
-    setSelectedAuthor(null);
-    setSelectedCommentaryLanguage(null);
-    setInitialized(false);
-  }, [bookId]);
-
-  useEffect(() => {
-    if (commentaryOptions && !initialized) {
-      if (commentaryOptions.authors.length > 0) {
-        const firstAuthor = commentaryOptions.authors[0];
-        setSelectedAuthor(firstAuthor.authorName);
-        if (firstAuthor.languageCodes.length > 0) {
-          setSelectedCommentaryLanguage(firstAuthor.languageCodes[0]);
-        }
-      }
-      setInitialized(true);
-    }
-  }, [commentaryOptions, initialized]);
-
-  useEffect(() => {
-    if (selectedAuthor && commentaryOptions && initialized) {
-      const author = commentaryOptions.authors.find(a => a.authorName === selectedAuthor);
-      if (author && author.languageCodes.length > 0) {
-        if (!selectedCommentaryLanguage || !author.languageCodes.includes(selectedCommentaryLanguage)) {
-          setSelectedCommentaryLanguage(author.languageCodes[0]);
-        }
-      }
-    }
-  }, [selectedAuthor, commentaryOptions, selectedCommentaryLanguage, initialized]);
-
-  const availableLanguagesForAuthor = useMemo(() => {
-    if (!selectedAuthor || !commentaryOptions) return [];
-    const author = commentaryOptions.authors.find(a => a.authorName === selectedAuthor);
-    if (!author) return [];
-    return commentaryOptions.languages.filter(l => author.languageCodes.includes(l.code));
-  }, [selectedAuthor, commentaryOptions]);
-
-  const availableAuthors = useMemo(() => {
-    return commentaryOptions?.authors || [];
-  }, [commentaryOptions]);
-
-  const handleAuthorChange = (authorName: string) => {
-    setSelectedAuthor(authorName);
-    const author = commentaryOptions?.authors.find(a => a.authorName === authorName);
-    if (author && author.languageCodes.length > 0) {
-      if (!selectedCommentaryLanguage || !author.languageCodes.includes(selectedCommentaryLanguage)) {
-        setSelectedCommentaryLanguage(author.languageCodes[0]);
-      }
-    }
-  };
-
-  const handleLanguageChange = (langCode: string) => {
-    setSelectedCommentaryLanguage(langCode);
-    if (selectedAuthor) {
-      const author = commentaryOptions?.authors.find(a => a.authorName === selectedAuthor);
-      if (author && !author.languageCodes.includes(langCode)) {
-        const newAuthor = commentaryOptions?.authors.find(a => a.languageCodes.includes(langCode));
-        if (newAuthor) {
-          setSelectedAuthor(newAuthor.authorName);
-        }
-      }
-    }
-  };
 
   if (isLoading) {
     return (
@@ -200,12 +111,10 @@ export function BookReader({
   };
 
   const handleVerseClick = (verse: any) => {
-    const content = getTranslation(verse, selectedLanguage);
+    const langCode = selectedCommentaryLanguage || "devanagari";
+    const content = getTranslation(verse, langCode);
     onVerseSelect(verse.id, content);
   };
-
-  const hasCommentaryOptions = commentaryOptions && 
-    (commentaryOptions.authors.length > 0 || commentaryOptions.languages.length > 0);
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
@@ -228,71 +137,6 @@ export function BookReader({
             <p className="text-xs sm:text-sm text-muted-foreground mt-3 sm:mt-4 leading-relaxed line-clamp-3 sm:line-clamp-none">
               {book.description}
             </p>
-          )}
-
-          {hasCommentaryOptions && (
-            <div className="mt-4 pt-4 border-t border-border/50">
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <User className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <Select
-                    value={selectedAuthor || ""}
-                    onValueChange={handleAuthorChange}
-                  >
-                    <SelectTrigger 
-                      className="flex-1" 
-                      data-testid="select-author"
-                    >
-                      <SelectValue placeholder="Select Author" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableAuthors.map((author) => (
-                        <SelectItem 
-                          key={author.authorName} 
-                          value={author.authorName}
-                          data-testid={`option-author-${author.authorName.replace(/\s+/g, '-').toLowerCase()}`}
-                        >
-                          {author.authorName}
-                          {author.authorTitle && (
-                            <span className="text-muted-foreground ml-1">
-                              ({author.authorTitle})
-                            </span>
-                          )}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {selectedAuthor && availableLanguagesForAuthor.length > 0 && (
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <Select
-                      value={selectedCommentaryLanguage || ""}
-                      onValueChange={handleLanguageChange}
-                    >
-                      <SelectTrigger 
-                        className="flex-1" 
-                        data-testid="select-commentary-language"
-                      >
-                        <SelectValue placeholder="Select Language" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableLanguagesForAuthor.map((lang) => (
-                          <SelectItem 
-                            key={lang.code} 
-                            value={lang.code}
-                            data-testid={`option-lang-${lang.code}`}
-                          >
-                            {lang.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-            </div>
           )}
         </div>
       </div>

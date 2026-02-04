@@ -17,10 +17,11 @@ import NotFound from "@/pages/not-found";
 
 function Home() {
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
-  const [selectedLanguage, setSelectedLanguage] = useState("devanagari");
   const [selectedVerseId, setSelectedVerseId] = useState<string | null>(null);
   const [selectedContent, setSelectedContent] = useState("");
   const [showTranslationPanel, setShowTranslationPanel] = useState(false);
+  const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
+  const [selectedCommentaryLanguage, setSelectedCommentaryLanguage] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
   const handleVerseSelect = (verseId: string, content: string) => {
@@ -36,6 +37,8 @@ function Home() {
     setSelectedVerseId(null);
     setSelectedContent("");
     setShowTranslationPanel(false);
+    setSelectedAuthor(null);
+    setSelectedCommentaryLanguage(null);
   };
 
   const sidebarStyle = {
@@ -71,15 +74,19 @@ function Home() {
               <>
                 <BookReader
                   bookId={selectedBookId}
-                  selectedLanguage={selectedLanguage}
                   onVerseSelect={handleVerseSelect}
                   selectedVerseId={selectedVerseId}
+                  selectedAuthor={selectedAuthor}
+                  selectedCommentaryLanguage={selectedCommentaryLanguage}
                 />
                 <TranslationPanel
+                  bookId={selectedBookId}
                   selectedVerseId={selectedVerseId}
                   selectedContent={selectedContent}
-                  currentLanguage={selectedLanguage}
-                  onLanguageChange={setSelectedLanguage}
+                  selectedAuthor={selectedAuthor}
+                  selectedCommentaryLanguage={selectedCommentaryLanguage}
+                  onAuthorChange={setSelectedAuthor}
+                  onLanguageChange={setSelectedCommentaryLanguage}
                   open={showTranslationPanel}
                   onOpenChange={setShowTranslationPanel}
                 />
