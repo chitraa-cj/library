@@ -1,9 +1,10 @@
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen } from "lucide-react";
-import type { BookWithDetails, Verse, VerseTranslation, Explanation } from "@shared/schema";
+import { Button } from "@/components/ui/button";
+import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import type { BookWithDetails, VerseTranslation, Explanation } from "@shared/schema";
 
 interface BookReaderProps {
   bookId: string;
@@ -41,13 +42,13 @@ function VerseExplanation({
   }
 
   return (
-    <div className="mt-4 pt-4 border-t border-border/50" data-testid={`explanation-${verseId}`}>
+    <div className="mt-6 pt-6 border-t border-border/50" data-testid={`explanation-${verseId}`}>
       {filteredExplanations.map((explanation, idx) => (
         <div key={idx} className={idx > 0 ? "mt-4 pt-4 border-t border-border/30" : ""}>
-          <p className="text-xs text-muted-foreground mb-2 font-medium">
+          <p className="text-xs text-muted-foreground mb-3 font-medium">
             {explanation.authorName} {explanation.authorTitle && `- ${explanation.authorTitle}`}
           </p>
-          <p className="font-serif text-sm sm:text-base leading-relaxed whitespace-pre-wrap break-words text-foreground/90">
+          <p className="font-serif text-base leading-relaxed whitespace-pre-wrap break-words text-foreground/90">
             {explanation.content}
           </p>
         </div>
@@ -63,9 +64,33 @@ export function BookReader({
   selectedAuthor,
   selectedCommentaryLanguage
 }: BookReaderProps) {
+  const [currentPage, setCurrentPage] = useState(0);
+
   const { data: book, isLoading, error } = useQuery<BookWithDetails>({
     queryKey: ["/api/books", bookId],
   });
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [bookId]);
+
+  useEffect(() => {
+    if (book && book.verses && book.verses.length > 0) {
+      const verse = book.verses[currentPage];
+      if (verse) {
+        const langCode = selectedCommentaryLanguage || "devanagari";
+        const content = getTranslationFromVerse(verse, langCode);
+        onVerseSelect(verse.id, content);
+      }
+    }
+  }, [currentPage, book, selectedCommentaryLanguage]);
+
+  const getTranslationFromVerse = (verse: any, langCode: string): string => {
+    const translation = verse.translations?.find(
+      (t: VerseTranslation) => t.languageCode === langCode
+    );
+    return translation?.content || "";
+  };
 
   if (isLoading) {
     return (
@@ -74,12 +99,8 @@ export function BookReader({
           <Skeleton className="h-10 sm:h-12 w-3/4" />
           <Skeleton className="h-5 sm:h-6 w-1/2" />
           <div className="space-y-4 mt-8">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="space-y-2">
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-16 sm:h-20 w-full" />
-              </div>
-            ))}
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-24 w-full" />
           </div>
         </div>
       </div>
@@ -98,6 +119,8 @@ export function BookReader({
   }
 
   const verses = book.verses || [];
+  const totalPages = verses.length;
+  const currentVerse = verses[currentPage];
 
   const getTranslation = (verse: any, langCode: string): string => {
     const translation = verse.translations?.find(
@@ -110,85 +133,152 @@ export function BookReader({
     return getTranslation(verse, "devanagari");
   };
 
-  const handleVerseClick = (verse: any) => {
-    const langCode = selectedCommentaryLanguage || "devanagari";
-    const content = getTranslation(verse, langCode);
-    onVerseSelect(verse.id, content);
+  const goToNextPage = () => {
+    if (currentPage < totalPages - 1) {
+      setCurrentPage(currentPage + 1);
+    }
   };
 
+  const goToPrevPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowRight" || e.key === " ") {
+      e.preventDefault();
+      goToNextPage();
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      goToPrevPage();
+    }
+  };
+
+  if (!currentVerse) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
+        <div className="text-center space-y-4">
+          <BookOpen className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mx-auto" />
+          <p className="text-muted-foreground">No verses available</p>
+        </div>
+      </div>
+    );
+  }
+
+  const verseText = selectedCommentaryLanguage 
+    ? getTranslation(currentVerse, selectedCommentaryLanguage) || getOriginalDevanagari(currentVerse)
+    : getOriginalDevanagari(currentVerse);
+
   return (
-    <div className="flex-1 flex flex-col min-w-0">
-      <div className="border-b border-border px-4 sm:px-8 py-4 sm:py-6 bg-card/50">
+    <div 
+      className="flex-1 flex flex-col min-w-0 focus:outline-none" 
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+    >
+      <div className="border-b border-border px-4 sm:px-8 py-3 sm:py-4 bg-card/50">
         <div className="max-w-3xl mx-auto">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
-            <div className="space-y-1 sm:space-y-2 min-w-0">
-              <h1 className="font-serif text-xl sm:text-2xl font-semibold tracking-tight truncate">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex items-center gap-3 min-w-0">
+              <h1 className="font-serif text-lg sm:text-xl font-semibold tracking-tight truncate">
                 {book.title}
               </h1>
-              {book.author && (
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">{book.author}</p>
-              )}
+              <Badge variant="secondary" className="shrink-0">
+                {book.category}
+              </Badge>
             </div>
-            <Badge variant="secondary" className="shrink-0 self-start">
-              {book.category}
-            </Badge>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Verse {currentPage + 1} of {totalPages}</span>
+            </div>
           </div>
-          {book.description && (
-            <p className="text-xs sm:text-sm text-muted-foreground mt-3 sm:mt-4 leading-relaxed line-clamp-3 sm:line-clamp-none">
-              {book.description}
-            </p>
-          )}
         </div>
       </div>
 
-      <ScrollArea className="flex-1">
-        <div className="max-w-3xl mx-auto px-4 sm:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
-          {verses.map((verse: any) => {
-            const verseText = selectedCommentaryLanguage 
-              ? getTranslation(verse, selectedCommentaryLanguage) || getOriginalDevanagari(verse)
-              : getOriginalDevanagari(verse);
-            const isSelected = verse.id === selectedVerseId;
-            
-            return (
-              <div
-                key={verse.id}
-                onClick={() => handleVerseClick(verse)}
-                className={`group p-3 sm:p-5 rounded-md border cursor-pointer hover-elevate active-elevate-2 ${
-                  isSelected 
-                    ? "border-primary bg-primary/5" 
-                    : "border-transparent"
-                }`}
-                data-testid={`verse-${verse.verseNumber}`}
-              >
-                <div className="flex items-start gap-3 sm:gap-4">
-                  <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded shrink-0">
-                    {verse.verseNumber}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex items-center justify-center p-4 sm:p-8 overflow-auto">
+          <div className="max-w-3xl w-full">
+            <div 
+              className="bg-card border border-border rounded-lg p-6 sm:p-10 shadow-sm"
+              data-testid={`verse-${currentVerse.verseNumber}`}
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <span className="text-sm font-medium text-primary bg-primary/10 px-3 py-1.5 rounded-full">
+                  {currentVerse.sectionTitle || `Verse ${currentVerse.verseNumber}`}
+                </span>
+                {currentVerse.sectionTitle && (
+                  <span className="text-xs text-muted-foreground">
+                    Mantra {currentVerse.verseNumber}
                   </span>
-                  <div className="flex-1 space-y-3 min-w-0">
-                    {verse.sectionTitle && (
-                      <p className="text-xs font-medium text-primary uppercase tracking-wider">
-                        {verse.sectionTitle}
-                      </p>
-                    )}
-                    <div className="space-y-3">
-                      <p className="font-serif text-base sm:text-lg leading-relaxed whitespace-pre-wrap break-words" data-testid={`text-original-${verse.verseNumber}`}>
-                        {verseText}
-                      </p>
-                      {selectedAuthor && selectedCommentaryLanguage && (
-                        <VerseExplanation 
-                          verseId={verse.id} 
-                          languageCode={selectedCommentaryLanguage}
-                          authorName={selectedAuthor}
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
-            );
-          })}
+
+              <div className="space-y-6">
+                <p 
+                  className="font-serif text-xl sm:text-2xl leading-relaxed whitespace-pre-wrap break-words text-center"
+                  data-testid={`text-original-${currentVerse.verseNumber}`}
+                >
+                  {verseText}
+                </p>
+
+                {selectedAuthor && selectedCommentaryLanguage && (
+                  <VerseExplanation 
+                    verseId={currentVerse.id} 
+                    languageCode={selectedCommentaryLanguage}
+                    authorName={selectedAuthor}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-      </ScrollArea>
+
+        <div className="border-t border-border px-4 sm:px-8 py-4 bg-background/80 backdrop-blur-sm">
+          <div className="max-w-3xl mx-auto flex items-center justify-between">
+            <Button
+              variant="outline"
+              onClick={goToPrevPage}
+              disabled={currentPage === 0}
+              className="gap-2"
+              data-testid="button-prev-page"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Previous</span>
+            </Button>
+
+            <div className="flex items-center gap-1">
+              {totalPages <= 10 ? (
+                Array.from({ length: totalPages }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentPage(i)}
+                    className={`w-2 h-2 rounded-full transition-colors ${
+                      i === currentPage 
+                        ? "bg-primary" 
+                        : "bg-muted hover:bg-muted-foreground/30"
+                    }`}
+                    data-testid={`page-dot-${i + 1}`}
+                  />
+                ))
+              ) : (
+                <span className="text-sm text-muted-foreground">
+                  {currentPage + 1} / {totalPages}
+                </span>
+              )}
+            </div>
+
+            <Button
+              variant="outline"
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages - 1}
+              className="gap-2"
+              data-testid="button-next-page"
+            >
+              <span className="hidden sm:inline">Next</span>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
