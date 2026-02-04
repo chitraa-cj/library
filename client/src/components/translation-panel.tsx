@@ -154,14 +154,7 @@ function PanelContent({
                         value={author.authorName}
                         data-testid={`option-author-${author.authorName.toLowerCase().replace(/\s+/g, '-')}`}
                       >
-                        <span className="flex flex-col items-start">
-                          <span>{author.authorName}</span>
-                          {author.authorTitle && (
-                            <span className="text-xs text-muted-foreground">
-                              {author.authorTitle}
-                            </span>
-                          )}
-                        </span>
+                        {author.authorName}
                       </SelectItem>
                     ))}
                   </SelectContent>
