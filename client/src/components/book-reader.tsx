@@ -300,7 +300,9 @@ export function BookReader({
       <ScrollArea className="flex-1">
         <div className="max-w-3xl mx-auto px-4 sm:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
           {verses.map((verse: any) => {
-            const originalText = getOriginalDevanagari(verse);
+            const verseText = selectedCommentaryLanguage 
+              ? getTranslation(verse, selectedCommentaryLanguage) || getOriginalDevanagari(verse)
+              : getOriginalDevanagari(verse);
             const isSelected = verse.id === selectedVerseId;
             
             return (
@@ -326,7 +328,7 @@ export function BookReader({
                     )}
                     <div className="space-y-3">
                       <p className="font-serif text-base sm:text-lg leading-relaxed whitespace-pre-wrap break-words" data-testid={`text-original-${verse.verseNumber}`}>
-                        {originalText}
+                        {verseText}
                       </p>
                       {selectedAuthor && selectedCommentaryLanguage && (
                         <VerseExplanation 
