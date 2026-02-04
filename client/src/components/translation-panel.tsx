@@ -209,64 +209,6 @@ function PanelContent({
             <Separator />
 
             <div className="space-y-3">
-              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                <MessageSquare className="h-3 w-3" />
-                Scholarly Explanations
-              </h3>
-              {explanationsLoading ? (
-                <div className="flex items-center justify-center py-4">
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                </div>
-              ) : filteredExplanations.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No explanations available for selected author</p>
-              ) : (
-                <div className="space-y-2">
-                  {filteredExplanations.map((explanation) => (
-                    <Collapsible
-                      key={explanation.id}
-                      open={selectedExplanation === explanation.id}
-                      onOpenChange={(open) =>
-                        setSelectedExplanation(open ? explanation.id : null)
-                      }
-                    >
-                      <CollapsibleTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-between p-3 h-auto text-left"
-                          data-testid={`button-explanation-${explanation.id}`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                              <User className="h-4 w-4 text-primary" />
-                            </div>
-                            <div className="flex flex-col items-start">
-                              <span className="text-sm font-medium">{explanation.authorName}</span>
-                              {explanation.authorTitle && (
-                                <span className="text-xs text-muted-foreground">
-                                  {explanation.authorTitle}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        <Card className="p-4 mt-1 ml-2">
-                          <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                            {explanation.content}
-                          </p>
-                        </Card>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <Separator />
-
-            <div className="space-y-3">
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2" data-testid="heading-panel-explanatory-videos">
                 <Play className="h-3 w-3" />
                 Explanatory Videos
