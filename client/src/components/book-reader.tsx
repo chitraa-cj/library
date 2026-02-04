@@ -129,10 +129,9 @@ export function BookReader({
     return commentaryOptions.languages.filter(l => author.languageCodes.includes(l.code));
   }, [selectedAuthor, commentaryOptions]);
 
-  const availableAuthorsForLanguage = useMemo(() => {
-    if (!selectedCommentaryLanguage || !commentaryOptions) return commentaryOptions?.authors || [];
-    return commentaryOptions.authors.filter(a => a.languageCodes.includes(selectedCommentaryLanguage));
-  }, [selectedCommentaryLanguage, commentaryOptions]);
+  const availableAuthors = useMemo(() => {
+    return commentaryOptions?.authors || [];
+  }, [commentaryOptions]);
 
   const handleAuthorChange = (authorName: string) => {
     setSelectedAuthor(authorName);
@@ -247,7 +246,7 @@ export function BookReader({
                       <SelectValue placeholder="Select Author" />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableAuthorsForLanguage.map((author) => (
+                      {availableAuthors.map((author) => (
                         <SelectItem 
                           key={author.authorName} 
                           value={author.authorName}
