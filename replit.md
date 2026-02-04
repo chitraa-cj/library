@@ -20,7 +20,7 @@ Preferred communication style: Simple, everyday language.
 
 The frontend uses a sidebar-based layout with three main panels:
 1. **AppSidebar**: Book navigation and search, grouped by category
-2. **BookReader**: Main content area displaying verses with pagination
+2. **BookReader**: Main content area displaying verses with continuous scrolling and commentary selection (author/language dropdowns with mutual filtering)
 3. **TranslationPanel**: Shows translations in different scripts and scholarly explanations
 
 ### Backend Architecture
@@ -33,6 +33,7 @@ The frontend uses a sidebar-based layout with three main panels:
 Key API endpoints:
 - `GET /api/books` - List all books
 - `GET /api/books/:id` - Get book with details and verses
+- `GET /api/books/:id/commentary-options` - Get available authors and languages for commentaries
 - `GET /api/verses/:id` - Get single verse with translations
 - `GET /api/verses/:id/translations` - Get all translations for a verse
 - `GET /api/verses/:id/explanations` - Get scholarly explanations

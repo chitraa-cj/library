@@ -64,6 +64,16 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/books/:id/commentary-options", async (req, res) => {
+    try {
+      const options = await storage.getCommentaryOptionsByBookId(req.params.id);
+      res.json(options);
+    } catch (error) {
+      console.error("Error fetching commentary options:", error);
+      res.status(500).json({ error: "Failed to fetch commentary options" });
+    }
+  });
+
   app.get("/api/languages", async (req, res) => {
     try {
       const languages = await storage.getAllLanguages();

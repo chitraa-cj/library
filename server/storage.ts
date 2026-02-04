@@ -23,6 +23,17 @@ import {
   type VerseWithTranslations,
 } from "@shared/schema";
 
+export interface CommentaryOption {
+  authorName: string;
+  authorTitle: string | null;
+  languageCodes: string[];
+}
+
+export interface CommentaryOptions {
+  authors: CommentaryOption[];
+  languages: { code: string; name: string }[];
+}
+
 export interface IStorage {
   getAllBooks(): Promise<Book[]>;
   getBookById(id: string): Promise<BookWithDetails | undefined>;
@@ -39,6 +50,7 @@ export interface IStorage {
 
   getExplanationsByVerseId(verseId: string): Promise<Explanation[]>;
   createExplanation(explanation: InsertExplanation): Promise<Explanation>;
+  getCommentaryOptionsByBookId(bookId: string): Promise<CommentaryOptions>;
 
   getAllLanguages(): Promise<Language[]>;
   createLanguage(language: InsertLanguage): Promise<Language>;
@@ -142,6 +154,54 @@ export class DatabaseStorage implements IStorage {
   async createExplanation(explanation: InsertExplanation): Promise<Explanation> {
     const result = await db.insert(explanations).values(explanation).returning();
     return result[0];
+  }
+
+  async getCommentaryOptionsByBookId(bookId: string): Promise<CommentaryOptions> {
+    const allExplanations = await db
+      .select({
+        authorName: explanations.authorName,
+        authorTitle: explanations.authorTitle,
+        languageCode: explanations.languageCode,
+      })
+      .from(explanations)
+      .innerJoin(verses, eq(explanations.verseId, verses.id))
+      .where(eq(verses.bookId, bookId));
+    
+    if (allExplanations.length === 0) {
+      return { authors: [], languages: [] };
+    }
+
+    const authorMap = new Map<string, { authorTitle: string | null; languageCodes: Set<string> }>();
+    const languageSet = new Set<string>();
+
+    for (const exp of allExplanations) {
+      languageSet.add(exp.languageCode);
+      
+      if (!authorMap.has(exp.authorName)) {
+        authorMap.set(exp.authorName, {
+          authorTitle: exp.authorTitle,
+          languageCodes: new Set([exp.languageCode])
+        });
+      } else {
+        authorMap.get(exp.authorName)!.languageCodes.add(exp.languageCode);
+      }
+    }
+
+    const allLanguages = await this.getAllLanguages();
+    const languageNameMap = new Map(allLanguages.map(l => [l.code, l.name]));
+
+    const authors: CommentaryOption[] = Array.from(authorMap.entries()).map(([name, data]) => ({
+      authorName: name,
+      authorTitle: data.authorTitle,
+      languageCodes: Array.from(data.languageCodes)
+    }));
+
+    const languagesResult = Array.from(languageSet).map(code => ({
+      code,
+      name: languageNameMap.get(code) || code
+    }));
+
+    return { authors, languages: languagesResult };
   }
 
   async getAllLanguages(): Promise<Language[]> {
