@@ -176,21 +176,31 @@ export function BookReader({
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
-      <div className="border-b border-border px-4 sm:px-8 py-3 sm:py-4 bg-card/50">
+      <div className="border-b border-border px-4 sm:px-8 py-4 sm:py-5 bg-card/50">
         <div className="max-w-3xl mx-auto">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div className="flex items-center gap-3 min-w-0">
-              <h1 className="font-serif text-lg sm:text-xl font-semibold tracking-tight truncate">
-                {book.title}
-              </h1>
-              <Badge variant="secondary" className="shrink-0">
-                {book.category}
-              </Badge>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
+            <div className="space-y-1 min-w-0">
+              <div className="flex items-center gap-3">
+                <h1 className="font-serif text-lg sm:text-xl font-semibold tracking-tight truncate">
+                  {book.title}
+                </h1>
+                <Badge variant="secondary" className="shrink-0">
+                  {book.category}
+                </Badge>
+              </div>
+              {book.author && (
+                <p className="text-xs sm:text-sm text-muted-foreground">{book.author}</p>
+              )}
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground shrink-0">
               <span>Verse {currentPage + 1} of {totalPages}</span>
             </div>
           </div>
+          {book.description && (
+            <p className="text-xs sm:text-sm text-muted-foreground mt-3 leading-relaxed line-clamp-2 sm:line-clamp-3">
+              {book.description}
+            </p>
+          )}
         </div>
       </div>
 
