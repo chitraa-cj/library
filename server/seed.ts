@@ -967,3 +967,143 @@ export async function updateIncompleteShankaraExplanations() {
     console.log("All Shankaracharya explanations are complete");
   }
 }
+
+/**
+ * English verse translations data
+ */
+const englishVerseTranslations: { [verseNumber: number]: string } = {
+  1: `īśā vāsyam idaṃ sarvaṃ yat kiñca jagatyāṃ jagat |
+tena tyaktena bhuñjīthā mā gṛdhaḥ kasya sviddhanam || 1 ||
+
+In the Lord is to be veiled all this—whatsoever moves on earth. Through such renunciation do thou save (thyself); be not greedy, for whose is wealth?`,
+  2: `kurvann eveha karmāṇi jijīviṣecchataṃ samāḥ |
+evaṃ tvayi nānyatheto'sti na karma lipyate nare || 2 ||
+
+Always performing karma here, one should desire to live, for a hundred years. So long as thou (seekest to live) a mere man, no other (path) exists (where) activity does not taint thee.`,
+  3: `asuryā nāma te lokā andhena tamasāvṛtāḥ |
+tāṃste pretyābhigacchanti ye ke cātmahano janāḥ || 3 ||
+
+Malignant are those worlds and enveloped in blinding darkness, into which pass, after death, whatsoever people slay the Self.`,
+  4: `anejad ekaṃ manaso javīyo nainaddevā āpnuvanpūrvamarṣat |
+taddhāvato'nyānatyeti tiṣṭhat tasminn apo mātariśvā dadhāti || 4 ||
+
+Unmoving, one, and speedier than the mind; the senses reach it never; for it goes before. Standing, it outstrips others that run. In virtue of it, does mātariśvā allot functions severally to all.`,
+  5: `tad ejati tan naijati tad dūre tad v antike |
+tad antar asya sarvasya tad u sarvasyāsya bāhyataḥ || 5 ||
+
+It moves: and it moves not; it is far and it is near. It is inside all this; it is also outside all this.`,
+  6: `yas tu sarvāṇi bhūtāny ātmany evānupaśyati |
+sarvabhūteṣu cātmānaṃ tato na vijugupsate || 6 ||
+
+And he who sees all beings in himself and himself in all beings has no aversion thence.`,
+  7: `yasmin sarvāṇi bhūtāny ātmaivābhūd vijānataḥ |
+tatra ko mohaḥ kaḥ śoka ekatvam anupaśyataḥ || 7 ||
+
+When to a knower discovering unity, all beings become his very Self, what delusion then (to him) and what sorrow?`,
+  8: `sa paryagāc chukram akāyam avraṇam asnāviraṃ śuddham apāpaviddham |
+kavir manīṣī paribhūḥ svayambhūr yāthātathyato'rthān vyadadhāc chāśvatībhyaḥ samābhyaḥ || 8 ||
+
+He (the Self) pervaded all, resplendent, bodiless, scatheless, having no muscles, pure, untouched by evil; far-seeing, omniscient, transcendent, self-sprung, (He) duly allotted to the various eternal creators their respective functions.`,
+  9: `andhaṃ tamaḥ praviśanti ye'vidyām upāsate |
+tato bhūya iva te tamo ya uvidyāyāṃ ratāḥ || 9 ||
+
+Into blinding darkness pass they who adhere to karma and into still greater darkness, as it were, they who delight in meditation.`,
+  10: `anyad evāhur vidyayān yad āhur avidyayā |
+iti śuśruma dhīrāṇāṃ ye nas tad vicacakṣire || 10 ||
+
+Distinct, they say, is (the fruit borne) by meditation and distinct again, they say, is (that borne) by karma. Thus have we heard from sages who taught us that.`,
+  11: `vidyāṃ cāvidyāṃ ca yas tad vedobhayaṃ saha |
+avidyayā mṛtyuṃ tīrtvā vidyayāmṛtam aśnute || 11 ||
+
+Whoever understands meditation and karma as going together, (he) overcoming death through karma, attains immortality through meditation.`,
+  12: `andhaṃ tamaḥ praviśanti ye'sambhūtim upāsate |
+tato bhūya iva te tamo ya u sambhūtyāṃ ratāḥ || 12 ||
+
+Into blinding darkness pass they who are devoted to the unmanifest, and into still greater darkness, as it were, they who delight in the manifest.`,
+  13: `anyad evāhuḥ saṃbhavād anyad āhur asaṃbhavāt |
+iti śuśruma dhīrāṇāṃ ye nas tad vicacakṣire || 13 ||
+
+Distinct, they say, is (what results) from the manifest and distinct again, they say, is (what results) from the unmanifest. Thus have we heard from the sages who taught us that.`,
+  14: `saṃbhūtiṃ ca vināśaṃ ca yas tad vedobhayaṃ saha |
+vināśena mṛtyuṃ tīrtvā saṃbhūtyāmṛtam aśnute || 14 ||
+
+Whoever knows the manifest and the unmanifest together, (he) overcoming death through the unmanifest, attains immortality through the manifest.`,
+  15: `hiraṇmayena pātreṇa satyasyāpihitaṃ mukham |
+tat tvaṃ pūṣann apāvṛṇu satyadharmāya dṛṣṭaye || 15 ||
+
+The face of Truth is covered with a golden disc. Remove it, O Pūṣan, that I, a worshipper of Truth, may behold it.`,
+  16: `pūṣann ekarṣe yama sūrya prājāpatya vyūha raśmīn samūha tejaḥ |
+yat te rūpaṃ kalyāṇatamaṃ tat te paśyāmi yo'sāvasau puruṣaḥ so'ham asmi || 16 ||
+
+O Pūṣan, the one Seer, Controller, O Sun, offspring of Prajāpati, spread forth thy rays and gather up thy radiant light that I may behold thee of loveliest form. Whosoever is that Person, that also am I.`,
+  17: `vāyur anilam amṛtam athedaṃ bhasmāntaṃ śarīram |
+oṃ krato smara kṛtaṃ smara krato smara kṛtaṃ smara || 17 ||
+
+Let (my) vital breath now attain the immortal Air; then let this body end in ashes. OM! O mind, remember—remember that which has been done. O mind, remember—remember that which has been done.`,
+  18: `agne naya supathā rāye asmān viśvāni deva vayunāni vidvān |
+yuyodhy asmaj juhurāṇam eno bhūyiṣṭhāṃ te nama uktiṃ vidhema || 18 ||
+
+O Fire, lead us to prosperity by a good path, O God, knowing all our deeds. Remove from us crooked-going sin. We shall render unto thee the fullest praise.`,
+};
+
+/**
+ * Seed English verse translations if missing
+ */
+export async function seedEnglishVerseTranslations() {
+  console.log("Checking for missing English verse translations...");
+  
+  // Get the Isha Upanishad book
+  const existingBooks = await db.select().from(books).where(eq(books.slug, "isha-upanishad-bhashya"));
+  if (existingBooks.length === 0) {
+    console.log("Isha Upanishad book not found, skipping English translations");
+    return;
+  }
+  
+  const book = existingBooks[0];
+  const bookVerses = await db.select().from(verses).where(eq(verses.bookId, book.id));
+  
+  if (bookVerses.length === 0) {
+    console.log("No verses found, skipping English translations");
+    return;
+  }
+  
+  // Check for existing English translations
+  const existingTranslations = await db
+    .select()
+    .from(verseTranslations)
+    .innerJoin(verses, eq(verseTranslations.verseId, verses.id))
+    .where(and(
+      eq(verses.bookId, book.id),
+      eq(verseTranslations.languageCode, "english")
+    ));
+  
+  if (existingTranslations.length >= 18) {
+    console.log("All English verse translations already exist");
+    return;
+  }
+  
+  // Get existing verse IDs that have English translations
+  const existingVerseIds = new Set(existingTranslations.map(t => t.verse_translations.verseId));
+  
+  // Add missing English translations
+  let addedCount = 0;
+  for (const verse of bookVerses) {
+    if (!existingVerseIds.has(verse.id)) {
+      const englishContent = englishVerseTranslations[verse.verseNumber];
+      if (englishContent) {
+        await storage.createTranslation({
+          verseId: verse.id,
+          languageCode: "english",
+          content: englishContent,
+        });
+        addedCount++;
+      }
+    }
+  }
+  
+  if (addedCount > 0) {
+    console.log(`Added ${addedCount} English verse translations`);
+  } else {
+    console.log("No new English verse translations needed");
+  }
+}

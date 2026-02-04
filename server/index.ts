@@ -2,7 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
-import { seedDatabase, seedAdditionalCommentaries, updateIncompleteShankaraExplanations } from "./seed";
+import { seedDatabase, seedAdditionalCommentaries, updateIncompleteShankaraExplanations, seedEnglishVerseTranslations } from "./seed";
 
 const app = express();
 const httpServer = createServer(app);
@@ -64,6 +64,7 @@ app.use((req, res, next) => {
   await seedDatabase().catch(console.error);
   await seedAdditionalCommentaries().catch(console.error);
   await updateIncompleteShankaraExplanations().catch(console.error);
+  await seedEnglishVerseTranslations().catch(console.error);
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
