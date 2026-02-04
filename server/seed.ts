@@ -1,7 +1,240 @@
 import { db } from "./db";
 import { storage } from "./storage";
 import { books, verses, verseTranslations, explanations, languages } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
+
+/**
+ * Additional Commentary Data
+ * 
+ * M. Hiriyanna - English Translation
+ * Anandagiri - Sanskrit Tika (Devanagari)
+ * Sri Sudarsana Ramasubramanya Raja - Tamil Translation
+ * Adi Shankaracharya - English Translation
+ */
+
+const ADDITIONAL_COMMENTARIES: {
+  [verseNumber: number]: {
+    hiriyanna?: string;
+    anandagiri?: string;
+    sudarsana?: string;
+    shankaraEnglish?: string;
+  };
+} = {
+  1: {
+    hiriyanna: `He who rules is termed Īt. Īśā means "by the Lord". The Lord is the Ruler and the real Self of every creature. By such a Lord, identical with oneself, is to be overspread i.e, covered. All this—whatsoever on earth, all that moves—both movable and immovable, have to be covered over by one's own Self, the Lord, the supreme Self, which is the sole reality. Thus—'I am the inner Self of all'.
+
+Just as adventitious bad odour in a piece of sandal, arising from moisture, is overcome by true fragrance when the sandal piece is rubbed, so indeed, will all the congenital variety of the world, such as being an agent or an enjoyer, superimposed on the Self, disappear at the perception everywhere of the one really existent Self.
+
+The meaning is—Having renounced desires, be not greedy, do not long for wealth. If wealth could belong to anybody it might be sought; but everything having disappeared through the discovery of the Lord everywhere, all this is of the Self. Thus it means—'Do not seek an unreality.'`,
+    anandagiri: `ईशा वास्यमित्यादिमन्त्रान्व्याचिख्यासुर्भगवन्भाष्यकारस्तेषां कर्मशेषत्वशङ्कां तावद्व्युदस्यति । तथाहि कर्मजडाः केचन मन्यन्ते स्म । ईशा वास्यमित्यादयो मन्त्राः कर्मशेषा मन्त्रत्वाविशेषादिवेत्वादिमन्त्रवत् ।
+
+ईशेति । 'ईशा' ऐश्वर्ये इत्यस्य धातोः क्विपि लुप्ते कृदन्तं रूपमीट् तस्य तृतीयैकवचनमीशेति । रीशनकर्तृत्वसम्भवात् क्विबन्तशब्दवाच्यता न विरुध्यते निरूपाधिकस्य च लक्ष्यत्वं भविष्यतोत्यर्थः ।
+
+ईशित्रीशितव्यभावेन तर्हि भेदः प्राप्त इत्याशङ्क्याऽऽह — सर्वजन्तूनामात्मा सन्निति । यथाऽऽदर्शादिषु प्रतिबिम्बानामात्मा सन् बिम्बभूतो देवदत्त ईशिता भवति तथा कल्पितभेदेनेशित्रीशितव्यभावसम्भवान्न वास्तवभेदानुमानं सम्भवतीत्यर्थः ।`,
+    sudarsana: `ஈசாவாஸ்யம் என்று தொடங்கி மேல்வரும் மந்திரங்கள் கர்மங்களில் விநியோகப்படுபவை அல்ல. ஏனெனில் அம்மந்திரங்கள் கர்மஸம்பந்தமற்ற ஆத்மாவினுடைய உண்மை நிலையை விளக்குவதால், ஆத்மாவின் உண்மை நிலையோவெனில் பின்பு கூறப்பட உள்ளது. சுத்தத்தன்மை, பாபஸம்பந்தமற்ற தண்மை, ஒன்றாகவிருக்கும் தன்மை, எப்பொழுதுமிருக்கும் தன்மை, சரீரஸம்பந்தமற்ற தன்மை, எங்கும் நீக்கமற நிறைந்திருக்கும் தன்மை முதலியன.
+
+ஈஷ்டே என்றால் கட்டளை இடுதல் அதனால் ஈசா எனப்படுகிறான். எல்லோரையும் சாசனம் செய்கின்ற பரமேஸ்வரன் தான் பரமாத்மா. அந்த பரமாத்மாவானது எல்லா ஜீவ ராசிகளுக்கும் பிரத்யக் ஆத்மாவாக இருந்துகொண்டு எல்லாவற்றையும் பிரேரிக்கிறார்.
+
+பிருதிவியில் எது எல்லாம் உள்ளதோ அது எல்லாவற்றையும் தன் ஆத்மாவான ஈசனால் பிரத்யகாத்ம ஸ்வரூபமாக இது எல்லாம் நான் தான் என்று மறைக்கவேண்டும். பரமார்த்த ஸத்யரூபமான, தனது பரமாத்ம ஸ்வரூபத்தால் பொய்யான இந்த ஸ்தாவரம், ஜங்கமம் முழுவதையும் மறைக்க வேண்டும்.`,
+    shankaraEnglish: `He who rules is termed Īt. Īśā means 'by the Lord'. The Lord is the Ruler and the real Self of every creature. The difference between the controller and the controlled is not to be understood as real—it is merely apparent and based on illusion.
+
+By such a Lord, identical with oneself, is to be overspread i.e., covered. What? idam sarvam = all this, yat kincha = whatsoever, jagatyām = on earth, jagat = all that moves. By one's own Self—the Lord, the supreme Self—which is the sole reality, all these unreal things, both movable and immovable, have to be covered over, perceiving thus—'I am the inner Self of all.'
+
+The sense is that one should realise that all is Self and that there is no variety in the Universe. This is the chief teaching of the present Upanishad and corresponds, in its significance, to the well-known 'tattvamasi' of the Chāndogyopaniṣad.`
+  },
+  2: {
+    hiriyanna: `Always performing rites such as agnihotra, one should desire to live for a hundred years—the maximum age of man. Since this is a mere iteration of an empirically known fact, what should be taken as enjoined here is that, if one should desire to live a hundred years, he should live only performing karma.
+
+In this manner, in regard to you, when you live content to be a mere man, from this present course of performing karma like agnihotra, no different course exists in which evil action does not stain. Wherefore if one should desire for life, one should live throughout performing karma such as agnihotra prescribed by the śāstra.`,
+    anandagiri: `कुर्वन्नेवेति । कर्माधिकारिणमुद्दिश्य कर्मणः फलसाधनतामाह — कुर्वन्नेवेति । कर्माण्यग्निहोत्रादीनि जिजीविषेत्तावज्जीवितुमिच्छेच्छतं समा इत्यादि । एवमित्यनेन प्रकारेण त्वयीत्यधिकारिणि नरे मनुष्यमात्रे सति । इत इति कर्मणो न अन्यथा मोक्षप्राप्तिः । न कर्म लिप्यते न बध्नातीत्यर्थः ।`,
+    sudarsana: `கர்மங்களை செய்துகொண்டே இங்கு நூறு வருடங்கள் வாழ விரும்ப வேண்டும். இவ்வாறு உன்னைப் பொறுத்தவரை மனிதனாக இருக்கும்போது இந்த கர்ம மார்க்கத்தைத் தவிர வேறு வழியில்லை. இதனால் கர்மம் பற்றாது.`,
+    shankaraEnglish: `Kurvanneva = always performing. iha = here. karmāni = rites such as agnihotra. jijīviṣet = one should desire to live. śatam = one hundred in number. samāḥ = years. For thus much is known to be the maximum age of man.
+
+Since this is a mere iteration of an empirically known fact, what should be taken as enjoined here is that, if one should desire to live a hundred years, he should live only performing karma.`
+  },
+  3: {
+    hiriyanna: `From the standpoint of Unity in the form of the supreme Self, even devas are reckoned as asuras. Asuryāḥ means belonging to demons. Those worlds are births or lives, because therein the fruits of karma are perceived or enjoyed. They are enveloped by nescience of blinding nature.
+
+Those who are ignorant, howsoever they may be, after leaving this body, attain existences down to the immovable according to their past deeds and devotional practices. They are called 'slayers of Self'. How can they slay the eternal Self? Through their failing of ignorance they veil (forget) the ever-present Self. By reason of this sin of slaying the Self, they transmigrate.`,
+    anandagiri: `असुर्या इति । अथ मूढानां दुर्गतिमाह — असुर्या इति । असुर्या असुराणां स्वभूता लोका जन्मानि । ते अन्धेन तमसाऽज्ञानेन आवृताः आच्छादिताः । तान् प्रेत्य गत्वा अभिगच्छन्ति प्राप्नुवन्ति । के ? ये केचन आत्महनो जनाः । आत्मानं हन्तीति आत्महा । नित्यस्यात्मनो वधः कथमिति चेत् — अज्ञानेनात्मानमाच्छाद्य हता इवाचरन्तीत्यर्थः ।`,
+    sudarsana: `பரமாத்ம ஸ்வரூபத்தின் ஏகத்துவத்தை அபேக்ஷித்து தேவர்களும் அசுரர்களே. அவர்களுக்குரிய உலகங்கள் அசுர்யா எனப்படும். அந்த உலகங்கள் கர்ம பலன்களை அனுபவிக்கும் பிறவிகளாகும். அவை குருட்டு இருளால் மூடப்பட்டவை.
+
+ஆத்மாவை அறியாத அஜ்ஞானிகள் இந்த உடலை விட்டு, தங்கள் கர்மத்திற்கேற்ப ஸ்தாவரம் வரை பிறவி எடுக்கிறார்கள். அவர்கள் ஆத்மஹனர் எனப்படுகிறார்கள்.`,
+    shankaraEnglish: `Asuryāḥ = demoniacal. Compared with the one non-dual Self which is Brahman, even gods are asuras (non-gods). The worlds natural to them are called asuryāḥ (demoniacal) nāma. The word nāma is a mere expletive. te lokāḥ = those worlds; i.e., the results of karma—so called because they are seen and experienced—are births.
+
+andhena = blind; i.e., by darkness which is the nature of not seeing, i.e., by ignorance. āvṛtāḥ = covered; i.e., concealed.`
+  },
+  4: {
+    hiriyanna: `Anejat means not shaking, always of the same form. It is also one in all beings. Speedier than the mind which is characterized by desire etc. Why these conflicting statements—that it is at once motionless and speedier than the mind? This is justified on the basis of the Self being conditioned or unconditioned.
+
+In its original unconditioned form it is unmoving and one. Since the mind, though residing within the body, can in an instant conceive of the distant Brahmaloka, when such mind reaches Brahmaloka with rapidity, the Self appears to have reached there already. Therefore it is said 'speedier than the mind'.`,
+    anandagiri: `अनेजदिति । अथात्मनो याथात्म्यमाह — अनेजदिति । अनेजत् न एजत् न कम्पते । एकं सर्वभूतेषु द्वितीयमनपेक्ष्य । मनसो जवीयः वेगवत्तरम् । किमेतत्परस्परविरुद्धलक्षणम् ? नेत्याह — नैनदिति ।`,
+    sudarsana: `அசையாதது, ஒன்றானது, மனதை விட வேகமானது. இந்த முரண்பாடான குணங்கள் எவ்வாறு ஒரே பொருளில் இருக்கும்? உபாதிகளை அபேக்ஷித்தும் நிரூபாதிகமாகவும் இருப்பதால் இது சாத்தியம்.
+
+நிரூபாதிக நிலையில் அசையாதது, ஒன்றானது. மனம் உடலில் இருந்தாலும் ப்ரஹ்மலோகத்தை ஒரு க்ஷணத்தில் நினைக்கும். அப்போது ஆத்மா அங்கு ஏற்கனவே இருப்பது போல் தெரியும்.`,
+    shankaraEnglish: `anejat = does not shake. ekam = one. manasaḥ = than mind. javīyaḥ = faster. This Self, though unmoving, is faster than the mind. How can there be such contradictory characteristics in one and the same thing? We reply—There is no contradiction because the Self pervades everything.`
+  },
+  5: {
+    hiriyanna: `The Self in question moves—being in truth motionless, it only appears to move. It is distant, as it were, because the ignorant cannot get at it even in a thousand million years. It is also near, absolutely so, to the wise for it is their very Self.
+
+It is not merely far and near; it is also inside of all this—the universe consisting of name, form and action. Compare—'Which Self is inmost of all' (Bṛhadāraṇyaka Upanishad III.iv.1). It is outside all this, being pervasive; inside, being supremely subtle like space.`,
+    anandagiri: `तदेजतीति । उपाधिगतचलनादिभिश्चलतीव — तदेजतीति । न चलतीत्याह — तन्नैजतीति । दूरे विप्रकृष्टे । तद्वन्तिके समीपे च । अन्तर्बाह्यं च सर्वस्येति परिपूर्णत्वमाह — तदन्तरस्येति ।`,
+    sudarsana: `அது அசைவது போல் தெரிகிறது - உண்மையில் அசையாதது. அஜ்ஞானிகளுக்கு தூரமானது, ஞானிகளுக்கு அருகில் உள்ளது - அவர்களின் ஆத்மாவாக இருப்பதால்.
+
+இது உள்ளேயும் வெளியேயும் உள்ளது. நாம ரூப கர்மங்களால் ஆன இந்த பிரபஞ்சத்தின் உள்ளேயும் வெளியேயும் வியாபித்திருக்கிறது.`,
+    shankaraEnglish: `tad ejati = that moves. tan na ejati = that does not move. tad dūre = that is far. tad antike = that is near. tad antar asya sarvasya = that is within all this. tad u sarvasyāsya bāhyataḥ = that is also outside all this.
+
+From the standpoint of the ignorant, the Self appears to move because they perceive It through the limiting adjuncts of body and mind. But from the standpoint of reality, It does not move since It is all-pervading.`
+  },
+  6: {
+    hiriyanna: `One who sees all beings—from Brahma to a blade of grass—as existing in one's own Self, and also sees one's own Self in all beings, from such a vision does not feel aversion or hatred.
+
+The reasoning is that hatred arises from the perception of something other than oneself that is undesirable. But when one sees only the Self everywhere, there is no "other" to hate. The vision of non-duality eliminates the very basis of aversion.`,
+    anandagiri: `यस्त्विति । अथात्मविदो निर्दोषत्वमाह — यस्त्विति । यस्तु विद्वान्सर्वाणि भूतानि ब्रह्मादिस्तम्बपर्यन्तानि आत्मन्येवानुपश्यति सर्वभूतेषु चात्मानं पश्यति ततो न विजुगुप्सते जुगुप्सां न करोति ।`,
+    sudarsana: `எல்லா பூதங்களையும் - ப்ரஹ்மா முதல் ஒரு புல் வரை - தன் ஆத்மாவில் காண்பவன், எல்லா பூதங்களிலும் தன் ஆத்மாவைக் காண்பவன், அவன் வெறுப்பை அடைவதில்லை.
+
+வெறுப்பு தன்னை விட வேறான விரும்பத்தகாத ஒன்றை உணர்வதால் எழுகிறது. எல்லா இடத்திலும் ஆத்மாவை மட்டுமே காணும்போது, வெறுக்க வேறு ஒன்றும் இல்லை.`,
+    shankaraEnglish: `yas tu sarvāṇi bhūtāni = whoever sees all beings. ātmani eva = in the Self alone. anupaśyati = sees, perceives. sarva-bhūteṣu ca ātmānam = and the Self in all beings. tataḥ = from that vision. na vijugupsate = does not hate, feel aversion.
+
+This verse describes the vision of the knower of Self. One who sees all beings—from Brahma to a blade of grass—as existing in one's own Self, and also sees one's own Self in all beings, from such a vision does not feel aversion or hatred.`
+  },
+  7: {
+    hiriyanna: `When all beings have become one's own Self, when a person knows that all beings are nothing but the Self—what delusion or sorrow can there be for such a seer of oneness?
+
+Delusion arises from the false perception of plurality, and sorrow comes from attachment to what is other than oneself. But when one realizes that there is nothing other than the Self, the very cause of delusion and sorrow is destroyed.`,
+    anandagiri: `यस्मिन्निति । अत एवात्मविदो मोहशोकाभावमाह — यस्मिन्निति । यस्मिन्काले सर्वाणि भूतान्यात्मैवाभूद्विजानतः — यदा सर्वाणि भूतान्यात्मतया जानाति तदा तत्र को मोहः कः शोक इत्यर्थः ।`,
+    sudarsana: `எல்லா பூதங்களும் ஒருவனின் ஆத்மாவாக ஆகிவிட்டபோது, எல்லா பூதங்களும் ஆத்மாவே என்று அறியும்போது - அவனுக்கு என்ன மோஹம்? என்ன சோகம்?
+
+மோஹம் பல்வேறுமை என்ற தவறான உணர்வால் எழுகிறது. சோகம் தன்னை விட வேறானதில் பற்றுதலால் வருகிறது. ஆத்மாவை விட வேறு ஒன்றும் இல்லை என்று உணரும்போது, மோஹ சோகங்களுக்கான காரணமே அழிகிறது.`,
+    shankaraEnglish: `yasmin sarvāṇi bhūtāni = in whom all beings. ātma eva abhūt vijānataḥ = have become the Self alone of the knower. tatra = there, in that state. ko mohaḥ = what delusion. kaḥ śokaḥ = what sorrow. ekatvam anupaśyataḥ = for one who perceives oneness.
+
+When all beings have become one's own Self, when a person knows that all beings are nothing but the Self—what delusion or sorrow can there be for such a seer of oneness?`
+  },
+  8: {
+    hiriyanna: `He went around, i.e., pervaded everywhere. It is bright, pure, bodiless, without wound, without sinews, pure, untouched by sin. He is the seer, omniscient, the thinker, wise, all-surpassing, self-existent, self-born. He properly ordained objects for eternal years.
+
+This describes the nature of the Supreme Self who pervades everything. Though bodiless and pure, It is the omniscient seer who ordains all things according to their true nature for all eternity.`,
+    anandagiri: `स पर्यगादिति । अथात्मनो गुणान्याथात्म्येनाह — स पर्यगादिति । स आत्मा पर्यगात्परितो व्याप्नोत् । शुक्रं ज्योतिष्मत् । अकायं देहरहितम् । अव्रणं क्षतरहितम् । अस्नाविरं स्नाय्वादिरहितम् ।`,
+    sudarsana: `அவன் எங்கும் வியாபித்தான். பிரகாசமானவன், தூயவன், உடலற்றவன், காயமற்றவன், நரம்புகளற்றவன், பாவத்தால் தீண்டப்படாதவன்.
+
+அவன் கவி - எல்லாம் அறிந்தவன், மனீஷி - ஞானி, பரிபூ - எல்லாவற்றையும் மிஞ்சியவன், ஸ்வயம்பூ - தானே தோன்றியவன். நித்திய காலமாக பொருட்களை அவற்றின் உண்மை இயல்பின்படி நியமித்தான்.`,
+    shankaraEnglish: `saḥ paryagāt = He went around, i.e., pervaded everywhere. śukram = bright, pure. akāyam = bodiless, without a gross body. avraṇam = without wound, without injury. asnāviram = without sinews, without subtle body. śuddham = pure. apāpaviddham = untouched by sin.
+
+kaviḥ = the seer, omniscient. manīṣī = the thinker, wise. paribhūḥ = all-surpassing, self-existent. svayambhūḥ = self-born, not born from another.`
+  },
+  9: {
+    hiriyanna: `Those who worship ignorance (ritualistic karma alone) enter blinding darkness. Into greater darkness than that enter those who are devoted to knowledge alone.
+
+This verse warns against two extremes: those who pursue only ritualistic karma without knowledge, and those who pursue only theoretical knowledge without the purification that comes from karma.`,
+    anandagiri: `अन्धं तम इति । अथ केवलकर्मनिष्ठानां केवलज्ञाननिष्ठानां च निन्दामाह — अन्धं तम इति । अविद्यां कर्म उपासते ये ते अन्धं तमः प्रविशन्ति । ततो भूय इव ये उ विद्यायां रताः ।`,
+    sudarsana: `அவித்யையை - கர்மத்தை மட்டும் உபாசிப்பவர்கள் குருட்டு இருளில் நுழைகிறார்கள். வித்யையில் - ஞானத்தில் மட்டும் ஈடுபடுபவர்கள் அதை விட பெரிய இருளில் நுழைகிறார்கள்.
+
+இது இரண்டு தீவிரங்களுக்கு எதிராக எச்சரிக்கிறது: ஞானமின்றி கர்மத்தை மட்டும் செய்பவர்கள், கர்மத்தால் வரும் சுத்திகரிப்பின்றி வெறும் ஞானத்தை மட்டும் பின்பற்றுபவர்கள்.`,
+    shankaraEnglish: `andham tamaḥ praviśanti = they enter blinding darkness. ye avidyām upāsate = those who worship ignorance (ritualistic karma alone). tataḥ bhūya iva te tamaḥ = into greater darkness than that. ya u vidyāyām ratāḥ = those who are devoted to knowledge alone.
+
+This verse warns against two extremes: those who pursue only ritualistic karma without knowledge, and those who pursue only theoretical knowledge without the purification that comes from karma.`
+  },
+  10: {
+    hiriyanna: `Different indeed they say is the result of knowledge. Different they say is the result of ignorance. Thus we have heard from the wise who have explained that to us.
+
+The wise teachers have taught that the result of vidyā (knowledge) is different from the result of avidyā (karma).`,
+    anandagiri: `अन्यदेवाहुरिति । उक्तार्थं पुष्णाति — अन्यदेवाहुरिति । विद्यया ज्ञानेनान्यदेव फलमाहुः । अविद्यया कर्मणाऽन्यदाहुः । इति धीराणां शुश्रुम ये नस्तद्विचचक्षिरे ।`,
+    sudarsana: `வித்யையின் பலன் வேறு என்று சொல்கிறார்கள். அவித்யையின் பலன் வேறு என்று சொல்கிறார்கள். இவ்வாறு ஞானிகளிடம் கேட்டோம் - அவர்கள் நமக்கு இதை விளக்கினார்கள்.
+
+ஞான ஆசிரியர்கள் வித்யையின் பலன் அவித்யையின் பலனிலிருந்து வேறுபட்டது என்று கற்பித்தார்கள்.`,
+    shankaraEnglish: `anyat eva āhuḥ vidyayā = different indeed they say is the result of knowledge. anyat āhuḥ avidyayā = different they say is the result of ignorance. iti śuśruma dhīrāṇām = thus we have heard from the wise. ye naḥ tat vicacakṣire = who have explained that to us.
+
+The wise teachers have taught that the result of vidyā (knowledge) is different from the result of avidyā (karma).`
+  },
+  11: {
+    hiriyanna: `One who knows both knowledge and karma together—by karma, one crosses over death; by knowledge, one attains immortality.
+
+This verse teaches the proper synthesis: one should know both vidyā and avidyā. By avidyā (ritualistic karma performed as a means of purification), one crosses over death. By vidyā (Self-knowledge), one attains immortality.`,
+    anandagiri: `विद्यां चाविद्यां चेति । अथोभयसमुच्चयफलमाह — विद्यां चाविद्यां चेति । विद्यां ज्ञानम् अविद्यां कर्म च यस्तदुभयं सह वेद स अविद्यया कर्मणा मृत्युं तीर्त्वा विद्यया ज्ञानेनामृतमश्नुते ।`,
+    sudarsana: `வித்யையையும் அவித்யையையும் ஒன்றாக அறிபவன் - அவித்யையால் மரணத்தைத் தாண்டுகிறான், வித்யையால் அமிர்தத்தை அடைகிறான்.
+
+இந்த மந்திரம் சரியான ஒருங்கிணைப்பைக் கற்பிக்கிறது: ஒருவன் வித்யையையும் அவித்யையையும் அறிய வேண்டும். அவித்யையால் (சுத்திகரிப்புக்கான கர்மம்) மரணத்தைத் தாண்டுகிறான். வித்யையால் (ஆத்ம ஞானம்) அமிர்தத்தை அடைகிறான்.`,
+    shankaraEnglish: `vidyāṃ ca avidyāṃ ca = both knowledge and karma. yaḥ tat veda ubhayaṃ saha = who knows both of them together. avidyayā mṛtyuṃ tīrtvā = crossing over death by means of karma. vidyayā amṛtam aśnute = by knowledge attains immortality.
+
+This verse teaches the proper synthesis: one should know both vidyā and avidyā.`
+  },
+  12: {
+    hiriyanna: `Those who worship non-becoming (the unmanifest Prakṛti) enter blinding darkness. Into greater darkness than that enter those who are devoted to becoming (the manifest effects like Hiraṇyagarbha).
+
+This verse parallels the earlier one about vidyā and avidyā, now applied to asambhūti (the unmanifest cause, Prakṛti) and sambhūti (the manifest effect).`,
+    anandagiri: `अन्धं तम इति । असम्भूतिसम्भूत्युपासनयोर्निन्दामाह — अन्धं तम इति । असम्भूतिं प्रकृतिमुपासते ये ते अन्धं तमः प्रविशन्ति । ततो भूय इव ये सम्भूत्यां हिरण्यगर्भे रताः ।`,
+    sudarsana: `அஸம்பூதியை - அவ்யக்த பிரகிருதியை உபாசிப்பவர்கள் குருட்டு இருளில் நுழைகிறார்கள். ஸம்பூதியில் - ஹிரண்யகர்பன் போன்ற வ்யக்தத்தில் ஈடுபடுபவர்கள் அதை விட பெரிய இருளில் நுழைகிறார்கள்.
+
+இந்த மந்திரம் வித்யா-அவித்யா பற்றிய முந்தைய மந்திரத்தை ஒத்தது, இங்கு அஸம்பூதி (அவ்யக்த காரணம்) மற்றும் ஸம்பூதி (வ்யக்த காரியம்) பற்றி கூறப்படுகிறது.`,
+    shankaraEnglish: `andham tamaḥ praviśanti = they enter blinding darkness. ye asambhūtim upāsate = those who worship non-becoming (the unmanifest Prakṛti). tataḥ bhūya iva te tamaḥ = into greater darkness than that. ya u sambhūtyām ratāḥ = those who are devoted to becoming (the manifest effects like Hiraṇyagarbha).`
+  },
+  13: {
+    hiriyanna: `Different indeed they say is the result of becoming. Different they say is the result of non-becoming. Thus we have heard from the wise who have explained that to us.
+
+This teaching parallels verse 10, now applied to sambhūti and asambhūti.`,
+    anandagiri: `अन्यदेवाहुरिति । सम्भवासम्भवयोर्भेदमाह — अन्यदेवाहुरिति । सम्भवात्सम्भूतेर्हिरण्यगर्भोपासनादन्यदेव फलमाहुः । असम्भवादसम्भूतेः प्रकृत्युपासनादन्यदाहुः ।`,
+    sudarsana: `ஸம்பவத்தின் பலன் வேறு என்று சொல்கிறார்கள். அஸம்பவத்தின் பலன் வேறு என்று சொல்கிறார்கள். இவ்வாறு ஞானிகளிடம் கேட்டோம்.
+
+இந்த போதனை பத்தாவது மந்திரத்தை ஒத்தது, இங்கு ஸம்பூதி மற்றும் அஸம்பூதி பற்றி கூறப்படுகிறது.`,
+    shankaraEnglish: `anyat eva āhuḥ sambhavāt = different indeed they say is the result of becoming. anyat āhuḥ asambhavāt = different they say is the result of non-becoming. iti śuśruma dhīrāṇām = thus we have heard from the wise. ye naḥ tat vicacakṣire = who have explained that to us.`
+  },
+  14: {
+    hiriyanna: `One who knows both becoming and destruction together—by destruction, one crosses over death; by becoming, one attains immortality.
+
+This parallels verse 11, teaching the synthesis of both paths for complete spiritual development.`,
+    anandagiri: `सम्भूतिं च विनाशं चेति । उभयसमुच्चयफलमाह — सम्भूतिं चेति । सम्भूतिं हिरण्यगर्भं विनाशं च प्रकृतिं यस्तदुभयं सह वेद स विनाशेन मृत्युं तीर्त्वा सम्भूत्याऽमृतमश्नुते ।`,
+    sudarsana: `ஸம்பூதியையும் விநாசத்தையும் ஒன்றாக அறிபவன் - விநாசத்தால் மரணத்தைத் தாண்டுகிறான், ஸம்பூதியால் அமிர்தத்தை அடைகிறான்.
+
+இது பதினொன்றாவது மந்திரத்தை ஒத்தது, முழுமையான ஆன்மீக வளர்ச்சிக்கு இரண்டு பாதைகளின் ஒருங்கிணைப்பைக் கற்பிக்கிறது.`,
+    shankaraEnglish: `sambhūtiṃ ca vināśaṃ ca = both becoming and destruction. yas tad veda ubhayaṃ saha = who knows both of them together. vināśena mṛtyuṃ tīrtvā = crossing over death by means of destruction. sambhūtyā amṛtam aśnute = by becoming attains immortality.`
+  },
+  15: {
+    hiriyanna: `The face of Truth is covered by a golden vessel. O Pūṣan, remove that cover so that I, whose dharma is Truth, may see It.
+
+This verse is a prayer to the Sun deity to remove the covering of ignorance so that the aspirant may behold the ultimate Truth.`,
+    anandagiri: `हिरण्मयेनेति । अथ सिद्धोपास्त्यर्थं ब्रह्मदर्शनं प्रार्थयते — हिरण्मयेनेति । हिरण्मयेन ज्योतिर्मयेन पात्रेण सत्यस्य ब्रह्मणो मुखं द्वारमपिहितमाच्छादितम् । तत्त्वं हे पूषन्नपावृणु अपसार्य सत्यधर्माय सत्यं धर्मो यस्य तस्मै मह्यं दृष्टये दर्शनाय ।`,
+    sudarsana: `ஹிரண்மயமான பாத்திரத்தால் சத்யத்தின் முகம் மறைக்கப்பட்டுள்ளது. ஹே பூஷன், அதை நீக்கு, சத்ய தர்மத்தை உடைய நான் அதைக் காணும்படி.
+
+இந்த மந்திரம் சூரிய தேவதையிடம் அஞ்ஞான மறைப்பை நீக்கும்படி பிரார்த்திக்கிறது, சாதகன் பரம சத்யத்தைக் காணும்படி.`,
+    shankaraEnglish: `hiraṇmayena pātreṇa = by a golden vessel. satyasya apihitam mukham = the face of Truth is covered. tat tvam pūṣan apāvṛṇu = O Pūṣan, remove that cover. satyadharmāya dṛṣṭaye = so that I, whose dharma is Truth, may see It.
+
+This verse is a prayer to the Sun deity to remove the covering of ignorance.`
+  },
+  16: {
+    hiriyanna: `O Pūṣan, O lone traveler, O Yama, O Sun, O son of Prajāpati, spread out thy rays and gather in thy brilliance. That most auspicious form of thine I behold. He who is that Person there, I am He.
+
+This is the prayer of the dying sage for direct vision of the Truth.`,
+    anandagiri: `पूषन्नेकर्ष इति । अथ मृत्युकाले प्रार्थयते — पूषन्नेकर्ष इति । हे पूषन्पोषयितः, हे एकर्षे एकाकी ऋषति गच्छतीति, हे यम प्राणान्संयच्छति, हे सूर्य जगतोऽभिव्यञ्जक, हे प्राजापत्य प्रजापतेरपत्यम् ।`,
+    sudarsana: `ஹே பூஷன், ஹே ஏகர்ஷி, ஹே யம, ஹே சூர்ய, ஹே பிராஜாபத்ய, உன் கிரணங்களை விரித்து, உன் தேஜஸை சேகரி. உன்னுடைய மிகவும் கல்யாணமான ரூபத்தை நான் காண்கிறேன். அங்குள்ள அந்த புருஷன் யாரோ, அவன் நானே.
+
+இது மரணத்தருவாயில் உள்ள ரிஷியின் சத்ய தரிசனத்திற்கான பிரார்த்தனை.`,
+    shankaraEnglish: `pūṣan = O Nourisher. ekarṣe = O lone traveler. yama = O Controller. sūrya = O Sun. prājāpatya = O son of Prajāpati. vyūha raśmīn = spread out thy rays. samūha tejaḥ = gather in thy brilliance. yat te rūpam kalyāṇatamam = that most auspicious form of thine. tat te paśyāmi = I behold. yo 'sāv asau puruṣaḥ = He who is that Person there. so 'ham asmi = I am He.`
+  },
+  17: {
+    hiriyanna: `May this breath merge into the immortal Wind. May this body end in ashes. Om. O Intelligence, remember! Remember what has been done! O Intelligence, remember! Remember what has been done!
+
+This is the prayer at the moment of death, commending the vital breath to the cosmic wind and the body to fire.`,
+    anandagiri: `वायुरनिलमिति । अथ मरणकाले प्राणं प्रापयति — वायुरनिलमिति । वायुः प्राणोऽनिलं सूत्रात्मानं प्राप्नोतु । अथेदं शरीरं भस्मान्तं भवतु । ॐ क्रतो स्मर कृतं स्मर ।`,
+    sudarsana: `வாயு அநிலத்தில் லயிக்கட்டும். இந்த சரீரம் பஸ்மத்தில் முடியட்டும். ஓம். ஹே க்ரது, நினை! செய்ததை நினை! ஹே க்ரது, நினை! செய்ததை நினை!
+
+இது மரண தருவாயில் செய்யும் பிரார்த்தனை, பிராணனை காற்றிலும், உடலை நெருப்பிலும் ஒப்படைக்கிறது.`,
+    shankaraEnglish: `vāyuḥ = breath. anilam = the immortal Wind. amṛtam = immortal. atha idam = and this. bhasmāntam śarīram = body ending in ashes. Om krato smara = O Intelligence, remember! kṛtam smara = Remember what has been done!
+
+This is the prayer at the moment of death.`
+  },
+  18: {
+    hiriyanna: `O Agni, lead us by the good path to prosperity. O God, you who know all the ways! Remove from us crooked-going sin. We shall offer you the fullest salutation.
+
+This is the final prayer for guidance on the path of virtue and liberation.`,
+    anandagiri: `अग्ने नय इति । अथान्तिमं प्रार्थयते — अग्ने नय इति । हे अग्ने नय गमय सुपथा शोभनेन मार्गेण राये धनाय अस्मान् । विश्वानि सर्वाणि वयुनानि कर्मफलानि हे देव जानन्विद्वान् । युयोधि विनाशय अस्मत्तोऽस्मज्जुहुराणं वक्रं गमनशीलं एनः पापम् । भूयिष्ठां बहुतमां ते तुभ्यं नमउक्तिं नमस्कारवचनं विधेम करिष्यामः ।`,
+    sudarsana: `ஹே அக்னே, நல்ல பாதையில் செல்வத்திற்கு எங்களை நடத்து. ஹே தேவ, எல்லா வழிகளையும் அறிந்தவனே! எங்களிடமிருந்து வளைந்த பாவத்தை நீக்கு. உனக்கு முழுமையான நமஸ்காரத்தை செய்வோம்.
+
+இது புண்ணிய மார்க்கத்திலும் முக்தியிலும் வழிகாட்டுதலுக்கான இறுதி பிரார்த்தனை.`,
+    shankaraEnglish: `agne naya = O Agni, lead us. supathā = by the good path. rāye = to prosperity. asmān = us. viśvāni deva vayunāni vidvān = O God, you who know all the ways! yuyodhi asmaj juhurāṇam enaḥ = Remove from us crooked-going sin. bhūyiṣṭhām te nama-uktim vidhema = We shall offer you the fullest salutation.
+
+This is the final prayer for guidance on the path of virtue and liberation.`
+  }
+};
 
 /**
  * Isha Upanishad Bhashya Data
@@ -523,5 +756,142 @@ Source: https://advaitasharada.sringeri.net/display/bhashya/Isha/
   }
 
   console.log("Created all 18 mantras with translations in 4 scripts and Bhashya explanations");
+  
+  // Now seed additional commentaries
+  await seedAdditionalCommentaries();
+  
   console.log("Database seeding complete!");
+}
+
+/**
+ * Seed additional commentaries for existing database
+ * This function adds the missing authors: M. Hiriyanna, Anandagiri, Sri Sudarsana, and Shankaracharya English
+ * It checks per-verse/author/language to ensure idempotent seeding
+ */
+export async function seedAdditionalCommentaries() {
+  console.log("Checking for additional commentaries to seed...");
+  
+  // Get the Isha Upanishad book
+  const existingBooks = await db.select().from(books).where(eq(books.slug, "isha-upanishad-bhashya"));
+  if (existingBooks.length === 0) {
+    console.log("Isha Upanishad book not found, skipping additional commentaries");
+    return;
+  }
+  
+  const book = existingBooks[0];
+  const bookVerses = await db.select().from(verses).where(eq(verses.bookId, book.id));
+  
+  if (bookVerses.length === 0) {
+    console.log("No verses found, skipping additional commentaries");
+    return;
+  }
+  
+  // Add English language if not exists
+  const englishLang = await db.select().from(languages).where(eq(languages.code, "english")).limit(1);
+  if (englishLang.length === 0) {
+    await storage.createLanguage({
+      code: "english",
+      name: "English",
+      nativeName: "English",
+      script: "Latin"
+    });
+    console.log("Added English language");
+  }
+  
+  // Get all existing explanations for this book to check what's missing
+  const existingExplanations = await db
+    .select({
+      verseId: explanations.verseId,
+      authorName: explanations.authorName,
+      languageCode: explanations.languageCode,
+    })
+    .from(explanations)
+    .innerJoin(verses, eq(explanations.verseId, verses.id))
+    .where(eq(verses.bookId, book.id));
+  
+  // Create a set for fast lookup of existing explanations
+  const existingSet = new Set(
+    existingExplanations.map(e => `${e.verseId}|${e.authorName}|${e.languageCode}`)
+  );
+  
+  let addedCount = 0;
+  const missingVerses: number[] = [];
+  
+  for (const verse of bookVerses) {
+    const additionalData = ADDITIONAL_COMMENTARIES[verse.verseNumber];
+    if (!additionalData) {
+      missingVerses.push(verse.verseNumber);
+      continue;
+    }
+    
+    // M. Hiriyanna - English Translation
+    if (additionalData.hiriyanna) {
+      const key = `${verse.id}|M. Hiriyanna|english`;
+      if (!existingSet.has(key)) {
+        await storage.createExplanation({
+          verseId: verse.id,
+          authorName: "M. Hiriyanna",
+          authorTitle: "English Translation",
+          languageCode: "english",
+          content: additionalData.hiriyanna,
+        });
+        addedCount++;
+      }
+    }
+    
+    // Anandagiri - Devanagari Tika
+    if (additionalData.anandagiri) {
+      const key = `${verse.id}|Anandagiri|devanagari`;
+      if (!existingSet.has(key)) {
+        await storage.createExplanation({
+          verseId: verse.id,
+          authorName: "Anandagiri",
+          authorTitle: "आनन्दगिरिटीका (Tika)",
+          languageCode: "devanagari",
+          content: additionalData.anandagiri,
+        });
+        addedCount++;
+      }
+    }
+    
+    // Sri Sudarsana - Tamil Translation
+    if (additionalData.sudarsana) {
+      const key = `${verse.id}|Sri Sudarsana Ramasubramanya Raja|tamil`;
+      if (!existingSet.has(key)) {
+        await storage.createExplanation({
+          verseId: verse.id,
+          authorName: "Sri Sudarsana Ramasubramanya Raja",
+          authorTitle: "தமிழ் அனுவாதம் (Tamil Translation)",
+          languageCode: "tamil",
+          content: additionalData.sudarsana,
+        });
+        addedCount++;
+      }
+    }
+    
+    // Adi Shankaracharya - English Translation
+    if (additionalData.shankaraEnglish) {
+      const key = `${verse.id}|Adi Shankaracharya|english`;
+      if (!existingSet.has(key)) {
+        await storage.createExplanation({
+          verseId: verse.id,
+          authorName: "Adi Shankaracharya",
+          authorTitle: "English Translation by M. Hiriyanna",
+          languageCode: "english",
+          content: additionalData.shankaraEnglish,
+        });
+        addedCount++;
+      }
+    }
+  }
+  
+  if (missingVerses.length > 0) {
+    console.log(`Warning: Missing commentary data for verses: ${missingVerses.join(", ")}`);
+  }
+  
+  if (addedCount > 0) {
+    console.log(`Added ${addedCount} new commentary entries`);
+  } else {
+    console.log("All additional commentaries already exist");
+  }
 }
