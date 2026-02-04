@@ -205,8 +205,8 @@ export function BookReader({
       </div>
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 flex items-center justify-center p-4 sm:p-8 overflow-auto">
-          <div className="max-w-3xl w-full">
+        <div className="flex-1 p-4 sm:p-8 overflow-auto">
+          <div className="max-w-3xl w-full mx-auto">
             <div 
               className="bg-card border border-border rounded-lg p-6 sm:p-10 shadow-sm"
               data-testid={`verse-${currentVerse.verseNumber}`}
