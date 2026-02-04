@@ -895,3 +895,75 @@ export async function seedAdditionalCommentaries() {
     console.log("All additional commentaries already exist");
   }
 }
+
+/**
+ * Update incomplete Shankaracharya explanations with complete content
+ * This function updates entries where the content length is shorter than expected
+ */
+export async function updateIncompleteShankaraExplanations() {
+  console.log("Checking for incomplete Shankaracharya explanations...");
+  
+  // Import complete bhashya data
+  const { COMPLETE_SHANKARA_BHASHYA } = await import("./complete-bhashya-data");
+  
+  // Get the Isha Upanishad book
+  const existingBooks = await db.select().from(books).where(eq(books.slug, "isha-upanishad-bhashya"));
+  if (existingBooks.length === 0) {
+    console.log("Isha Upanishad book not found, skipping update");
+    return;
+  }
+  
+  const book = existingBooks[0];
+  const bookVerses = await db.select().from(verses).where(eq(verses.bookId, book.id));
+  
+  if (bookVerses.length === 0) {
+    console.log("No verses found, skipping update");
+    return;
+  }
+  
+  // Get all Shankaracharya explanations
+  const shankaraExplanations = await db
+    .select({
+      id: explanations.id,
+      verseId: explanations.verseId,
+      languageCode: explanations.languageCode,
+      content: explanations.content,
+    })
+    .from(explanations)
+    .innerJoin(verses, eq(explanations.verseId, verses.id))
+    .where(and(
+      eq(verses.bookId, book.id),
+      eq(explanations.authorName, "Adi Shankaracharya")
+    ));
+  
+  // Create a map of verse ID to verse number
+  const verseIdToNumber = new Map(bookVerses.map(v => [v.id, v.verseNumber]));
+  
+  let updatedCount = 0;
+  
+  for (const explanation of shankaraExplanations) {
+    const verseNumber = verseIdToNumber.get(explanation.verseId);
+    if (!verseNumber) continue;
+    
+    const completeData = COMPLETE_SHANKARA_BHASHYA[verseNumber];
+    if (!completeData) continue;
+    
+    const completeContent = completeData[explanation.languageCode];
+    if (!completeContent) continue;
+    
+    // Update if the current content is shorter than the complete content
+    if (explanation.content.length < completeContent.length) {
+      await db
+        .update(explanations)
+        .set({ content: completeContent })
+        .where(eq(explanations.id, explanation.id));
+      updatedCount++;
+    }
+  }
+  
+  if (updatedCount > 0) {
+    console.log(`Updated ${updatedCount} incomplete Shankaracharya explanations`);
+  } else {
+    console.log("All Shankaracharya explanations are complete");
+  }
+}
