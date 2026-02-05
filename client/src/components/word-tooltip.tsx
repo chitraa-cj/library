@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useId, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { Loader2, X, BookOpen, Languages, Sparkles, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -36,24 +37,33 @@ interface WordTooltipProps {
   className?: string;
 }
 
+interface TooltipPosition {
+  top: number;
+  left: number;
+  arrowLeft: number;
+}
+
 export function WordTooltip({ 
   content, 
   commentaryContent = "",
   sourceLanguage,
   className = ""
 }: WordTooltipProps) {
+  const instanceId = useId();
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
-  const [clickedWordRect, setClickedWordRect] = useState<DOMRect | null>(null);
+  const [position, setPosition] = useState<TooltipPosition | null>(null);
   const [showTooltip, setShowTooltip] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [translation, setTranslation] = useState<WordTranslation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [targetLanguage, setTargetLanguage] = useState("english");
-  const containerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const clickedWordRef = useRef<DOMRect | null>(null);
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    if (!showTooltip) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       
       if (tooltipRef.current && !tooltipRef.current.contains(target)) {
@@ -64,39 +74,65 @@ export function WordTooltip({
           closeTooltip();
         }
       }
-    }
+    };
     
-    function handleScroll(event: Event) {
-      const target = event.target as HTMLElement;
-      if (target.closest('[data-radix-popper-content-wrapper]')) {
-        return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        closeTooltip();
       }
-      closeTooltip();
-    }
+    };
     
-    if (showTooltip) {
-      document.addEventListener("mousedown", handleClickOutside);
-      window.addEventListener("scroll", handleScroll, true);
-    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
     
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
-      window.removeEventListener("scroll", handleScroll, true);
+      document.removeEventListener("keydown", handleEscape);
     };
   }, [showTooltip]);
 
+  useLayoutEffect(() => {
+    if (showTooltip && clickedWordRef.current && tooltipRef.current) {
+      const rect = clickedWordRef.current;
+      const tooltipWidth = 340;
+      const gap = 12;
+      
+      const wordCenterX = rect.left + rect.width / 2;
+      let left = wordCenterX - tooltipWidth / 2;
+      let top = rect.bottom + gap;
+      
+      if (left < 8) left = 8;
+      if (left + tooltipWidth > window.innerWidth - 8) {
+        left = window.innerWidth - tooltipWidth - 8;
+      }
+      
+      const tooltipHeight = tooltipRef.current.offsetHeight || 400;
+      if (top + tooltipHeight > window.innerHeight - 8) {
+        top = rect.top - tooltipHeight - gap;
+        if (top < 8) top = 8;
+      }
+      
+      const arrowLeft = Math.max(16, Math.min(wordCenterX - left - 10, tooltipWidth - 36));
+      
+      setPosition({ top, left, arrowLeft });
+    }
+  }, [showTooltip]);
+
   const handleWordClick = (word: string, event: React.MouseEvent<HTMLSpanElement>) => {
+    event.preventDefault();
     event.stopPropagation();
-    const rect = event.currentTarget.getBoundingClientRect();
-    const cleanWord = word.replace(/[।॥,.;:!?'"()[\]{}—–-]/g, '').trim();
     
+    const rect = event.currentTarget.getBoundingClientRect();
+    clickedWordRef.current = rect;
+    
+    const cleanWord = word.replace(/[।॥,.;:!?'"()[\]{}—–-]/g, '').trim();
     if (!cleanWord || cleanWord.length === 0) return;
     
     setSelectedWord(cleanWord);
-    setClickedWordRect(rect);
     setShowTooltip(true);
     setTranslation(null);
     setError(null);
+    setPosition(null);
     
     fetchTranslation(cleanWord, targetLanguage);
   };
@@ -142,189 +178,179 @@ export function WordTooltip({
     setSelectedWord(null);
     setTranslation(null);
     setError(null);
-    setClickedWordRect(null);
+    setPosition(null);
+    clickedWordRef.current = null;
   };
 
-  const getTooltipStyle = useCallback(() => {
-    if (!clickedWordRect) return {};
-    
-    const tooltipWidth = 340;
-    const tooltipMaxHeight = 450;
-    const gap = 8;
-    
-    const wordCenterX = clickedWordRect.left + clickedWordRect.width / 2;
-    let left = wordCenterX - tooltipWidth / 2;
-    let top = clickedWordRect.bottom + gap;
-    
-    if (left < 10) left = 10;
-    if (left + tooltipWidth > window.innerWidth - 10) {
-      left = window.innerWidth - tooltipWidth - 10;
-    }
-    
-    if (top + tooltipMaxHeight > window.innerHeight - 10) {
-      top = clickedWordRect.top - tooltipMaxHeight - gap;
-      if (top < 10) top = 10;
-    }
-    
-    const arrowLeft = Math.max(16, Math.min(wordCenterX - left, tooltipWidth - 16));
-    
-    return { left, top, arrowLeft };
-  }, [clickedWordRect]);
-
+  if (!content) return null;
+  
   const words = content.split(/(\s+)/);
-  const tooltipStyle = getTooltipStyle();
 
-  return (
-    <div ref={containerRef} className={`relative ${className}`}>
-      <span className="leading-relaxed">
-        {words.map((segment, index) => {
-          if (/^\s+$/.test(segment)) {
-            return <span key={index}>{segment}</span>;
-          }
-          
-          const cleanWord = segment.replace(/[।॥,.;:!?'"()[\]{}—–-]/g, '').trim();
-          if (!cleanWord) {
-            return <span key={index}>{segment}</span>;
-          }
-
-          return (
-            <span
-              key={index}
-              onClick={(e) => handleWordClick(segment, e)}
-              className="cursor-pointer hover:text-primary transition-colors border-b-2 border-transparent hover:border-primary/50 pb-0.5 inline"
-              data-testid={`word-${index}`}
-            >
-              {segment}
-            </span>
-          );
-        })}
-      </span>
-
-      {showTooltip && clickedWordRect && (
-        <div
-          ref={tooltipRef}
+  const tooltipContent = showTooltip ? (
+    <div
+      ref={tooltipRef}
+      style={{
+        position: 'fixed',
+        top: position ? position.top : -9999,
+        left: position ? position.left : -9999,
+        width: 340,
+        zIndex: 99999,
+        visibility: position ? 'visible' : 'hidden',
+      }}
+      className="animate-in fade-in-0 slide-in-from-top-2 duration-150"
+    >
+      {position && (
+        <div 
           style={{
-            position: "fixed",
-            left: tooltipStyle.left,
-            top: tooltipStyle.top,
-            zIndex: 9999,
-            width: 340,
+            position: 'absolute',
+            top: -10,
+            left: position.arrowLeft,
+            width: 0,
+            height: 0,
+            borderLeft: '10px solid transparent',
+            borderRight: '10px solid transparent',
+            borderBottom: '10px solid #fff',
+            zIndex: 1,
           }}
-          className="animate-in fade-in-0 slide-in-from-top-2 duration-150"
-        >
-          <div 
-            className="absolute -top-2 w-0 h-0 border-l-[10px] border-r-[10px] border-b-[10px] border-l-transparent border-r-transparent border-b-card"
-            style={{ left: (tooltipStyle.arrowLeft || 170) - 10 }}
-          />
-          <Card className="w-full max-h-[420px] overflow-y-auto shadow-xl border-2 border-primary/30 bg-card">
-            <div className="p-4">
-              <div className="flex items-start justify-between gap-2 mb-3">
+        />
+      )}
+      <Card 
+        className="w-full max-h-[400px] overflow-y-auto shadow-xl border-2 border-primary/30"
+        style={{ backgroundColor: '#ffffff' }}
+      >
+        <div className="p-4 bg-white">
+          <div className="flex items-start justify-between gap-2 mb-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="font-semibold text-primary text-sm">AI Word Analysis</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 -mt-1 -mr-1"
+              onClick={closeTooltip}
+              data-testid="button-close-tooltip"
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border">
+            <Globe className="h-4 w-4 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Translate to:</span>
+            <Select value={targetLanguage} onValueChange={handleLanguageChange}>
+              <SelectTrigger className="h-7 w-[140px] text-xs bg-white" data-testid="select-target-language">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TRANSLATION_LANGUAGES.map((lang) => (
+                  <SelectItem key={lang.code} value={lang.code} data-testid={`lang-option-${lang.code}`}>
+                    {lang.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {isLoading && (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <span className="ml-2 text-sm text-muted-foreground">Analyzing...</span>
+            </div>
+          )}
+
+          {error && (
+            <div className="text-destructive text-sm py-4 text-center">
+              {error}
+            </div>
+          )}
+
+          {translation && !isLoading && (
+            <div className="space-y-3">
+              <div className="bg-primary/10 rounded-md p-2">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  <span className="font-semibold text-primary text-sm">AI Word Analysis</span>
+                  <Badge variant="secondary" className="text-xs">Word</Badge>
+                  <span className="font-bold text-base">{translation.word}</span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 -mt-1 -mr-1"
-                  onClick={closeTooltip}
-                  data-testid="button-close-tooltip"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
               </div>
 
-              <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Translate to:</span>
-                <Select value={targetLanguage} onValueChange={handleLanguageChange}>
-                  <SelectTrigger className="h-7 w-[140px] text-xs" data-testid="select-target-language">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TRANSLATION_LANGUAGES.map((lang) => (
-                      <SelectItem key={lang.code} value={lang.code} data-testid={`lang-option-${lang.code}`}>
-                        {lang.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Languages className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Translation</span>
+                </div>
+                <p className="text-sm font-medium">{translation.translation}</p>
               </div>
 
-              {isLoading && (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                  <span className="ml-2 text-sm text-muted-foreground">Analyzing...</span>
-                </div>
-              )}
-
-              {error && (
-                <div className="text-destructive text-sm py-4 text-center">
-                  {error}
-                </div>
-              )}
-
-              {translation && !isLoading && (
-                <div className="space-y-3">
-                  <div className="bg-primary/10 rounded-md p-2">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-xs">Word</Badge>
-                      <span className="font-bold text-base">{translation.word}</span>
-                    </div>
-                  </div>
-
+              {translation.grammaticalInfo && (
+                <>
+                  <Separator />
                   <div>
                     <div className="flex items-center gap-1.5 mb-1">
-                      <Languages className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Translation</span>
+                      <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Grammar</span>
                     </div>
-                    <p className="text-sm font-medium">{translation.translation}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{translation.grammaticalInfo}</p>
                   </div>
+                </>
+              )}
 
-                  {translation.grammaticalInfo && (
-                    <>
-                      <Separator />
-                      <div>
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Grammar</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground leading-relaxed">{translation.grammaticalInfo}</p>
-                      </div>
-                    </>
-                  )}
+              {translation.etymology && (
+                <>
+                  <Separator />
+                  <div>
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">Etymology</span>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{translation.etymology}</p>
+                  </div>
+                </>
+              )}
 
-                  {translation.etymology && (
-                    <>
-                      <Separator />
-                      <div>
-                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">Etymology</span>
-                        <p className="text-xs text-muted-foreground leading-relaxed">{translation.etymology}</p>
-                      </div>
-                    </>
-                  )}
+              {translation.contextualMeaning && (
+                <>
+                  <Separator />
+                  <div>
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">Contextual Meaning</span>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{translation.contextualMeaning}</p>
+                  </div>
+                </>
+              )}
 
-                  {translation.contextualMeaning && (
-                    <>
-                      <Separator />
-                      <div>
-                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">Contextual Meaning</span>
-                        <p className="text-xs text-muted-foreground leading-relaxed">{translation.contextualMeaning}</p>
-                      </div>
-                    </>
-                  )}
-
-                  {translation.cached && (
-                    <div className="text-[10px] text-muted-foreground/60 text-right">
-                      (from cache)
-                    </div>
-                  )}
+              {translation.cached && (
+                <div className="text-[10px] text-muted-foreground/60 text-right">
+                  (from cache)
                 </div>
               )}
             </div>
-          </Card>
+          )}
         </div>
-      )}
+      </Card>
     </div>
+  ) : null;
+
+  return (
+    <span className={className}>
+      {words.map((segment, index) => {
+        if (/^\s+$/.test(segment)) {
+          return <span key={index}>{segment}</span>;
+        }
+        
+        const cleanWord = segment.replace(/[।॥,.;:!?'"()[\]{}—–-]/g, '').trim();
+        if (!cleanWord) {
+          return <span key={index}>{segment}</span>;
+        }
+
+        return (
+          <span
+            key={index}
+            onClick={(e) => handleWordClick(segment, e)}
+            className="cursor-pointer hover:text-primary transition-colors border-b-2 border-transparent hover:border-primary/50 pb-0.5"
+            data-testid={`${instanceId}-word-${index}`}
+          >
+            {segment}
+          </span>
+        );
+      })}
+      {tooltipContent && createPortal(tooltipContent, document.body)}
+    </span>
   );
 }
