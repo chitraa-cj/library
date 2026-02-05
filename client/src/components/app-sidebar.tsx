@@ -36,7 +36,8 @@ interface AppSidebarProps {
 export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, selectedVerseNumber }: AppSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedBooks, setExpandedBooks] = useState<Set<string>>(new Set());
-  const { isMobile, setOpenMobile } = useSidebar();
+  const { isMobile, setOpenMobile, state } = useSidebar();
+  const isCollapsed = state === "collapsed";
 
   const handleBookSelect = (bookId: string) => {
     onSelectBook(bookId);
@@ -91,34 +92,38 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="p-4 border-b border-primary/30 bg-gradient-to-b from-primary/20 via-primary/10 to-transparent">
-        <div className="flex items-center gap-3 mb-4">
+      <SidebarHeader className={`border-b border-primary/30 bg-gradient-to-b from-primary/20 via-primary/10 to-transparent ${isCollapsed ? 'p-2' : 'p-4'}`}>
+        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 mb-4'}`}>
           <div className="relative">
-            <div className="absolute -inset-1 bg-primary/20 rounded-full blur-md"></div>
+            {!isCollapsed && <div className="absolute -inset-1 bg-primary/20 rounded-full blur-md"></div>}
             <img 
               src="https://oneness.org.in/assets/img/favicon.png" 
               alt="Ekatma Dham"
-              className="h-10 w-10 object-contain relative"
+              className={`object-contain relative ${isCollapsed ? 'h-8 w-8' : 'h-10 w-10'}`}
             />
           </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1">
-              <span className="text-xs text-primary/50">ॐ</span>
-              <span className="font-serif font-bold text-base text-primary">Ekatma Dham</span>
+          {!isCollapsed && (
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-primary/50">ॐ</span>
+                <span className="font-serif font-bold text-base text-primary">Ekatma Dham</span>
+              </div>
+              <span className="text-[10px] text-muted-foreground tracking-widest uppercase">Abode of Oneness</span>
             </div>
-            <span className="text-[10px] text-muted-foreground tracking-widest uppercase">Abode of Oneness</span>
+          )}
+        </div>
+        {!isCollapsed && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search texts..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+              data-testid="input-search-books"
+            />
           </div>
-        </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search texts..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-            data-testid="input-search-books"
-          />
-        </div>
+        )}
       </SidebarHeader>
 
       <SidebarContent>
@@ -137,9 +142,11 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
           ) : (
             Object.entries(groupedBooks).map(([category, categoryBooks]) => (
               <SidebarGroup key={category}>
-                <SidebarGroupLabel className="px-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  {category}
-                </SidebarGroupLabel>
+                {!isCollapsed && (
+                  <SidebarGroupLabel className="px-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    {category}
+                  </SidebarGroupLabel>
+                )}
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {categoryBooks.map((book) => {
@@ -156,36 +163,41 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
                             <CollapsibleTrigger asChild>
                               <SidebarMenuButton
                                 onClick={() => handleBookSelect(book.id)}
-                                className={`mx-3 my-1 px-4 py-4 rounded-xl transition-all ${
+                                tooltip={book.title}
+                                className={`${isCollapsed ? 'mx-1 my-1 p-2 justify-center' : 'mx-3 my-1 px-4 py-4'} rounded-xl transition-all ${
                                   selectedBookId === book.id
                                     ? "bg-gradient-to-r from-primary/12 via-primary/8 to-primary/5 text-primary border border-primary/25"
                                     : "hover:bg-sidebar-accent/40 border border-transparent"
                                 }`}
                                 data-testid={`button-book-${book.id}`}
                               >
-                                <div className={`p-2 rounded-lg shrink-0 ${selectedBookId === book.id ? 'bg-primary/15' : 'bg-muted/50'}`}>
+                                <div className={`${isCollapsed ? 'p-1.5' : 'p-2'} rounded-lg shrink-0 ${selectedBookId === book.id ? 'bg-primary/15' : 'bg-muted/50'}`}>
                                   <BookOpen className={`h-4 w-4 ${selectedBookId === book.id ? 'text-primary' : 'text-muted-foreground'}`} />
                                 </div>
-                                <div className="flex flex-col flex-1 min-w-0 gap-1 ml-1">
-                                  <span className={`font-serif text-sm leading-snug ${selectedBookId === book.id ? 'font-semibold text-primary' : 'font-medium'}`}>{book.title}</span>
-                                  {book.author && (
-                                    <span className={`text-xs leading-snug ${selectedBookId === book.id ? 'text-primary/60' : 'text-muted-foreground'}`}>
-                                      {book.author}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                                  {book.totalVerses && book.totalVerses > 0 && (
-                                    <Badge variant={selectedBookId === book.id ? "default" : "secondary"} className="text-[10px] font-medium px-2 h-5">
-                                      {book.totalVerses}
-                                    </Badge>
-                                  )}
-                                  <ChevronRight className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-90 text-primary' : 'text-muted-foreground'}`} />
-                                </div>
+                                {!isCollapsed && (
+                                  <>
+                                    <div className="flex flex-col flex-1 min-w-0 gap-1 ml-1">
+                                      <span className={`font-serif text-sm leading-snug ${selectedBookId === book.id ? 'font-semibold text-primary' : 'font-medium'}`}>{book.title}</span>
+                                      {book.author && (
+                                        <span className={`text-xs leading-snug ${selectedBookId === book.id ? 'text-primary/60' : 'text-muted-foreground'}`}>
+                                          {book.author}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                                      {book.totalVerses && book.totalVerses > 0 && (
+                                        <Badge variant={selectedBookId === book.id ? "default" : "secondary"} className="text-[10px] font-medium px-2 h-5">
+                                          {book.totalVerses}
+                                        </Badge>
+                                      )}
+                                      <ChevronRight className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-90 text-primary' : 'text-muted-foreground'}`} />
+                                    </div>
+                                  </>
+                                )}
                               </SidebarMenuButton>
                             </CollapsibleTrigger>
                             <CollapsibleContent>
-                              {selectedBookId === book.id && verses.length > 0 && (
+                              {!isCollapsed && selectedBookId === book.id && verses.length > 0 && (
                                 <SidebarMenuSub className="py-2 space-y-1">
                                   {verses.map((verse) => (
                                     <SidebarMenuSubItem key={verse.id}>
