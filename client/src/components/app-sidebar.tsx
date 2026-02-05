@@ -186,15 +186,15 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
                             </CollapsibleTrigger>
                             <CollapsibleContent>
                               {selectedBookId === book.id && verses.length > 0 && (
-                                <SidebarMenuSub>
+                                <SidebarMenuSub className="py-2 space-y-1">
                                   {verses.map((verse) => (
                                     <SidebarMenuSubItem key={verse.id}>
                                       <SidebarMenuSubButton
                                         onClick={() => handleVerseSelect(book.id, verse.verseNumber)}
-                                        className={`text-xs ${
+                                        className={`text-sm py-2.5 px-3 rounded-md transition-colors ${
                                           selectedVerseNumber === verse.verseNumber
-                                            ? "bg-primary/10 text-primary font-medium"
-                                            : "text-muted-foreground hover:text-foreground"
+                                            ? "bg-primary/15 text-primary font-medium border-l-2 border-primary"
+                                            : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
                                         }`}
                                         data-testid={`button-verse-nav-${verse.verseNumber}`}
                                       >
