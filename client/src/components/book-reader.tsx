@@ -1,11 +1,29 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ChevronLeft, ChevronRight, Play } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, Play, User, Globe } from "lucide-react";
 import { VideoPopup } from "@/components/video-popup";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { BookWithDetails, VerseTranslation, Explanation } from "@shared/schema";
+
+interface CommentaryOption {
+  authorName: string;
+  authorTitle: string | null;
+  languageCodes: string[];
+}
+
+interface CommentaryOptions {
+  authors: CommentaryOption[];
+  languages: { code: string; name: string }[];
+}
 
 interface BookReaderProps {
   bookId: string;
@@ -13,6 +31,8 @@ interface BookReaderProps {
   selectedVerseId: string | null;
   selectedAuthor: string | null;
   selectedCommentaryLanguage: string | null;
+  onAuthorChange: (author: string | null) => void;
+  onLanguageChange: (lang: string | null) => void;
   navigateToVerse?: number | null;
   onVerseChange?: (verseNumber: number) => void;
 }
@@ -66,14 +86,66 @@ export function BookReader({
   selectedVerseId,
   selectedAuthor,
   selectedCommentaryLanguage,
+  onAuthorChange,
+  onLanguageChange,
   navigateToVerse,
   onVerseChange
 }: BookReaderProps) {
   const [currentPage, setCurrentPage] = useState(0);
+  const [initialized, setInitialized] = useState(false);
 
   const { data: book, isLoading, error } = useQuery<BookWithDetails>({
     queryKey: ["/api/books", bookId],
   });
+
+  const { data: commentaryOptions } = useQuery<CommentaryOptions>({
+    queryKey: ["/api/books", bookId, "commentary-options"],
+  });
+
+  useEffect(() => {
+    setInitialized(false);
+  }, [bookId]);
+
+  useEffect(() => {
+    if (commentaryOptions && !initialized && !selectedAuthor) {
+      if (commentaryOptions.authors.length > 0) {
+        const firstAuthor = commentaryOptions.authors[0];
+        onAuthorChange(firstAuthor.authorName);
+        if (firstAuthor.languageCodes.length > 0) {
+          onLanguageChange(firstAuthor.languageCodes[0]);
+        }
+      }
+      setInitialized(true);
+    }
+  }, [commentaryOptions, initialized, selectedAuthor, onAuthorChange, onLanguageChange]);
+
+  const availableLanguagesForAuthor = useMemo(() => {
+    if (!selectedAuthor || !commentaryOptions) return [];
+    const author = commentaryOptions.authors.find(a => a.authorName === selectedAuthor);
+    if (!author) return [];
+    return commentaryOptions.languages.filter(l => author.languageCodes.includes(l.code));
+  }, [selectedAuthor, commentaryOptions]);
+
+  const availableAuthors = useMemo(() => {
+    return commentaryOptions?.authors || [];
+  }, [commentaryOptions]);
+
+  const handleAuthorChange = (authorName: string) => {
+    onAuthorChange(authorName);
+    const author = commentaryOptions?.authors.find(a => a.authorName === authorName);
+    if (author && author.languageCodes.length > 0) {
+      if (!selectedCommentaryLanguage || !author.languageCodes.includes(selectedCommentaryLanguage)) {
+        onLanguageChange(author.languageCodes[0]);
+      }
+    }
+  };
+
+  const handleLanguageChange = (langCode: string) => {
+    onLanguageChange(langCode);
+  };
+
+  const hasCommentaryOptions = commentaryOptions && 
+    (commentaryOptions.authors.length > 0 || commentaryOptions.languages.length > 0);
 
   useEffect(() => {
     setCurrentPage(0);
@@ -248,6 +320,63 @@ export function BookReader({
               <div className="absolute top-4 right-4 text-6xl text-primary/[0.08] font-serif select-none pointer-events-none">ॐ</div>
               <div className="absolute bottom-4 left-4 text-4xl text-primary/[0.06] font-serif select-none pointer-events-none rotate-180">ॐ</div>
               
+              {hasCommentaryOptions && (
+                <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <Select
+                      value={selectedAuthor || ""}
+                      onValueChange={handleAuthorChange}
+                    >
+                      <SelectTrigger 
+                        className="w-[180px] h-8 text-xs bg-background/80 backdrop-blur-sm border-primary/20" 
+                        data-testid="select-author"
+                      >
+                        <SelectValue placeholder="Select Author" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableAuthors.map((author) => (
+                          <SelectItem 
+                            key={author.authorName} 
+                            value={author.authorName}
+                            data-testid={`option-author-${author.authorName.toLowerCase().replace(/\s+/g, '-')}`}
+                          >
+                            {author.authorName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <Select
+                      value={selectedCommentaryLanguage || ""}
+                      onValueChange={handleLanguageChange}
+                      disabled={availableLanguagesForAuthor.length === 0}
+                    >
+                      <SelectTrigger 
+                        className="w-[140px] h-8 text-xs bg-background/80 backdrop-blur-sm border-primary/20" 
+                        data-testid="select-commentary-language"
+                      >
+                        <SelectValue placeholder="Language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableLanguagesForAuthor.map((lang) => (
+                          <SelectItem 
+                            key={lang.code} 
+                            value={lang.code}
+                            data-testid={`option-lang-${lang.code}`}
+                          >
+                            {lang.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center justify-center gap-3 mb-6">
                 <span className="text-primary/40">॥</span>
                 <span className="text-sm font-medium text-primary bg-gradient-to-r from-primary/15 to-primary/10 px-4 py-1.5 rounded-full border border-primary/20">

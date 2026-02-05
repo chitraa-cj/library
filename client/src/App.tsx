@@ -145,6 +145,8 @@ function HomePage() {
                   selectedVerseId={selectedVerseId}
                   selectedAuthor={selectedAuthor}
                   selectedCommentaryLanguage={selectedCommentaryLanguage}
+                  onAuthorChange={setSelectedAuthor}
+                  onLanguageChange={setSelectedCommentaryLanguage}
                   navigateToVerse={navigateToVerse}
                   onVerseChange={handleVerseChange}
                 />
