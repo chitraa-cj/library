@@ -416,7 +416,7 @@ export function BookReader({
                 <div className="flex items-center justify-center">
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground/70 bg-muted/30 px-3 py-1.5 rounded-full">
                     <Sparkles className="h-3 w-3" />
-                    <span>Select any word for AI translation</span>
+                    <span>Click any word for AI translation</span>
                   </div>
                 </div>
 

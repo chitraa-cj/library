@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Info, Loader2, X, BookOpen, Languages, Sparkles } from "lucide-react";
+import { Loader2, X, BookOpen, Languages, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,7 +29,6 @@ export function WordTooltip({
 }: WordTooltipProps) {
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
   const [selectedPosition, setSelectedPosition] = useState<{ x: number; y: number } | null>(null);
-  const [showInfoButton, setShowInfoButton] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [translation, setTranslation] = useState<WordTranslation | null>(null);
@@ -40,10 +39,8 @@ export function WordTooltip({
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
-      if (tooltipRef.current && !tooltipRef.current.contains(target) && 
-          !containerRef.current?.contains(target)) {
+      if (tooltipRef.current && !tooltipRef.current.contains(target)) {
         setShowTooltip(false);
-        setShowInfoButton(false);
         setSelectedWord(null);
       }
     }
@@ -51,44 +48,26 @@ export function WordTooltip({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    function handleSelectionChange() {
-      const selection = window.getSelection();
-      if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
-        return;
-      }
-
-      const range = selection.getRangeAt(0);
-      if (!containerRef.current?.contains(range.commonAncestorContainer)) {
-        return;
-      }
-
-      const text = selection.toString().trim();
-      if (text && text.length > 0 && text.length < 100) {
-        const rect = range.getBoundingClientRect();
-        
-        setSelectedWord(text);
-        setSelectedPosition({
-          x: rect.left + rect.width / 2,
-          y: rect.bottom + 8,
-        });
-        setShowInfoButton(true);
-        setShowTooltip(false);
-        setTranslation(null);
-        setError(null);
-      }
-    }
-
-    document.addEventListener("selectionchange", handleSelectionChange);
-    return () => document.removeEventListener("selectionchange", handleSelectionChange);
-  }, []);
-
-  const fetchTranslation = async () => {
-    if (!selectedWord) return;
+  const handleWordClick = (word: string, event: React.MouseEvent<HTMLSpanElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const cleanWord = word.replace(/[।॥,.;:!?'"()[\]{}—–-]/g, '').trim();
     
-    setIsLoading(true);
-    setShowInfoButton(false);
+    if (!cleanWord || cleanWord.length === 0) return;
+    
+    setSelectedWord(cleanWord);
+    setSelectedPosition({
+      x: rect.left + rect.width / 2,
+      y: rect.bottom + 8,
+    });
     setShowTooltip(true);
+    setTranslation(null);
+    setError(null);
+    
+    fetchTranslation(cleanWord);
+  };
+
+  const fetchTranslation = async (word: string) => {
+    setIsLoading(true);
     setError(null);
 
     try {
@@ -96,7 +75,7 @@ export function WordTooltip({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          word: selectedWord,
+          word,
           sourceLanguage,
           targetLanguage,
           verseContext: verseContent,
@@ -118,40 +97,38 @@ export function WordTooltip({
 
   const closeTooltip = () => {
     setShowTooltip(false);
-    setShowInfoButton(false);
     setSelectedWord(null);
     setTranslation(null);
     setError(null);
   };
 
-  return (
-    <div ref={containerRef} className="relative select-text cursor-text">
-      <p className="text-lg leading-relaxed whitespace-pre-wrap font-serif">
-        {verseContent}
-      </p>
+  const words = verseContent.split(/(\s+)/);
 
-      {showInfoButton && selectedPosition && (
-        <div
-          style={{
-            position: "fixed",
-            left: selectedPosition.x,
-            top: selectedPosition.y,
-            transform: "translateX(-50%)",
-            zIndex: 9999,
-          }}
-        >
-          <Button
-            size="sm"
-            variant="default"
-            onClick={fetchTranslation}
-            className="h-7 px-2 gap-1 rounded-full bg-primary/90 hover:bg-primary shadow-lg animate-in fade-in-0 zoom-in-95"
-            data-testid="button-word-info"
-          >
-            <Info className="h-3.5 w-3.5" />
-            <span className="text-xs">Explain</span>
-          </Button>
-        </div>
-      )}
+  return (
+    <div ref={containerRef} className="relative">
+      <p className="text-lg leading-relaxed font-serif">
+        {words.map((segment, index) => {
+          if (/^\s+$/.test(segment)) {
+            return <span key={index}>{segment}</span>;
+          }
+          
+          const cleanWord = segment.replace(/[।॥,.;:!?'"()[\]{}—–-]/g, '').trim();
+          if (!cleanWord) {
+            return <span key={index}>{segment}</span>;
+          }
+
+          return (
+            <span
+              key={index}
+              onClick={(e) => handleWordClick(segment, e)}
+              className="cursor-pointer hover:text-primary transition-colors border-b-2 border-transparent hover:border-primary/50 pb-0.5"
+              data-testid={`word-${index}`}
+            >
+              {segment}
+            </span>
+          );
+        })}
+      </p>
 
       {showTooltip && selectedPosition && (
         <div

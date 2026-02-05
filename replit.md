@@ -52,7 +52,7 @@ The database schema supports multi-language sacred texts:
 ### AI Word Translation (RAG Feature)
 - **Component**: `WordTooltip` in `client/src/components/word-tooltip.tsx`
 - **Backend**: `server/openai.ts` using OpenAI gpt-4o model
-- **Flow**: User selects text → "Explain" button appears → Click shows AI analysis tooltip
+- **Flow**: Hover over word (underline appears) → Click word → AI analysis tooltip appears
 - **Features**: Translation, grammatical analysis, etymology, contextual meaning based on Shankaracharya's commentary
 - **Caching**: Results cached in `wordTranslations` table to avoid repeated API calls
 
