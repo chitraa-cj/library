@@ -67,19 +67,25 @@ function Home() {
           selectedVerseNumber={currentVerseNumber}
         />
         <div className="flex flex-col flex-1 min-w-0">
-          <header className="flex items-center justify-between gap-4 px-3 sm:px-4 py-2 sm:py-3 border-b border-primary/30 bg-gradient-to-r from-primary/15 via-primary/5 to-transparent backdrop-blur-sm sticky top-0 z-10">
+          <header className="flex items-center justify-between gap-4 px-3 sm:px-4 py-2 sm:py-3 border-b border-primary/25 bg-gradient-to-r from-primary/15 via-primary/8 to-accent/5 backdrop-blur-sm sticky top-0 z-10">
             <div className="flex items-center gap-3">
               <SidebarTrigger data-testid="button-sidebar-toggle" />
               <div className="hidden sm:flex items-center gap-2">
-                <img 
-                  src="https://oneness.org.in/assets/img/favicon.png" 
-                  alt="Ekatma Dham"
-                  className="h-8 w-8 object-contain"
-                />
+                <div className="relative">
+                  <div className="absolute -inset-0.5 bg-primary/15 rounded-full blur-sm"></div>
+                  <img 
+                    src="https://oneness.org.in/assets/img/favicon.png" 
+                    alt="Ekatma Dham"
+                    className="h-8 w-8 object-contain relative"
+                  />
+                </div>
                 <div className="flex flex-col">
-                  <span className="font-serif text-sm font-bold text-primary">
-                    Ekatma Dham
-                  </span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-primary/50">ॐ</span>
+                    <span className="font-serif text-sm font-bold text-primary">
+                      Ekatma Dham
+                    </span>
+                  </div>
                   <span className="text-[10px] text-muted-foreground tracking-wide">
                     ABODE OF ONENESS
                   </span>

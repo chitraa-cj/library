@@ -228,27 +228,30 @@ export function BookReader({
         <div className="flex-1 p-4 sm:p-8 overflow-auto">
           <div className="max-w-3xl w-full mx-auto">
             <div 
-              className="bg-card border border-border rounded-lg p-6 sm:p-10 shadow-sm"
+              className="bg-gradient-to-b from-card to-card/80 border border-primary/15 rounded-xl p-6 sm:p-10 shadow-sm relative overflow-hidden"
               data-testid={`verse-${currentVerse.verseNumber}`}
             >
-              <div className="flex items-center gap-3 mb-6">
-                <span className="text-sm font-medium text-primary bg-primary/10 px-3 py-1.5 rounded-full">
+              <div className="absolute top-2 right-2 text-4xl text-primary/5 font-serif select-none pointer-events-none">ॐ</div>
+              
+              <div className="flex items-center justify-center gap-3 mb-6">
+                <span className="text-primary/40">॥</span>
+                <span className="text-sm font-medium text-primary bg-gradient-to-r from-primary/15 to-primary/10 px-4 py-1.5 rounded-full border border-primary/20">
                   {currentVerse.sectionTitle || `Verse ${currentVerse.verseNumber}`}
                 </span>
-                {currentVerse.sectionTitle && (
-                  <span className="text-xs text-muted-foreground">
-                    Mantra {currentVerse.verseNumber}
-                  </span>
-                )}
+                <span className="text-primary/40">॥</span>
               </div>
 
               <div className="space-y-6">
-                <p 
-                  className="font-serif text-xl sm:text-2xl leading-relaxed whitespace-pre-wrap break-words text-center"
-                  data-testid={`text-original-${currentVerse.verseNumber}`}
-                >
-                  {verseText}
-                </p>
+                <div className="relative">
+                  <div className="absolute -left-2 top-0 text-2xl text-primary/20 font-serif">❝</div>
+                  <p 
+                    className="font-serif text-xl sm:text-2xl leading-relaxed whitespace-pre-wrap break-words text-center px-4"
+                    data-testid={`text-original-${currentVerse.verseNumber}`}
+                  >
+                    {verseText}
+                  </p>
+                  <div className="absolute -right-2 bottom-0 text-2xl text-primary/20 font-serif rotate-180">❝</div>
+                </div>
 
                 {selectedAuthor && selectedCommentaryLanguage && (
                   <VerseExplanation 

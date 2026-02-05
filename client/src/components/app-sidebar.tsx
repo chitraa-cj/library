@@ -91,15 +91,21 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
 
   return (
     <Sidebar className="border-r border-sidebar-border">
-      <SidebarHeader className="p-4 border-b border-primary/30 bg-gradient-to-b from-primary/15 to-primary/5">
+      <SidebarHeader className="p-4 border-b border-primary/30 bg-gradient-to-b from-primary/20 via-primary/10 to-transparent">
         <div className="flex items-center gap-3 mb-4">
-          <img 
-            src="https://oneness.org.in/assets/img/favicon.png" 
-            alt="Ekatma Dham"
-            className="h-10 w-10 object-contain"
-          />
+          <div className="relative">
+            <div className="absolute -inset-1 bg-primary/20 rounded-full blur-md"></div>
+            <img 
+              src="https://oneness.org.in/assets/img/favicon.png" 
+              alt="Ekatma Dham"
+              className="h-10 w-10 object-contain relative"
+            />
+          </div>
           <div className="flex flex-col">
-            <span className="font-serif font-bold text-base text-primary">Ekatma Dham</span>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-primary/50">ॐ</span>
+              <span className="font-serif font-bold text-base text-primary">Ekatma Dham</span>
+            </div>
             <span className="text-[10px] text-muted-foreground tracking-widest uppercase">Abode of Oneness</span>
           </div>
         </div>
