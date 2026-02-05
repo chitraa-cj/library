@@ -163,20 +163,20 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
                                 }`}
                                 data-testid={`button-book-${book.id}`}
                               >
-                                <div className={`p-2 rounded-lg ${selectedBookId === book.id ? 'bg-primary/25 shadow-inner' : 'bg-muted/60'}`}>
-                                  <BookOpen className={`h-5 w-5 shrink-0 ${selectedBookId === book.id ? 'text-primary' : 'text-muted-foreground'}`} />
+                                <div className={`p-1.5 rounded-lg shrink-0 ${selectedBookId === book.id ? 'bg-primary/25 shadow-inner' : 'bg-muted/60'}`}>
+                                  <BookOpen className={`h-4 w-4 ${selectedBookId === book.id ? 'text-primary' : 'text-muted-foreground'}`} />
                                 </div>
                                 <div className="flex flex-col flex-1 min-w-0 gap-0.5">
-                                  <span className={`font-serif text-sm truncate ${selectedBookId === book.id ? 'font-bold text-primary' : 'font-medium'}`}>{book.title}</span>
+                                  <span className={`font-serif text-sm leading-tight ${selectedBookId === book.id ? 'font-bold text-primary' : 'font-medium'}`}>{book.title}</span>
                                   {book.author && (
-                                    <span className={`text-xs truncate ${selectedBookId === book.id ? 'text-primary/70' : 'text-muted-foreground'}`}>
+                                    <span className={`text-xs leading-tight ${selectedBookId === book.id ? 'text-primary/70' : 'text-muted-foreground'}`}>
                                       {book.author}
                                     </span>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1 shrink-0">
                                   {book.totalVerses && book.totalVerses > 0 && (
-                                    <Badge variant={selectedBookId === book.id ? "default" : "secondary"} className="text-xs font-medium px-2">
+                                    <Badge variant={selectedBookId === book.id ? "default" : "secondary"} className="text-[10px] font-medium px-1.5 h-5">
                                       {book.totalVerses}
                                     </Badge>
                                   )}
