@@ -760,7 +760,68 @@ Therefore the following verses, removing this original nescience concerning the 
 अतः स्वाभाविकमात्मनोऽज्ञानं निवर्तयन्त आत्मयाथात्म्यप्रतिपादनादिमे मन्त्रा ऐक्यविज्ञानप्रत्ययं शोकमोहाद्यात्मसंसारधर्मोच्छेदकारणं जनयन्ति । तान् मन्त्रान् अधिकारिविषयसम्बन्धप्रयोजनानि दर्शयित्वा सङ्क्षेपतो व्याख्यास्यामः ॥`,
   });
 
-  console.log("Created introduction verse");
+  await storage.createTranslation({
+    verseId: introVerse.id,
+    languageCode: "kannada",
+    content: "ಈಶಾ ವಾಸ್ಯಮ್ ಇತ್ಯಾದಯೋ ಮಂತ್ರಾಃ ಆತ್ಮನೋ ಯಾಥಾತ್ಮ್ಯಪ್ರತಿಪಾದಕಾಃ ಕರ್ಮಸ್ವನುಪ್ರವೇಶಾಯೋಗಾತ್ ಕರ್ಮಣಿ ವಿನಿಯೋಗಂ ನ ಪ್ರಾಪ್ನುವಂತಿ ।",
+  });
+
+  await storage.createTranslation({
+    verseId: introVerse.id,
+    languageCode: "tamil",
+    content: "ஈஶா வாஸ்யம் இத்யாதயோ மந்த்ரா ஆத்மநோ யாதாத்ம்யப்ரதிபாதகா கர்மஸ்வனுப்ரவேஶாயோகாத் கர்மணி விநியோகம் ந ப்ராப்நுவந்தி ।",
+  });
+
+  await storage.createTranslation({
+    verseId: introVerse.id,
+    languageCode: "telugu",
+    content: "ఈశా వాస్యమ్ ఇత్యాదయో మన్త్రాః ఆత్మనో యాథాత్మ్యప్రతిపాదకాః కర్మస్వనుప్రవేశాయోగాత్ కర్మణి వినియోగం న ప్రాప్నువన్తి ।",
+  });
+
+  await storage.createExplanation({
+    verseId: introVerse.id,
+    authorName: "Adi Shankaracharya",
+    authorTitle: "ಆದಿ ಶಂಕರಾಚಾರ್ಯ - ಭಾಷ್ಯಮ್ (Kannada)",
+    languageCode: "kannada",
+    content: `'ಈಶಾ ವಾಸ್ಯಮ್' ಇತ್ಯಾದಯೋ ಮಂತ್ರಾಃ ಕರ್ಮಸ್ವವಿನಿಯುಕ್ತಾಃ, ತೇಷಾಮಕರ್ಮಶೇಷಸ್ಯಾತ್ಮನೋ ಯಾಥಾತ್ಮ್ಯಪ್ರಕಾಶಕತ್ವಾತ್ । ಯಾಥಾತ್ಮ್ಯಂ ಚಾತ್ಮನಃ ಶುದ್ಧತ್ವಾಪಾಪವಿದ್ಧತ್ವೈಕತ್ವನಿತ್ಯತ್ವಾಶರೀರತ್ವಸರ್ವಗತತ್ವಾದಿ ವಕ್ಷ್ಯಮಾಣಮ್ । ತಚ್ಚ ಕರ್ಮಣಾ ವಿರುಧ್ಯತ ಇತಿ ಯುಕ್ತ ಏವೈಷಾಂ ಕರ್ಮಸ್ವವಿನಿಯೋಗಃ ।
+
+ತಸ್ಮಾದೇತೇ ಮಂತ್ರಾ ಆತ್ಮನೋ ಯಾಥಾತ್ಮ್ಯಪ್ರಕಾಶನೇನ ಆತ್ಮವಿಷಯಂ ಸ್ವಾಭಾವಿಕಕರ್ಮವಿಜ್ಞಾನಂ ನಿವರ್ತಯಂತಃ ಶೋಕಮೋಹಾದಿಸಂಸಾರಧರ್ಮವಿಚ್ಛಿತ್ತಿಸಾಧನಮಾತ್ಮೈಕತ್ವಾದಿವಿಜ್ಞಾನಮುತ್ಪಾದಯಂತೀತಿ ।`,
+  });
+
+  await storage.createExplanation({
+    verseId: introVerse.id,
+    authorName: "Adi Shankaracharya",
+    authorTitle: "ஆதி ஶங்கராசார்ய - பாஷ்யம் (Tamil)",
+    languageCode: "tamil",
+    content: `'ஈஶா வாஸ்யம்' இத்யாதயோ மந்த்ரா: கர்மஸ்வவிநியுக்தா:, தேஷாமகர்மஶேஷஸ்யாத்மநோ யாதாத்ம்யப்ரகாஶகத்வாத் ।
+
+தஸ்மாதேதே மந்த்ரா ஆத்மநோ யாதாத்ம்யப்ரகாஶநேந ஆத்மவிஷயம் ஸ்வாபாவிககர்மவிஜ்ஞாநம் நிவர்தயந்த: ஶோகமோஹாதிஸம்ஸாரதர்மவிச்சித்திஸாதநமாத்மைகத்வாதிவிஜ்ஞாநமுத்பாதயந்தீதி ।`,
+  });
+
+  await storage.createExplanation({
+    verseId: introVerse.id,
+    authorName: "Adi Shankaracharya",
+    authorTitle: "ఆది శంకరాచార్య - భాష్యమ్ (Telugu)",
+    languageCode: "telugu",
+    content: `'ఈశా వాస్యమ్' ఇత్యాదయో మన్త్రాః కర్మస్వవినియుక్తాః, తేషామకర్మశేషస్యాత్మనో యాథాత్మ్యప్రకాశకత్వాత్ ।
+
+తస్మాదేతే మన్త్రా ఆత్మనో యాథాత్మ్యప్రకాశనేన ఆత్మవిషయం స్వాభావికకర్మవిజ్ఞానం నివర్తయన్తః శోకమోహాదిసంసారధర్మవిచ్ఛిత్తిసాధనమాత్మైకత్వాదివిజ్ఞానముత్పాదయన్తీతి ।`,
+  });
+
+  await storage.createExplanation({
+    verseId: introVerse.id,
+    authorName: "Anandagiri",
+    authorTitle: "आनन्दगिरि - टीका (Sub-commentary on Bhashya)",
+    languageCode: "devanagari",
+    content: `'ईशा वास्यम्' इत्यादयो मन्त्राः कर्मस्वविनियुक्ताः, तेषामकर्मशेषस्यात्मनो याथात्म्यप्रकाशकत्वात् । याथात्म्यं चात्मनः शुद्धत्वापापविद्धत्वैकत्वनित्यत्वाशरीरत्वसर्वगतत्वादि वक्ष्यमाणम् ।
+
+येनाऽऽत्मना परेणेशा व्याप्तं विश्वमशेषतः ।
+सोऽहं देहद्वयीसाक्षी वर्जितो देहतद्गणेः ॥
+
+ईशा वास्यमित्यादिमन्त्रान्व्याचिख्यासुर्भगवन्भाष्यकारस्तेषां कर्मशेषत्वशङ्कां तावद्व्युदस्यति ।`,
+  });
+
+  console.log("Created introduction verse with all translations and Tika");
 
   for (const mantra of MANTRAS) {
     const verse = await storage.createVerse({
