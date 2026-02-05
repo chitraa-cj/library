@@ -156,31 +156,31 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
                             <CollapsibleTrigger asChild>
                               <SidebarMenuButton
                                 onClick={() => handleBookSelect(book.id)}
-                                className={`mx-2 rounded-lg transition-all ${
+                                className={`mx-2 py-3 rounded-xl transition-all ${
                                   selectedBookId === book.id
-                                    ? "bg-primary/15 text-primary border border-primary/30 shadow-sm"
-                                    : "hover:bg-sidebar-accent/50"
+                                    ? "bg-gradient-to-r from-primary/20 via-primary/15 to-primary/10 text-primary border border-primary/40 shadow-md"
+                                    : "hover:bg-sidebar-accent/50 border border-transparent"
                                 }`}
                                 data-testid={`button-book-${book.id}`}
                               >
-                                <div className={`p-1.5 rounded-md ${selectedBookId === book.id ? 'bg-primary/20' : 'bg-muted/50'}`}>
-                                  <BookOpen className={`h-4 w-4 shrink-0 ${selectedBookId === book.id ? 'text-primary' : ''}`} />
+                                <div className={`p-2 rounded-lg ${selectedBookId === book.id ? 'bg-primary/25 shadow-inner' : 'bg-muted/60'}`}>
+                                  <BookOpen className={`h-5 w-5 shrink-0 ${selectedBookId === book.id ? 'text-primary' : 'text-muted-foreground'}`} />
                                 </div>
-                                <div className="flex flex-col flex-1 min-w-0">
-                                  <span className={`font-serif text-sm truncate ${selectedBookId === book.id ? 'font-semibold' : ''}`}>{book.title}</span>
+                                <div className="flex flex-col flex-1 min-w-0 gap-0.5">
+                                  <span className={`font-serif text-sm truncate ${selectedBookId === book.id ? 'font-bold text-primary' : 'font-medium'}`}>{book.title}</span>
                                   {book.author && (
-                                    <span className="text-xs text-muted-foreground truncate">
+                                    <span className={`text-xs truncate ${selectedBookId === book.id ? 'text-primary/70' : 'text-muted-foreground'}`}>
                                       {book.author}
                                     </span>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-1">
+                                <div className="flex items-center gap-2">
                                   {book.totalVerses && book.totalVerses > 0 && (
-                                    <Badge variant={selectedBookId === book.id ? "default" : "secondary"} className="text-xs">
+                                    <Badge variant={selectedBookId === book.id ? "default" : "secondary"} className="text-xs font-medium px-2">
                                       {book.totalVerses}
                                     </Badge>
                                   )}
-                                  <ChevronRight className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-90 text-primary' : 'text-muted-foreground'}`} />
+                                  <ChevronRight className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-90 text-primary' : 'text-muted-foreground'}`} />
                                 </div>
                               </SidebarMenuButton>
                             </CollapsibleTrigger>
