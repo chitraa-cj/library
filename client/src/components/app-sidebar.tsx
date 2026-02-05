@@ -164,36 +164,38 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
                               <SidebarMenuButton
                                 onClick={() => handleBookSelect(book.id)}
                                 tooltip={book.title}
-                                className={`${isCollapsed ? 'mx-1 my-1 p-2 justify-center' : 'mx-2 my-1.5 px-3 py-4'} rounded-lg transition-all ${
+                                className={`${isCollapsed ? 'mx-1 my-1 p-2 justify-center' : 'mx-2 my-2'} rounded-lg transition-all ${
                                   selectedBookId === book.id
                                     ? "bg-gradient-to-r from-primary/12 via-primary/8 to-primary/5 text-primary border border-primary/25"
                                     : "hover:bg-sidebar-accent/40 border border-transparent"
                                 }`}
                                 data-testid={`button-book-${book.id}`}
                               >
-                                <div className={`${isCollapsed ? 'p-1.5' : 'p-2'} rounded-lg shrink-0 ${selectedBookId === book.id ? 'bg-primary/15' : 'bg-muted/50'}`}>
-                                  <BookOpen className={`h-4 w-4 ${selectedBookId === book.id ? 'text-primary' : 'text-muted-foreground'}`} />
+                                <div className={`flex items-center gap-3 w-full ${isCollapsed ? '' : 'px-3 py-3'}`}>
+                                  <div className={`${isCollapsed ? 'p-1.5' : 'p-2.5'} rounded-lg shrink-0 ${selectedBookId === book.id ? 'bg-primary/15' : 'bg-muted/50'}`}>
+                                    <BookOpen className={`h-4 w-4 ${selectedBookId === book.id ? 'text-primary' : 'text-muted-foreground'}`} />
+                                  </div>
+                                  {!isCollapsed && (
+                                    <>
+                                      <div className="flex flex-col flex-1 min-w-0 gap-1">
+                                        <span className={`font-serif text-sm leading-snug ${selectedBookId === book.id ? 'font-semibold text-primary' : 'font-medium'}`}>{book.title}</span>
+                                        {book.author && (
+                                          <span className={`text-xs leading-snug ${selectedBookId === book.id ? 'text-primary/60' : 'text-muted-foreground'}`}>
+                                            {book.author}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-1.5 shrink-0">
+                                        {book.totalVerses && book.totalVerses > 0 && (
+                                          <Badge variant={selectedBookId === book.id ? "default" : "secondary"} className="text-[10px] font-medium px-2 h-5">
+                                            {book.totalVerses}
+                                          </Badge>
+                                        )}
+                                        <ChevronRight className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-90 text-primary' : 'text-muted-foreground'}`} />
+                                      </div>
+                                    </>
+                                  )}
                                 </div>
-                                {!isCollapsed && (
-                                  <>
-                                    <div className="flex flex-col flex-1 min-w-0 gap-1 ml-1">
-                                      <span className={`font-serif text-sm leading-snug ${selectedBookId === book.id ? 'font-semibold text-primary' : 'font-medium'}`}>{book.title}</span>
-                                      {book.author && (
-                                        <span className={`text-xs leading-snug ${selectedBookId === book.id ? 'text-primary/60' : 'text-muted-foreground'}`}>
-                                          {book.author}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                                      {book.totalVerses && book.totalVerses > 0 && (
-                                        <Badge variant={selectedBookId === book.id ? "default" : "secondary"} className="text-[10px] font-medium px-2 h-5">
-                                          {book.totalVerses}
-                                        </Badge>
-                                      )}
-                                      <ChevronRight className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-90 text-primary' : 'text-muted-foreground'}`} />
-                                    </div>
-                                  </>
-                                )}
                               </SidebarMenuButton>
                             </CollapsibleTrigger>
                             <CollapsibleContent>
