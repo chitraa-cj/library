@@ -737,13 +737,22 @@ Source: https://advaitasharada.sringeri.net/display/bhashya/Isha/
     authorName: "Adi Shankaracharya",
     authorTitle: "English Translation by M. Hiriyanna",
     languageCode: "english",
-    content: `The verses beginning with Īśāvāsyam are not utilised in ritual, since they explain the true nature of the Self which is not subsidiary to karma. The true nature of the Self, as will presently be indicated, is purity, taintlessness, oneness, permanence, bodilessness, omnipresence and so forth, which being inconsistent with karma, it is only right that these (verses) are not used in ritual.
+    content: `The verses beginning with Īśāvāsyam are not utilised in ritual[1], since they explain the true nature of the Self which is not subsidiary to karma. The true nature of the Self, as will presently be indicated, is purity, taintlessness, oneness, permanence, bodilessness, omnipresence and so forth, which being inconsistent with karma, it is only right that these (verses) are not used in ritual.
 
 The Self whose essence is thus described, moreover, cannot be produced, modified, acquired or purified; nor is it of the character of an agent or an enjoyer; in which case it would be subsidiary to karma. (And its existence cannot be called in question) inasmuch as all the Upanishads purport only to unfold its nature. The Bhagavadgīta and the Mokṣadharma (in the Mahābhārata) have also the same aim.
 
-(It has therefore to be presumed that) karma is prescribed taking (for granted) that, as recognised by the intelligence of the average man, plurality, agency, enjoyment and so forth, as also impurity and sinfulness, are of the Self. Those that know who are eligible (for ritual) state that karma is prescribed only for him who is desirous of its fruit—whether that fruit be visible (i.e. attainable in this life) as spiritual lustre or invisible (i.e. attainable only in another life) as Svarga—and thinks "I am a twice-born, free from blindness, dwarfishness and the like marks of disqualification".
+(It has therefore to be presumed that) karma is prescribed taking (for granted) that, as recognised by the intelligence of the average man, plurality, agency, enjoyment and so forth, as also impurity and sinfulness, are of the Self. Those that know who are eligible (for ritual) state that karma is prescribed only for him who is desirous of its fruit—whether that fruit be visible (i.e. attainable in this life) as spiritual lustre or invisible (i.e. attainable only in another life) as Svarga—and thinks "I am a twice-born, free from blindness, dwarfishness and the like marks of disqualification"[2].
 
-Therefore the following verses, removing this original nescience concerning the Self, from an explanation of its real nature, produce a knowledge of unity which is the means of eradicating sorrow, delusion and other similar features of mundane existence. We shall briefly comment on these verses, having thus indicated the persons entitled to study them, the subject-matter, aim and their inter-relation.`,
+Therefore the following verses, removing this original nescience concerning the Self, from an explanation of its real nature, produce a knowledge of unity which is the means of eradicating sorrow, delusion and other similar features of mundane existence. We shall briefly comment on these verses, having thus indicated the persons entitled to study them, the subject-matter, aim and their inter-relation[3].
+
+—————————————
+Footnotes:
+
+[1] The doubt whether these verses are to be used in ritual arises because this Upanishad forms part of a Saṃhitā and the verses in the Saṃhitā portion of the Veda are generally so employed. If these verses are at all to be utilised in ritual there should be an express statement to that effect in the Veda or there should at least be an indirect guidance afforded by their contents. We find no such express statement, and the subject matter, so far from being connected with karma, is directly antagonistic to it.
+
+[2] Desire, which is either for attaining happiness or for avoiding misery necessarily implies nescience. For the Self being in reality bliss itself, untouched by sorrow, cannot by its nature, be affected by any desire. Similarly, believing that the Self is fit for performing karma because its bodily adjuncts with which it is empirically connected are fit for it is also an indication of nescience.
+
+[3] In the beginning of a commentary it is customary to point out specifically the qualifications of persons entitled to study the treatise, its subject-matter, the aim of its teaching and their inter-relation, especially that between the last two. Deficiency in respect of any of these which are termed the Anubandhachatuṣṭayam is understood to indicate the unworthiness of the treatise to be commented upon.`,
   });
 
   await storage.createExplanation({
