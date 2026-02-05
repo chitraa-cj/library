@@ -164,7 +164,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
                               <SidebarMenuButton
                                 onClick={() => handleBookSelect(book.id)}
                                 tooltip={book.title}
-                                className={`${isCollapsed ? 'mx-1 my-1 p-2 justify-center' : 'mx-2 my-1 px-3 py-3'} rounded-lg transition-all ${
+                                className={`${isCollapsed ? 'mx-1 my-1 p-2 justify-center' : 'mx-2 my-1.5 px-3 py-4'} rounded-lg transition-all ${
                                   selectedBookId === book.id
                                     ? "bg-gradient-to-r from-primary/12 via-primary/8 to-primary/5 text-primary border border-primary/25"
                                     : "hover:bg-sidebar-accent/40 border border-transparent"
