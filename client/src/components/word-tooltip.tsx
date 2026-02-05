@@ -242,7 +242,12 @@ export function WordTooltip({
               <SelectTrigger className="h-7 w-[140px] text-xs bg-white" data-testid="select-target-language">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent 
+                className="z-[100000]" 
+                position="popper" 
+                side="top"
+                sideOffset={5}
+              >
                 {TRANSLATION_LANGUAGES.map((lang) => (
                   <SelectItem key={lang.code} value={lang.code} data-testid={`lang-option-${lang.code}`}>
                     {lang.name}
