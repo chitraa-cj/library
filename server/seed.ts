@@ -686,7 +686,7 @@ Source: https://advaitasharada.sringeri.net/display/bhashya/Isha/
 उपचितमुदितोदितैर्गुणौघैः उपनिषदामयमुज्जहार भाष्यम् ॥`,
     category: "Upanishad Bhashya",
     coverImage: null,
-    totalVerses: MANTRAS.length,
+    totalVerses: MANTRAS.length + 1, // +1 for introduction
   });
 
   console.log("Created book:", book.title);
@@ -712,6 +712,55 @@ Source: https://advaitasharada.sringeri.net/display/bhashya/Isha/
     17: "The Final Prayer - Om Krato",
     18: "Prayer to Agni - Lead Us"
   };
+
+  // Create Introduction (verse 0) - Introductory Remarks by Śaṅkara
+  const introVerse = await storage.createVerse({
+    bookId: book.id,
+    verseNumber: 0,
+    sectionTitle: "Introductory Remarks by Śaṅkara",
+  });
+
+  await storage.createTranslation({
+    verseId: introVerse.id,
+    languageCode: "devanagari",
+    content: "ईशावास्यमित्यादयो मन्त्रा आत्मनो याथात्म्यप्रतिपादकाः कर्मस्वनुप्रवेशायोगात् कर्मणि विनियोगं न प्राप्नुवन्ति ।",
+  });
+
+  await storage.createTranslation({
+    verseId: introVerse.id,
+    languageCode: "english",
+    content: "The verses beginning with Īśāvāsyam explain the true nature of the Self which is not subsidiary to karma.",
+  });
+
+  await storage.createExplanation({
+    verseId: introVerse.id,
+    authorName: "Adi Shankaracharya",
+    authorTitle: "English Translation by M. Hiriyanna",
+    languageCode: "english",
+    content: `The verses beginning with Īśāvāsyam are not utilised in ritual, since they explain the true nature of the Self which is not subsidiary to karma. The true nature of the Self, as will presently be indicated, is purity, taintlessness, oneness, permanence, bodilessness, omnipresence and so forth, which being inconsistent with karma, it is only right that these (verses) are not used in ritual.
+
+The Self whose essence is thus described, moreover, cannot be produced, modified, acquired or purified; nor is it of the character of an agent or an enjoyer; in which case it would be subsidiary to karma. (And its existence cannot be called in question) inasmuch as all the Upanishads purport only to unfold its nature. The Bhagavadgīta and the Mokṣadharma (in the Mahābhārata) have also the same aim.
+
+(It has therefore to be presumed that) karma is prescribed taking (for granted) that, as recognised by the intelligence of the average man, plurality, agency, enjoyment and so forth, as also impurity and sinfulness, are of the Self. Those that know who are eligible (for ritual) state that karma is prescribed only for him who is desirous of its fruit—whether that fruit be visible (i.e. attainable in this life) as spiritual lustre or invisible (i.e. attainable only in another life) as Svarga—and thinks "I am a twice-born, free from blindness, dwarfishness and the like marks of disqualification".
+
+Therefore the following verses, removing this original nescience concerning the Self, from an explanation of its real nature, produce a knowledge of unity which is the means of eradicating sorrow, delusion and other similar features of mundane existence. We shall briefly comment on these verses, having thus indicated the persons entitled to study them, the subject-matter, aim and their inter-relation.`,
+  });
+
+  await storage.createExplanation({
+    verseId: introVerse.id,
+    authorName: "Adi Shankaracharya",
+    authorTitle: "आदि शङ्कराचार्य - भाष्यम् (Devanagari)",
+    languageCode: "devanagari",
+    content: `ईशावास्यमित्यादयो मन्त्रा आत्मनो याथात्म्यप्रतिपादकाः कर्मस्वनुप्रवेशायोगात् कर्मणि विनियोगं न प्राप्नुवन्ति । आत्मनो याथात्म्यं च यथोच्यमानम् — शुद्धत्वं निरञ्जनत्वमेकत्वं नित्यत्वमशरीरत्वं सर्वगतत्वमित्यादिलक्षणम् — तद्विरुद्धाः कर्मणो न युक्तमेव कर्मणि विनियोगं प्राप्नुयुः ।
+
+एवंलक्षणस्य चात्मनो नोत्पाद्यत्वं न विकार्यत्वं नाप्यत्वं न संस्कार्यत्वमित्यतः कर्तृत्वभोक्तृत्वाद्यभावात् कर्मकाण्डाऽपेक्षित्वं नास्त्येव । सर्वासां हि उपनिषदामेतस्यैवार्थस्य प्रतिपादनपरत्वात् । तथा च गीताऽपि मोक्षधर्मश्च ।
+
+अतः प्राकृतबुद्ध्यभिमतानेकत्वकर्तृत्वभोक्तृत्वादयः, तथाऽशुद्धत्वपापित्वादयोऽप्यात्मनोऽभ्युपगम्य कर्म विधीयते । एवमधिकारित्वज्ञा वदन्ति — यः कामी फलार्थी दृष्टादृष्टफलेषु ब्रह्मवर्चसादिस्वर्गादिषु यो द्विजात्यभिमानी अकाणः अकुब्जादिः इत्येवं मन्यते यः स एवाधिकारीति ।
+
+अतः स्वाभाविकमात्मनोऽज्ञानं निवर्तयन्त आत्मयाथात्म्यप्रतिपादनादिमे मन्त्रा ऐक्यविज्ञानप्रत्ययं शोकमोहाद्यात्मसंसारधर्मोच्छेदकारणं जनयन्ति । तान् मन्त्रान् अधिकारिविषयसम्बन्धप्रयोजनानि दर्शयित्वा सङ्क्षेपतो व्याख्यास्यामः ॥`,
+  });
+
+  console.log("Created introduction verse");
 
   for (const mantra of MANTRAS) {
     const verse = await storage.createVerse({
