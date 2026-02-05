@@ -196,7 +196,7 @@ export function BookReader({
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
-      <div className="border-b border-border px-4 sm:px-8 py-4 sm:py-5 bg-card/50">
+      <div className="border-b border-border px-4 sm:px-8 py-4 sm:py-5 bg-card/50 shrink-0">
         <div className="max-w-3xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
             <div className="space-y-1 min-w-0">
@@ -224,8 +224,8 @@ export function BookReader({
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 p-4 sm:p-8 overflow-auto">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="flex-1 p-4 sm:p-8 overflow-y-auto">
           <div className="max-w-3xl w-full mx-auto">
             <div 
               className="bg-gradient-to-b from-card to-card/80 border border-primary/15 rounded-xl p-6 sm:p-10 shadow-sm relative overflow-hidden"

@@ -66,8 +66,8 @@ function Home() {
           onSelectVerse={handleSidebarVerseSelect}
           selectedVerseNumber={currentVerseNumber}
         />
-        <div className="flex flex-col flex-1 min-w-0">
-          <header className="flex items-center justify-between gap-4 px-3 sm:px-4 py-2 sm:py-3 border-b border-primary/25 bg-gradient-to-r from-primary/15 via-primary/8 to-accent/5 backdrop-blur-sm sticky top-0 z-10">
+        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+          <header className="flex items-center justify-between gap-4 px-3 sm:px-4 py-2 sm:py-3 border-b border-primary/25 bg-gradient-to-r from-primary/15 via-primary/8 to-accent/5 backdrop-blur-sm sticky top-0 z-10 shrink-0">
             <div className="flex items-center gap-3">
               <SidebarTrigger data-testid="button-sidebar-toggle" />
               <div className="hidden sm:flex items-center gap-2">
@@ -96,7 +96,7 @@ function Home() {
               <ThemeToggle />
             </div>
           </header>
-          <main className="flex flex-1 overflow-hidden">
+          <main className="flex flex-1 min-h-0 overflow-hidden">
             {selectedBookId ? (
               <>
                 <BookReader
