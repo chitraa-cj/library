@@ -224,14 +224,29 @@ export function BookReader({
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <div className="flex-1 p-4 sm:p-8 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
+        {/* Dharmic background pattern */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-10 left-10 text-[12rem] text-primary/[0.03] font-serif select-none">ॐ</div>
+          <div className="absolute bottom-20 right-10 text-[10rem] text-primary/[0.03] font-serif select-none rotate-12">ॐ</div>
+          <div className="absolute top-1/2 left-1/4 text-[8rem] text-primary/[0.02] font-serif select-none -rotate-6">श्री</div>
+          <div className="absolute top-1/3 right-1/4 text-6xl text-primary/[0.03] font-serif select-none">॥</div>
+          <div className="absolute bottom-1/3 left-1/3 text-5xl text-primary/[0.03] font-serif select-none">॥</div>
+        </div>
+        
+        <div className="flex-1 p-4 sm:p-8 overflow-y-auto relative z-10">
           <div className="max-w-3xl w-full mx-auto">
             <div 
-              className="bg-gradient-to-b from-card to-card/80 border border-primary/15 rounded-xl p-6 sm:p-10 shadow-sm relative overflow-hidden"
+              className="backdrop-blur-md bg-gradient-to-br from-white/70 via-orange-50/50 to-amber-50/40 dark:from-card/80 dark:via-card/70 dark:to-orange-950/30 border border-primary/20 rounded-2xl p-6 sm:p-10 shadow-lg shadow-primary/5 relative overflow-hidden"
               data-testid={`verse-${currentVerse.verseNumber}`}
             >
-              <div className="absolute top-2 right-2 text-4xl text-primary/5 font-serif select-none pointer-events-none">ॐ</div>
+              {/* Decorative corner elements */}
+              <div className="absolute top-0 left-0 w-20 h-20 border-t-2 border-l-2 border-primary/20 rounded-tl-2xl"></div>
+              <div className="absolute bottom-0 right-0 w-20 h-20 border-b-2 border-r-2 border-primary/20 rounded-br-2xl"></div>
+              
+              {/* Large Om watermark */}
+              <div className="absolute top-4 right-4 text-6xl text-primary/[0.08] font-serif select-none pointer-events-none">ॐ</div>
+              <div className="absolute bottom-4 left-4 text-4xl text-primary/[0.06] font-serif select-none pointer-events-none rotate-180">ॐ</div>
               
               <div className="flex items-center justify-center gap-3 mb-6">
                 <span className="text-primary/40">॥</span>
