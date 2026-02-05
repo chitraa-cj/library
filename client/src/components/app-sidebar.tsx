@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, BookOpen, Loader2, Library } from "lucide-react";
+import { Search, BookOpen, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -59,14 +59,16 @@ export function AppSidebar({ selectedBookId, onSelectBook }: AppSidebarProps) {
 
   return (
     <Sidebar className="border-r border-sidebar-border">
-      <SidebarHeader className="p-4 border-b border-sidebar-border">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="flex items-center justify-center w-9 h-9 rounded-md bg-primary text-primary-foreground">
-            <Library className="w-5 h-5" />
-          </div>
+      <SidebarHeader className="p-4 border-b border-primary/20 bg-gradient-to-b from-primary/10 to-transparent">
+        <div className="flex items-center gap-3 mb-4">
+          <img 
+            src="https://imagedelivery.net/ccA891Uf3B8piYrq4lSrpw/b195e39a-03aa-47f7-9218-fa97630e1700/public" 
+            alt="Ekatma Dham"
+            className="h-10 w-auto"
+          />
           <div className="flex flex-col">
-            <span className="font-serif font-semibold text-sm">Sacred Texts</span>
-            <span className="text-xs text-muted-foreground">Library</span>
+            <span className="font-serif font-semibold text-base text-primary">Ekatma Dham</span>
+            <span className="text-[10px] text-muted-foreground tracking-widest uppercase">Abode of Oneness</span>
           </div>
         </div>
         <div className="relative">

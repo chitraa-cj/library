@@ -5,39 +5,44 @@ import { VideoInline } from "@/components/video-popup";
 const features = [
   {
     icon: BookOpen,
-    title: "Ancient Wisdom",
-    description: "Access sacred texts from Advaita, Jain, Hindu, Sanskrit, Telugu, and Tamil traditions",
+    title: "Isha Upanishad",
+    description: "Study the complete 18 mantras of the Isha Upanishad with original Sanskrit text",
   },
   {
     icon: Globe,
     title: "Multi-Script Support",
-    description: "Read in Devanagari, Kannada, Telugu, Tamil, and more scripts",
+    description: "Read in Devanagari, Kannada, Telugu, Tamil, and English scripts",
   },
   {
     icon: MessageSquareText,
-    title: "Scholarly Explanations",
-    description: "Explore multiple commentaries from renowned scholars",
+    title: "Shankaracharya Bhashya",
+    description: "Complete commentary by Adi Shankaracharya explaining the profound Advaita wisdom",
   },
   {
     icon: Sparkles,
-    title: "Translation & Insight",
-    description: "Translate any verse and gain deeper understanding",
+    title: "Translations & Insight",
+    description: "Multiple translations by renowned scholars for deeper understanding",
   },
 ];
 
 export function WelcomeScreen() {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 bg-gradient-to-b from-background to-muted/30">
+    <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 bg-gradient-to-b from-primary/5 via-background to-muted/20">
       <div className="max-w-2xl text-center space-y-6 sm:space-y-8">
         <div className="space-y-3 sm:space-y-4">
-          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-primary/10 mb-2 sm:mb-4">
-            <BookOpen className="w-8 h-8 sm:w-10 sm:h-10 text-primary" />
-          </div>
-          <h1 className="font-serif text-2xl sm:text-4xl font-semibold tracking-tight">
-            Sacred Texts Library
+          <img 
+            src="https://imagedelivery.net/ccA891Uf3B8piYrq4lSrpw/b195e39a-03aa-47f7-9218-fa97630e1700/public" 
+            alt="Ekatma Dham"
+            className="h-20 sm:h-28 w-auto mx-auto mb-2"
+          />
+          <h1 className="font-serif text-2xl sm:text-4xl font-semibold tracking-tight text-primary">
+            Ekatma Dham
           </h1>
-          <p className="text-sm sm:text-lg text-muted-foreground max-w-md mx-auto">
-            Explore the timeless wisdom of ancient scriptures with translations and scholarly explanations
+          <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-muted-foreground font-medium">
+            Abode of Oneness
+          </p>
+          <p className="text-sm sm:text-lg text-muted-foreground max-w-md mx-auto mt-4">
+            Explore the Isha Upanishad with complete Shankaracharya Bhashya and multiple translations
           </p>
         </div>
 
@@ -64,11 +69,11 @@ export function WelcomeScreen() {
 
         <div className="mt-6 sm:mt-8 space-y-3">
           <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider" data-testid="heading-explanatory-videos">
-            Explanatory Videos
+            Watch Introduction
           </h2>
           <VideoInline 
             videoId="8ELHatzdtAk"
-            title="Introduction to Sacred Texts"
+            title="Introduction to Isha Upanishad"
             className="max-w-xl mx-auto"
           />
         </div>

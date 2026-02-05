@@ -1,8 +1,8 @@
-# Sacred Texts Library
+# Ekatma Dham - Abode of Oneness
 
 ## Overview
 
-A digital library application for exploring ancient sacred texts from Advaita, Jain, Hindu, Sanskrit, Telugu, and Tamil traditions. The platform provides multi-script support (Devanagari, Kannada, Telugu, Tamil), verse-by-verse translations, and scholarly commentaries/explanations from renowned scholars.
+Ekatma Dham is a digital platform for exploring the Isha Upanishad with complete Shankaracharya Bhashya (commentary). The platform provides multi-script support (Devanagari, Kannada, Telugu, Tamil, English), verse-by-verse translations, and scholarly commentaries celebrating Sanatana Dharma and the legacy of Adi Shankaracharya. The branding and logo are from oneness.org.in.
 
 ## User Preferences
 

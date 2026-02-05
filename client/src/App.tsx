@@ -54,17 +54,29 @@ function Home() {
           onSelectBook={handleBookSelect}
         />
         <div className="flex flex-col flex-1 min-w-0">
-          <header className="flex items-center justify-between gap-4 px-3 sm:px-4 py-2 sm:py-3 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-10">
-            <div className="flex items-center gap-2">
+          <header className="flex items-center justify-between gap-4 px-3 sm:px-4 py-2 sm:py-3 border-b border-primary/20 bg-gradient-to-r from-primary/5 to-transparent backdrop-blur-sm sticky top-0 z-10">
+            <div className="flex items-center gap-3">
               <SidebarTrigger data-testid="button-sidebar-toggle" />
-              <span className="font-serif text-sm text-muted-foreground hidden sm:block">
-                Sacred Texts Library
-              </span>
+              <div className="hidden sm:flex items-center gap-2">
+                <img 
+                  src="https://imagedelivery.net/ccA891Uf3B8piYrq4lSrpw/b195e39a-03aa-47f7-9218-fa97630e1700/public" 
+                  alt="Ekatma Dham"
+                  className="h-8 w-auto"
+                />
+                <div className="flex flex-col">
+                  <span className="font-serif text-sm font-semibold text-primary">
+                    Ekatma Dham
+                  </span>
+                  <span className="text-[10px] text-muted-foreground tracking-wide">
+                    ABODE OF ONENESS
+                  </span>
+                </div>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <VideoPopup 
                 videoId="8ELHatzdtAk"
-                title="Introduction to Sacred Texts"
+                title="Introduction to Isha Upanishad"
               />
               <ThemeToggle />
             </div>

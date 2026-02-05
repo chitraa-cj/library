@@ -40,7 +40,7 @@ export function VideoPopup({
         <DialogHeader className="p-4 pb-0">
           <DialogTitle className="font-serif">{title}</DialogTitle>
           <DialogDescription className="sr-only">
-            Watch the introduction video about Sacred Texts
+            Watch the introduction video about Isha Upanishad
           </DialogDescription>
         </DialogHeader>
         <div className="relative w-full aspect-video">
