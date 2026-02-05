@@ -39,7 +39,9 @@ export function WordTooltip({
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (tooltipRef.current && !tooltipRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (tooltipRef.current && !tooltipRef.current.contains(target) && 
+          !containerRef.current?.contains(target)) {
         setShowTooltip(false);
         setShowInfoButton(false);
         setSelectedWord(null);
@@ -49,28 +51,37 @@ export function WordTooltip({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleTextSelection = () => {
-    const selection = window.getSelection();
-    if (!selection || selection.isCollapsed) {
-      return;
+  useEffect(() => {
+    function handleSelectionChange() {
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+        return;
+      }
+
+      const range = selection.getRangeAt(0);
+      if (!containerRef.current?.contains(range.commonAncestorContainer)) {
+        return;
+      }
+
+      const text = selection.toString().trim();
+      if (text && text.length > 0 && text.length < 100) {
+        const rect = range.getBoundingClientRect();
+        
+        setSelectedWord(text);
+        setSelectedPosition({
+          x: rect.left + rect.width / 2,
+          y: rect.bottom + 8,
+        });
+        setShowInfoButton(true);
+        setShowTooltip(false);
+        setTranslation(null);
+        setError(null);
+      }
     }
 
-    const text = selection.toString().trim();
-    if (text && text.length > 0 && text.length < 100) {
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      
-      setSelectedWord(text);
-      setSelectedPosition({
-        x: rect.left + rect.width / 2,
-        y: rect.bottom + 8,
-      });
-      setShowInfoButton(true);
-      setShowTooltip(false);
-      setTranslation(null);
-      setError(null);
-    }
-  };
+    document.addEventListener("selectionchange", handleSelectionChange);
+    return () => document.removeEventListener("selectionchange", handleSelectionChange);
+  }, []);
 
   const fetchTranslation = async () => {
     if (!selectedWord) return;
@@ -114,16 +125,10 @@ export function WordTooltip({
   };
 
   return (
-    <div ref={containerRef} className="relative">
-      <div 
-        onMouseUp={handleTextSelection}
-        onTouchEnd={handleTextSelection}
-        className="select-text"
-      >
-        <p className="text-lg leading-relaxed whitespace-pre-wrap font-serif">
-          {verseContent}
-        </p>
-      </div>
+    <div ref={containerRef} className="relative select-text cursor-text">
+      <p className="text-lg leading-relaxed whitespace-pre-wrap font-serif">
+        {verseContent}
+      </p>
 
       {showInfoButton && selectedPosition && (
         <div
