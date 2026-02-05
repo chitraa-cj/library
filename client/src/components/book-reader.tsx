@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, Play } from "lucide-react";
+import { VideoPopup } from "@/components/video-popup";
 import type { BookWithDetails, VerseTranslation, Explanation } from "@shared/schema";
 
 interface BookReaderProps {
@@ -257,54 +258,61 @@ export function BookReader({
                   />
                 )}
               </div>
+
+              <div className="flex items-center justify-between mt-8 pt-6 border-t border-border/50">
+                <Button
+                  variant="outline"
+                  onClick={goToPrevPage}
+                  disabled={currentPage === 0}
+                  className="gap-2"
+                  data-testid="button-prev-page"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span className="hidden sm:inline">Previous</span>
+                </Button>
+
+                <div className="flex items-center gap-1">
+                  {totalPages <= 10 ? (
+                    Array.from({ length: totalPages }, (_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentPage(i)}
+                        className={`w-2 h-2 rounded-full transition-colors ${
+                          i === currentPage 
+                            ? "bg-primary" 
+                            : "bg-muted hover:bg-muted-foreground/30"
+                        }`}
+                        data-testid={`page-dot-${i + 1}`}
+                      />
+                    ))
+                  ) : (
+                    <span className="text-sm text-muted-foreground">
+                      {currentPage + 1} / {totalPages}
+                    </span>
+                  )}
+                </div>
+
+                <Button
+                  variant="outline"
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages - 1}
+                  className="gap-2"
+                  data-testid="button-next-page"
+                >
+                  <span className="hidden sm:inline">Next</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="border-t border-border px-4 sm:px-8 py-4 bg-background/80 backdrop-blur-sm">
-          <div className="max-w-3xl mx-auto flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={goToPrevPage}
-              disabled={currentPage === 0}
-              className="gap-2"
-              data-testid="button-prev-page"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">Previous</span>
-            </Button>
-
-            <div className="flex items-center gap-1">
-              {totalPages <= 10 ? (
-                Array.from({ length: totalPages }, (_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setCurrentPage(i)}
-                    className={`w-2 h-2 rounded-full transition-colors ${
-                      i === currentPage 
-                        ? "bg-primary" 
-                        : "bg-muted hover:bg-muted-foreground/30"
-                    }`}
-                    data-testid={`page-dot-${i + 1}`}
-                  />
-                ))
-              ) : (
-                <span className="text-sm text-muted-foreground">
-                  {currentPage + 1} / {totalPages}
-                </span>
-              )}
-            </div>
-
-            <Button
-              variant="outline"
-              onClick={goToNextPage}
-              disabled={currentPage === totalPages - 1}
-              className="gap-2"
-              data-testid="button-next-page"
-            >
-              <span className="hidden sm:inline">Next</span>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+        <div className="border-t border-border px-4 sm:px-8 py-3 bg-background/80 backdrop-blur-sm">
+          <div className="max-w-3xl mx-auto flex items-center justify-center">
+            <VideoPopup 
+              videoId="8ELHatzdtAk"
+              title="Introduction to Isha Upanishad"
+            />
           </div>
         </div>
       </div>
