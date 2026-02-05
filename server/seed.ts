@@ -1243,3 +1243,111 @@ export async function seedEnglishVerseTranslations() {
     console.log("No new English verse translations needed");
   }
 }
+
+/**
+ * Update verse section titles to use descriptive English names
+ * This ensures production database has the correct chapter names
+ * Also creates Introduction verse (verse 0) if missing
+ */
+export async function updateVerseSectionTitles() {
+  console.log("Checking verse section titles...");
+  
+  const verseTitles: Record<number, string> = {
+    0: "Introductory Remarks by Śaṅkara",
+    1: "Devotion to Jñāna (Knowledge)",
+    2: "Devotion to Karma (Action)",
+    3: "The Fate of the Self-Slayers",
+    4: "Nature of the Self - Unmoving Yet Swift",
+    5: "The Self - Far and Near",
+    6: "Vision of Unity in All Beings",
+    7: "Freedom from Delusion and Sorrow",
+    8: "Nature of the Supreme Self",
+    9: "Avidyā and Vidyā - A Warning",
+    10: "The Fruits of Knowledge and Ignorance",
+    11: "Combining Vidyā and Avidyā",
+    12: "Worship of the Unmanifest",
+    13: "Sambhūti and Asambhūti",
+    14: "Combining Sambhūti and Vināśa",
+    15: "Prayer to the Sun - The Golden Disc",
+    16: "Prayer to the Sun - O Pūṣan",
+    17: "The Final Prayer - Om Krato",
+    18: "Prayer to Agni - Lead Us"
+  };
+  
+  // Get the book ID first
+  const allBooks = await db.select().from(books);
+  if (allBooks.length === 0) {
+    console.log("No books found, skipping section title update");
+    return;
+  }
+  const bookId = allBooks[0].id;
+  
+  let updatedCount = 0;
+  let createdCount = 0;
+  
+  for (const [verseNum, title] of Object.entries(verseTitles)) {
+    const verseNumber = parseInt(verseNum);
+    
+    // Find the verse
+    const existingVerses = await db.select().from(verses).where(eq(verses.verseNumber, verseNumber));
+    
+    if (existingVerses.length > 0) {
+      const verse = existingVerses[0];
+      
+      // Check if section title needs updating
+      if (verse.sectionTitle !== title) {
+        await db.update(verses)
+          .set({ sectionTitle: title })
+          .where(eq(verses.id, verse.id));
+        updatedCount++;
+      }
+    } else if (verseNumber === 0) {
+      // Create Introduction verse if missing
+      console.log("Creating missing Introduction verse (verse 0)...");
+      
+      const introVerse = await storage.createVerse({
+        bookId: bookId,
+        verseNumber: 0,
+        sectionTitle: "Introductory Remarks by Śaṅkara",
+      });
+      
+      // Add translations for introduction
+      await storage.createTranslation({
+        verseId: introVerse.id,
+        languageCode: "devanagari",
+        content: "ईशावास्यमित्यादयो मन्त्रा आत्मनो याथात्म्यप्रतिपादकाः कर्मस्वनुप्रवेशायोगात् कर्मणि विनियोगं न प्राप्नुवन्ति ।",
+      });
+      
+      await storage.createTranslation({
+        verseId: introVerse.id,
+        languageCode: "english",
+        content: "The verses beginning with Īśāvāsyam explain the true nature of the Self which is not subsidiary to karma.",
+      });
+      
+      // Add Shankaracharya explanation
+      await storage.createExplanation({
+        verseId: introVerse.id,
+        authorName: "Adi Shankaracharya",
+        authorTitle: "English Translation by M. Hiriyanna",
+        languageCode: "english",
+        content: `The mantras beginning with 'Īśāvāsyam' set forth the true nature of the Self. Since the Self as there explained is not subsidiary to sacrificial action, these mantras do not fall in the class of injunctions relating to karma.
+
+The true nature of the Self to be expounded later is its purity (being untouched by evil), its being one, its being eternal, its being incorporeal, its being omnipresent, and the like.
+
+To such a Self, which is the subject matter of the Upanishad, no relation is possible with rituals or their accessories or their results. This is the purport of the Introduction.`,
+      });
+      
+      createdCount++;
+    }
+  }
+  
+  if (updatedCount > 0) {
+    console.log(`Updated ${updatedCount} verse section titles`);
+  }
+  if (createdCount > 0) {
+    console.log(`Created ${createdCount} missing verses`);
+  }
+  if (updatedCount === 0 && createdCount === 0) {
+    console.log("All verse section titles are already correct");
+  }
+}
