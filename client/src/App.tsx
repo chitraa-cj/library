@@ -67,17 +67,17 @@ function Home() {
           selectedVerseNumber={currentVerseNumber}
         />
         <div className="flex flex-col flex-1 min-w-0">
-          <header className="flex items-center justify-between gap-4 px-3 sm:px-4 py-2 sm:py-3 border-b border-primary/20 bg-gradient-to-r from-primary/5 to-transparent backdrop-blur-sm sticky top-0 z-10">
+          <header className="flex items-center justify-between gap-4 px-3 sm:px-4 py-2 sm:py-3 border-b border-primary/30 bg-gradient-to-r from-primary/15 via-primary/5 to-transparent backdrop-blur-sm sticky top-0 z-10">
             <div className="flex items-center gap-3">
               <SidebarTrigger data-testid="button-sidebar-toggle" />
               <div className="hidden sm:flex items-center gap-2">
                 <img 
-                  src="https://imagedelivery.net/ccA891Uf3B8piYrq4lSrpw/b195e39a-03aa-47f7-9218-fa97630e1700/public" 
+                  src="https://oneness.org.in/assets/img/ekatma2.png" 
                   alt="Ekatma Dham"
-                  className="h-8 w-auto"
+                  className="h-10 w-auto"
                 />
                 <div className="flex flex-col">
-                  <span className="font-serif text-sm font-semibold text-primary">
+                  <span className="font-serif text-sm font-bold text-primary">
                     Ekatma Dham
                   </span>
                   <span className="text-[10px] text-muted-foreground tracking-wide">

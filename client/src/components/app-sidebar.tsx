@@ -91,15 +91,15 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
 
   return (
     <Sidebar className="border-r border-sidebar-border">
-      <SidebarHeader className="p-4 border-b border-primary/20 bg-gradient-to-b from-primary/10 to-transparent">
+      <SidebarHeader className="p-4 border-b border-primary/30 bg-gradient-to-b from-primary/15 to-primary/5">
         <div className="flex items-center gap-3 mb-4">
           <img 
-            src="https://imagedelivery.net/ccA891Uf3B8piYrq4lSrpw/b195e39a-03aa-47f7-9218-fa97630e1700/public" 
+            src="https://oneness.org.in/assets/img/ekatma2.png" 
             alt="Ekatma Dham"
-            className="h-10 w-auto"
+            className="h-12 w-auto"
           />
           <div className="flex flex-col">
-            <span className="font-serif font-semibold text-base text-primary">Ekatma Dham</span>
+            <span className="font-serif font-bold text-base text-primary">Ekatma Dham</span>
             <span className="text-[10px] text-muted-foreground tracking-widest uppercase">Abode of Oneness</span>
           </div>
         </div>
@@ -150,16 +150,18 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
                             <CollapsibleTrigger asChild>
                               <SidebarMenuButton
                                 onClick={() => handleBookSelect(book.id)}
-                                className={`mx-2 rounded-md transition-colors ${
+                                className={`mx-2 rounded-lg transition-all ${
                                   selectedBookId === book.id
-                                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                                    : ""
+                                    ? "bg-primary/15 text-primary border border-primary/30 shadow-sm"
+                                    : "hover:bg-sidebar-accent/50"
                                 }`}
                                 data-testid={`button-book-${book.id}`}
                               >
-                                <BookOpen className="h-4 w-4 shrink-0" />
+                                <div className={`p-1.5 rounded-md ${selectedBookId === book.id ? 'bg-primary/20' : 'bg-muted/50'}`}>
+                                  <BookOpen className={`h-4 w-4 shrink-0 ${selectedBookId === book.id ? 'text-primary' : ''}`} />
+                                </div>
                                 <div className="flex flex-col flex-1 min-w-0">
-                                  <span className="font-serif text-sm truncate">{book.title}</span>
+                                  <span className={`font-serif text-sm truncate ${selectedBookId === book.id ? 'font-semibold' : ''}`}>{book.title}</span>
                                   {book.author && (
                                     <span className="text-xs text-muted-foreground truncate">
                                       {book.author}
@@ -168,11 +170,11 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
                                 </div>
                                 <div className="flex items-center gap-1">
                                   {book.totalVerses && book.totalVerses > 0 && (
-                                    <Badge variant="secondary" className="text-xs">
+                                    <Badge variant={selectedBookId === book.id ? "default" : "secondary"} className="text-xs">
                                       {book.totalVerses}
                                     </Badge>
                                   )}
-                                  <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                                  <ChevronRight className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-90 text-primary' : 'text-muted-foreground'}`} />
                                 </div>
                               </SidebarMenuButton>
                             </CollapsibleTrigger>
