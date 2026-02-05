@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Loader2, X, BookOpen, Languages, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,20 +15,22 @@ interface WordTranslation {
 }
 
 interface WordTooltipProps {
-  verseContent: string;
-  commentaryContent: string;
+  content: string;
+  commentaryContent?: string;
   sourceLanguage: string;
   targetLanguage?: string;
+  className?: string;
 }
 
 export function WordTooltip({ 
-  verseContent, 
-  commentaryContent, 
+  content, 
+  commentaryContent = "",
   sourceLanguage,
-  targetLanguage = "english" 
+  targetLanguage = "english",
+  className = ""
 }: WordTooltipProps) {
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
-  const [selectedPosition, setSelectedPosition] = useState<{ x: number; y: number } | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState<{ left: number; top: number; wordCenterX: number } | null>(null);
   const [showTooltip, setShowTooltip] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [translation, setTranslation] = useState<WordTranslation | null>(null);
@@ -36,29 +38,67 @@ export function WordTooltip({
   const containerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
+  const calculatePosition = useCallback((rect: DOMRect, containerRect: DOMRect | null) => {
+    const tooltipWidth = 320;
+    const padding = 12;
+    
+    const wordCenterX = rect.left + rect.width / 2;
+    let left = wordCenterX - tooltipWidth / 2;
+    let top = rect.bottom + padding;
+    
+    if (left < padding) {
+      left = padding;
+    }
+    if (left + tooltipWidth > window.innerWidth - padding) {
+      left = window.innerWidth - tooltipWidth - padding;
+    }
+    
+    const maxTop = window.innerHeight - 420;
+    if (top > maxTop) {
+      top = rect.top - 420;
+      if (top < 10) {
+        top = 10;
+      }
+    }
+    
+    return { left, top, wordCenterX };
+  }, []);
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
       if (tooltipRef.current && !tooltipRef.current.contains(target)) {
-        setShowTooltip(false);
-        setSelectedWord(null);
+        closeTooltip();
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    
+    function handleScroll() {
+      closeTooltip();
+    }
+    
+    if (showTooltip) {
+      document.addEventListener("mousedown", handleClickOutside);
+      window.addEventListener("scroll", handleScroll, true);
+    }
+    
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
+  }, [showTooltip]);
 
   const handleWordClick = (word: string, event: React.MouseEvent<HTMLSpanElement>) => {
+    event.stopPropagation();
     const rect = event.currentTarget.getBoundingClientRect();
+    const containerRect = containerRef.current?.getBoundingClientRect() || null;
     const cleanWord = word.replace(/[।॥,.;:!?'"()[\]{}—–-]/g, '').trim();
     
     if (!cleanWord || cleanWord.length === 0) return;
     
+    const position = calculatePosition(rect, containerRect);
+    
     setSelectedWord(cleanWord);
-    setSelectedPosition({
-      x: rect.left + rect.width / 2,
-      y: rect.bottom + 8,
-    });
+    setTooltipPosition(position);
     setShowTooltip(true);
     setTranslation(null);
     setError(null);
@@ -78,7 +118,7 @@ export function WordTooltip({
           word,
           sourceLanguage,
           targetLanguage,
-          verseContext: verseContent,
+          verseContext: content,
           commentaryContext: commentaryContent,
         }),
       });
@@ -102,11 +142,11 @@ export function WordTooltip({
     setError(null);
   };
 
-  const words = verseContent.split(/(\s+)/);
+  const words = content.split(/(\s+)/);
 
   return (
-    <div ref={containerRef} className="relative">
-      <p className="text-lg leading-relaxed font-serif">
+    <div ref={containerRef} className={`relative ${className}`}>
+      <span className="leading-relaxed">
         {words.map((segment, index) => {
           if (/^\s+$/.test(segment)) {
             return <span key={index}>{segment}</span>;
@@ -121,28 +161,34 @@ export function WordTooltip({
             <span
               key={index}
               onClick={(e) => handleWordClick(segment, e)}
-              className="cursor-pointer hover:text-primary transition-colors border-b-2 border-transparent hover:border-primary/50 pb-0.5"
+              className="cursor-pointer hover:text-primary transition-colors border-b-2 border-transparent hover:border-primary/50 pb-0.5 inline"
               data-testid={`word-${index}`}
             >
               {segment}
             </span>
           );
         })}
-      </p>
+      </span>
 
-      {showTooltip && selectedPosition && (
+      {showTooltip && tooltipPosition && (
         <div
           ref={tooltipRef}
           style={{
             position: "fixed",
-            left: Math.min(Math.max(selectedPosition.x, 180), window.innerWidth - 180),
-            top: selectedPosition.y,
-            transform: "translateX(-50%)",
+            left: tooltipPosition.left,
+            top: tooltipPosition.top,
             zIndex: 9999,
+            width: 320,
           }}
-          className="animate-in fade-in-0 slide-in-from-top-2"
+          className="animate-in fade-in-0 slide-in-from-top-2 duration-200"
         >
-          <Card className="w-80 max-h-96 overflow-y-auto shadow-2xl border-primary/20 bg-background/95 backdrop-blur-md">
+          <div 
+            className="absolute -top-2 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-primary/20"
+            style={{
+              left: Math.max(8, Math.min(tooltipPosition.wordCenterX - tooltipPosition.left - 8, 304)),
+            }}
+          />
+          <Card className="w-full max-h-96 overflow-y-auto shadow-2xl border-primary/20 bg-background/98 backdrop-blur-md">
             <div className="p-3">
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">

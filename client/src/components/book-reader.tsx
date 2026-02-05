@@ -72,9 +72,14 @@ function VerseExplanation({
           <p className="text-xs text-muted-foreground mb-3 font-medium">
             {explanation.authorName} {explanation.authorTitle && `- ${explanation.authorTitle}`}
           </p>
-          <p className="font-serif text-base leading-relaxed whitespace-pre-wrap break-words text-foreground/90">
-            {explanation.content}
-          </p>
+          <div className="font-serif text-base leading-relaxed whitespace-pre-wrap break-words text-foreground/90">
+            <WordTooltip
+              content={explanation.content}
+              sourceLanguage={languageCode}
+              targetLanguage="english"
+              className="inline"
+            />
+          </div>
         </div>
       ))}
     </div>
@@ -404,7 +409,7 @@ export function BookReader({
                     data-testid={`text-original-${currentVerse.verseNumber}`}
                   >
                     <WordTooltip
-                      verseContent={verseText}
+                      content={verseText}
                       commentaryContent={commentaryContext}
                       sourceLanguage={selectedCommentaryLanguage || "devanagari"}
                       targetLanguage="english"
