@@ -43,6 +43,8 @@ interface TranslationPanelProps {
   onLanguageChange: (lang: string | null) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  collapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
 function PanelContent({
@@ -247,6 +249,8 @@ export function TranslationPanel({
   onLanguageChange,
   open,
   onOpenChange,
+  collapsed,
+  onCollapsedChange,
 }: TranslationPanelProps) {
   const isMobile = useIsMobile();
 
@@ -282,8 +286,13 @@ export function TranslationPanel({
     );
   }
 
+  // Desktop: collapsible panel
+  if (collapsed) {
+    return null;
+  }
+
   return (
-    <div className="w-80 border-l border-border bg-card/30 flex flex-col">
+    <div className="w-80 border-l border-border bg-card/30 flex flex-col transition-all duration-300">
       {header}
       <PanelContent
         bookId={bookId}

@@ -12,6 +12,8 @@ import { WelcomeScreen } from "@/components/welcome-screen";
 import { BookReader } from "@/components/book-reader";
 import { TranslationPanel } from "@/components/translation-panel";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
+import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import NotFound from "@/pages/not-found";
 
 function Home() {
@@ -23,6 +25,7 @@ function Home() {
   const [selectedCommentaryLanguage, setSelectedCommentaryLanguage] = useState<string | null>(null);
   const [navigateToVerse, setNavigateToVerse] = useState<number | null>(null);
   const [currentVerseNumber, setCurrentVerseNumber] = useState<number>(1);
+  const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const isMobile = useIsMobile();
 
   const handleVerseSelect = (verseId: string, content: string) => {
@@ -93,6 +96,21 @@ function Home() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {selectedBookId && !isMobile && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setRightPanelCollapsed(!rightPanelCollapsed)}
+                  title={rightPanelCollapsed ? "Show commentary panel" : "Hide commentary panel"}
+                  data-testid="button-toggle-right-panel"
+                >
+                  {rightPanelCollapsed ? (
+                    <PanelRightOpen className="h-4 w-4" />
+                  ) : (
+                    <PanelRightClose className="h-4 w-4" />
+                  )}
+                </Button>
+              )}
               <ThemeToggle />
             </div>
           </header>
@@ -118,6 +136,8 @@ function Home() {
                   onLanguageChange={setSelectedCommentaryLanguage}
                   open={showTranslationPanel}
                   onOpenChange={setShowTranslationPanel}
+                  collapsed={rightPanelCollapsed}
+                  onCollapsedChange={setRightPanelCollapsed}
                 />
               </>
             ) : (
