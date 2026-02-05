@@ -201,6 +201,7 @@ export function WordTooltip({
     >
       {position && (
         <div 
+          className="dark:border-b-card"
           style={{
             position: 'absolute',
             top: -10,
@@ -209,16 +210,15 @@ export function WordTooltip({
             height: 0,
             borderLeft: '10px solid transparent',
             borderRight: '10px solid transparent',
-            borderBottom: '10px solid #fff',
+            borderBottom: '10px solid var(--arrow-color, hsl(var(--card)))',
             zIndex: 1,
           }}
         />
       )}
       <Card 
-        className="w-full max-h-[400px] overflow-y-auto shadow-xl border-2 border-primary/30"
-        style={{ backgroundColor: '#ffffff' }}
+        className="w-full max-h-[400px] overflow-y-auto shadow-xl border-2 border-primary/30 bg-card"
       >
-        <div className="p-4 bg-white">
+        <div className="p-4 bg-card text-card-foreground">
           <div className="flex items-start justify-between gap-2 mb-3">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
@@ -239,7 +239,7 @@ export function WordTooltip({
             <Globe className="h-4 w-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Translate to:</span>
             <Select value={targetLanguage} onValueChange={handleLanguageChange}>
-              <SelectTrigger className="h-7 w-[140px] text-xs bg-white" data-testid="select-target-language">
+              <SelectTrigger className="h-7 w-[140px] text-xs bg-card" data-testid="select-target-language">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent 

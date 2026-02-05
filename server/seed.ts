@@ -676,9 +676,9 @@ export async function seedDatabase() {
 
   const book = await storage.createBook({
     slug: "isha-upanishad-bhashya",
-    title: "Isha Upanishad",
+    title: "Īśāvāsyopaniṣad",
     author: "Sri Shankaracharya",
-    description: `The Isha Upanishad (ईशावास्योपनिषद्) is one of the shortest and most celebrated Upanishads. This text presents Shankaracharya's Bhashya (commentary) on the 18 mantras, providing deep philosophical insights into Advaita Vedanta.`,
+    description: `The Īśāvāsyopaniṣad (ईशावास्योपनिषद्) is one of the shortest and most celebrated Upanishads. This text presents Shankaracharya's Bhashya (commentary) on the 18 mantras, providing deep philosophical insights into Advaita Vedanta.`,
     category: "Upanishad Bhashya",
     coverImage: null,
     totalVerses: MANTRAS.length + 1, // +1 for introduction
@@ -1349,5 +1349,20 @@ To such a Self, which is the subject matter of the Upanishad, no relation is pos
   }
   if (updatedCount === 0 && createdCount === 0) {
     console.log("All verse section titles are already correct");
+  }
+  
+  // Also update book title to complete Sanskrit name
+  const bookToUpdate = allBooks[0];
+  const correctTitle = "Īśāvāsyopaniṣad";
+  const correctDescription = `The Īśāvāsyopaniṣad (ईशावास्योपनिषद्) is one of the shortest and most celebrated Upanishads. This text presents Shankaracharya's Bhashya (commentary) on the 18 mantras, providing deep philosophical insights into Advaita Vedanta.`;
+  
+  if (bookToUpdate.title !== correctTitle || bookToUpdate.description !== correctDescription) {
+    await db.update(books)
+      .set({ 
+        title: correctTitle,
+        description: correctDescription
+      })
+      .where(eq(books.id, bookId));
+    console.log("Updated book title to complete Sanskrit name: Īśāvāsyopaniṣad");
   }
 }
