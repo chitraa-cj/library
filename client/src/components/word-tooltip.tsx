@@ -1,9 +1,16 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Loader2, X, BookOpen, Languages, Sparkles } from "lucide-react";
+import { Loader2, X, BookOpen, Languages, Sparkles, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface WordTranslation {
   word: string;
@@ -14,11 +21,18 @@ interface WordTranslation {
   cached?: boolean;
 }
 
+const TRANSLATION_LANGUAGES = [
+  { code: "english", name: "English" },
+  { code: "hindi", name: "Hindi (हिन्दी)" },
+  { code: "kannada", name: "Kannada (ಕನ್ನಡ)" },
+  { code: "tamil", name: "Tamil (தமிழ்)" },
+  { code: "telugu", name: "Telugu (తెలుగు)" },
+];
+
 interface WordTooltipProps {
   content: string;
   commentaryContent?: string;
   sourceLanguage: string;
-  targetLanguage?: string;
   className?: string;
 }
 
@@ -26,53 +40,37 @@ export function WordTooltip({
   content, 
   commentaryContent = "",
   sourceLanguage,
-  targetLanguage = "english",
   className = ""
 }: WordTooltipProps) {
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
-  const [tooltipPosition, setTooltipPosition] = useState<{ left: number; top: number; wordCenterX: number } | null>(null);
+  const [clickedWordRect, setClickedWordRect] = useState<DOMRect | null>(null);
   const [showTooltip, setShowTooltip] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [translation, setTranslation] = useState<WordTranslation | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [targetLanguage, setTargetLanguage] = useState("english");
   const containerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
-  const calculatePosition = useCallback((rect: DOMRect, containerRect: DOMRect | null) => {
-    const tooltipWidth = 320;
-    const padding = 12;
-    
-    const wordCenterX = rect.left + rect.width / 2;
-    let left = wordCenterX - tooltipWidth / 2;
-    let top = rect.bottom + padding;
-    
-    if (left < padding) {
-      left = padding;
-    }
-    if (left + tooltipWidth > window.innerWidth - padding) {
-      left = window.innerWidth - tooltipWidth - padding;
-    }
-    
-    const maxTop = window.innerHeight - 420;
-    if (top > maxTop) {
-      top = rect.top - 420;
-      if (top < 10) {
-        top = 10;
-      }
-    }
-    
-    return { left, top, wordCenterX };
-  }, []);
-
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      const target = event.target as Node;
+      const target = event.target as HTMLElement;
+      
       if (tooltipRef.current && !tooltipRef.current.contains(target)) {
-        closeTooltip();
+        const isSelectContent = target.closest('[data-radix-popper-content-wrapper]') ||
+                               target.closest('[role="listbox"]') ||
+                               target.closest('[role="option"]');
+        if (!isSelectContent) {
+          closeTooltip();
+        }
       }
     }
     
-    function handleScroll() {
+    function handleScroll(event: Event) {
+      const target = event.target as HTMLElement;
+      if (target.closest('[data-radix-popper-content-wrapper]')) {
+        return;
+      }
       closeTooltip();
     }
     
@@ -90,23 +88,20 @@ export function WordTooltip({
   const handleWordClick = (word: string, event: React.MouseEvent<HTMLSpanElement>) => {
     event.stopPropagation();
     const rect = event.currentTarget.getBoundingClientRect();
-    const containerRect = containerRef.current?.getBoundingClientRect() || null;
     const cleanWord = word.replace(/[।॥,.;:!?'"()[\]{}—–-]/g, '').trim();
     
     if (!cleanWord || cleanWord.length === 0) return;
     
-    const position = calculatePosition(rect, containerRect);
-    
     setSelectedWord(cleanWord);
-    setTooltipPosition(position);
+    setClickedWordRect(rect);
     setShowTooltip(true);
     setTranslation(null);
     setError(null);
     
-    fetchTranslation(cleanWord);
+    fetchTranslation(cleanWord, targetLanguage);
   };
 
-  const fetchTranslation = async (word: string) => {
+  const fetchTranslation = async (word: string, lang: string) => {
     setIsLoading(true);
     setError(null);
 
@@ -117,7 +112,7 @@ export function WordTooltip({
         body: JSON.stringify({
           word,
           sourceLanguage,
-          targetLanguage,
+          targetLanguage: lang,
           verseContext: content,
           commentaryContext: commentaryContent,
         }),
@@ -135,14 +130,49 @@ export function WordTooltip({
     }
   };
 
+  const handleLanguageChange = (newLang: string) => {
+    setTargetLanguage(newLang);
+    if (selectedWord) {
+      fetchTranslation(selectedWord, newLang);
+    }
+  };
+
   const closeTooltip = () => {
     setShowTooltip(false);
     setSelectedWord(null);
     setTranslation(null);
     setError(null);
+    setClickedWordRect(null);
   };
 
+  const getTooltipStyle = useCallback(() => {
+    if (!clickedWordRect) return {};
+    
+    const tooltipWidth = 340;
+    const tooltipMaxHeight = 450;
+    const gap = 8;
+    
+    const wordCenterX = clickedWordRect.left + clickedWordRect.width / 2;
+    let left = wordCenterX - tooltipWidth / 2;
+    let top = clickedWordRect.bottom + gap;
+    
+    if (left < 10) left = 10;
+    if (left + tooltipWidth > window.innerWidth - 10) {
+      left = window.innerWidth - tooltipWidth - 10;
+    }
+    
+    if (top + tooltipMaxHeight > window.innerHeight - 10) {
+      top = clickedWordRect.top - tooltipMaxHeight - gap;
+      if (top < 10) top = 10;
+    }
+    
+    const arrowLeft = Math.max(16, Math.min(wordCenterX - left, tooltipWidth - 16));
+    
+    return { left, top, arrowLeft };
+  }, [clickedWordRect]);
+
   const words = content.split(/(\s+)/);
+  const tooltipStyle = getTooltipStyle();
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
@@ -170,27 +200,25 @@ export function WordTooltip({
         })}
       </span>
 
-      {showTooltip && tooltipPosition && (
+      {showTooltip && clickedWordRect && (
         <div
           ref={tooltipRef}
           style={{
             position: "fixed",
-            left: tooltipPosition.left,
-            top: tooltipPosition.top,
+            left: tooltipStyle.left,
+            top: tooltipStyle.top,
             zIndex: 9999,
-            width: 320,
+            width: 340,
           }}
-          className="animate-in fade-in-0 slide-in-from-top-2 duration-200"
+          className="animate-in fade-in-0 slide-in-from-top-2 duration-150"
         >
           <div 
-            className="absolute -top-2 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-primary/20"
-            style={{
-              left: Math.max(8, Math.min(tooltipPosition.wordCenterX - tooltipPosition.left - 8, 304)),
-            }}
+            className="absolute -top-2 w-0 h-0 border-l-[10px] border-r-[10px] border-b-[10px] border-l-transparent border-r-transparent border-b-card"
+            style={{ left: (tooltipStyle.arrowLeft || 170) - 10 }}
           />
-          <Card className="w-full max-h-96 overflow-y-auto shadow-2xl border-primary/20 bg-background/98 backdrop-blur-md">
-            <div className="p-3">
-              <div className="flex items-start justify-between gap-2 mb-2">
+          <Card className="w-full max-h-[420px] overflow-y-auto shadow-xl border-2 border-primary/30 bg-card">
+            <div className="p-4">
+              <div className="flex items-start justify-between gap-2 mb-3">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4 text-primary" />
                   <span className="font-semibold text-primary text-sm">AI Word Analysis</span>
@@ -204,6 +232,23 @@ export function WordTooltip({
                 >
                   <X className="h-3.5 w-3.5" />
                 </Button>
+              </div>
+
+              <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border">
+                <Globe className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Translate to:</span>
+                <Select value={targetLanguage} onValueChange={handleLanguageChange}>
+                  <SelectTrigger className="h-7 w-[140px] text-xs" data-testid="select-target-language">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TRANSLATION_LANGUAGES.map((lang) => (
+                      <SelectItem key={lang.code} value={lang.code} data-testid={`lang-option-${lang.code}`}>
+                        {lang.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {isLoading && (

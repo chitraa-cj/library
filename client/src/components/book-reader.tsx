@@ -76,7 +76,6 @@ function VerseExplanation({
             <WordTooltip
               content={explanation.content}
               sourceLanguage={languageCode}
-              targetLanguage="english"
               className="inline"
             />
           </div>
@@ -412,7 +411,6 @@ export function BookReader({
                       content={verseText}
                       commentaryContent={commentaryContext}
                       sourceLanguage={selectedCommentaryLanguage || "devanagari"}
-                      targetLanguage="english"
                     />
                   </div>
                   <div className="absolute -right-2 bottom-0 text-2xl text-primary/20 font-serif rotate-180">❝</div>
