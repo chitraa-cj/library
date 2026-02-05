@@ -12,6 +12,8 @@ interface BookReaderProps {
   selectedVerseId: string | null;
   selectedAuthor: string | null;
   selectedCommentaryLanguage: string | null;
+  navigateToVerse?: number | null;
+  onVerseChange?: (verseNumber: number) => void;
 }
 
 function VerseExplanation({ 
@@ -62,7 +64,9 @@ export function BookReader({
   onVerseSelect,
   selectedVerseId,
   selectedAuthor,
-  selectedCommentaryLanguage
+  selectedCommentaryLanguage,
+  navigateToVerse,
+  onVerseChange
 }: BookReaderProps) {
   const [currentPage, setCurrentPage] = useState(0);
 
@@ -73,6 +77,21 @@ export function BookReader({
   useEffect(() => {
     setCurrentPage(0);
   }, [bookId]);
+
+  useEffect(() => {
+    if (navigateToVerse !== null && navigateToVerse !== undefined && book?.verses) {
+      const pageIndex = book.verses.findIndex(v => v.verseNumber === navigateToVerse);
+      if (pageIndex >= 0 && pageIndex !== currentPage) {
+        setCurrentPage(pageIndex);
+      }
+    }
+  }, [navigateToVerse, book?.verses]);
+
+  useEffect(() => {
+    if (onVerseChange && book?.verses && book.verses[currentPage]) {
+      onVerseChange(book.verses[currentPage].verseNumber);
+    }
+  }, [currentPage, book?.verses, onVerseChange]);
 
   useEffect(() => {
     if (book && book.verses && book.verses.length > 0) {

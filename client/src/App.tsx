@@ -22,6 +22,8 @@ function Home() {
   const [showTranslationPanel, setShowTranslationPanel] = useState(false);
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const [selectedCommentaryLanguage, setSelectedCommentaryLanguage] = useState<string | null>(null);
+  const [navigateToVerse, setNavigateToVerse] = useState<number | null>(null);
+  const [currentVerseNumber, setCurrentVerseNumber] = useState<number>(1);
   const isMobile = useIsMobile();
 
   const handleVerseSelect = (verseId: string, content: string) => {
@@ -39,6 +41,16 @@ function Home() {
     setShowTranslationPanel(false);
     setSelectedAuthor(null);
     setSelectedCommentaryLanguage(null);
+    setNavigateToVerse(null);
+    setCurrentVerseNumber(1);
+  };
+
+  const handleSidebarVerseSelect = (verseNumber: number) => {
+    setNavigateToVerse(verseNumber);
+  };
+
+  const handleVerseChange = (verseNumber: number) => {
+    setCurrentVerseNumber(verseNumber);
   };
 
   const sidebarStyle = {
@@ -52,6 +64,8 @@ function Home() {
         <AppSidebar
           selectedBookId={selectedBookId}
           onSelectBook={handleBookSelect}
+          onSelectVerse={handleSidebarVerseSelect}
+          selectedVerseNumber={currentVerseNumber}
         />
         <div className="flex flex-col flex-1 min-w-0">
           <header className="flex items-center justify-between gap-4 px-3 sm:px-4 py-2 sm:py-3 border-b border-primary/20 bg-gradient-to-r from-primary/5 to-transparent backdrop-blur-sm sticky top-0 z-10">
@@ -90,6 +104,8 @@ function Home() {
                   selectedVerseId={selectedVerseId}
                   selectedAuthor={selectedAuthor}
                   selectedCommentaryLanguage={selectedCommentaryLanguage}
+                  navigateToVerse={navigateToVerse}
+                  onVerseChange={handleVerseChange}
                 />
                 <TranslationPanel
                   bookId={selectedBookId}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, BookOpen, Loader2 } from "lucide-react";
+import { Search, BookOpen, Loader2, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -14,35 +14,67 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
   useSidebar,
 } from "@/components/ui/sidebar";
-import type { Book } from "@shared/schema";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import type { Book, Verse } from "@shared/schema";
 
 interface AppSidebarProps {
   selectedBookId: string | null;
   onSelectBook: (bookId: string) => void;
+  onSelectVerse?: (verseNumber: number) => void;
+  selectedVerseNumber?: number;
 }
 
-const categoryIcons: Record<string, string> = {
-  "Upanishad": "sacred-texts",
-  "Bhashya": "commentary",
-  "Sutra": "aphorisms",
-  "default": "scripture"
-};
-
-export function AppSidebar({ selectedBookId, onSelectBook }: AppSidebarProps) {
+export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, selectedVerseNumber }: AppSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [expandedBooks, setExpandedBooks] = useState<Set<string>>(new Set());
   const { isMobile, setOpenMobile } = useSidebar();
 
   const handleBookSelect = (bookId: string) => {
     onSelectBook(bookId);
+    setExpandedBooks(new Set([bookId]));
     if (isMobile) {
       setOpenMobile(false);
     }
   };
 
+  const handleVerseSelect = (bookId: string, verseNumber: number) => {
+    if (selectedBookId !== bookId) {
+      onSelectBook(bookId);
+    }
+    if (onSelectVerse) {
+      onSelectVerse(verseNumber);
+    }
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
+  const toggleBookExpand = (bookId: string) => {
+    const newExpanded = new Set(expandedBooks);
+    if (newExpanded.has(bookId)) {
+      newExpanded.delete(bookId);
+    } else {
+      newExpanded.add(bookId);
+    }
+    setExpandedBooks(newExpanded);
+  };
+
   const { data: books = [], isLoading } = useQuery<Book[]>({
     queryKey: ["/api/books"],
+  });
+
+  const { data: selectedBookData } = useQuery<{ book: Book; verses: Verse[] }>({
+    queryKey: ["/api/books", selectedBookId],
+    enabled: !!selectedBookId,
   });
 
   const filteredBooks = books.filter((book) =>
@@ -104,34 +136,73 @@ export function AppSidebar({ selectedBookId, onSelectBook }: AppSidebarProps) {
                 </SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {categoryBooks.map((book) => (
-                      <SidebarMenuItem key={book.id}>
-                        <SidebarMenuButton
-                          onClick={() => handleBookSelect(book.id)}
-                          className={`mx-2 rounded-md transition-colors ${
-                            selectedBookId === book.id
-                              ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                              : ""
-                          }`}
-                          data-testid={`button-book-${book.id}`}
+                    {categoryBooks.map((book) => {
+                      const isExpanded = expandedBooks.has(book.id) || selectedBookId === book.id;
+                      const verses = selectedBookId === book.id && selectedBookData?.verses ? selectedBookData.verses : [];
+                      
+                      return (
+                        <Collapsible
+                          key={book.id}
+                          open={isExpanded}
+                          onOpenChange={() => toggleBookExpand(book.id)}
                         >
-                          <BookOpen className="h-4 w-4 shrink-0" />
-                          <div className="flex flex-col flex-1 min-w-0">
-                            <span className="font-serif text-sm truncate">{book.title}</span>
-                            {book.author && (
-                              <span className="text-xs text-muted-foreground truncate">
-                                {book.author}
-                              </span>
-                            )}
-                          </div>
-                          {book.totalVerses && book.totalVerses > 0 && (
-                            <Badge variant="secondary" className="ml-auto text-xs">
-                              {book.totalVerses}
-                            </Badge>
-                          )}
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
+                          <SidebarMenuItem>
+                            <CollapsibleTrigger asChild>
+                              <SidebarMenuButton
+                                onClick={() => handleBookSelect(book.id)}
+                                className={`mx-2 rounded-md transition-colors ${
+                                  selectedBookId === book.id
+                                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                                    : ""
+                                }`}
+                                data-testid={`button-book-${book.id}`}
+                              >
+                                <BookOpen className="h-4 w-4 shrink-0" />
+                                <div className="flex flex-col flex-1 min-w-0">
+                                  <span className="font-serif text-sm truncate">{book.title}</span>
+                                  {book.author && (
+                                    <span className="text-xs text-muted-foreground truncate">
+                                      {book.author}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  {book.totalVerses && book.totalVerses > 0 && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      {book.totalVerses}
+                                    </Badge>
+                                  )}
+                                  <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                                </div>
+                              </SidebarMenuButton>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              {selectedBookId === book.id && verses.length > 0 && (
+                                <SidebarMenuSub>
+                                  {verses.map((verse) => (
+                                    <SidebarMenuSubItem key={verse.id}>
+                                      <SidebarMenuSubButton
+                                        onClick={() => handleVerseSelect(book.id, verse.verseNumber)}
+                                        className={`text-xs ${
+                                          selectedVerseNumber === verse.verseNumber
+                                            ? "bg-primary/10 text-primary font-medium"
+                                            : "text-muted-foreground hover:text-foreground"
+                                        }`}
+                                        data-testid={`button-verse-nav-${verse.verseNumber}`}
+                                      >
+                                        <span className="truncate">
+                                          {verse.sectionTitle || `Verse ${verse.verseNumber}`}
+                                        </span>
+                                      </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                  ))}
+                                </SidebarMenuSub>
+                              )}
+                            </CollapsibleContent>
+                          </SidebarMenuItem>
+                        </Collapsible>
+                      );
+                    })}
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
