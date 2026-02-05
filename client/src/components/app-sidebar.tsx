@@ -94,9 +94,9 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
       <SidebarHeader className="p-4 border-b border-primary/30 bg-gradient-to-b from-primary/15 to-primary/5">
         <div className="flex items-center gap-3 mb-4">
           <img 
-            src="https://oneness.org.in/assets/img/ekatma2.png" 
+            src="https://oneness.org.in/assets/img/favicon.png" 
             alt="Ekatma Dham"
-            className="h-12 w-auto"
+            className="h-10 w-10 object-contain"
           />
           <div className="flex flex-col">
             <span className="font-serif font-bold text-base text-primary">Ekatma Dham</span>

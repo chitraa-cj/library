@@ -31,9 +31,9 @@ export function WelcomeScreen() {
       <div className="max-w-2xl text-center space-y-6 sm:space-y-8">
         <div className="space-y-3 sm:space-y-4">
           <img 
-            src="https://oneness.org.in/assets/img/ekatma2.png" 
+            src="https://oneness.org.in/assets/img/favicon.png" 
             alt="Ekatma Dham"
-            className="h-24 sm:h-32 w-auto mx-auto mb-2"
+            className="h-20 sm:h-24 w-20 sm:w-24 object-contain mx-auto mb-2"
           />
           <h1 className="font-serif text-2xl sm:text-4xl font-semibold tracking-tight text-primary">
             Ekatma Dham

@@ -72,9 +72,9 @@ function Home() {
               <SidebarTrigger data-testid="button-sidebar-toggle" />
               <div className="hidden sm:flex items-center gap-2">
                 <img 
-                  src="https://oneness.org.in/assets/img/ekatma2.png" 
+                  src="https://oneness.org.in/assets/img/favicon.png" 
                   alt="Ekatma Dham"
-                  className="h-10 w-auto"
+                  className="h-8 w-8 object-contain"
                 />
                 <div className="flex flex-col">
                   <span className="font-serif text-sm font-bold text-primary">
