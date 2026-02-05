@@ -333,7 +333,7 @@ export function BookReader({
               
               {/* Large Om watermark */}
               <div className="absolute top-4 right-4 text-6xl text-primary/[0.08] font-serif select-none pointer-events-none">ॐ</div>
-              <div className="absolute bottom-4 left-4 text-4xl text-primary/[0.06] font-serif select-none pointer-events-none rotate-180">ॐ</div>
+              <div className="absolute bottom-4 left-4 text-4xl text-primary/[0.06] font-serif select-none pointer-events-none">ॐ</div>
               
               {hasCommentaryOptions && (
                 <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
