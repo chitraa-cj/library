@@ -90,7 +90,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
   }, {} as Record<string, Book[]>);
 
   return (
-    <Sidebar className="border-r border-sidebar-border">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="p-4 border-b border-primary/30 bg-gradient-to-b from-primary/20 via-primary/10 to-transparent">
         <div className="flex items-center gap-3 mb-4">
           <div className="relative">
