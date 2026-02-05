@@ -203,14 +203,14 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
                                     <SidebarMenuSubItem key={verse.id}>
                                       <SidebarMenuSubButton
                                         onClick={() => handleVerseSelect(book.id, verse.verseNumber)}
-                                        className={`text-sm py-2.5 px-3 rounded-md transition-colors h-auto min-h-[2.5rem] ${
+                                        className={`text-sm py-2.5 px-3 rounded-md transition-colors h-auto min-h-[2.5rem] overflow-visible [&>span]:!truncate-none ${
                                           selectedVerseNumber === verse.verseNumber
                                             ? "bg-primary/15 text-primary font-medium border-l-2 border-primary"
                                             : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
                                         }`}
                                         data-testid={`button-verse-nav-${verse.verseNumber}`}
                                       >
-                                        <span className="whitespace-normal leading-snug">
+                                        <span className="whitespace-normal leading-snug text-wrap break-words">
                                           {verse.sectionTitle || `Verse ${verse.verseNumber}`}
                                         </span>
                                       </SidebarMenuSubButton>
