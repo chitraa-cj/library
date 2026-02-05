@@ -199,9 +199,9 @@ export function BookReader({
       <div className="border-b border-border px-4 sm:px-8 py-4 sm:py-5 bg-card/50 shrink-0">
         <div className="max-w-3xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
-            <div className="space-y-1 min-w-0">
-              <div className="flex items-center gap-3">
-                <h1 className="font-serif text-lg sm:text-xl font-semibold tracking-tight truncate">
+            <div className="space-y-1 flex-1">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <h1 className="font-serif text-lg sm:text-xl font-semibold tracking-tight">
                   {book.title}
                 </h1>
                 <Badge variant="secondary" className="shrink-0">
