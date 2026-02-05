@@ -678,12 +678,7 @@ export async function seedDatabase() {
     slug: "isha-upanishad-bhashya",
     title: "Isha Upanishad",
     author: "Sri Shankaracharya",
-    description: `The Isha Upanishad (ईशावास्योपनिषद्) is one of the shortest and most celebrated Upanishads. This text presents Shankaracharya's Bhashya (commentary) on the 18 mantras, providing deep philosophical insights into Advaita Vedanta.
-
-Source: https://advaitasharada.sringeri.net/display/bhashya/Isha/
-
-करतलकलिताद्वयात्मतत्त्वं क्षपितदुरन्तचिरन्तनप्रमोहम् ।
-उपचितमुदितोदितैर्गुणौघैः उपनिषदामयमुज्जहार भाष्यम् ॥`,
+    description: `The Isha Upanishad (ईशावास्योपनिषद्) is one of the shortest and most celebrated Upanishads. This text presents Shankaracharya's Bhashya (commentary) on the 18 mantras, providing deep philosophical insights into Advaita Vedanta.`,
     category: "Upanishad Bhashya",
     coverImage: null,
     totalVerses: MANTRAS.length + 1, // +1 for introduction

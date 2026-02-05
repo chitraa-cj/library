@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { testStrapiConnection, STRAPI_URL } from "./strapi";
+import { translateWord } from "./openai";
+import { translateWordRequestSchema } from "@shared/schema";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -94,6 +96,56 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error testing Strapi connection:", error);
       res.status(500).json({ connected: false, message: "Failed to test connection" });
+    }
+  });
+
+  app.post("/api/translate-word", async (req, res) => {
+    try {
+      const parseResult = translateWordRequestSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ error: "Invalid request", details: parseResult.error.flatten() });
+      }
+
+      const { word, sourceLanguage, targetLanguage, verseContext, commentaryContext } = parseResult.data;
+
+      const cached = await storage.getCachedWordTranslation(word, sourceLanguage, targetLanguage);
+      if (cached) {
+        return res.json({
+          word: cached.word,
+          translation: cached.translation,
+          grammaticalInfo: cached.grammaticalInfo,
+          etymology: cached.etymology,
+          contextualMeaning: cached.contextualMeaning,
+          cached: true,
+        });
+      }
+
+      const result = await translateWord(
+        word,
+        sourceLanguage,
+        targetLanguage,
+        verseContext || "",
+        commentaryContext || ""
+      );
+
+      await storage.cacheWordTranslation({
+        word: result.word,
+        sourceLanguage,
+        targetLanguage,
+        translation: result.translation,
+        grammaticalInfo: result.grammaticalInfo,
+        etymology: result.etymology,
+        contextualMeaning: result.contextualMeaning,
+        verseContext: verseContext || null,
+      });
+
+      res.json({
+        ...result,
+        cached: false,
+      });
+    } catch (error) {
+      console.error("Error translating word:", error);
+      res.status(500).json({ error: "Failed to translate word" });
     }
   });
 

@@ -93,10 +93,36 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
 });
 
+export const wordTranslations = pgTable("word_translations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  word: text("word").notNull(),
+  sourceLanguage: varchar("source_language", { length: 20 }).notNull(),
+  targetLanguage: varchar("target_language", { length: 20 }).notNull(),
+  translation: text("translation").notNull(),
+  grammaticalInfo: text("grammatical_info"),
+  etymology: text("etymology"),
+  contextualMeaning: text("contextual_meaning"),
+  verseContext: text("verse_context"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const translateWordRequestSchema = z.object({
+  word: z.string().min(1).max(100).transform(s => s.trim()),
+  sourceLanguage: z.string().min(1).max(20),
+  targetLanguage: z.string().min(1).max(20),
+  verseContext: z.string().optional().default(""),
+  commentaryContext: z.string().optional().default(""),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
 });
 
+export const insertWordTranslationSchema = createInsertSchema(wordTranslations).omit({ id: true, createdAt: true });
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
+export type InsertWordTranslation = z.infer<typeof insertWordTranslationSchema>;
+export type WordTranslation = typeof wordTranslations.$inferSelect;

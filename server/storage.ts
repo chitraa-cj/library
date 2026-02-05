@@ -7,6 +7,7 @@ import {
   explanations,
   bookTitles,
   languages,
+  wordTranslations,
   type Book,
   type InsertBook,
   type Verse,
@@ -21,6 +22,8 @@ import {
   type InsertLanguage,
   type BookWithDetails,
   type VerseWithTranslations,
+  type WordTranslation,
+  type InsertWordTranslation,
 } from "@shared/schema";
 
 export interface CommentaryOption {
@@ -57,6 +60,9 @@ export interface IStorage {
 
   createBookTitle(bookTitle: InsertBookTitle): Promise<BookTitle>;
   getBookTitlesByBookId(bookId: string): Promise<BookTitle[]>;
+
+  getCachedWordTranslation(word: string, sourceLanguage: string, targetLanguage: string): Promise<WordTranslation | undefined>;
+  cacheWordTranslation(translation: InsertWordTranslation): Promise<WordTranslation>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -220,6 +226,26 @@ export class DatabaseStorage implements IStorage {
 
   async getBookTitlesByBookId(bookId: string): Promise<BookTitle[]> {
     return await db.select().from(bookTitles).where(eq(bookTitles.bookId, bookId));
+  }
+
+  async getCachedWordTranslation(word: string, sourceLanguage: string, targetLanguage: string): Promise<WordTranslation | undefined> {
+    const result = await db
+      .select()
+      .from(wordTranslations)
+      .where(
+        and(
+          eq(wordTranslations.word, word),
+          eq(wordTranslations.sourceLanguage, sourceLanguage),
+          eq(wordTranslations.targetLanguage, targetLanguage)
+        )
+      )
+      .limit(1);
+    return result[0];
+  }
+
+  async cacheWordTranslation(translation: InsertWordTranslation): Promise<WordTranslation> {
+    const result = await db.insert(wordTranslations).values(translation).returning();
+    return result[0];
   }
 }
 

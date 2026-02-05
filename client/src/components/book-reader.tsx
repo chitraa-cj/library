@@ -3,8 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ChevronLeft, ChevronRight, Play, User, Globe } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, Play, User, Globe, Sparkles } from "lucide-react";
 import { VideoPopup } from "@/components/video-popup";
+import { WordTooltip } from "@/components/word-tooltip";
 import {
   Select,
   SelectContent,
@@ -262,6 +263,16 @@ export function BookReader({
     ? getTranslation(currentVerse, selectedCommentaryLanguage) || getOriginalDevanagari(currentVerse)
     : getOriginalDevanagari(currentVerse);
 
+  const getCommentaryContent = (verse: any): string => {
+    if (!selectedAuthor || !selectedCommentaryLanguage) return "";
+    const explanation = verse.explanations?.find(
+      (e: Explanation) => e.authorName === selectedAuthor && e.languageCode === selectedCommentaryLanguage
+    );
+    return explanation?.content || "";
+  };
+
+  const commentaryContext = getCommentaryContent(currentVerse);
+
   return (
     <div 
       className="flex-1 flex flex-col min-w-0 focus:outline-none" 
@@ -388,13 +399,25 @@ export function BookReader({
               <div className="space-y-6">
                 <div className="relative">
                   <div className="absolute -left-2 top-0 text-2xl text-primary/20 font-serif">❝</div>
-                  <p 
-                    className="font-serif text-xl sm:text-2xl leading-relaxed whitespace-pre-wrap break-words text-center px-4"
+                  <div 
+                    className="font-serif text-xl sm:text-2xl leading-relaxed text-center px-4"
                     data-testid={`text-original-${currentVerse.verseNumber}`}
                   >
-                    {verseText}
-                  </p>
+                    <WordTooltip
+                      verseContent={verseText}
+                      commentaryContent={commentaryContext}
+                      sourceLanguage={selectedCommentaryLanguage || "devanagari"}
+                      targetLanguage="english"
+                    />
+                  </div>
                   <div className="absolute -right-2 bottom-0 text-2xl text-primary/20 font-serif rotate-180">❝</div>
+                </div>
+                
+                <div className="flex items-center justify-center">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground/70 bg-muted/30 px-3 py-1.5 rounded-full">
+                    <Sparkles className="h-3 w-3" />
+                    <span>Select any word for AI translation</span>
+                  </div>
                 </div>
 
                 {selectedAuthor && selectedCommentaryLanguage && (

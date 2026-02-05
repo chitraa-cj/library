@@ -42,6 +42,7 @@ waitForPort = 5000
 
 [userenv.shared]
 STRAPI_URL = "https://giving-friendship-116a69f561.strapiapp.com"
+OPENAI_API_KEY = "REDACTED_OPENAI_KEY"
 
 [agent]
 integrations = ["javascript_openai:1.0.0"]

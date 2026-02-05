@@ -37,6 +37,7 @@ Key API endpoints:
 - `GET /api/verses/:id` - Get single verse with translations
 - `GET /api/verses/:id/translations` - Get all translations for a verse
 - `GET /api/verses/:id/explanations` - Get scholarly explanations
+- `POST /api/translate-word` - AI-powered word translation with RAG context (uses OpenAI gpt-4o)
 
 ### Data Model
 The database schema supports multi-language sacred texts:
@@ -46,6 +47,14 @@ The database schema supports multi-language sacred texts:
 - **verses**: Individual verses with section organization
 - **verseTranslations**: Verse content in different languages/scripts
 - **explanations**: Scholar commentaries on verses
+- **wordTranslations**: Cached AI-generated word translations for performance
+
+### AI Word Translation (RAG Feature)
+- **Component**: `WordTooltip` in `client/src/components/word-tooltip.tsx`
+- **Backend**: `server/openai.ts` using OpenAI gpt-4o model
+- **Flow**: User selects text → "Explain" button appears → Click shows AI analysis tooltip
+- **Features**: Translation, grammatical analysis, etymology, contextual meaning based on Shankaracharya's commentary
+- **Caching**: Results cached in `wordTranslations` table to avoid repeated API calls
 
 ### Build System
 - **Development**: Vite dev server with HMR, proxied through Express
