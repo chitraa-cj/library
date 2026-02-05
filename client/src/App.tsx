@@ -13,10 +13,10 @@ import { BookReader } from "@/components/book-reader";
 import { TranslationPanel } from "@/components/translation-panel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { PanelRightClose, PanelRightOpen } from "lucide-react";
+import { PanelRightClose, PanelRightOpen, Home as HomeIcon } from "lucide-react";
 import NotFound from "@/pages/not-found";
 
-function Home() {
+function HomePage() {
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [selectedVerseId, setSelectedVerseId] = useState<string | null>(null);
   const [selectedContent, setSelectedContent] = useState("");
@@ -38,6 +38,17 @@ function Home() {
 
   const handleBookSelect = (bookId: string) => {
     setSelectedBookId(bookId);
+    setSelectedVerseId(null);
+    setSelectedContent("");
+    setShowTranslationPanel(false);
+    setSelectedAuthor(null);
+    setSelectedCommentaryLanguage(null);
+    setNavigateToVerse(null);
+    setCurrentVerseNumber(1);
+  };
+
+  const handleGoHome = () => {
+    setSelectedBookId(null);
     setSelectedVerseId(null);
     setSelectedContent("");
     setShowTranslationPanel(false);
@@ -73,7 +84,18 @@ function Home() {
           <header className="flex items-center justify-between gap-4 px-3 sm:px-4 py-2 sm:py-3 border-b border-primary/25 bg-gradient-to-r from-primary/15 via-primary/8 to-accent/5 backdrop-blur-sm sticky top-0 z-10 shrink-0">
             <div className="flex items-center gap-3">
               <SidebarTrigger data-testid="button-sidebar-toggle" />
-              <div className="hidden sm:flex items-center gap-2">
+              {selectedBookId && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleGoHome}
+                  title="Go to home"
+                  data-testid="button-go-home"
+                >
+                  <HomeIcon className="h-4 w-4" />
+                </Button>
+              )}
+              <div className="hidden sm:flex items-center gap-2 cursor-pointer" onClick={handleGoHome}>
                 <div className="relative">
                   <div className="absolute -inset-0.5 bg-primary/15 rounded-full blur-sm"></div>
                   <img 
@@ -153,7 +175,7 @@ function Home() {
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
+      <Route path="/" component={HomePage} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -27,12 +27,12 @@ const features = [
 
 export function WelcomeScreen() {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 bg-gradient-to-b from-primary/10 via-background to-accent/20 relative overflow-hidden">
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none select-none flex items-center justify-center">
+    <div className="flex-1 flex flex-col items-center p-4 sm:p-8 bg-gradient-to-b from-primary/10 via-background to-accent/20 relative overflow-y-auto">
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none select-none flex items-center justify-center overflow-hidden">
         <span className="text-[40rem] font-serif text-primary">ॐ</span>
       </div>
       
-      <div className="max-w-2xl text-center space-y-6 sm:space-y-8 relative z-10">
+      <div className="max-w-2xl text-center space-y-6 sm:space-y-8 relative z-10 py-8">
         <div className="space-y-3 sm:space-y-4">
           <div className="relative inline-block">
             <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-full blur-xl"></div>
