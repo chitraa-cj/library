@@ -691,11 +691,33 @@ Source: https://advaitasharada.sringeri.net/display/bhashya/Isha/
 
   console.log("Created book:", book.title);
 
+  // Descriptive verse titles based on Shankaracharya's commentary themes
+  const verseTitles: Record<number, string> = {
+    1: "Devotion to Jñāna (Knowledge)",
+    2: "Devotion to Karma (Action)",
+    3: "The Fate of the Self-Slayers",
+    4: "Nature of the Self - Unmoving Yet Swift",
+    5: "The Self - Far and Near",
+    6: "Vision of Unity in All Beings",
+    7: "Freedom from Delusion and Sorrow",
+    8: "Nature of the Supreme Self",
+    9: "Avidyā and Vidyā - A Warning",
+    10: "The Fruits of Knowledge and Ignorance",
+    11: "Combining Vidyā and Avidyā",
+    12: "Worship of the Unmanifest",
+    13: "Sambhūti and Asambhūti",
+    14: "Combining Sambhūti and Vināśa",
+    15: "Prayer to the Sun - The Golden Disc",
+    16: "Prayer to the Sun - O Pūṣan",
+    17: "The Final Prayer - Om Krato",
+    18: "Prayer to Agni - Lead Us"
+  };
+
   for (const mantra of MANTRAS) {
     const verse = await storage.createVerse({
       bookId: book.id,
       verseNumber: mantra.number,
-      sectionTitle: `मन्त्र ${mantra.number}`,
+      sectionTitle: verseTitles[mantra.number] || `Mantra ${mantra.number}`,
     });
 
     await storage.createTranslation({
