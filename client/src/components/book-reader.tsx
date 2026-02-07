@@ -171,7 +171,7 @@ function VerseNotes({ verseId }: { verseId: string }) {
     return (
       <div className="mt-4 pt-4 border-t border-border/40">
         <button
-          onClick={() => { window.location.href = "/api/login"; }}
+          onClick={() => { window.location.href = "/auth"; }}
           className="flex items-center gap-2 mx-auto text-sm text-muted-foreground hover:text-primary transition-colors px-4 py-2 rounded-full border border-border/50 hover:border-primary/30 bg-background/60 backdrop-blur-sm"
           data-testid="button-login-for-notes"
         >

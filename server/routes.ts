@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { testStrapiConnection, STRAPI_URL } from "./strapi";
@@ -6,6 +6,13 @@ import { translateWord } from "./openai";
 import { translateWordRequestSchema } from "@shared/schema";
 import { isAuthenticated } from "./replit_integrations/auth";
 import { z } from "zod";
+
+function getUserId(req: any): string {
+  if (req.session?.emailUserId) {
+    return req.session.emailUserId;
+  }
+  return req.user?.claims?.sub;
+}
 
 export async function registerRoutes(
   httpServer: Server,
@@ -153,7 +160,7 @@ export async function registerRoutes(
 
   app.get("/api/verses/:id/notes", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const notes = await storage.getNotesByVerseAndUser(req.params.id, userId);
       res.json(notes);
     } catch (error) {
@@ -164,7 +171,7 @@ export async function registerRoutes(
 
   app.post("/api/verses/:id/notes", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const schema = z.object({ content: z.string().min(1).max(5000) });
       const { content } = schema.parse(req.body);
       const note = await storage.createNote({
@@ -181,7 +188,7 @@ export async function registerRoutes(
 
   app.patch("/api/notes/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const schema = z.object({ content: z.string().min(1).max(5000) });
       const { content } = schema.parse(req.body);
       const note = await storage.updateNote(req.params.id, userId, content);
@@ -197,7 +204,7 @@ export async function registerRoutes(
 
   app.delete("/api/notes/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = getUserId(req);
       const deleted = await storage.deleteNote(req.params.id, userId);
       if (!deleted) {
         return res.status(404).json({ error: "Note not found" });

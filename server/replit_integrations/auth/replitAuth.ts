@@ -63,6 +63,15 @@ async function upsertUser(claims: any) {
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
   app.use(getSession());
+  app.use((req: any, _res: any, next: any) => {
+    if (req.session && !req.session.regenerate) {
+      req.session.regenerate = (cb: any) => { cb(); };
+    }
+    if (req.session && !req.session.save) {
+      req.session.save = (cb: any) => { cb(); };
+    }
+    next();
+  });
   app.use(passport.initialize());
   app.use(passport.session());
 
@@ -131,9 +140,13 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  if ((req.session as any)?.emailUserId) {
+    return next();
+  }
+
   const user = req.user as any;
 
-  if (!req.isAuthenticated() || !user.expires_at) {
+  if (!req.isAuthenticated() || !user?.expires_at) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 

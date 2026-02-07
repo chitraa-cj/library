@@ -99,6 +99,13 @@ The database schema supports multi-language sacred texts:
 - **@replit/vite-plugin-cartographer**: Development tooling
 - **@replit/vite-plugin-dev-banner**: Development environment indicator
 
+### Authentication
+- **Dual auth**: Supports both Replit OIDC (Google, GitHub, etc.) and email/password registration/login
+- **Email auth**: bcryptjs password hashing, session-based with connect-pg-simple store
+- **Auth page**: `/auth` route with login/register tabs (client/src/pages/auth-page.tsx)
+- **Session compatibility**: Passport v0.6+ polyfill for regenerate/save on session store
+- **Password field**: Added to users table (nullable, only set for email-registered users)
+
 ## Notes
 - **SendGrid Integration**: User dismissed the Replit SendGrid connector and chose to leave email OTP authentication out for now. Can revisit later if needed.
 - **Branding**: Main header uses "Advaita Sharada - Encyclopaedia of Advaita Vedanta". Sidebar still shows "Ekatma Dham - Abode of Oneness" branding with oneness.org.in logo.

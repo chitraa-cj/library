@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -18,6 +18,7 @@ import { PanelRightClose, PanelRightOpen, ChevronRight, LogIn, LogOut } from "lu
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
+import AuthPage from "@/pages/auth-page";
 
 interface VerseBreadcrumb {
   bookTitle: string;
@@ -41,6 +42,7 @@ function HomePage() {
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const [verseBreadcrumb, setVerseBreadcrumb] = useState<VerseBreadcrumb | null>(null);
   const isMobile = useIsMobile();
+  const [, setLocation] = useLocation();
   const { user, isLoading: authLoading, isAuthenticated: isLoggedIn } = useAuth();
 
   const handleVerseSelect = (verseId: string, content: string) => {
@@ -179,7 +181,10 @@ function HomePage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => { window.location.href = "/api/logout"; }}
+                      onClick={async () => {
+                        await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+                        queryClient.setQueryData(["/api/auth/user"], null);
+                      }}
                       title="Log out"
                       data-testid="button-logout"
                     >
@@ -190,7 +195,7 @@ function HomePage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => { window.location.href = "/api/login"; }}
+                    onClick={() => { setLocation("/auth"); }}
                     title="Log in"
                     data-testid="button-login"
                   >
@@ -243,6 +248,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
+      <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
   );
