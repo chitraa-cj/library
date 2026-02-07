@@ -185,12 +185,13 @@ export async function registerRoutes(
   app.post("/api/verses/:id/notes", isAuthenticated, async (req: any, res) => {
     try {
       const userId = getUserId(req);
-      const schema = z.object({ content: z.string().min(1).max(5000) });
-      const { content } = schema.parse(req.body);
+      const schema = z.object({ content: z.string().min(1).max(5000), selectedText: z.string().max(2000).optional() });
+      const { content, selectedText } = schema.parse(req.body);
       const note = await storage.createNote({
         userId,
         verseId: req.params.id,
         content,
+        selectedText: selectedText || null,
       });
       res.status(201).json(note);
     } catch (error) {

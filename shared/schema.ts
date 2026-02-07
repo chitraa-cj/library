@@ -123,6 +123,7 @@ export const notes = pgTable("notes", {
   userId: varchar("user_id").notNull(),
   verseId: varchar("verse_id").notNull().references(() => verses.id),
   content: text("content").notNull(),
+  selectedText: text("selected_text"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

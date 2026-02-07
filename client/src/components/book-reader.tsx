@@ -1,14 +1,11 @@
-import { useState, useEffect, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, Play, User, Globe, Sparkles, MessageSquareText, StickyNote, Pencil, Trash2, Plus, X, Check } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, Globe, Sparkles, MessageSquareText, StickyNote } from "lucide-react";
 import { VideoPopup } from "@/components/video-popup";
 import { WordTooltip } from "@/components/word-tooltip";
-import { useAuth } from "@/hooks/use-auth";
-import { apiRequest } from "@/lib/queryClient";
 import {
   Select,
   SelectContent,
@@ -16,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { BookWithDetails, VerseTranslation, Explanation, Note } from "@shared/schema";
+import type { BookWithDetails, VerseTranslation, Explanation } from "@shared/schema";
 import shankaracharyaImg from "@assets/image_1770455528511.png";
 import rishiImg from "@assets/image_1770455608411.png";
 import meditatingRishiImg from "@assets/image_1770455642043.png";
@@ -53,6 +50,7 @@ interface BookReaderProps {
   navigateToVerse?: number | null;
   onVerseChange?: (verseNumber: number) => void;
   onBreadcrumbChange?: (breadcrumb: VerseBreadcrumb) => void;
+  onAddNoteWithText?: (text: string) => void;
 }
 
 function isShankaracharya(name: string): boolean {
@@ -133,202 +131,6 @@ function VerseExplanation({
   );
 }
 
-function VerseNotes({ verseId }: { verseId: string }) {
-  const { isAuthenticated } = useAuth();
-  const queryClient = useQueryClient();
-  const [newNote, setNewNote] = useState("");
-  const [addingNote, setAddingNote] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState("");
-
-  const { data: verseNotes = [], isLoading } = useQuery<Note[]>({
-    queryKey: ["/api/verses", verseId, "notes"],
-    enabled: isAuthenticated,
-  });
-
-  const createMutation = useMutation({
-    mutationFn: async (content: string) => {
-      const res = await apiRequest("POST", `/api/verses/${verseId}/notes`, { content });
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/verses", verseId, "notes"] });
-      setNewNote("");
-      setAddingNote(false);
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, content }: { id: string; content: string }) => {
-      const res = await apiRequest("PATCH", `/api/notes/${id}`, { content });
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/verses", verseId, "notes"] });
-      setEditingId(null);
-      setEditContent("");
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/notes/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/verses", verseId, "notes"] });
-    },
-  });
-
-  if (!isAuthenticated) {
-    return (
-      <div className="mt-4 pt-4 border-t border-border/40">
-        <button
-          onClick={() => { window.location.href = "/auth"; }}
-          className="flex items-center gap-2 mx-auto text-sm text-muted-foreground hover:text-primary transition-colors px-4 py-2 rounded-full border border-border/50 hover:border-primary/30 bg-background/60 backdrop-blur-sm"
-          data-testid="button-login-for-notes"
-        >
-          <StickyNote className="h-4 w-4" />
-          <span>Log in to add notes</span>
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mt-4 pt-4 border-t border-border/40" data-testid="notes-section">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <StickyNote className="h-4 w-4" />
-          <span>My Notes</span>
-          {verseNotes.length > 0 && (
-            <Badge variant="secondary" className="text-[10px] h-4 px-1.5">{verseNotes.length}</Badge>
-          )}
-        </div>
-        {!addingNote && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setAddingNote(true)}
-            className="h-7 text-xs gap-1"
-            data-testid="button-add-note"
-          >
-            <Plus className="h-3 w-3" />
-            Add
-          </Button>
-        )}
-      </div>
-
-      {addingNote && (
-        <div className="mb-3 space-y-2 animate-in fade-in slide-in-from-top-1 duration-150" data-testid="new-note-form">
-          <Textarea
-            value={newNote}
-            onChange={(e) => setNewNote(e.target.value)}
-            placeholder="Write your note..."
-            className="text-sm min-h-[80px] bg-background/80 border-primary/20 resize-none"
-            data-testid="input-new-note"
-          />
-          <div className="flex items-center justify-end gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => { setAddingNote(false); setNewNote(""); }}
-              className="h-7 text-xs"
-              data-testid="button-cancel-note"
-            >
-              <X className="h-3 w-3 mr-1" />
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => createMutation.mutate(newNote)}
-              disabled={!newNote.trim() || createMutation.isPending}
-              className="h-7 text-xs"
-              data-testid="button-save-note"
-            >
-              <Check className="h-3 w-3 mr-1" />
-              Save
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {isLoading && <Skeleton className="h-16 w-full" />}
-
-      {verseNotes.length > 0 && (
-        <div className="space-y-2">
-          {verseNotes.map((note) => (
-            <div
-              key={note.id}
-              className="group relative rounded-md border border-border/40 bg-background/60 backdrop-blur-sm p-3"
-              data-testid={`note-${note.id}`}
-            >
-              {editingId === note.id ? (
-                <div className="space-y-2">
-                  <Textarea
-                    value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
-                    className="text-sm min-h-[60px] bg-background/80 border-primary/20 resize-none"
-                    data-testid="input-edit-note"
-                  />
-                  <div className="flex items-center justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditingId(null)}
-                      className="h-7 text-xs"
-                      data-testid="button-cancel-edit"
-                    >
-                      <X className="h-3 w-3 mr-1" />
-                      Cancel
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => updateMutation.mutate({ id: note.id, content: editContent })}
-                      disabled={!editContent.trim() || updateMutation.isPending}
-                      className="h-7 text-xs"
-                      data-testid="button-save-edit"
-                    >
-                      <Check className="h-3 w-3 mr-1" />
-                      Save
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <p className="text-sm whitespace-pre-wrap pr-14">{note.content}</p>
-                  <div className="absolute top-2 right-2 flex items-center gap-1 invisible group-hover:visible">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => { setEditingId(note.id); setEditContent(note.content); }}
-                      data-testid={`button-edit-note-${note.id}`}
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 text-destructive"
-                      onClick={() => deleteMutation.mutate(note.id)}
-                      data-testid={`button-delete-note-${note.id}`}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    {note.updatedAt ? new Date(note.updatedAt).toLocaleDateString() : ""}
-                  </p>
-                </>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function BookReader({ 
   bookId, 
   onVerseSelect,
@@ -339,11 +141,50 @@ export function BookReader({
   onLanguageChange,
   navigateToVerse,
   onVerseChange,
-  onBreadcrumbChange
+  onBreadcrumbChange,
+  onAddNoteWithText,
 }: BookReaderProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [initialized, setInitialized] = useState(false);
   const [commentaryExpanded, setCommentaryExpanded] = useState(false);
+  const [selectionPopup, setSelectionPopup] = useState<{ text: string; x: number; y: number } | null>(null);
+
+  const handleTextSelect = useCallback(() => {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed || !selection.toString().trim()) {
+      return;
+    }
+    const text = selection.toString().trim();
+    if (text.length < 2) return;
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    setSelectionPopup({
+      text,
+      x: rect.left + rect.width / 2,
+      y: rect.top - 10,
+    });
+  }, []);
+
+  const handleAddNoteFromSelection = useCallback(() => {
+    if (selectionPopup && onAddNoteWithText) {
+      onAddNoteWithText(selectionPopup.text);
+      window.getSelection()?.removeAllRanges();
+      setSelectionPopup(null);
+    }
+  }, [selectionPopup, onAddNoteWithText]);
+
+  useEffect(() => {
+    const dismiss = () => {
+      setTimeout(() => {
+        const sel = window.getSelection();
+        if (!sel || sel.isCollapsed) {
+          setSelectionPopup(null);
+        }
+      }, 200);
+    };
+    document.addEventListener("mousedown", dismiss);
+    return () => document.removeEventListener("mousedown", dismiss);
+  }, []);
 
   const { data: book, isLoading, error } = useQuery<BookWithDetails>({
     queryKey: ["/api/books", bookId],
@@ -696,10 +537,31 @@ export function BookReader({
         </div>
         
         <div className="flex-1 p-3 sm:p-8 overflow-y-auto relative z-10">
+          {selectionPopup && onAddNoteWithText && (
+            <div
+              className="fixed z-50 animate-in fade-in slide-in-from-bottom-1 duration-150"
+              style={{ left: `${selectionPopup.x}px`, top: `${selectionPopup.y}px`, transform: "translate(-50%, -100%)" }}
+              data-testid="selection-popup"
+            >
+              <Button
+                size="sm"
+                variant="default"
+                className="gap-1.5 text-xs shadow-lg"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={handleAddNoteFromSelection}
+                data-testid="button-annotate-selection"
+              >
+                <StickyNote className="h-3 w-3" />
+                Add Note
+              </Button>
+            </div>
+          )}
           <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl w-full mx-auto">
             <div 
               className="backdrop-blur-md bg-gradient-to-br from-white/70 via-orange-50/50 to-amber-50/40 dark:from-card/80 dark:via-card/70 dark:to-orange-950/30 border border-primary/20 rounded-xl sm:rounded-2xl p-4 sm:p-10 shadow-lg shadow-primary/5 relative overflow-hidden"
               data-testid={`verse-${currentVerse.verseNumber}`}
+              onMouseUp={handleTextSelect}
+              onTouchEnd={handleTextSelect}
             >
               <div className="absolute top-0 left-0 w-12 sm:w-20 h-12 sm:h-20 border-t-2 border-l-2 border-primary/20 rounded-tl-xl sm:rounded-tl-2xl"></div>
               <div className="absolute bottom-0 right-0 w-12 sm:w-20 h-12 sm:h-20 border-b-2 border-r-2 border-primary/20 rounded-br-xl sm:rounded-br-2xl"></div>
@@ -791,7 +653,6 @@ export function BookReader({
                   </div>
                 )}
 
-                <VerseNotes verseId={currentVerse.id} />
               </div>
 
               <div className="flex items-center justify-between mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-border/50">

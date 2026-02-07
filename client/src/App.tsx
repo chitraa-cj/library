@@ -44,6 +44,7 @@ function HomePage() {
   const [currentVerseNumber, setCurrentVerseNumber] = useState<number>(1);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const [verseBreadcrumb, setVerseBreadcrumb] = useState<VerseBreadcrumb | null>(null);
+  const [pendingNoteText, setPendingNoteText] = useState<string | null>(null);
   const [urlInitialized, setUrlInitialized] = useState(false);
   const isMobile = useIsMobile();
   const { user, isLoading: authLoading, isAuthenticated: isLoggedIn } = useAuth();
@@ -268,6 +269,14 @@ function HomePage() {
                   navigateToVerse={navigateToVerse}
                   onVerseChange={handleVerseChange}
                   onBreadcrumbChange={setVerseBreadcrumb}
+                  onAddNoteWithText={(text) => {
+                    setPendingNoteText(text);
+                    if (isMobile) {
+                      setShowTranslationPanel(true);
+                    } else if (rightPanelCollapsed) {
+                      setRightPanelCollapsed(false);
+                    }
+                  }}
                 />
                 <TranslationPanel
                   bookId={selectedBookId}
@@ -281,6 +290,8 @@ function HomePage() {
                   onOpenChange={setShowTranslationPanel}
                   collapsed={rightPanelCollapsed}
                   onCollapsedChange={setRightPanelCollapsed}
+                  pendingNoteText={pendingNoteText}
+                  onPendingNoteTextConsumed={() => setPendingNoteText(null)}
                 />
               </>
             ) : (

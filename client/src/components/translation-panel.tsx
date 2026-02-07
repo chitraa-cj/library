@@ -1,25 +1,14 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Globe, MessageSquare, ChevronDown, User, Loader2, Play, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { Globe, MessageSquare, Play, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { VideoInline } from "@/components/video-popup";
+import { VerseNotes } from "@/components/verse-notes";
 import type { Explanation, VerseTranslation } from "@shared/schema";
 
 interface CommentaryOption {
@@ -45,6 +34,8 @@ interface TranslationPanelProps {
   onOpenChange?: (open: boolean) => void;
   collapsed?: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
+  pendingNoteText?: string | null;
+  onPendingNoteTextConsumed?: () => void;
 }
 
 function PanelContent({
@@ -55,7 +46,9 @@ function PanelContent({
   selectedCommentaryLanguage,
   onAuthorChange,
   onLanguageChange,
-}: Omit<TranslationPanelProps, 'open' | 'onOpenChange'>) {
+  pendingNoteText,
+  onPendingNoteTextConsumed,
+}: Omit<TranslationPanelProps, 'open' | 'onOpenChange' | 'collapsed' | 'onCollapsedChange'>) {
   const [selectedExplanation, setSelectedExplanation] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
 
@@ -147,6 +140,14 @@ function PanelContent({
 
             <Separator />
 
+            <VerseNotes
+              verseId={selectedVerseId}
+              pendingSelectedText={pendingNoteText}
+              onSelectedTextConsumed={onPendingNoteTextConsumed}
+            />
+
+            <Separator />
+
             <div className="space-y-3">
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2" data-testid="heading-panel-explanatory-videos">
                 <Play className="h-3 w-3" />
@@ -188,6 +189,8 @@ export function TranslationPanel({
   onOpenChange,
   collapsed,
   onCollapsedChange,
+  pendingNoteText,
+  onPendingNoteTextConsumed,
 }: TranslationPanelProps) {
   const isMobile = useIsMobile();
 
@@ -217,6 +220,8 @@ export function TranslationPanel({
             selectedCommentaryLanguage={selectedCommentaryLanguage}
             onAuthorChange={onAuthorChange}
             onLanguageChange={onLanguageChange}
+            pendingNoteText={pendingNoteText}
+            onPendingNoteTextConsumed={onPendingNoteTextConsumed}
           />
         </SheetContent>
       </Sheet>
@@ -264,6 +269,8 @@ export function TranslationPanel({
         selectedCommentaryLanguage={selectedCommentaryLanguage}
         onAuthorChange={onAuthorChange}
         onLanguageChange={onLanguageChange}
+        pendingNoteText={pendingNoteText}
+        onPendingNoteTextConsumed={onPendingNoteTextConsumed}
       />
     </div>
   );
