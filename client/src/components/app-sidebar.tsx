@@ -18,6 +18,7 @@ interface CatalogSubCategory {
   id: string;
   label: string;
   categoryMatch?: string;
+  categoryAltMatch?: string;
 }
 
 interface CatalogCategory {
@@ -32,7 +33,7 @@ const CATALOG_TREE: CatalogCategory[] = [
     id: "prasthana-shankaracharya",
     label: "Prasthana Thraya - Shankaracharya Bhashya",
     children: [
-      { id: "pt-shankara-upanishad", label: "Upanishad", categoryMatch: "Upanishad" },
+      { id: "pt-shankara-upanishad", label: "Upanishad", categoryMatch: "Upanishad", categoryAltMatch: "Upanishad Bhashya" },
       { id: "pt-shankara-gita", label: "Bhagavad Gita" },
       { id: "pt-shankara-brahmasutra", label: "Brahma Sutra" },
     ],
@@ -71,11 +72,17 @@ const CATALOG_TREE: CatalogCategory[] = [
   },
 ];
 
+function matchesCategory(matcher: string | undefined, altMatcher: string | undefined, bookCategory: string): boolean {
+  if (matcher && bookCategory === matcher) return true;
+  if (altMatcher && bookCategory === altMatcher) return true;
+  return false;
+}
+
 function findBookPath(book: Book): { categoryId: string; subCategoryId: string | null } | null {
   for (const cat of CATALOG_TREE) {
     if (cat.children) {
       for (const sub of cat.children) {
-        if (sub.categoryMatch && book.category === sub.categoryMatch) {
+        if (matchesCategory(sub.categoryMatch, sub.categoryAltMatch, book.category)) {
           return { categoryId: cat.id, subCategoryId: sub.id };
         }
       }
