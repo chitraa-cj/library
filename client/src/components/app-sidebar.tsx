@@ -1,9 +1,11 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, BookOpen, Loader2, ChevronRight, ChevronDown } from "lucide-react";
+import { Search, BookOpen, Loader2, ChevronRight, ChevronDown, Home, ArrowLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Sidebar,
   SidebarContent,
@@ -31,6 +33,8 @@ interface AppSidebarProps {
   onSelectBook: (bookId: string) => void;
   onSelectVerse?: (verseNumber: number) => void;
   selectedVerseNumber?: number;
+  onGoHome?: () => void;
+  onGoBack?: () => void;
 }
 
 interface AdhyayGroup {
@@ -92,7 +96,7 @@ function buildHierarchy(verses: Verse[]): AdhyayGroup[] {
   return sorted;
 }
 
-export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, selectedVerseNumber }: AppSidebarProps) {
+export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, selectedVerseNumber, onGoHome, onGoBack }: AppSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedBooks, setExpandedBooks] = useState<Set<string>>(new Set());
   const [expandedAdhyays, setExpandedAdhyays] = useState<Set<string>>(new Set());
@@ -175,36 +179,103 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className={`border-b border-primary/30 bg-gradient-to-b from-primary/20 via-primary/10 to-transparent ${isCollapsed ? 'p-2' : 'p-4'}`}>
-        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 mb-4'}`}>
-          <div className="relative">
-            {!isCollapsed && <div className="absolute -inset-1 bg-primary/20 rounded-full blur-md"></div>}
+        {isCollapsed ? (
+          <div className="flex flex-col items-center gap-2">
             <img 
               src="https://oneness.org.in/assets/img/favicon.png" 
               alt="Ekatma Dham"
-              className={`object-contain relative ${isCollapsed ? 'h-8 w-8' : 'h-10 w-10'}`}
+              className="h-8 w-8 object-contain cursor-pointer"
+              onClick={onGoHome}
             />
+            {selectedBookId && onGoBack && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={onGoBack}
+                    data-testid="button-go-back-collapsed"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">Back</TooltipContent>
+              </Tooltip>
+            )}
+            {onGoHome && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={onGoHome}
+                    data-testid="button-go-home-collapsed"
+                  >
+                    <Home className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">Home</TooltipContent>
+              </Tooltip>
+            )}
           </div>
-          {!isCollapsed && (
-            <div className="flex flex-col">
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-primary/50">ॐ</span>
-                <span className="font-serif font-bold text-base text-primary">Ekatma Dham</span>
+        ) : (
+          <>
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <div className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer" onClick={onGoHome}>
+                <div className="relative">
+                  <div className="absolute -inset-1 bg-primary/20 rounded-full blur-md"></div>
+                  <img 
+                    src="https://oneness.org.in/assets/img/favicon.png" 
+                    alt="Ekatma Dham"
+                    className="h-10 w-10 object-contain relative"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-primary/50">ॐ</span>
+                    <span className="font-serif font-bold text-base text-primary">Ekatma Dham</span>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground tracking-widest uppercase">Abode of Oneness</span>
+                </div>
               </div>
-              <span className="text-[10px] text-muted-foreground tracking-widest uppercase">Abode of Oneness</span>
+              <div className="flex items-center gap-1 shrink-0">
+                {selectedBookId && onGoBack && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onGoBack}
+                    title="Go back"
+                    data-testid="button-go-back"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                )}
+                {onGoHome && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onGoHome}
+                    title="Go to home"
+                    data-testid="button-go-home"
+                  >
+                    <Home className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
-          )}
-        </div>
-        {!isCollapsed && (
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search texts..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-              data-testid="input-search-books"
-            />
-          </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search texts..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+                data-testid="input-search-books"
+              />
+            </div>
+          </>
         )}
       </SidebarHeader>
 
