@@ -16,7 +16,7 @@ import {
 import type { BookWithVerseMeta, VerseMeta, VerseTranslation, Explanation, VerseWithTranslations } from "@shared/schema";
 import shankaracharyaImg from "@assets/image_1770455528511.png";
 import rishiImg from "@assets/image_1770455608411.png";
-import meditatingRishiImg from "@assets/image_1770455642043.png";
+import scholarImg from "@assets/image_1770480809898.png";
 
 interface CommentaryOption {
   authorName: string;
@@ -491,10 +491,10 @@ export function BookReader({
             </div>
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <img 
-                src={meditatingRishiImg} 
-                alt="Meditating sage" 
+                src={scholarImg} 
+                alt="Sanskrit scholar" 
                 className="h-14 w-14 object-contain select-none hidden sm:block opacity-80"
-                data-testid="img-meditating-rishi"
+                data-testid="img-scholar"
               />
               <div className="flex flex-col items-end gap-0.5 sm:gap-1 text-xs sm:text-sm text-muted-foreground">
                 {currentNumericLabel && (
