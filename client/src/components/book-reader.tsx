@@ -52,11 +52,13 @@ interface BookReaderProps {
 function VerseExplanation({ 
   verseId, 
   languageCode, 
-  authorName 
+  authorName,
+  showAll 
 }: { 
   verseId: string; 
   languageCode: string;
   authorName: string | null;
+  showAll: boolean;
 }) {
   const { data: explanations, isLoading } = useQuery<Explanation[]>({
     queryKey: ["/api/verses", verseId, "explanations"],
@@ -68,6 +70,7 @@ function VerseExplanation({
 
   const filteredExplanations = explanations?.filter(e => {
     const langMatch = e.languageCode === languageCode;
+    if (showAll) return langMatch;
     const authorMatch = !authorName || e.authorName === authorName;
     return langMatch && authorMatch;
   });
@@ -76,20 +79,39 @@ function VerseExplanation({
     return null;
   }
 
+  const grouped = filteredExplanations.reduce((acc, exp) => {
+    const key = exp.authorName;
+    if (!acc[key]) acc[key] = { authorName: exp.authorName, authorTitle: exp.authorTitle, items: [] };
+    acc[key].items.push(exp);
+    return acc;
+  }, {} as Record<string, { authorName: string; authorTitle: string | null; items: Explanation[] }>);
+
   return (
-    <div className="mt-6 pt-6 border-t border-border/50" data-testid={`explanation-${verseId}`}>
-      {filteredExplanations.map((explanation, idx) => (
-        <div key={idx} className={idx > 0 ? "mt-4 pt-4 border-t border-border/30" : ""}>
-          <p className="text-xs text-muted-foreground mb-3 font-medium">
-            {explanation.authorName} {explanation.authorTitle && `- ${explanation.authorTitle}`}
-          </p>
-          <div className="font-serif text-base leading-relaxed whitespace-pre-wrap break-words text-foreground/90">
-            <WordTooltip
-              content={explanation.content}
-              sourceLanguage={languageCode}
-              className="inline"
-            />
+    <div className="mt-6 space-y-6" data-testid={`explanation-${verseId}`}>
+      {Object.values(grouped).map((group, gIdx) => (
+        <div 
+          key={group.authorName} 
+          className={`${gIdx > 0 ? "pt-5 border-t border-border/40" : ""}`}
+          data-testid={`commentary-group-${group.authorName.toLowerCase().replace(/\s+/g, '-')}`}
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <User className="h-4 w-4 text-primary/70 shrink-0" />
+            <h4 className="text-sm font-semibold text-foreground">{group.authorName}</h4>
+            {group.authorTitle && (
+              <span className="text-xs text-muted-foreground">- {group.authorTitle}</span>
+            )}
           </div>
+          {group.items.map((explanation, idx) => (
+            <div key={idx} className={idx > 0 ? "mt-3 pt-3 border-t border-border/20" : ""}>
+              <div className="font-serif text-base leading-relaxed whitespace-pre-wrap break-words text-foreground/90 pl-6">
+                <WordTooltip
+                  content={explanation.content}
+                  sourceLanguage={languageCode}
+                  className="inline"
+                />
+              </div>
+            </div>
+          ))}
         </div>
       ))}
     </div>
@@ -122,27 +144,30 @@ export function BookReader({
 
   useEffect(() => {
     setInitialized(false);
-  }, [bookId]);
+    onAuthorChange("__all__");
+  }, [bookId, onAuthorChange]);
 
   useEffect(() => {
-    if (commentaryOptions && !initialized && !selectedAuthor) {
-      if (commentaryOptions.authors.length > 0) {
-        const firstAuthor = commentaryOptions.authors[0];
-        onAuthorChange(firstAuthor.authorName);
-        if (firstAuthor.languageCodes.length > 0) {
-          onLanguageChange(firstAuthor.languageCodes[0]);
-        }
+    if (commentaryOptions && !initialized) {
+      onAuthorChange("__all__");
+      if (commentaryOptions.languages.length > 0) {
+        onLanguageChange(commentaryOptions.languages[0].code);
       }
       setInitialized(true);
     }
-  }, [commentaryOptions, initialized, selectedAuthor, onAuthorChange, onLanguageChange]);
+  }, [commentaryOptions, initialized, onAuthorChange, onLanguageChange]);
+
+  const isShowingAll = selectedAuthor === "__all__";
 
   const availableLanguagesForAuthor = useMemo(() => {
-    if (!selectedAuthor || !commentaryOptions) return [];
+    if (!commentaryOptions) return [];
+    if (isShowingAll) {
+      return commentaryOptions.languages;
+    }
     const author = commentaryOptions.authors.find(a => a.authorName === selectedAuthor);
     if (!author) return [];
     return commentaryOptions.languages.filter(l => author.languageCodes.includes(l.code));
-  }, [selectedAuthor, commentaryOptions]);
+  }, [selectedAuthor, commentaryOptions, isShowingAll]);
 
   const availableAuthors = useMemo(() => {
     return commentaryOptions?.authors || [];
@@ -150,10 +175,18 @@ export function BookReader({
 
   const handleAuthorChange = (authorName: string) => {
     onAuthorChange(authorName);
-    const author = commentaryOptions?.authors.find(a => a.authorName === authorName);
-    if (author && author.languageCodes.length > 0) {
-      if (!selectedCommentaryLanguage || !author.languageCodes.includes(selectedCommentaryLanguage)) {
-        onLanguageChange(author.languageCodes[0]);
+    if (authorName === "__all__") {
+      if (commentaryOptions && commentaryOptions.languages.length > 0) {
+        if (!selectedCommentaryLanguage) {
+          onLanguageChange(commentaryOptions.languages[0].code);
+        }
+      }
+    } else {
+      const author = commentaryOptions?.authors.find(a => a.authorName === authorName);
+      if (author && author.languageCodes.length > 0) {
+        if (!selectedCommentaryLanguage || !author.languageCodes.includes(selectedCommentaryLanguage)) {
+          onLanguageChange(author.languageCodes[0]);
+        }
       }
     }
   };
@@ -446,7 +479,7 @@ export function BookReader({
                           <div className="flex items-center gap-2">
                             <User className="h-4 w-4 text-muted-foreground shrink-0" />
                             <Select
-                              value={selectedAuthor || ""}
+                              value={selectedAuthor || "__all__"}
                               onValueChange={handleAuthorChange}
                             >
                               <SelectTrigger 
@@ -456,6 +489,12 @@ export function BookReader({
                                 <SelectValue placeholder="Select Author" />
                               </SelectTrigger>
                               <SelectContent>
+                                <SelectItem 
+                                  value="__all__"
+                                  data-testid="option-author-all"
+                                >
+                                  All Commentators
+                                </SelectItem>
                                 {availableAuthors.map((author) => (
                                   <SelectItem 
                                     key={author.authorName} 
@@ -497,11 +536,12 @@ export function BookReader({
                           </div>
                         </div>
 
-                        {selectedAuthor && selectedCommentaryLanguage && (
+                        {selectedCommentaryLanguage && (
                           <VerseExplanation 
                             verseId={currentVerse.id} 
                             languageCode={selectedCommentaryLanguage}
-                            authorName={selectedAuthor}
+                            authorName={isShowingAll ? null : selectedAuthor}
+                            showAll={isShowingAll}
                           />
                         )}
                       </div>

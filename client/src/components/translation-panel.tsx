@@ -72,21 +72,20 @@ function PanelContent({
     setInitialized(false);
   }, [bookId]);
 
+  const isShowingAll = selectedAuthor === "__all__";
+
   useEffect(() => {
     if (commentaryOptions && !initialized && !selectedAuthor) {
-      if (commentaryOptions.authors.length > 0) {
-        const firstAuthor = commentaryOptions.authors[0];
-        onAuthorChange(firstAuthor.authorName);
-        if (firstAuthor.languageCodes.length > 0) {
-          onLanguageChange(firstAuthor.languageCodes[0]);
-        }
+      onAuthorChange("__all__");
+      if (commentaryOptions.languages.length > 0) {
+        onLanguageChange(commentaryOptions.languages[0].code);
       }
       setInitialized(true);
     }
   }, [commentaryOptions, initialized, selectedAuthor, onAuthorChange, onLanguageChange]);
 
   useEffect(() => {
-    if (selectedAuthor && commentaryOptions && initialized) {
+    if (selectedAuthor && selectedAuthor !== "__all__" && commentaryOptions && initialized) {
       const author = commentaryOptions.authors.find(a => a.authorName === selectedAuthor);
       if (author && author.languageCodes.length > 0) {
         if (!selectedCommentaryLanguage || !author.languageCodes.includes(selectedCommentaryLanguage)) {
@@ -97,11 +96,13 @@ function PanelContent({
   }, [selectedAuthor, commentaryOptions, selectedCommentaryLanguage, initialized, onLanguageChange]);
 
   const availableLanguagesForAuthor = useMemo(() => {
-    if (!selectedAuthor || !commentaryOptions) return [];
+    if (!commentaryOptions) return [];
+    if (isShowingAll) return commentaryOptions.languages;
+    if (!selectedAuthor) return [];
     const author = commentaryOptions.authors.find(a => a.authorName === selectedAuthor);
     if (!author) return [];
     return commentaryOptions.languages.filter(l => author.languageCodes.includes(l.code));
-  }, [selectedAuthor, commentaryOptions]);
+  }, [selectedAuthor, commentaryOptions, isShowingAll]);
 
   const availableAuthors = useMemo(() => {
     return commentaryOptions?.authors || [];
@@ -122,7 +123,7 @@ function PanelContent({
   };
 
   const filteredExplanations = explanations.filter(
-    (e) => e.languageCode === selectedCommentaryLanguage && e.authorName === selectedAuthor
+    (e) => e.languageCode === selectedCommentaryLanguage && (isShowingAll || e.authorName === selectedAuthor)
   );
 
   const hasCommentaryOptions = commentaryOptions && 
