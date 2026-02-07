@@ -527,7 +527,7 @@ export function BookReader({
             </div>
           </div>
           {book.description && (
-            <p className="text-[11px] sm:text-sm text-muted-foreground mt-2 sm:mt-3 leading-relaxed line-clamp-1 sm:line-clamp-3">
+            <p className="text-[11px] sm:text-sm text-muted-foreground mt-2 sm:mt-3 leading-relaxed">
               {book.description}
             </p>
           )}
