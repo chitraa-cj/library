@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import type { BookWithVerseMeta, VerseMeta, VerseTranslation, Explanation, VerseWithTranslations } from "@shared/schema";
 import shankaracharyaImg from "@assets/image_1770455528511.png";
-import rishiImg from "@assets/image_1770455608411.png";
+import meditatingRishiImg from "@assets/image_1770480897044.png";
 import scholarImg from "@assets/image_1770480809898.png";
 
 interface CommentaryOption {
@@ -656,8 +656,8 @@ export function BookReader({
                     <div className="absolute -right-1 sm:-right-2 bottom-0 text-xl sm:text-2xl text-primary/20 font-serif rotate-180">❝</div>
                   </div>
                   <img 
-                    src={rishiImg} 
-                    alt="Rishi reading scripture" 
+                    src={meditatingRishiImg} 
+                    alt="Meditating rishi" 
                     className="w-28 shrink-0 opacity-80 select-none pointer-events-none hidden sm:block"
                     data-testid="img-rishi"
                   />
