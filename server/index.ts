@@ -4,8 +4,7 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import { seedDatabase, seedAdditionalCommentaries, updateIncompleteShankaraExplanations, seedEnglishVerseTranslations, updateVerseSectionTitles, updateIshaUpanishadHierarchy } from "./seed";
 import { seedBhagavadGita } from "./seed-gita";
-import { seedWordMeanings } from "./seed-word-meanings";
-import { seedGroupedWordMeanings } from "./seed-word-meanings-grouped";
+import { seedWordMeaningsFromFile } from "./seed-word-meanings-local";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 
 const app = express();
@@ -113,8 +112,7 @@ async function runSeedOperations() {
     await updateVerseSectionTitles().catch(console.error);
     await updateIshaUpanishadHierarchy().catch(console.error);
     await seedBhagavadGita().catch(console.error);
-    await seedWordMeanings().catch(console.error);
-    await seedGroupedWordMeanings().catch(console.error);
+    await seedWordMeaningsFromFile().catch(console.error);
     log("All seed operations completed");
   } catch (err) {
     console.error("Seed operations failed:", err);
