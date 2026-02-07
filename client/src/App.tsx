@@ -14,7 +14,7 @@ import { TranslationPanel } from "@/components/translation-panel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PanelRightClose, PanelRightOpen, ChevronRight, LogIn, LogOut } from "lucide-react";
+import { ChevronRight, LogIn, LogOut } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
@@ -153,21 +153,6 @@ function HomePage() {
               )}
             </div>
             <div className="flex items-center gap-2">
-              {selectedBookId && !isMobile && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setRightPanelCollapsed(!rightPanelCollapsed)}
-                  title={rightPanelCollapsed ? "Show commentary panel" : "Hide commentary panel"}
-                  data-testid="button-toggle-right-panel"
-                >
-                  {rightPanelCollapsed ? (
-                    <PanelRightOpen className="h-4 w-4" />
-                  ) : (
-                    <PanelRightClose className="h-4 w-4" />
-                  )}
-                </Button>
-              )}
               <ThemeToggle />
               {!authLoading && (
                 isLoggedIn && user ? (

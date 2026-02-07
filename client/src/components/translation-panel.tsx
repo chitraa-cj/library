@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Globe, MessageSquare, ChevronDown, User, Loader2, Play } from "lucide-react";
+import { Globe, MessageSquare, ChevronDown, User, Loader2, Play, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -223,14 +223,39 @@ export function TranslationPanel({
     );
   }
 
-  // Desktop: collapsible panel
   if (collapsed) {
-    return null;
+    return (
+      <div className="border-l border-border bg-card/30 flex flex-col items-center py-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onCollapsedChange?.(false)}
+          title="Show commentary panel"
+          data-testid="button-toggle-right-panel"
+        >
+          <PanelRightOpen className="h-4 w-4" />
+        </Button>
+      </div>
+    );
   }
 
   return (
     <div className="w-80 border-l border-border bg-card/30 flex flex-col transition-all duration-300">
-      {header}
+      <div className="p-2 flex items-center justify-between border-b border-border">
+        <h2 className="font-medium text-sm flex items-center gap-2 px-2">
+          <Globe className="h-4 w-4" />
+          Commentary & Insight
+        </h2>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onCollapsedChange?.(true)}
+          title="Hide commentary panel"
+          data-testid="button-toggle-right-panel"
+        >
+          <PanelRightClose className="h-4 w-4" />
+        </Button>
+      </div>
       <PanelContent
         bookId={bookId}
         selectedVerseId={selectedVerseId}
