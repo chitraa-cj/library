@@ -45,4 +45,4 @@ STRAPI_URL = "https://giving-friendship-116a69f561.strapiapp.com"
 OPENAI_API_KEY = "REDACTED_OPENAI_KEY"
 
 [agent]
-integrations = ["javascript_openai:1.0.0"]
+integrations = ["javascript_openai:1.0.0", "javascript_log_in_with_replit:2.0.0"]

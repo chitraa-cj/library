@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { seedDatabase, seedAdditionalCommentaries, updateIncompleteShankaraExplanations, seedEnglishVerseTranslations, updateVerseSectionTitles } from "./seed";
+import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 
 const app = express();
 const httpServer = createServer(app);
@@ -66,6 +67,8 @@ app.use((req, res, next) => {
   await updateIncompleteShankaraExplanations().catch(console.error);
   await seedEnglishVerseTranslations().catch(console.error);
   await updateVerseSectionTitles().catch(console.error);
+  await setupAuth(app);
+  registerAuthRoutes(app);
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {

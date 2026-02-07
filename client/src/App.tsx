@@ -14,7 +14,9 @@ import { TranslationPanel } from "@/components/translation-panel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PanelRightClose, PanelRightOpen, ChevronRight } from "lucide-react";
+import { PanelRightClose, PanelRightOpen, ChevronRight, LogIn, LogOut } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
 
 interface VerseBreadcrumb {
@@ -39,6 +41,7 @@ function HomePage() {
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const [verseBreadcrumb, setVerseBreadcrumb] = useState<VerseBreadcrumb | null>(null);
   const isMobile = useIsMobile();
+  const { user, isLoading: authLoading, isAuthenticated: isLoggedIn } = useAuth();
 
   const handleVerseSelect = (verseId: string, content: string) => {
     setSelectedVerseId(verseId);
@@ -164,6 +167,37 @@ function HomePage() {
                 </Button>
               )}
               <ThemeToggle />
+              {!authLoading && (
+                isLoggedIn && user ? (
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-7 w-7">
+                      <AvatarImage src={user.profileImageUrl ?? undefined} alt={user.firstName ?? "User"} />
+                      <AvatarFallback className="text-xs">
+                        {(user.firstName?.[0] ?? "") + (user.lastName?.[0] ?? "")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => { window.location.href = "/api/logout"; }}
+                      title="Log out"
+                      data-testid="button-logout"
+                    >
+                      <LogOut className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => { window.location.href = "/api/login"; }}
+                    title="Log in"
+                    data-testid="button-login"
+                  >
+                    <LogIn className="h-4 w-4" />
+                  </Button>
+                )
+              )}
             </div>
           </header>
           <main className="flex flex-1 min-h-0 overflow-hidden">

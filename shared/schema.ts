@@ -91,11 +91,6 @@ export interface BookWithDetails extends Book {
   verses: VerseWithTranslations[];
 }
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-});
 
 export const wordTranslations = pgTable("word_translations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -118,15 +113,9 @@ export const translateWordRequestSchema = z.object({
   commentaryContext: z.string().optional().default(""),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-});
-
 export const insertWordTranslationSchema = createInsertSchema(wordTranslations).omit({ id: true, createdAt: true });
-
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
 
 export type InsertWordTranslation = z.infer<typeof insertWordTranslationSchema>;
 export type WordTranslation = typeof wordTranslations.$inferSelect;
+
+export * from "./models/auth";
