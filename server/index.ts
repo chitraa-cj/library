@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { seedDatabase, seedAdditionalCommentaries, updateIncompleteShankaraExplanations, seedEnglishVerseTranslations, updateVerseSectionTitles } from "./seed";
+// Gita seeding runs separately via: npx tsx server/run-seed-gita.ts
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 
 const app = express();
