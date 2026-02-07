@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ChevronLeft, ChevronRight, Play, User, Globe, Sparkles } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, Play, User, Globe, Sparkles, MessageSquareText } from "lucide-react";
 import { VideoPopup } from "@/components/video-popup";
 import { WordTooltip } from "@/components/word-tooltip";
 import {
@@ -110,6 +110,7 @@ export function BookReader({
 }: BookReaderProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [initialized, setInitialized] = useState(false);
+  const [commentaryExpanded, setCommentaryExpanded] = useState(false);
 
   const { data: book, isLoading, error } = useQuery<BookWithDetails>({
     queryKey: ["/api/books", bookId],
@@ -393,63 +394,6 @@ export function BookReader({
               <div className="absolute top-4 right-4 text-6xl text-primary/[0.08] font-serif select-none pointer-events-none">ॐ</div>
               <div className="absolute bottom-4 left-4 text-4xl text-primary/[0.06] font-serif select-none pointer-events-none">ॐ</div>
               
-              {hasCommentaryOptions && (
-                <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <Select
-                      value={selectedAuthor || ""}
-                      onValueChange={handleAuthorChange}
-                    >
-                      <SelectTrigger 
-                        className="w-[180px] h-8 text-xs bg-background/80 backdrop-blur-sm border-primary/20" 
-                        data-testid="select-author"
-                      >
-                        <SelectValue placeholder="Select Author" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableAuthors.map((author) => (
-                          <SelectItem 
-                            key={author.authorName} 
-                            value={author.authorName}
-                            data-testid={`option-author-${author.authorName.toLowerCase().replace(/\s+/g, '-')}`}
-                          >
-                            {author.authorName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <Select
-                      value={selectedCommentaryLanguage || ""}
-                      onValueChange={handleLanguageChange}
-                      disabled={availableLanguagesForAuthor.length === 0}
-                    >
-                      <SelectTrigger 
-                        className="w-[140px] h-8 text-xs bg-background/80 backdrop-blur-sm border-primary/20" 
-                        data-testid="select-commentary-language"
-                      >
-                        <SelectValue placeholder="Language" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableLanguagesForAuthor.map((lang) => (
-                          <SelectItem 
-                            key={lang.code} 
-                            value={lang.code}
-                            data-testid={`option-lang-${lang.code}`}
-                          >
-                            {lang.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              )}
-
               <div className="flex items-center justify-center gap-3 mb-6">
                 <span className="text-primary/40">॥</span>
                 <span className="text-sm font-medium text-primary bg-gradient-to-r from-primary/15 to-primary/10 px-4 py-1.5 rounded-full border border-primary/20 flex items-center gap-2">
@@ -484,12 +428,85 @@ export function BookReader({
                   </div>
                 </div>
 
-                {selectedAuthor && selectedCommentaryLanguage && (
-                  <VerseExplanation 
-                    verseId={currentVerse.id} 
-                    languageCode={selectedCommentaryLanguage}
-                    authorName={selectedAuthor}
-                  />
+                {hasCommentaryOptions && (
+                  <div className="mt-2">
+                    <button
+                      onClick={() => setCommentaryExpanded(!commentaryExpanded)}
+                      className="flex items-center gap-2 mx-auto text-sm text-muted-foreground hover:text-primary transition-colors px-4 py-2 rounded-full border border-border/50 hover:border-primary/30 bg-background/60 backdrop-blur-sm"
+                      data-testid="button-toggle-commentary"
+                    >
+                      <MessageSquareText className="h-4 w-4" />
+                      <span>{commentaryExpanded ? "Hide Commentary" : "Show Commentary"}</span>
+                      <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${commentaryExpanded ? "rotate-180" : ""}`} />
+                    </button>
+
+                    {commentaryExpanded && (
+                      <div className="mt-4 pt-4 border-t border-border/40 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="flex flex-wrap items-center justify-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <Select
+                              value={selectedAuthor || ""}
+                              onValueChange={handleAuthorChange}
+                            >
+                              <SelectTrigger 
+                                className="w-[180px] h-8 text-xs bg-background/80 backdrop-blur-sm border-primary/20" 
+                                data-testid="select-author"
+                              >
+                                <SelectValue placeholder="Select Author" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableAuthors.map((author) => (
+                                  <SelectItem 
+                                    key={author.authorName} 
+                                    value={author.authorName}
+                                    data-testid={`option-author-${author.authorName.toLowerCase().replace(/\s+/g, '-')}`}
+                                  >
+                                    {author.authorName}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <Select
+                              value={selectedCommentaryLanguage || ""}
+                              onValueChange={handleLanguageChange}
+                              disabled={availableLanguagesForAuthor.length === 0}
+                            >
+                              <SelectTrigger 
+                                className="w-[140px] h-8 text-xs bg-background/80 backdrop-blur-sm border-primary/20" 
+                                data-testid="select-commentary-language"
+                              >
+                                <SelectValue placeholder="Language" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableLanguagesForAuthor.map((lang) => (
+                                  <SelectItem 
+                                    key={lang.code} 
+                                    value={lang.code}
+                                    data-testid={`option-lang-${lang.code}`}
+                                  >
+                                    {lang.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        {selectedAuthor && selectedCommentaryLanguage && (
+                          <VerseExplanation 
+                            verseId={currentVerse.id} 
+                            languageCode={selectedCommentaryLanguage}
+                            authorName={selectedAuthor}
+                          />
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
 
