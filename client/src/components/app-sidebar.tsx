@@ -34,7 +34,7 @@ const CATALOG_TREE: CatalogCategory[] = [
     label: "Prasthana Thraya - Shankaracharya Bhashya",
     children: [
       { id: "pt-shankara-upanishad", label: "Upanishad", categoryMatch: "Upanishad", categoryAltMatch: "Upanishad Bhashya" },
-      { id: "pt-shankara-gita", label: "Bhagavad Gita" },
+      { id: "pt-shankara-gita", label: "Bhagavad Gita", categoryMatch: "Gita" },
       { id: "pt-shankara-brahmasutra", label: "Brahma Sutra" },
     ],
   },
