@@ -27,6 +27,10 @@ export const verses = pgTable("verses", {
   bookId: varchar("book_id").notNull().references(() => books.id),
   verseNumber: integer("verse_number").notNull(),
   sectionTitle: text("section_title"),
+  adhyayNumber: integer("adhyay_number"),
+  adhyayTitle: text("adhyay_title"),
+  khandaNumber: integer("khanda_number"),
+  khandaTitle: text("khanda_title"),
 });
 
 export const verseTranslations = pgTable("verse_translations", {

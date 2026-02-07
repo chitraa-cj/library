@@ -13,8 +13,19 @@ import { BookReader } from "@/components/book-reader";
 import { TranslationPanel } from "@/components/translation-panel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { PanelRightClose, PanelRightOpen, Home as HomeIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { PanelRightClose, PanelRightOpen, Home as HomeIcon, ChevronRight } from "lucide-react";
 import NotFound from "@/pages/not-found";
+
+interface VerseBreadcrumb {
+  bookTitle: string;
+  adhyayNumber: number | null;
+  adhyayTitle: string | null;
+  khandaNumber: number | null;
+  khandaTitle: string | null;
+  verseLabel: string;
+  numericLabel: string;
+}
 
 function HomePage() {
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
@@ -26,6 +37,7 @@ function HomePage() {
   const [navigateToVerse, setNavigateToVerse] = useState<number | null>(null);
   const [currentVerseNumber, setCurrentVerseNumber] = useState<number>(1);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
+  const [verseBreadcrumb, setVerseBreadcrumb] = useState<VerseBreadcrumb | null>(null);
   const isMobile = useIsMobile();
 
   const handleVerseSelect = (verseId: string, content: string) => {
@@ -45,6 +57,7 @@ function HomePage() {
     setSelectedCommentaryLanguage(null);
     setNavigateToVerse(null);
     setCurrentVerseNumber(1);
+    setVerseBreadcrumb(null);
   };
 
   const handleGoHome = () => {
@@ -56,6 +69,7 @@ function HomePage() {
     setSelectedCommentaryLanguage(null);
     setNavigateToVerse(null);
     setCurrentVerseNumber(1);
+    setVerseBreadcrumb(null);
   };
 
   const handleSidebarVerseSelect = (verseNumber: number) => {
@@ -82,7 +96,7 @@ function HomePage() {
         />
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
           <header className="flex items-center justify-between gap-4 px-3 sm:px-4 py-2 sm:py-3 border-b border-primary/25 bg-gradient-to-r from-primary/15 via-primary/8 to-accent/5 backdrop-blur-sm sticky top-0 z-10 shrink-0">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               <SidebarTrigger data-testid="button-sidebar-toggle" />
               {selectedBookId && (
                 <Button
@@ -95,27 +109,52 @@ function HomePage() {
                   <HomeIcon className="h-4 w-4" />
                 </Button>
               )}
-              <div className="hidden sm:flex items-center gap-2 cursor-pointer" onClick={handleGoHome}>
-                <div className="relative">
-                  <div className="absolute -inset-0.5 bg-primary/15 rounded-full blur-sm"></div>
-                  <img 
-                    src="https://oneness.org.in/assets/img/favicon.png" 
-                    alt="Ekatma Dham"
-                    className="h-8 w-8 object-contain relative"
-                  />
+              {selectedBookId && verseBreadcrumb ? (
+                <div className="flex items-center gap-1.5 min-w-0 overflow-hidden" data-testid="breadcrumb-nav">
+                  <Badge variant="secondary" className="font-mono text-[11px] px-2 h-5 shrink-0" data-testid="text-numeric-label">
+                    {verseBreadcrumb.numericLabel}
+                  </Badge>
+                  <div className="hidden md:flex items-center gap-1 min-w-0 text-xs text-muted-foreground overflow-hidden">
+                    <span className="truncate max-w-[100px] font-medium text-foreground/70">{verseBreadcrumb.bookTitle}</span>
+                    {verseBreadcrumb.adhyayTitle && (
+                      <>
+                        <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+                        <span className="truncate max-w-[120px]">{verseBreadcrumb.adhyayTitle}</span>
+                      </>
+                    )}
+                    {verseBreadcrumb.khandaTitle && (
+                      <>
+                        <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+                        <span className="truncate max-w-[120px]">{verseBreadcrumb.khandaTitle}</span>
+                      </>
+                    )}
+                    <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+                    <span className="truncate max-w-[140px] text-foreground/80 font-medium">{verseBreadcrumb.verseLabel}</span>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-primary/50">ॐ</span>
-                    <span className="font-serif text-sm font-bold text-primary">
-                      Ekatma Dham
+              ) : (
+                <div className="hidden sm:flex items-center gap-2 cursor-pointer" onClick={handleGoHome}>
+                  <div className="relative">
+                    <div className="absolute -inset-0.5 bg-primary/15 rounded-full blur-sm"></div>
+                    <img 
+                      src="https://oneness.org.in/assets/img/favicon.png" 
+                      alt="Ekatma Dham"
+                      className="h-8 w-8 object-contain relative"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-primary/50">ॐ</span>
+                      <span className="font-serif text-sm font-bold text-primary">
+                        Ekatma Dham
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground tracking-wide">
+                      ABODE OF ONENESS
                     </span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground tracking-wide">
-                    ABODE OF ONENESS
-                  </span>
                 </div>
-              </div>
+              )}
             </div>
             <div className="flex items-center gap-2">
               {selectedBookId && !isMobile && (
@@ -149,6 +188,7 @@ function HomePage() {
                   onLanguageChange={setSelectedCommentaryLanguage}
                   navigateToVerse={navigateToVerse}
                   onVerseChange={handleVerseChange}
+                  onBreadcrumbChange={setVerseBreadcrumb}
                 />
                 <TranslationPanel
                   bookId={selectedBookId}

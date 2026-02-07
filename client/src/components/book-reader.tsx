@@ -26,6 +26,16 @@ interface CommentaryOptions {
   languages: { code: string; name: string }[];
 }
 
+interface VerseBreadcrumb {
+  bookTitle: string;
+  adhyayNumber: number | null;
+  adhyayTitle: string | null;
+  khandaNumber: number | null;
+  khandaTitle: string | null;
+  verseLabel: string;
+  numericLabel: string;
+}
+
 interface BookReaderProps {
   bookId: string;
   onVerseSelect: (verseId: string, content: string) => void;
@@ -36,6 +46,7 @@ interface BookReaderProps {
   onLanguageChange: (lang: string | null) => void;
   navigateToVerse?: number | null;
   onVerseChange?: (verseNumber: number) => void;
+  onBreadcrumbChange?: (breadcrumb: VerseBreadcrumb) => void;
 }
 
 function VerseExplanation({ 
@@ -94,7 +105,8 @@ export function BookReader({
   onAuthorChange,
   onLanguageChange,
   navigateToVerse,
-  onVerseChange
+  onVerseChange,
+  onBreadcrumbChange
 }: BookReaderProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [initialized, setInitialized] = useState(false);
@@ -152,6 +164,20 @@ export function BookReader({
   const hasCommentaryOptions = commentaryOptions && 
     (commentaryOptions.authors.length > 0 || commentaryOptions.languages.length > 0);
 
+  const verses = book?.verses || [];
+  const currentVerse = verses[currentPage] || null;
+
+  const currentNumericLabel = useMemo(() => {
+    if (!currentVerse || currentVerse.adhyayNumber == null || currentVerse.khandaNumber == null) {
+      return null;
+    }
+    const khandaVerses = verses
+      .filter((v) => v.adhyayNumber === currentVerse.adhyayNumber && v.khandaNumber === currentVerse.khandaNumber)
+      .sort((a, b) => a.verseNumber - b.verseNumber);
+    const idx = khandaVerses.findIndex((v) => v.id === currentVerse.id);
+    return `${currentVerse.adhyayNumber}.${currentVerse.khandaNumber}.${idx >= 0 ? idx + 1 : 1}`;
+  }, [currentVerse, verses]);
+
   useEffect(() => {
     setCurrentPage(0);
   }, [bookId]);
@@ -170,6 +196,35 @@ export function BookReader({
       onVerseChange(book.verses[currentPage].verseNumber);
     }
   }, [currentPage, book?.verses, onVerseChange]);
+
+  useEffect(() => {
+    if (onBreadcrumbChange && book?.verses && book.verses[currentPage]) {
+      const verse = book.verses[currentPage];
+      const adhyayNum = verse.adhyayNumber;
+      const khandaNum = verse.khandaNumber;
+
+      let numericLabel: string;
+      if (adhyayNum != null && khandaNum != null) {
+        const khandaVerses = book.verses
+          .filter((v) => v.adhyayNumber === adhyayNum && v.khandaNumber === khandaNum)
+          .sort((a, b) => a.verseNumber - b.verseNumber);
+        const idx = khandaVerses.findIndex((v) => v.id === verse.id);
+        numericLabel = `${adhyayNum}.${khandaNum}.${idx >= 0 ? idx + 1 : 1}`;
+      } else {
+        numericLabel = `${verse.verseNumber}`;
+      }
+
+      onBreadcrumbChange({
+        bookTitle: book.title,
+        adhyayNumber: adhyayNum ?? null,
+        adhyayTitle: verse.adhyayTitle || null,
+        khandaNumber: khandaNum ?? null,
+        khandaTitle: verse.khandaTitle || null,
+        verseLabel: verse.sectionTitle || `Mantra ${verse.verseNumber}`,
+        numericLabel,
+      });
+    }
+  }, [currentPage, book, onBreadcrumbChange]);
 
   useEffect(() => {
     if (book && book.verses && book.verses.length > 0) {
@@ -215,9 +270,7 @@ export function BookReader({
     );
   }
 
-  const verses = book.verses || [];
   const totalPages = verses.length;
-  const currentVerse = verses[currentPage];
 
   const getTranslation = (verse: any, langCode: string): string => {
     const translation = verse.translations?.find(
@@ -300,7 +353,12 @@ export function BookReader({
               )}
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground shrink-0">
-              <span>Verse {currentPage + 1} of {totalPages}</span>
+              {currentNumericLabel && (
+                <Badge variant="outline" className="font-mono text-[11px] px-2 h-5 border-muted-foreground/30" data-testid="text-header-numeric">
+                  {currentNumericLabel}
+                </Badge>
+              )}
+              <span>{currentPage + 1} / {totalPages}</span>
             </div>
           </div>
           {book.description && (
@@ -394,7 +452,10 @@ export function BookReader({
 
               <div className="flex items-center justify-center gap-3 mb-6">
                 <span className="text-primary/40">॥</span>
-                <span className="text-sm font-medium text-primary bg-gradient-to-r from-primary/15 to-primary/10 px-4 py-1.5 rounded-full border border-primary/20">
+                <span className="text-sm font-medium text-primary bg-gradient-to-r from-primary/15 to-primary/10 px-4 py-1.5 rounded-full border border-primary/20 flex items-center gap-2">
+                  {currentNumericLabel && (
+                    <span className="font-mono text-xs opacity-70" data-testid="text-verse-numeric">{currentNumericLabel}</span>
+                  )}
                   {currentVerse.sectionTitle || `Verse ${currentVerse.verseNumber}`}
                 </span>
                 <span className="text-primary/40">॥</span>

@@ -19,9 +19,11 @@ Preferred communication style: Simple, everyday language.
 - **Build Tool**: Vite with path aliases (`@/` for client source, `@shared/` for shared code)
 
 The frontend uses a sidebar-based layout with three main panels:
-1. **AppSidebar**: Book navigation and search, grouped by category
-2. **BookReader**: Main content area displaying verses with continuous scrolling and commentary selection (author/language dropdowns with mutual filtering)
+1. **AppSidebar**: Book navigation and search, grouped by category. Supports hierarchical nested tree: Adhyay > Khanda > Verse with numeric labels (e.g., 1.1.2). Falls back to flat verse list if no hierarchy data.
+2. **BookReader**: Main content area displaying verses with commentary selection (author/language dropdowns). Shows numeric position label (e.g., 1.1.2) in verse header and title area.
 3. **TranslationPanel**: Shows translations in different scripts and scholarly explanations
+
+The header displays a breadcrumb navigation showing the current position: Book > Adhyay > Khanda > Verse with a numeric badge.
 
 ### Backend Architecture
 - **Framework**: Express.js 5 (ESM modules)
@@ -44,7 +46,7 @@ The database schema supports multi-language sacred texts:
 - **languages**: Language definitions with code, name, native name, and script
 - **books**: Sacred text metadata (title, author, description, category)
 - **bookTitles**: Localized book titles for different languages
-- **verses**: Individual verses with section organization
+- **verses**: Individual verses with hierarchical organization (adhyayNumber, adhyayTitle, khandaNumber, khandaTitle for Adhyay > Khanda > Verse structure)
 - **verseTranslations**: Verse content in different languages/scripts
 - **explanations**: Scholar commentaries on verses
 - **wordTranslations**: Cached AI-generated word translations for performance

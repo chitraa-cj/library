@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, BookOpen, Loader2, ChevronRight } from "lucide-react";
+import { Search, BookOpen, Loader2, ChevronRight, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -33,9 +33,70 @@ interface AppSidebarProps {
   selectedVerseNumber?: number;
 }
 
+interface AdhyayGroup {
+  adhyayNumber: number;
+  adhyayTitle: string;
+  khandas: KhandaGroup[];
+}
+
+interface KhandaGroup {
+  khandaNumber: number;
+  khandaTitle: string;
+  verses: Verse[];
+}
+
+function hasHierarchyData(verses: Verse[]): boolean {
+  return verses.some((v) => v.adhyayNumber != null && v.khandaNumber != null);
+}
+
+function buildHierarchy(verses: Verse[]): AdhyayGroup[] {
+  const hierarchyVerses = verses.filter(
+    (v) => v.adhyayNumber != null && v.khandaNumber != null
+  );
+  if (hierarchyVerses.length === 0) return [];
+
+  const adhyayMap = new Map<number, AdhyayGroup>();
+
+  for (const verse of hierarchyVerses) {
+    const adhyayNum = verse.adhyayNumber!;
+    const adhyayTitle = verse.adhyayTitle ?? `Adhyay ${adhyayNum}`;
+    const khandaNum = verse.khandaNumber!;
+    const khandaTitle = verse.khandaTitle ?? `Khanda ${khandaNum}`;
+
+    if (!adhyayMap.has(adhyayNum)) {
+      adhyayMap.set(adhyayNum, {
+        adhyayNumber: adhyayNum,
+        adhyayTitle,
+        khandas: [],
+      });
+    }
+
+    const adhyay = adhyayMap.get(adhyayNum)!;
+    let khanda = adhyay.khandas.find((k) => k.khandaNumber === khandaNum);
+    if (!khanda) {
+      khanda = { khandaNumber: khandaNum, khandaTitle, verses: [] };
+      adhyay.khandas.push(khanda);
+    }
+    khanda.verses.push(verse);
+  }
+
+  const sorted = Array.from(adhyayMap.values()).sort(
+    (a, b) => a.adhyayNumber - b.adhyayNumber
+  );
+  for (const adhyay of sorted) {
+    adhyay.khandas.sort((a, b) => a.khandaNumber - b.khandaNumber);
+    for (const khanda of adhyay.khandas) {
+      khanda.verses.sort((a, b) => a.verseNumber - b.verseNumber);
+    }
+  }
+  return sorted;
+}
+
 export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, selectedVerseNumber }: AppSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedBooks, setExpandedBooks] = useState<Set<string>>(new Set());
+  const [expandedAdhyays, setExpandedAdhyays] = useState<Set<string>>(new Set());
+  const [expandedKhandas, setExpandedKhandas] = useState<Set<string>>(new Set());
   const { isMobile, setOpenMobile, state } = useSidebar();
   const isCollapsed = state === "collapsed";
 
@@ -69,6 +130,20 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
     setExpandedBooks(newExpanded);
   };
 
+  const toggleAdhyay = (key: string) => {
+    const next = new Set(expandedAdhyays);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    setExpandedAdhyays(next);
+  };
+
+  const toggleKhanda = (key: string) => {
+    const next = new Set(expandedKhandas);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    setExpandedKhandas(next);
+  };
+
   const { data: books = [], isLoading } = useQuery<Book[]>({
     queryKey: ["/api/books"],
   });
@@ -89,6 +164,13 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
     acc[category].push(book);
     return acc;
   }, {} as Record<string, Book[]>);
+
+  const hierarchy = useMemo(() => {
+    if (!selectedBookData?.verses) return [];
+    return buildHierarchy(selectedBookData.verses);
+  }, [selectedBookData?.verses]);
+
+  const hasHierarchy = hierarchy.length > 0 && hasHierarchyData(selectedBookData?.verses ?? []);
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -198,24 +280,123 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
                             </CollapsibleTrigger>
                             <CollapsibleContent>
                               {!isCollapsed && selectedBookId === book.id && verses.length > 0 && (
-                                <SidebarMenuSub className="py-2 space-y-1">
-                                  {verses.map((verse) => (
-                                    <SidebarMenuSubItem key={verse.id}>
-                                      <SidebarMenuSubButton
-                                        onClick={() => handleVerseSelect(book.id, verse.verseNumber)}
-                                        className={`text-sm py-2.5 px-3 rounded-md transition-colors h-auto min-h-[2.5rem] overflow-visible [&>span]:!truncate-none ${
-                                          selectedVerseNumber === verse.verseNumber
-                                            ? "bg-primary/15 text-primary font-medium border-l-2 border-primary"
-                                            : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
-                                        }`}
-                                        data-testid={`button-verse-nav-${verse.verseNumber}`}
-                                      >
-                                        <span className="whitespace-normal leading-snug text-wrap break-words">
-                                          {verse.sectionTitle || `Verse ${verse.verseNumber}`}
-                                        </span>
-                                      </SidebarMenuSubButton>
-                                    </SidebarMenuSubItem>
-                                  ))}
+                                <SidebarMenuSub className="py-2 space-y-0.5">
+                                  {hasHierarchy ? (
+                                    hierarchy.map((adhyay) => {
+                                      const adhyayKey = `${book.id}-a${adhyay.adhyayNumber}`;
+                                      const isAdhyayOpen = expandedAdhyays.has(adhyayKey);
+                                      const isCurrentAdhyay = adhyay.khandas.some(k =>
+                                        k.verses.some(v => v.verseNumber === selectedVerseNumber)
+                                      );
+
+                                      return (
+                                        <SidebarMenuSubItem key={adhyayKey}>
+                                          <SidebarMenuSubButton
+                                            onClick={() => toggleAdhyay(adhyayKey)}
+                                            className={`text-sm py-2 px-2 rounded-md transition-colors h-auto min-h-[2rem] overflow-visible [&>span]:!truncate-none ${
+                                              isCurrentAdhyay && !isAdhyayOpen
+                                                ? "bg-primary/10 text-primary font-medium"
+                                                : "text-muted-foreground hover:text-foreground"
+                                            }`}
+                                            data-testid={`button-adhyay-${adhyay.adhyayNumber}`}
+                                          >
+                                            <span className="flex items-center gap-2 whitespace-normal leading-snug w-full">
+                                              {isAdhyayOpen ? (
+                                                <ChevronDown className="h-3 w-3 shrink-0 text-primary" />
+                                              ) : (
+                                                <ChevronRight className="h-3 w-3 shrink-0" />
+                                              )}
+                                              <Badge variant="secondary" className="text-[10px] px-1.5 h-4 shrink-0 font-mono">
+                                                {adhyay.adhyayNumber}
+                                              </Badge>
+                                              <span className="text-xs font-medium">{adhyay.adhyayTitle}</span>
+                                            </span>
+                                          </SidebarMenuSubButton>
+
+                                          {isAdhyayOpen && (
+                                            <div className="ml-3 pl-2 border-l border-border/40 mt-1 space-y-0.5">
+                                              {adhyay.khandas.map((khanda) => {
+                                                const khandaKey = `${adhyayKey}-k${khanda.khandaNumber}`;
+                                                const isKhandaOpen = expandedKhandas.has(khandaKey);
+                                                const isCurrentKhanda = khanda.verses.some(
+                                                  (v) => v.verseNumber === selectedVerseNumber
+                                                );
+
+                                                return (
+                                                  <div key={khandaKey}>
+                                                    <button
+                                                      onClick={() => toggleKhanda(khandaKey)}
+                                                      className={`flex items-center gap-2 w-full text-left text-xs py-1.5 px-2 rounded-md transition-colors ${
+                                                        isCurrentKhanda && !isKhandaOpen
+                                                          ? "bg-primary/10 text-primary font-medium"
+                                                          : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
+                                                      }`}
+                                                      data-testid={`button-khanda-${adhyay.adhyayNumber}-${khanda.khandaNumber}`}
+                                                    >
+                                                      {isKhandaOpen ? (
+                                                        <ChevronDown className="h-3 w-3 shrink-0 text-primary" />
+                                                      ) : (
+                                                        <ChevronRight className="h-3 w-3 shrink-0" />
+                                                      )}
+                                                      <Badge variant="outline" className="text-[10px] px-1 h-4 shrink-0 font-mono border-muted-foreground/30">
+                                                        {adhyay.adhyayNumber}.{khanda.khandaNumber}
+                                                      </Badge>
+                                                      <span className="truncate">{khanda.khandaTitle}</span>
+                                                    </button>
+
+                                                    {isKhandaOpen && (
+                                                      <div className="ml-3 pl-2 border-l border-border/30 mt-0.5 space-y-0.5">
+                                                        {khanda.verses.map((verse, idx) => {
+                                                          const verseLabel = `${adhyay.adhyayNumber}.${khanda.khandaNumber}.${idx + 1}`;
+                                                          return (
+                                                            <button
+                                                              key={verse.id}
+                                                              onClick={() => handleVerseSelect(book.id, verse.verseNumber)}
+                                                              className={`flex items-center gap-2 w-full text-left text-xs py-1.5 px-2 rounded-md transition-colors ${
+                                                                selectedVerseNumber === verse.verseNumber
+                                                                  ? "bg-primary/15 text-primary font-medium"
+                                                                  : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
+                                                              }`}
+                                                              data-testid={`button-verse-nav-${verse.verseNumber}`}
+                                                            >
+                                                              <span className="font-mono text-[10px] text-primary/70 shrink-0 min-w-[2rem]">
+                                                                {verseLabel}
+                                                              </span>
+                                                              <span className="whitespace-normal leading-snug text-wrap break-words">
+                                                                {verse.sectionTitle || `Mantra ${verse.verseNumber}`}
+                                                              </span>
+                                                            </button>
+                                                          );
+                                                        })}
+                                                      </div>
+                                                    )}
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
+                                          )}
+                                        </SidebarMenuSubItem>
+                                      );
+                                    })
+                                  ) : (
+                                    verses.map((verse) => (
+                                      <SidebarMenuSubItem key={verse.id}>
+                                        <SidebarMenuSubButton
+                                          onClick={() => handleVerseSelect(book.id, verse.verseNumber)}
+                                          className={`text-sm py-2.5 px-3 rounded-md transition-colors h-auto min-h-[2.5rem] overflow-visible [&>span]:!truncate-none ${
+                                            selectedVerseNumber === verse.verseNumber
+                                              ? "bg-primary/15 text-primary font-medium border-l-2 border-primary"
+                                              : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
+                                          }`}
+                                          data-testid={`button-verse-nav-${verse.verseNumber}`}
+                                        >
+                                          <span className="whitespace-normal leading-snug text-wrap break-words">
+                                            {verse.sectionTitle || `Verse ${verse.verseNumber}`}
+                                          </span>
+                                        </SidebarMenuSubButton>
+                                      </SidebarMenuSubItem>
+                                    ))
+                                  )}
                                 </SidebarMenuSub>
                               )}
                             </CollapsibleContent>
