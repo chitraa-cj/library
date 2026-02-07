@@ -69,6 +69,7 @@ function VerseExplanation({
   authorName: string | null;
   showAll: boolean;
 }) {
+  const [showMoreCommentaries, setShowMoreCommentaries] = useState(false);
   const { data: explanations, isLoading } = useQuery<Explanation[]>({
     queryKey: ["/api/verses", verseId, "explanations"],
   });
@@ -77,57 +78,88 @@ function VerseExplanation({
     return <Skeleton className="h-20 w-full mt-3" />;
   }
 
-  const filteredExplanations = explanations?.filter(e => {
-    const langMatch = e.languageCode === languageCode;
-    if (showAll) return langMatch;
-    const authorMatch = !authorName || e.authorName === authorName;
-    return langMatch && authorMatch;
-  });
-  
-  if (!filteredExplanations || filteredExplanations.length === 0) {
+  const allForLanguage = explanations?.filter(e => e.languageCode === languageCode) || [];
+
+  const primaryExplanations = showAll
+    ? allForLanguage
+    : allForLanguage.filter(e => !authorName || e.authorName === authorName);
+
+  const otherExplanations = !showAll && authorName
+    ? allForLanguage.filter(e => e.authorName !== authorName)
+    : [];
+
+  if (primaryExplanations.length === 0 && otherExplanations.length === 0) {
     return null;
   }
 
-  const grouped = filteredExplanations.reduce((acc, exp) => {
-    const key = exp.authorName;
-    if (!acc[key]) acc[key] = { authorName: exp.authorName, authorTitle: exp.authorTitle, items: [] };
-    acc[key].items.push(exp);
-    return acc;
-  }, {} as Record<string, { authorName: string; authorTitle: string | null; items: Explanation[] }>);
+  const groupExplanations = (items: Explanation[]) =>
+    items.reduce((acc, exp) => {
+      const key = exp.authorName;
+      if (!acc[key]) acc[key] = { authorName: exp.authorName, authorTitle: exp.authorTitle, items: [] };
+      acc[key].items.push(exp);
+      return acc;
+    }, {} as Record<string, { authorName: string; authorTitle: string | null; items: Explanation[] }>);
+
+  const primaryGrouped = groupExplanations(primaryExplanations);
+  const otherGrouped = groupExplanations(otherExplanations);
+
+  const renderGroup = (group: { authorName: string; authorTitle: string | null; items: Explanation[] }, gIdx: number) => (
+    <div 
+      key={group.authorName} 
+      className={`${gIdx > 0 ? "pt-5 border-t border-border/40" : ""}`}
+      data-testid={`commentary-group-${group.authorName.toLowerCase().replace(/\s+/g, '-')}`}
+    >
+      <div className="flex items-center gap-2 mb-3">
+        {isShankaracharya(group.authorName) ? (
+          <img src={shankaracharyaImg} alt="Adi Shankaracharya" className="h-8 w-8 object-contain shrink-0" />
+        ) : (
+          <User className="h-4 w-4 text-primary/70 shrink-0" />
+        )}
+        <h4 className="text-sm font-semibold text-foreground">{group.authorName}</h4>
+        {group.authorTitle && (
+          <span className="text-xs text-muted-foreground">- {group.authorTitle}</span>
+        )}
+      </div>
+      {group.items.map((explanation, idx) => (
+        <div key={idx} className={idx > 0 ? "mt-3 pt-3 border-t border-border/20" : ""}>
+          <div className="font-serif text-base leading-relaxed whitespace-pre-wrap break-words text-foreground/90 pl-6">
+            <WordTooltip
+              content={explanation.content}
+              sourceLanguage={languageCode}
+              verseId={verseId}
+              className="inline"
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div className="mt-6 space-y-6" data-testid={`explanation-${verseId}`}>
-      {Object.values(grouped).map((group, gIdx) => (
-        <div 
-          key={group.authorName} 
-          className={`${gIdx > 0 ? "pt-5 border-t border-border/40" : ""}`}
-          data-testid={`commentary-group-${group.authorName.toLowerCase().replace(/\s+/g, '-')}`}
-        >
-          <div className="flex items-center gap-2 mb-3">
-            {isShankaracharya(group.authorName) ? (
-              <img src={shankaracharyaImg} alt="Adi Shankaracharya" className="h-8 w-8 object-contain shrink-0" />
-            ) : (
-              <User className="h-4 w-4 text-primary/70 shrink-0" />
-            )}
-            <h4 className="text-sm font-semibold text-foreground">{group.authorName}</h4>
-            {group.authorTitle && (
-              <span className="text-xs text-muted-foreground">- {group.authorTitle}</span>
-            )}
+      {Object.values(primaryGrouped).map((group, gIdx) => renderGroup(group, gIdx))}
+
+      {otherExplanations.length > 0 && (
+        <>
+          <div className="flex justify-center pt-2">
+            <button
+              onClick={() => setShowMoreCommentaries(!showMoreCommentaries)}
+              className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground hover:text-primary transition-colors px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-border/50 hover:border-primary/30 bg-background/60 backdrop-blur-sm"
+              data-testid="button-show-more-commentaries"
+            >
+              <MessageSquareText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span>{showMoreCommentaries ? "Hide Other Commentaries" : `Show More (${Object.keys(otherGrouped).length} more)`}</span>
+              <ChevronDown className={`h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform duration-200 ${showMoreCommentaries ? "rotate-180" : ""}`} />
+            </button>
           </div>
-          {group.items.map((explanation, idx) => (
-            <div key={idx} className={idx > 0 ? "mt-3 pt-3 border-t border-border/20" : ""}>
-              <div className="font-serif text-base leading-relaxed whitespace-pre-wrap break-words text-foreground/90 pl-6">
-                <WordTooltip
-                  content={explanation.content}
-                  sourceLanguage={languageCode}
-                  verseId={verseId}
-                  className="inline"
-                />
-              </div>
+
+          {showMoreCommentaries && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-200">
+              {Object.values(otherGrouped).map((group, gIdx) => renderGroup(group, gIdx))}
             </div>
-          ))}
-        </div>
-      ))}
+          )}
+        </>
+      )}
     </div>
   );
 }
