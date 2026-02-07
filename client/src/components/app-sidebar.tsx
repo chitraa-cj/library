@@ -169,8 +169,8 @@ function buildHierarchy(verses: Verse[]): AdhyayGroup[] {
 
 export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, selectedVerseNumber, onGoHome, onGoBack }: AppSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
-  const [expandedSubCategories, setExpandedSubCategories] = useState<Set<string>>(new Set());
+  const [drillCategoryId, setDrillCategoryId] = useState<string | null>(null);
+  const [drillSubCategoryId, setDrillSubCategoryId] = useState<string | null>(null);
   const [expandedBooks, setExpandedBooks] = useState<Set<string>>(new Set());
   const [expandedAdhyays, setExpandedAdhyays] = useState<Set<string>>(new Set());
   const [expandedKhandas, setExpandedKhandas] = useState<Set<string>>(new Set());
@@ -220,19 +220,46 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
 
   useEffect(() => {
     if (selectedBookPath) {
-      setExpandedCategories(new Set([selectedBookPath.categoryId]));
+      setDrillCategoryId(selectedBookPath.categoryId);
       if (selectedBookPath.subCategoryId) {
-        setExpandedSubCategories(prev => {
-          const next = new Set(prev);
-          next.add(selectedBookPath.subCategoryId!);
-          return next;
-        });
+        setDrillSubCategoryId(selectedBookPath.subCategoryId);
       }
       if (selectedBookId) {
         setExpandedBooks(new Set([selectedBookId]));
       }
     }
   }, [selectedBookPath, selectedBookId]);
+
+  const drillCategory = useMemo(() => {
+    if (!drillCategoryId) return null;
+    return CATALOG_TREE.find(c => c.id === drillCategoryId) ?? null;
+  }, [drillCategoryId]);
+
+  const drillSubCategory = useMemo(() => {
+    if (!drillSubCategoryId || !drillCategory?.children) return null;
+    return drillCategory.children.find(s => s.id === drillSubCategoryId) ?? null;
+  }, [drillSubCategoryId, drillCategory]);
+
+  const drillBreadcrumb = useMemo(() => {
+    const crumbs: { label: string; onClick: () => void }[] = [];
+    crumbs.push({
+      label: "All Categories",
+      onClick: () => { setDrillCategoryId(null); setDrillSubCategoryId(null); },
+    });
+    if (drillCategory) {
+      crumbs.push({
+        label: drillCategory.label,
+        onClick: () => { setDrillSubCategoryId(null); },
+      });
+    }
+    if (drillSubCategory) {
+      crumbs.push({
+        label: drillSubCategory.label,
+        onClick: () => {},
+      });
+    }
+    return crumbs;
+  }, [drillCategory, drillSubCategory]);
 
   const handleBookSelect = (bookId: string) => {
     onSelectBook(bookId);
@@ -254,19 +281,13 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
     }
   };
 
-  const toggleCategory = (catId: string) => {
-    if (expandedCategories.has(catId)) {
-      setExpandedCategories(new Set());
-    } else {
-      setExpandedCategories(new Set([catId]));
-    }
+  const handleDrillCategory = (catId: string) => {
+    setDrillCategoryId(catId);
+    setDrillSubCategoryId(null);
   };
 
-  const toggleSubCategory = (subId: string) => {
-    const next = new Set(expandedSubCategories);
-    if (next.has(subId)) next.delete(subId);
-    else next.add(subId);
-    setExpandedSubCategories(next);
+  const handleDrillSubCategory = (subId: string) => {
+    setDrillSubCategoryId(subId);
   };
 
   const toggleBookExpand = (bookId: string) => {
@@ -302,11 +323,6 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
       return booksInCat;
     });
   }, [searchQuery, booksBySubCategory]);
-
-  const sidebarBreadcrumb = useMemo(() => {
-    if (!selectedBookObj) return null;
-    return getBookBreadcrumbPath(selectedBookObj);
-  }, [selectedBookObj]);
 
   const renderVerseTree = (book: Book, verses: Verse[]) => {
     if (verses.length === 0) return null;
@@ -470,51 +486,124 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
     );
   };
 
-  const renderSubCategory = (sub: CatalogSubCategory, catId: string) => {
-    const isExpanded = expandedSubCategories.has(sub.id);
-    const subBooks = booksBySubCategory[sub.id] ?? [];
-    const hasBooks = subBooks.length > 0;
-    const containsSelectedBook = selectedBookPath?.subCategoryId === sub.id;
-
+  const renderDrillBreadcrumb = () => {
+    if (drillBreadcrumb.length <= 1) return null;
     return (
-      <div key={sub.id}>
-        <button
-          onClick={() => toggleSubCategory(sub.id)}
-          className={`flex items-center gap-1.5 w-full text-left text-xs py-1.5 px-2 rounded-md transition-colors ${
-            containsSelectedBook
-              ? "text-primary font-medium"
-              : "text-foreground/70 hover:text-foreground hover:bg-sidebar-accent/30"
-          }`}
-          data-testid={`button-subcat-${sub.id}`}
-        >
-          {isExpanded ? (
-            <ChevronDown className="h-3 w-3 shrink-0 text-primary" />
-          ) : (
-            <ChevronRight className="h-3 w-3 shrink-0" />
-          )}
-          {hasBooks ? (
-            <FolderOpen className="h-3.5 w-3.5 shrink-0 text-primary/60" />
-          ) : (
-            <Folder className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
-          )}
-          <span className="flex-1 min-w-0 truncate">{sub.label}</span>
-          {!hasBooks && (
-            <Lock className="h-3 w-3 shrink-0 text-muted-foreground/40" />
-          )}
-        </button>
-        {isExpanded && (
-          <div className="ml-3 pl-2 border-l border-border/30 mt-0.5">
-            {hasBooks ? (
-              subBooks.map(book => renderBookItem(book))
-            ) : (
-              <div className="py-2 px-2 text-[10px] text-muted-foreground/60 italic">
-                Coming soon...
-              </div>
-            )}
-          </div>
-        )}
+      <div className="flex items-center gap-1 text-[10px] text-muted-foreground px-2 py-1.5 flex-wrap border-b border-border/30 mb-1" data-testid="sidebar-breadcrumb">
+        {drillBreadcrumb.map((crumb, idx) => {
+          const isLast = idx === drillBreadcrumb.length - 1;
+          return (
+            <span key={idx} className="flex items-center gap-1">
+              {idx > 0 && <ChevronRight className="h-2.5 w-2.5 shrink-0 text-muted-foreground/40" />}
+              <span
+                className={`${isLast ? 'text-primary font-medium' : 'hover:text-foreground cursor-pointer underline-offset-2 hover:underline'} truncate max-w-[140px]`}
+                onClick={() => { if (!isLast) crumb.onClick(); }}
+                title={crumb.label}
+              >
+                {crumb.label}
+              </span>
+            </span>
+          );
+        })}
       </div>
     );
+  };
+
+  const renderCategoryList = () => {
+    const items = searchQuery.trim() ? filteredTree : CATALOG_TREE;
+    return (
+      <div className="space-y-0.5">
+        {items.map((cat) => {
+          const directBooks = booksBySubCategory[cat.id] ?? [];
+          const hasChildren = !!cat.children && cat.children.length > 0;
+          const hasAnyContent = hasChildren || directBooks.length > 0;
+
+          return (
+            <button
+              key={cat.id}
+              onClick={() => hasAnyContent ? handleDrillCategory(cat.id) : undefined}
+              className={`flex items-center gap-2 w-full text-left text-[11px] py-2.5 px-2 rounded-md transition-colors font-medium ${
+                !hasAnyContent
+                  ? "text-muted-foreground/50 cursor-default"
+                  : "text-foreground/80 hover:text-foreground hover:bg-sidebar-accent/30"
+              }`}
+              data-testid={`button-category-${cat.id}`}
+              disabled={!hasAnyContent}
+            >
+              <Library className={`h-3.5 w-3.5 shrink-0 ${hasAnyContent ? 'text-muted-foreground/60' : 'text-muted-foreground/30'}`} />
+              <span className="flex-1 min-w-0 leading-snug">{cat.label}</span>
+              {hasAnyContent ? (
+                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
+              ) : (
+                <Lock className="h-3 w-3 shrink-0 text-muted-foreground/30" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderSubCategoryList = () => {
+    if (!drillCategory?.children) {
+      const directBooks = booksBySubCategory[drillCategory?.id ?? ""] ?? [];
+      if (directBooks.length > 0) {
+        return <div className="space-y-0.5">{directBooks.map(book => renderBookItem(book))}</div>;
+      }
+      return (
+        <div className="py-4 px-2 text-xs text-muted-foreground/60 italic text-center">
+          Coming soon...
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-0.5">
+        {drillCategory.children.map((sub) => {
+          const subBooks = booksBySubCategory[sub.id] ?? [];
+          const hasBooks = subBooks.length > 0;
+
+          return (
+            <button
+              key={sub.id}
+              onClick={() => hasBooks ? handleDrillSubCategory(sub.id) : undefined}
+              className={`flex items-center gap-2 w-full text-left text-xs py-2.5 px-2 rounded-md transition-colors ${
+                !hasBooks
+                  ? "text-muted-foreground/50 cursor-default"
+                  : "text-foreground/80 hover:text-foreground hover:bg-sidebar-accent/30"
+              }`}
+              data-testid={`button-subcat-${sub.id}`}
+              disabled={!hasBooks}
+            >
+              {hasBooks ? (
+                <FolderOpen className="h-3.5 w-3.5 shrink-0 text-primary/60" />
+              ) : (
+                <Folder className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
+              )}
+              <span className="flex-1 min-w-0 truncate">{sub.label}</span>
+              {hasBooks ? (
+                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
+              ) : (
+                <Lock className="h-3 w-3 shrink-0 text-muted-foreground/30" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderBookList = () => {
+    if (!drillSubCategoryId) return null;
+    const subBooks = booksBySubCategory[drillSubCategoryId] ?? [];
+    if (subBooks.length === 0) {
+      return (
+        <div className="py-4 px-2 text-xs text-muted-foreground/60 italic text-center">
+          Coming soon...
+        </div>
+      );
+    }
+    return <div className="space-y-0.5">{subBooks.map(book => renderBookItem(book))}</div>;
   };
 
   return (
@@ -580,27 +669,6 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
               </div>
             </div>
 
-            {sidebarBreadcrumb && selectedBookId && (
-              <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-2 px-1 flex-wrap" data-testid="sidebar-breadcrumb">
-                {sidebarBreadcrumb.map((segment, idx) => (
-                  <span key={idx} className="flex items-center gap-1">
-                    {idx > 0 && <ChevronRight className="h-2.5 w-2.5 shrink-0 text-muted-foreground/40" />}
-                    <span
-                      className={`${idx === sidebarBreadcrumb.length - 1 ? 'text-primary font-medium' : 'hover:text-foreground cursor-pointer'} truncate max-w-[120px]`}
-                      onClick={() => {
-                        if (idx < sidebarBreadcrumb.length - 1 && onGoHome) {
-                          onGoHome();
-                        }
-                      }}
-                      title={segment}
-                    >
-                      {segment}
-                    </span>
-                  </span>
-                ))}
-              </div>
-            )}
-
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -642,50 +710,10 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
             </div>
           ) : (
             <div className="p-2 space-y-1">
-              {filteredTree.map((cat) => {
-                const isCatExpanded = expandedCategories.has(cat.id);
-                const containsSelectedBook = selectedBookPath?.categoryId === cat.id;
-                const directBooks = booksBySubCategory[cat.id] ?? [];
-                const hasChildren = !!cat.children && cat.children.length > 0;
-                const hasAnyContent = hasChildren || directBooks.length > 0;
-
-                return (
-                  <div key={cat.id} data-testid={`catalog-category-${cat.id}`}>
-                    <button
-                      onClick={() => toggleCategory(cat.id)}
-                      className={`flex items-center gap-2 w-full text-left text-[11px] py-2 px-2 rounded-md transition-colors font-medium ${
-                        containsSelectedBook
-                          ? "bg-primary/10 text-primary"
-                          : "text-foreground/80 hover:text-foreground hover:bg-sidebar-accent/30"
-                      }`}
-                      data-testid={`button-category-${cat.id}`}
-                    >
-                      {isCatExpanded ? (
-                        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-primary" />
-                      ) : (
-                        <ChevronRight className="h-3.5 w-3.5 shrink-0" />
-                      )}
-                      <Library className={`h-3.5 w-3.5 shrink-0 ${containsSelectedBook ? 'text-primary' : 'text-muted-foreground/60'}`} />
-                      <span className="flex-1 min-w-0 leading-snug">{cat.label}</span>
-                    </button>
-
-                    {isCatExpanded && (
-                      <div className="ml-3 pl-2 border-l border-primary/15 mt-0.5 space-y-0.5">
-                        {hasChildren
-                          ? cat.children!.map(sub => renderSubCategory(sub, cat.id))
-                          : hasAnyContent
-                            ? directBooks.map(book => renderBookItem(book))
-                            : (
-                              <div className="py-2 px-2 text-[10px] text-muted-foreground/60 italic">
-                                Coming soon...
-                              </div>
-                            )
-                        }
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              {renderDrillBreadcrumb()}
+              {!drillCategoryId && renderCategoryList()}
+              {drillCategoryId && !drillSubCategoryId && renderSubCategoryList()}
+              {drillCategoryId && drillSubCategoryId && renderBookList()}
             </div>
           )}
         </ScrollArea>
