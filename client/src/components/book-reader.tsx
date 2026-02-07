@@ -635,8 +635,7 @@ export function BookReader({
         </div>
         
         <div className="flex-1 p-4 sm:p-8 overflow-y-auto relative z-10">
-          <div className="max-w-4xl w-full mx-auto flex items-start gap-6">
-            <div className="flex-1 min-w-0">
+          <div className="max-w-3xl w-full mx-auto">
             <div 
               className="backdrop-blur-md bg-gradient-to-br from-white/70 via-orange-50/50 to-amber-50/40 dark:from-card/80 dark:via-card/70 dark:to-orange-950/30 border border-primary/20 rounded-2xl p-6 sm:p-10 shadow-lg shadow-primary/5 relative overflow-hidden"
               data-testid={`verse-${currentVerse.verseNumber}`}
@@ -661,19 +660,27 @@ export function BookReader({
               </div>
 
               <div className="space-y-6">
-                <div className="relative">
-                  <div className="absolute -left-2 top-0 text-2xl text-primary/20 font-serif">❝</div>
-                  <div 
-                    className="font-serif text-xl sm:text-2xl leading-relaxed text-center px-4"
-                    data-testid={`text-original-${currentVerse.verseNumber}`}
-                  >
-                    <WordTooltip
-                      content={originalDevanagari}
-                      commentaryContent={commentaryContext}
-                      sourceLanguage="devanagari"
-                    />
+                <div className="flex items-start gap-4">
+                  <div className="relative flex-1 min-w-0">
+                    <div className="absolute -left-2 top-0 text-2xl text-primary/20 font-serif">❝</div>
+                    <div 
+                      className="font-serif text-xl sm:text-2xl leading-relaxed text-center px-4"
+                      data-testid={`text-original-${currentVerse.verseNumber}`}
+                    >
+                      <WordTooltip
+                        content={originalDevanagari}
+                        commentaryContent={commentaryContext}
+                        sourceLanguage="devanagari"
+                      />
+                    </div>
+                    <div className="absolute -right-2 bottom-0 text-2xl text-primary/20 font-serif rotate-180">❝</div>
                   </div>
-                  <div className="absolute -right-2 bottom-0 text-2xl text-primary/20 font-serif rotate-180">❝</div>
+                  <img 
+                    src={rishiImg} 
+                    alt="Rishi reading scripture" 
+                    className="w-28 shrink-0 opacity-80 select-none pointer-events-none hidden sm:block"
+                    data-testid="img-rishi"
+                  />
                 </div>
 
                 {isNonDevanagariSelected && translationText && (
@@ -833,15 +840,6 @@ export function BookReader({
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
-            </div>
-            </div>
-            <div className="hidden lg:flex flex-col items-center justify-start pt-8 shrink-0">
-              <img 
-                src={rishiImg} 
-                alt="Rishi reading scripture" 
-                className="w-36 opacity-80 drop-shadow-md select-none pointer-events-none"
-                data-testid="img-rishi"
-              />
             </div>
           </div>
         </div>
