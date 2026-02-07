@@ -328,10 +328,10 @@ export function WordTooltip({
         <div className="p-4 bg-card text-card-foreground">
           <div className="flex items-start justify-between gap-2 mb-3">
             <div className="flex items-center gap-2">
-              {hasWordMeanings ? (
+              {showAllMeanings ? (
                 <>
                   <BookText className="h-4 w-4 text-primary" />
-                  <span className="font-semibold text-primary text-sm">Word Meanings</span>
+                  <span className="font-semibold text-primary text-sm">Word-by-Word Meanings</span>
                 </>
               ) : (
                 <>
@@ -351,9 +351,9 @@ export function WordTooltip({
             </Button>
           </div>
 
-          {hasWordMeanings && showAllMeanings && renderDirectMeaningsPanel()}
+          {showAllMeanings && renderDirectMeaningsPanel()}
 
-          {!hasWordMeanings && (
+          {!showAllMeanings && (
             <>
               <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border">
                 <Globe className="h-4 w-4 text-muted-foreground" />
