@@ -110,28 +110,28 @@ function HomePage() {
                 </Button>
               )}
               {selectedBookId && verseBreadcrumb ? (
-                <div className="flex items-center gap-1.5 min-w-0 overflow-hidden" data-testid="breadcrumb-nav">
+                <nav className="flex items-center gap-1.5 min-w-0 overflow-hidden" data-testid="breadcrumb-nav" aria-label="Current verse position">
                   <Badge variant="secondary" className="font-mono text-[11px] px-2 h-5 shrink-0" data-testid="text-numeric-label">
                     {verseBreadcrumb.numericLabel}
                   </Badge>
-                  <div className="hidden md:flex items-center gap-1 min-w-0 text-xs text-muted-foreground overflow-hidden">
-                    <span className="truncate max-w-[100px] font-medium text-foreground/70">{verseBreadcrumb.bookTitle}</span>
+                  <div className="flex items-center gap-1 min-w-0 text-xs text-muted-foreground overflow-hidden">
+                    <span className="hidden lg:inline truncate max-w-[100px] font-medium text-foreground/70">{verseBreadcrumb.bookTitle}</span>
                     {verseBreadcrumb.adhyayTitle && (
                       <>
-                        <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/50" />
-                        <span className="truncate max-w-[120px]">{verseBreadcrumb.adhyayTitle}</span>
+                        <ChevronRight className="hidden lg:block h-3 w-3 shrink-0 text-muted-foreground/50" />
+                        <span className="hidden sm:inline truncate max-w-[120px]">{verseBreadcrumb.adhyayTitle}</span>
                       </>
                     )}
                     {verseBreadcrumb.khandaTitle && (
                       <>
-                        <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/50" />
-                        <span className="truncate max-w-[120px]">{verseBreadcrumb.khandaTitle}</span>
+                        <ChevronRight className="hidden sm:block h-3 w-3 shrink-0 text-muted-foreground/50" />
+                        <span className="hidden sm:inline truncate max-w-[120px]">{verseBreadcrumb.khandaTitle}</span>
                       </>
                     )}
                     <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/50" />
-                    <span className="truncate max-w-[140px] text-foreground/80 font-medium">{verseBreadcrumb.verseLabel}</span>
+                    <span className="truncate max-w-[120px] sm:max-w-[140px] text-foreground/80 font-medium">{verseBreadcrumb.verseLabel}</span>
                   </div>
-                </div>
+                </nav>
               ) : (
                 <div className="hidden sm:flex items-center gap-2 cursor-pointer" onClick={handleGoHome}>
                   <div className="relative">
