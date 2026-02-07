@@ -354,9 +354,18 @@ export function BookReader({
 
   const availableTranslations = useMemo(() => {
     if (!currentVerseDetails?.translations) return [];
-    return currentVerseDetails.translations.filter(
-      (t: VerseTranslation) => t.languageCode !== "devanagari"
+    const hasDevanagari = currentVerseDetails.translations.some(
+      (t: VerseTranslation) => t.languageCode === "devanagari"
     );
+    const hasSanskrit = currentVerseDetails.translations.some(
+      (t: VerseTranslation) => t.languageCode === "sa"
+    );
+    return currentVerseDetails.translations.filter((t: VerseTranslation) => {
+      if (t.languageCode === "devanagari") return false;
+      if (t.languageCode === "sa" && !hasDevanagari) return false;
+      if (t.languageCode === "sa" && hasDevanagari) return true;
+      return true;
+    });
   }, [currentVerseDetails]);
 
   const commentaryContext = useMemo(() => {
@@ -411,7 +420,9 @@ export function BookReader({
   };
 
   const getOriginalDevanagari = (verse: any): string => {
-    return getTranslation(verse, "devanagari");
+    const devText = getTranslation(verse, "devanagari");
+    if (devText) return devText;
+    return getTranslation(verse, "sa");
   };
 
   const goToNextPage = () => {
