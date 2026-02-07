@@ -122,12 +122,13 @@ function VerseExplanation({
       </div>
       {group.items.map((explanation, idx) => (
         <div key={idx} className={idx > 0 ? "mt-3 pt-3 border-t border-border/20" : ""}>
-          <div className="font-serif text-base leading-relaxed whitespace-pre-wrap break-words text-foreground/90 pl-6">
+          <div className="font-serif text-base leading-relaxed whitespace-pre-wrap break-words text-foreground/90 pl-6" data-testid={`commentary-text-${idx}`}>
             <WordTooltip
               content={explanation.content}
               sourceLanguage={languageCode}
               verseId={verseId}
               className="inline"
+              useWordMeanings={false}
             />
           </div>
         </div>
@@ -386,7 +387,26 @@ export function BookReader({
   useEffect(() => {
     if (currentVerse && currentVerseDetails) {
       const langCode = selectedCommentaryLanguage || "devanagari";
-      const content = getTranslation(currentVerseDetails, langCode);
+      let content = getTranslation(currentVerseDetails, langCode);
+      if (!content) {
+        const langAliases: Record<string, string[]> = {
+          "hi": ["hi", "hindi"],
+          "hindi": ["hi", "hindi"],
+          "english": ["english", "en"],
+          "en": ["english", "en"],
+        };
+        const matchCodes = langAliases[langCode] || [langCode];
+        const matched = currentVerseDetails.translations?.find(
+          (t: VerseTranslation) => matchCodes.includes(t.languageCode)
+        );
+        content = matched?.content || "";
+      }
+      if (!content) {
+        content = getTranslation(currentVerseDetails, "sa") || 
+                  getTranslation(currentVerseDetails, "en") || 
+                  getTranslation(currentVerseDetails, "english") || 
+                  getOriginalDevanagari(currentVerseDetails);
+      }
       onVerseSelect(currentVerse.id, content);
     }
   }, [currentVerse, currentVerseDetails, selectedCommentaryLanguage]);

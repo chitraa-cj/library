@@ -45,6 +45,7 @@ interface WordTooltipProps {
   sourceLanguage: string;
   verseId?: string;
   className?: string;
+  useWordMeanings?: boolean;
 }
 
 interface TooltipPosition {
@@ -65,7 +66,8 @@ export function WordTooltip({
   commentaryContent = "",
   sourceLanguage,
   verseId,
-  className = ""
+  className = "",
+  useWordMeanings: enableWordMeanings = true,
 }: WordTooltipProps) {
   const instanceId = useId();
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
@@ -88,7 +90,7 @@ export function WordTooltip({
       if (!res.ok) return [];
       return res.json();
     },
-    enabled: !!verseId,
+    enabled: !!verseId && enableWordMeanings,
     staleTime: Infinity,
   });
 
@@ -187,7 +189,7 @@ export function WordTooltip({
     setError(null);
     setPosition(null);
 
-    if (wordMeanings && wordMeanings.length > 0) {
+    if (enableWordMeanings && wordMeanings && wordMeanings.length > 0) {
       const found = findDirectMeaning(cleanWord);
       setDirectMeaning(found);
       setShowAllMeanings(true);
@@ -328,7 +330,7 @@ export function WordTooltip({
         <div className="p-4 bg-card text-card-foreground">
           <div className="flex items-start justify-between gap-2 mb-3">
             <div className="flex items-center gap-2">
-              {showAllMeanings ? (
+              {enableWordMeanings && showAllMeanings ? (
                 <>
                   <BookText className="h-4 w-4 text-primary" />
                   <span className="font-semibold text-primary text-sm">Word-by-Word Meanings</span>
@@ -351,9 +353,9 @@ export function WordTooltip({
             </Button>
           </div>
 
-          {showAllMeanings && renderDirectMeaningsPanel()}
+          {enableWordMeanings && showAllMeanings && renderDirectMeaningsPanel()}
 
-          {!showAllMeanings && (
+          {!(enableWordMeanings && showAllMeanings) && (
             <>
               <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border">
                 <Globe className="h-4 w-4 text-muted-foreground" />
