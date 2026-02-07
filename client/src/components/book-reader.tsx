@@ -19,6 +19,7 @@ import {
 import type { BookWithDetails, VerseTranslation, Explanation, Note } from "@shared/schema";
 import shankaracharyaImg from "@assets/image_1770455528511.png";
 import rishiImg from "@assets/image_1770455608411.png";
+import meditatingRishiImg from "@assets/image_1770455642043.png";
 
 interface CommentaryOption {
   authorName: string;
@@ -598,13 +599,21 @@ export function BookReader({
                 <p className="text-xs sm:text-sm text-muted-foreground">{book.author}</p>
               )}
             </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground shrink-0">
-              {currentNumericLabel && (
-                <Badge variant="outline" className="font-mono text-[11px] px-2 h-5 border-muted-foreground/30" data-testid="text-header-numeric">
-                  {currentNumericLabel}
-                </Badge>
-              )}
-              <span>{currentPage + 1} / {totalPages}</span>
+            <div className="flex items-center gap-3 shrink-0">
+              <img 
+                src={meditatingRishiImg} 
+                alt="Meditating sage" 
+                className="h-14 w-14 object-contain select-none hidden sm:block opacity-80"
+                data-testid="img-meditating-rishi"
+              />
+              <div className="flex flex-col items-end gap-1 text-sm text-muted-foreground">
+                {currentNumericLabel && (
+                  <Badge variant="outline" className="font-mono text-[11px] px-2 h-5 border-muted-foreground/30" data-testid="text-header-numeric">
+                    {currentNumericLabel}
+                  </Badge>
+                )}
+                <span>{currentPage + 1} / {totalPages}</span>
+              </div>
             </div>
           </div>
           {book.description && (
