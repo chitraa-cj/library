@@ -62,10 +62,18 @@ The database schema supports multi-language sacred texts:
 - **users**: User accounts (Replit Auth OIDC - id, email, firstName, lastName, profileImageUrl)
 - **sessions**: Session storage for authentication
 
+### Word-by-Word Meanings (Direct Mapping)
+- **Table**: `verse_word_meanings` stores pre-scraped word-meaning pairs per verse (word, meaning, position)
+- **Source**: Scraped from bhagavadgita.com for all Bhagavad Gita verses (694/701 covered)
+- **API**: `GET /api/verses/:id/word-meanings` returns all word meanings for a verse
+- **Seed Scripts**: `server/seed-word-meanings.ts` (individual), `server/seed-word-meanings-grouped.ts` (combined verses)
+- **Flow**: Click word → Tooltip shows all word-by-word meanings instantly (no AI call needed)
+- **Fallback**: For verses without pre-scraped meanings (e.g., non-Gita texts), falls back to AI analysis
+
 ### AI Word Translation (RAG Feature)
 - **Component**: `WordTooltip` in `client/src/components/word-tooltip.tsx`
 - **Backend**: `server/openai.ts` using OpenAI gpt-4o model
-- **Flow**: Hover over word (underline appears) → Click word → AI analysis tooltip appears
+- **Flow**: For non-Gita texts: Click word → AI analysis tooltip appears
 - **Features**: Translation, grammatical analysis, etymology, contextual meaning based on Shankaracharya's commentary
 - **Caching**: Results cached in `wordTranslations` table to avoid repeated API calls
 

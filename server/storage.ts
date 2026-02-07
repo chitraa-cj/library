@@ -9,6 +9,7 @@ import {
   languages,
   wordTranslations,
   notes,
+  verseWordMeanings,
   type Book,
   type InsertBook,
   type Verse,
@@ -27,6 +28,7 @@ import {
   type InsertWordTranslation,
   type Note,
   type InsertNote,
+  type VerseWordMeaning,
 } from "@shared/schema";
 
 export interface CommentaryOption {
@@ -66,6 +68,8 @@ export interface IStorage {
 
   getCachedWordTranslation(word: string, sourceLanguage: string, targetLanguage: string): Promise<WordTranslation | undefined>;
   cacheWordTranslation(translation: InsertWordTranslation): Promise<WordTranslation>;
+
+  getWordMeaningsByVerseId(verseId: string): Promise<VerseWordMeaning[]>;
 
   getNotesByVerseAndUser(verseId: string, userId: string): Promise<Note[]>;
   createNote(note: InsertNote): Promise<Note>;
@@ -254,6 +258,14 @@ export class DatabaseStorage implements IStorage {
   async cacheWordTranslation(translation: InsertWordTranslation): Promise<WordTranslation> {
     const result = await db.insert(wordTranslations).values(translation).returning();
     return result[0];
+  }
+
+  async getWordMeaningsByVerseId(verseId: string): Promise<VerseWordMeaning[]> {
+    return await db
+      .select()
+      .from(verseWordMeanings)
+      .where(eq(verseWordMeanings.verseId, verseId))
+      .orderBy(verseWordMeanings.position);
   }
 
   async getNotesByVerseAndUser(verseId: string, userId: string): Promise<Note[]> {

@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useId, useLayoutEffect } from "react";
+import { useState, useRef, useEffect, useId, useLayoutEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { Loader2, X, BookOpen, Languages, Sparkles, Globe } from "lucide-react";
+import { Loader2, X, BookOpen, Languages, Sparkles, Globe, BookText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
 
 interface WordTranslation {
   word: string;
@@ -22,18 +23,27 @@ interface WordTranslation {
   cached?: boolean;
 }
 
+interface DirectWordMeaning {
+  id: string;
+  verseId: string;
+  word: string;
+  meaning: string;
+  position: number;
+}
+
 const TRANSLATION_LANGUAGES = [
   { code: "english", name: "English" },
-  { code: "hindi", name: "Hindi (हिन्दी)" },
-  { code: "kannada", name: "Kannada (ಕನ್ನಡ)" },
-  { code: "tamil", name: "Tamil (தமிழ்)" },
-  { code: "telugu", name: "Telugu (తెలుగు)" },
+  { code: "hindi", name: "Hindi (\u0939\u093f\u0928\u094d\u0926\u0940)" },
+  { code: "kannada", name: "Kannada (\u0c95\u0ca8\u0ccd\u0ca8\u0ca1)" },
+  { code: "tamil", name: "Tamil (\u0ba4\u0bae\u0bbf\u0bb4\u0bcd)" },
+  { code: "telugu", name: "Telugu (\u0c24\u0c46\u0c32\u0c41\u0c17\u0c41)" },
 ];
 
 interface WordTooltipProps {
   content: string;
   commentaryContent?: string;
   sourceLanguage: string;
+  verseId?: string;
   className?: string;
 }
 
@@ -43,10 +53,18 @@ interface TooltipPosition {
   arrowLeft: number;
 }
 
+function normalizeWord(word: string): string {
+  return word
+    .replace(/[\u0964\u0965,.;:!?'"()\[\]{}\u2014\u2013\-\u0902\u0903\u094d]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
 export function WordTooltip({ 
   content, 
   commentaryContent = "",
   sourceLanguage,
+  verseId,
   className = ""
 }: WordTooltipProps) {
   const instanceId = useId();
@@ -55,10 +73,24 @@ export function WordTooltip({
   const [showTooltip, setShowTooltip] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [translation, setTranslation] = useState<WordTranslation | null>(null);
+  const [directMeaning, setDirectMeaning] = useState<DirectWordMeaning | null>(null);
+  const [showAllMeanings, setShowAllMeanings] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [targetLanguage, setTargetLanguage] = useState("english");
   const tooltipRef = useRef<HTMLDivElement>(null);
   const clickedWordRef = useRef<DOMRect | null>(null);
+
+  const { data: wordMeanings } = useQuery<DirectWordMeaning[]>({
+    queryKey: ["/api/verses", verseId, "word-meanings"],
+    queryFn: async () => {
+      if (!verseId) return [];
+      const res = await fetch(`/api/verses/${verseId}/word-meanings`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!verseId,
+    staleTime: Infinity,
+  });
 
   useEffect(() => {
     if (!showTooltip) return;
@@ -116,7 +148,26 @@ export function WordTooltip({
       
       setPosition({ top, left, arrowLeft });
     }
-  }, [showTooltip]);
+  }, [showTooltip, directMeaning, showAllMeanings, translation]);
+
+  const findDirectMeaning = (clickedWord: string): DirectWordMeaning | null => {
+    if (!wordMeanings || wordMeanings.length === 0) return null;
+
+    const normalized = normalizeWord(clickedWord);
+    if (!normalized) return null;
+
+    for (const wm of wordMeanings) {
+      const wmWords = wm.word.toLowerCase().split(/[\s-]+/);
+      if (wmWords.some(w => normalized.includes(w) || w.includes(normalized))) {
+        return wm;
+      }
+      const wmNorm = wm.word.toLowerCase().replace(/[-\s]/g, "");
+      if (wmNorm === normalized || normalized.includes(wmNorm) || wmNorm.includes(normalized)) {
+        return wm;
+      }
+    }
+    return null;
+  };
 
   const handleWordClick = (word: string, event: React.MouseEvent<HTMLSpanElement>) => {
     event.preventDefault();
@@ -125,19 +176,27 @@ export function WordTooltip({
     const rect = event.currentTarget.getBoundingClientRect();
     clickedWordRef.current = rect;
     
-    const cleanWord = word.replace(/[।॥,.;:!?'"()[\]{}—–-]/g, '').trim();
+    const cleanWord = word.replace(/[\u0964\u0965,.;:!?'"()\[\]{}\u2014\u2013\-]/g, '').trim();
     if (!cleanWord || cleanWord.length === 0) return;
     
     setSelectedWord(cleanWord);
     setShowTooltip(true);
     setTranslation(null);
+    setDirectMeaning(null);
+    setShowAllMeanings(false);
     setError(null);
     setPosition(null);
-    
-    fetchTranslation(cleanWord, targetLanguage);
+
+    if (wordMeanings && wordMeanings.length > 0) {
+      const found = findDirectMeaning(cleanWord);
+      setDirectMeaning(found);
+      setShowAllMeanings(true);
+    } else {
+      fetchAiTranslation(cleanWord, targetLanguage);
+    }
   };
 
-  const fetchTranslation = async (word: string, lang: string) => {
+  const fetchAiTranslation = async (word: string, lang: string) => {
     setIsLoading(true);
     setError(null);
 
@@ -169,7 +228,7 @@ export function WordTooltip({
   const handleLanguageChange = (newLang: string) => {
     setTargetLanguage(newLang);
     if (selectedWord) {
-      fetchTranslation(selectedWord, newLang);
+      fetchAiTranslation(selectedWord, newLang);
     }
   };
 
@@ -177,6 +236,8 @@ export function WordTooltip({
     setShowTooltip(false);
     setSelectedWord(null);
     setTranslation(null);
+    setDirectMeaning(null);
+    setShowAllMeanings(false);
     setError(null);
     setPosition(null);
     clickedWordRef.current = null;
@@ -185,6 +246,52 @@ export function WordTooltip({
   if (!content) return null;
   
   const words = content.split(/(\s+)/);
+
+  const hasWordMeanings = wordMeanings && wordMeanings.length > 0;
+
+  const renderDirectMeaningsPanel = () => {
+    if (!wordMeanings || wordMeanings.length === 0) return null;
+
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 mb-2">
+          <BookText className="h-4 w-4 text-primary" />
+          <span className="font-semibold text-primary text-sm">Word-by-Word Meanings</span>
+        </div>
+
+        {directMeaning && (
+          <div className="bg-primary/10 rounded-md p-2.5 mb-2">
+            <div className="flex items-start gap-2">
+              <Badge variant="secondary" className="text-xs shrink-0">Selected</Badge>
+              <div>
+                <span className="font-bold text-sm">{directMeaning.word}</span>
+                <span className="text-muted-foreground mx-1.5">&mdash;</span>
+                <span className="text-sm">{directMeaning.meaning}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <Separator />
+
+        <div className="space-y-1 max-h-[220px] overflow-y-auto">
+          {wordMeanings.map((wm, idx) => (
+            <div
+              key={wm.id || idx}
+              className={`flex items-start gap-1.5 py-1 px-1.5 rounded-sm text-xs ${
+                directMeaning?.id === wm.id ? "bg-primary/10 font-medium" : ""
+              }`}
+              data-testid={`word-meaning-${idx}`}
+            >
+              <span className="text-primary/80 font-medium italic shrink-0">{wm.word}</span>
+              <span className="text-muted-foreground">&mdash;</span>
+              <span className="text-foreground/80">{wm.meaning}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   const tooltipContent = showTooltip ? (
     <div
@@ -216,13 +323,22 @@ export function WordTooltip({
         />
       )}
       <Card 
-        className="w-full max-h-[400px] overflow-y-auto shadow-xl border-2 border-primary/30 bg-card"
+        className="w-full max-h-[450px] overflow-y-auto shadow-xl border-2 border-primary/30 bg-card"
       >
         <div className="p-4 bg-card text-card-foreground">
           <div className="flex items-start justify-between gap-2 mb-3">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <span className="font-semibold text-primary text-sm">AI Word Analysis</span>
+              {hasWordMeanings ? (
+                <>
+                  <BookText className="h-4 w-4 text-primary" />
+                  <span className="font-semibold text-primary text-sm">Word Meanings</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <span className="font-semibold text-primary text-sm">AI Word Analysis</span>
+                </>
+              )}
             </div>
             <Button
               variant="ghost"
@@ -235,108 +351,127 @@ export function WordTooltip({
             </Button>
           </div>
 
-          <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border">
-            <Globe className="h-4 w-4 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">Translate to:</span>
-            <Select value={targetLanguage} onValueChange={handleLanguageChange}>
-              <SelectTrigger className="h-7 w-[140px] text-xs bg-card" data-testid="select-target-language">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent 
-                className="z-[100000]" 
-                position="popper" 
-                side="top"
-                sideOffset={5}
-              >
-                {TRANSLATION_LANGUAGES.map((lang) => (
-                  <SelectItem key={lang.code} value={lang.code} data-testid={`lang-option-${lang.code}`}>
-                    {lang.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {hasWordMeanings && showAllMeanings && renderDirectMeaningsPanel()}
 
-          {isLoading && (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              <span className="ml-2 text-sm text-muted-foreground">Analyzing...</span>
-            </div>
-          )}
-
-          {error && (
-            <div className="text-destructive text-sm py-4 text-center">
-              {error}
-            </div>
-          )}
-
-          {translation && !isLoading && (
-            <div className="space-y-3">
-              <div className="bg-primary/10 rounded-md p-2">
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="text-xs">Word</Badge>
-                  <span className="font-bold text-base">{translation.word}</span>
-                </div>
+          {!hasWordMeanings && (
+            <>
+              <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border">
+                <Globe className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Translate to:</span>
+                <Select value={targetLanguage} onValueChange={handleLanguageChange}>
+                  <SelectTrigger className="h-7 w-[140px] text-xs bg-card" data-testid="select-target-language">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent 
+                    className="z-[100000]" 
+                    position="popper" 
+                    side="top"
+                    sideOffset={5}
+                  >
+                    {TRANSLATION_LANGUAGES.map((lang) => (
+                      <SelectItem key={lang.code} value={lang.code} data-testid={`lang-option-${lang.code}`}>
+                        {lang.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Languages className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Translation</span>
+              {isLoading && (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <span className="ml-2 text-sm text-muted-foreground">Analyzing...</span>
                 </div>
-                <p className="text-sm font-medium">{translation.translation}</p>
-              </div>
+              )}
 
-              {translation.grammaticalInfo && (
-                <>
-                  <Separator />
+              {error && (
+                <div className="text-destructive text-sm py-4 text-center">
+                  {error}
+                </div>
+              )}
+
+              {translation && !isLoading && (
+                <div className="space-y-3">
+                  <div className="bg-primary/10 rounded-md p-2">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-xs">Word</Badge>
+                      <span className="font-bold text-base">{translation.word}</span>
+                    </div>
+                  </div>
+
                   <div>
                     <div className="flex items-center gap-1.5 mb-1">
-                      <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Grammar</span>
+                      <Languages className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Translation</span>
                     </div>
-                    {typeof translation.grammaticalInfo === 'string' ? (
-                      <p className="text-xs text-muted-foreground leading-relaxed">{translation.grammaticalInfo}</p>
-                    ) : (
-                      <div className="space-y-1">
-                        {Object.entries(translation.grammaticalInfo).map(([key, value]) => (
-                          <p key={key} className="text-xs text-muted-foreground leading-relaxed">
-                            <span className="font-medium capitalize">{key.replace(/[/_]/g, ' ')}: </span>
-                            {String(value)}
-                          </p>
-                        ))}
+                    <p className="text-sm font-medium">{translation.translation}</p>
+                  </div>
+
+                  {translation.grammaticalInfo && (
+                    <>
+                      <Separator />
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Grammar</span>
+                        </div>
+                        {typeof translation.grammaticalInfo === 'string' ? (
+                          <p className="text-xs text-muted-foreground leading-relaxed">{translation.grammaticalInfo}</p>
+                        ) : (
+                          <div className="space-y-1">
+                            {Object.entries(translation.grammaticalInfo).map(([key, value]) => (
+                              <p key={key} className="text-xs text-muted-foreground leading-relaxed">
+                                <span className="font-medium capitalize">{key.replace(/[/_]/g, ' ')}: </span>
+                                {String(value)}
+                              </p>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </>
-              )}
+                    </>
+                  )}
 
-              {translation.etymology && (
-                <>
-                  <Separator />
-                  <div>
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">Etymology</span>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{translation.etymology}</p>
-                  </div>
-                </>
-              )}
+                  {translation.etymology && (
+                    <>
+                      <Separator />
+                      <div>
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">Etymology</span>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{translation.etymology}</p>
+                      </div>
+                    </>
+                  )}
 
-              {translation.contextualMeaning && (
-                <>
-                  <Separator />
-                  <div>
-                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">Contextual Meaning</span>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{translation.contextualMeaning}</p>
-                  </div>
-                </>
-              )}
+                  {translation.contextualMeaning && (
+                    <>
+                      <Separator />
+                      <div>
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">Contextual Meaning</span>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{translation.contextualMeaning}</p>
+                      </div>
+                    </>
+                  )}
 
-              {translation.cached && (
-                <div className="text-[10px] text-muted-foreground/60 text-right">
-                  (from cache)
+                  {translation.cached && (
+                    <div className="text-[10px] text-muted-foreground/60 text-right">
+                      (from cache)
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
+
+              {!isLoading && !translation && !error && selectedWord && (
+                <div className="py-4 text-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => fetchAiTranslation(selectedWord, targetLanguage)}
+                    data-testid="button-ai-translate"
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Analyze with AI
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </Card>
@@ -350,7 +485,7 @@ export function WordTooltip({
           return <span key={index}>{segment}</span>;
         }
         
-        const cleanWord = segment.replace(/[।॥,.;:!?'"()[\]{}—–-]/g, '').trim();
+        const cleanWord = segment.replace(/[\u0964\u0965,.;:!?'"()\[\]{}\u2014\u2013\-]/g, '').trim();
         if (!cleanWord) {
           return <span key={index}>{segment}</span>;
         }

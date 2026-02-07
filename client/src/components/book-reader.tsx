@@ -120,6 +120,7 @@ function VerseExplanation({
                 <WordTooltip
                   content={explanation.content}
                   sourceLanguage={languageCode}
+                  verseId={verseId}
                   className="inline"
                 />
               </div>
@@ -592,6 +593,7 @@ export function BookReader({
                         content={originalDevanagari}
                         commentaryContent={commentaryContext}
                         sourceLanguage="devanagari"
+                        verseId={currentVerse.id}
                       />
                     </div>
                     <div className="absolute -right-1 sm:-right-2 bottom-0 text-xl sm:text-2xl text-primary/20 font-serif rotate-180">❝</div>
@@ -614,6 +616,7 @@ export function BookReader({
                         content={translationText}
                         commentaryContent={commentaryContext}
                         sourceLanguage={selectedCommentaryLanguage || "devanagari"}
+                        verseId={currentVerse.id}
                       />
                     </div>
                   </div>

@@ -121,6 +121,16 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/verses/:id/word-meanings", async (req, res) => {
+    try {
+      const meanings = await storage.getWordMeaningsByVerseId(req.params.id);
+      res.json(meanings);
+    } catch (error) {
+      console.error("Error fetching word meanings:", error);
+      res.status(500).json({ error: "Failed to fetch word meanings" });
+    }
+  });
+
   app.post("/api/translate-word", async (req, res) => {
     try {
       const parseResult = translateWordRequestSchema.safeParse(req.body);

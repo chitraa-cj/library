@@ -118,6 +118,18 @@ export const insertWordTranslationSchema = createInsertSchema(wordTranslations).
 export type InsertWordTranslation = z.infer<typeof insertWordTranslationSchema>;
 export type WordTranslation = typeof wordTranslations.$inferSelect;
 
+export const verseWordMeanings = pgTable("verse_word_meanings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  verseId: varchar("verse_id").notNull().references(() => verses.id),
+  word: text("word").notNull(),
+  meaning: text("meaning").notNull(),
+  position: integer("position").notNull(),
+});
+
+export const insertVerseWordMeaningSchema = createInsertSchema(verseWordMeanings).omit({ id: true });
+export type InsertVerseWordMeaning = z.infer<typeof insertVerseWordMeaningSchema>;
+export type VerseWordMeaning = typeof verseWordMeanings.$inferSelect;
+
 export const notes = pgTable("notes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(),
