@@ -90,5 +90,5 @@ The database schema supports multi-language sacred texts:
 - **@replit/vite-plugin-dev-banner**: Development environment indicator
 
 ## Notes
-- **SendGrid Integration**: User dismissed the Replit SendGrid connector. If email functionality (e.g., OTP authentication) is needed in the future, ask the user for a SendGrid API key to store as a secret, or explore alternative email services.
+- **SendGrid Integration**: User dismissed the Replit SendGrid connector and chose to leave email OTP authentication out for now. Can revisit later if needed.
 - **Branding**: Main header uses "Advaita Sharada - Encyclopaedia of Advaita Vedanta". Sidebar still shows "Ekatma Dham - Abode of Oneness" branding with oneness.org.in logo.
