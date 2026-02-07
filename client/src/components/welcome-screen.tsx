@@ -1,6 +1,7 @@
 import { BookOpen, Globe, MessageSquareText, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { VideoInline } from "@/components/video-popup";
+import shankaracharyaImg from "@assets/image_1770455528511.png";
 
 const features = [
   {
@@ -14,7 +15,8 @@ const features = [
     description: "Read in Devanagari, Kannada, Telugu, Tamil, and English scripts",
   },
   {
-    icon: MessageSquareText,
+    icon: null,
+    image: shankaracharyaImg,
     title: "Shankaracharya Bhashya",
     description: "Complete commentary by Adi Shankaracharya explaining the profound Advaita wisdom",
   },
@@ -74,7 +76,11 @@ export function WelcomeScreen() {
             >
               <div className="flex items-start gap-4">
                 <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 shrink-0 border border-primary/20">
-                  <feature.icon className="w-5 h-5 text-primary" />
+                  {'image' in feature && feature.image ? (
+                    <img src={feature.image} alt={feature.title} className="w-8 h-8 object-contain" />
+                  ) : feature.icon ? (
+                    <feature.icon className="w-5 h-5 text-primary" />
+                  ) : null}
                 </div>
                 <div className="space-y-1">
                   <h3 className="font-medium text-sm text-foreground">{feature.title}</h3>

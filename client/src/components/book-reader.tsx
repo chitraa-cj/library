@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { BookWithDetails, VerseTranslation, Explanation, Note } from "@shared/schema";
+import shankaracharyaImg from "@assets/image_1770455528511.png";
 
 interface CommentaryOption {
   authorName: string;
@@ -50,6 +51,11 @@ interface BookReaderProps {
   navigateToVerse?: number | null;
   onVerseChange?: (verseNumber: number) => void;
   onBreadcrumbChange?: (breadcrumb: VerseBreadcrumb) => void;
+}
+
+function isShankaracharya(name: string): boolean {
+  const lower = name.toLowerCase();
+  return lower.includes("shankaracharya") || lower.includes("sankara") || lower.includes("śaṅkara");
 }
 
 function VerseExplanation({ 
@@ -98,7 +104,11 @@ function VerseExplanation({
           data-testid={`commentary-group-${group.authorName.toLowerCase().replace(/\s+/g, '-')}`}
         >
           <div className="flex items-center gap-2 mb-3">
-            <User className="h-4 w-4 text-primary/70 shrink-0" />
+            {isShankaracharya(group.authorName) ? (
+              <img src={shankaracharyaImg} alt="Adi Shankaracharya" className="h-8 w-8 object-contain shrink-0" />
+            ) : (
+              <User className="h-4 w-4 text-primary/70 shrink-0" />
+            )}
             <h4 className="text-sm font-semibold text-foreground">{group.authorName}</h4>
             {group.authorTitle && (
               <span className="text-xs text-muted-foreground">- {group.authorTitle}</span>
