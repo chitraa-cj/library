@@ -354,19 +354,26 @@ export function BookReader({
 
   const availableTranslations = useMemo(() => {
     if (!currentVerseDetails?.translations) return [];
+    const primaryCodes = new Set(["devanagari", "sa"]);
     const hasDevanagari = currentVerseDetails.translations.some(
       (t: VerseTranslation) => t.languageCode === "devanagari"
     );
-    const hasSanskrit = currentVerseDetails.translations.some(
-      (t: VerseTranslation) => t.languageCode === "sa"
-    );
-    return currentVerseDetails.translations.filter((t: VerseTranslation) => {
+    const nonPrimary = currentVerseDetails.translations.filter((t: VerseTranslation) => {
       if (t.languageCode === "devanagari") return false;
       if (t.languageCode === "sa" && !hasDevanagari) return false;
-      if (t.languageCode === "sa" && hasDevanagari) return true;
       return true;
     });
-  }, [currentVerseDetails]);
+    if (!selectedCommentaryLanguage) return nonPrimary;
+    const langAliases: Record<string, string[]> = {
+      "english": ["english", "en"],
+      "en": ["english", "en"],
+    };
+    const matchCodes = langAliases[selectedCommentaryLanguage] || [selectedCommentaryLanguage];
+    const filtered = nonPrimary.filter((t: VerseTranslation) =>
+      matchCodes.includes(t.languageCode)
+    );
+    return filtered.length > 0 ? filtered : nonPrimary;
+  }, [currentVerseDetails, selectedCommentaryLanguage]);
 
   const commentaryContext = useMemo(() => {
     if (!selectedAuthor || !selectedCommentaryLanguage || !currentVerseDetails) return "";
