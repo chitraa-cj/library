@@ -348,7 +348,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
               <div key={adhyayKey}>
                 <button
                   onClick={() => toggleAdhyay(adhyayKey)}
-                  className={`flex items-center gap-1.5 w-full text-left text-xs py-1.5 px-2 rounded-md transition-colors ${
+                  className={`flex items-center gap-1.5 w-full text-left text-xs py-2 px-2 rounded-md transition-colors ${
                     isCurrentAdhyay && !isAdhyayOpen
                       ? "bg-primary/10 text-primary font-medium"
                       : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
@@ -379,7 +379,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
                         <div key={khandaKey}>
                           <button
                             onClick={() => toggleKhanda(khandaKey)}
-                            className={`flex items-center gap-1.5 w-full text-left text-xs py-1.5 px-2 rounded-md transition-colors ${
+                            className={`flex items-center gap-1.5 w-full text-left text-xs py-2 px-2 rounded-md transition-colors ${
                               isCurrentKhanda && !isKhandaOpen
                                 ? "bg-primary/10 text-primary font-medium"
                                 : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
@@ -405,7 +405,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
                                   <button
                                     key={verse.id}
                                     onClick={() => handleVerseSelect(book.id, verse.verseNumber)}
-                                    className={`flex items-center gap-2 w-full text-left text-xs py-1.5 px-2 rounded-md transition-colors ${
+                                    className={`flex items-center gap-2 w-full text-left text-xs py-2 px-2 rounded-md transition-colors ${
                                       selectedVerseNumber === verse.verseNumber
                                         ? "bg-primary/15 text-primary font-medium"
                                         : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
@@ -441,7 +441,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
           <button
             key={verse.id}
             onClick={() => handleVerseSelect(book.id, verse.verseNumber)}
-            className={`flex items-center gap-2 w-full text-left text-xs py-1.5 px-2 rounded-md transition-colors ${
+            className={`flex items-center gap-2 w-full text-left text-xs py-2 px-2 rounded-md transition-colors ${
               selectedVerseNumber === verse.verseNumber
                 ? "bg-primary/15 text-primary font-medium"
                 : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
@@ -469,7 +469,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
             handleBookSelect(book.id);
             if (isSelected) toggleBookExpand(book.id);
           }}
-          className={`flex items-center gap-2 w-full text-left text-xs py-2 px-2 rounded-md transition-colors ${
+          className={`flex items-center gap-2 w-full text-left text-xs py-2.5 px-2 rounded-md transition-colors ${
             isSelected
               ? "bg-primary/15 text-primary font-semibold"
               : "text-foreground/80 hover:text-foreground hover:bg-sidebar-accent/30"

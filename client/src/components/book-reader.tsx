@@ -583,54 +583,54 @@ export function BookReader({
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
-      <div className="border-b border-border px-4 sm:px-8 py-4 sm:py-5 bg-card/50 shrink-0">
+      <div className="border-b border-border px-3 sm:px-8 py-3 sm:py-5 bg-card/50 shrink-0">
         <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
-            <div className="space-y-1 flex-1">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <h1 className="font-serif text-lg sm:text-xl font-semibold tracking-tight">
+          <div className="flex items-start justify-between gap-2 sm:gap-4">
+            <div className="space-y-0.5 sm:space-y-1 flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-3">
+                <h1 className="font-serif text-base sm:text-xl font-semibold tracking-tight truncate">
                   {book.title}
                 </h1>
-                <Badge variant="secondary" className="shrink-0">
+                <Badge variant="secondary" className="shrink-0 text-[10px] sm:text-xs">
                   {book.category}
                 </Badge>
               </div>
               {book.author && (
-                <p className="text-xs sm:text-sm text-muted-foreground">{book.author}</p>
+                <p className="text-[11px] sm:text-sm text-muted-foreground">{book.author}</p>
               )}
             </div>
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <img 
                 src={meditatingRishiImg} 
                 alt="Meditating sage" 
                 className="h-14 w-14 object-contain select-none hidden sm:block opacity-80"
                 data-testid="img-meditating-rishi"
               />
-              <div className="flex flex-col items-end gap-1 text-sm text-muted-foreground">
+              <div className="flex flex-col items-end gap-0.5 sm:gap-1 text-xs sm:text-sm text-muted-foreground">
                 {currentNumericLabel && (
-                  <Badge variant="outline" className="font-mono text-[11px] px-2 h-5 border-muted-foreground/30" data-testid="text-header-numeric">
+                  <Badge variant="outline" className="font-mono text-[10px] sm:text-[11px] px-1.5 sm:px-2 h-4 sm:h-5 border-muted-foreground/30" data-testid="text-header-numeric">
                     {currentNumericLabel}
                   </Badge>
                 )}
-                <span>{currentPage + 1} / {totalPages}</span>
+                <span className="text-[11px] sm:text-sm">{currentPage + 1} / {totalPages}</span>
               </div>
             </div>
           </div>
           {book.description && (
-            <p className="text-xs sm:text-sm text-muted-foreground mt-3 leading-relaxed line-clamp-2 sm:line-clamp-3">
+            <p className="text-[11px] sm:text-sm text-muted-foreground mt-2 sm:mt-3 leading-relaxed line-clamp-1 sm:line-clamp-3">
               {book.description}
             </p>
           )}
           {hasCommentaryOptions && (
-            <div className="flex flex-wrap items-center gap-3 mt-3">
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-muted-foreground shrink-0" />
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 sm:mt-3">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
                 <Select
                   value={selectedAuthor || "__all__"}
                   onValueChange={handleAuthorChange}
                 >
                   <SelectTrigger 
-                    className="w-[180px] h-8 text-xs bg-background/80 backdrop-blur-sm border-primary/20" 
+                    className="w-[140px] sm:w-[180px] h-7 sm:h-8 text-[11px] sm:text-xs bg-background/80 backdrop-blur-sm border-primary/20" 
                     data-testid="select-author"
                   >
                     <SelectValue placeholder="Select Author" />
@@ -654,15 +654,15 @@ export function BookReader({
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
                 <Select
                   value={selectedCommentaryLanguage || ""}
                   onValueChange={handleLanguageChange}
                   disabled={availableLanguagesForAuthor.length === 0}
                 >
                   <SelectTrigger 
-                    className="w-[140px] h-8 text-xs bg-background/80 backdrop-blur-sm border-primary/20" 
+                    className="w-[120px] sm:w-[140px] h-7 sm:h-8 text-[11px] sm:text-xs bg-background/80 backdrop-blur-sm border-primary/20" 
                     data-testid="select-commentary-language"
                   >
                     <SelectValue placeholder="Language" />
@@ -695,37 +695,35 @@ export function BookReader({
           <div className="absolute bottom-1/3 left-1/3 text-5xl text-primary/[0.03] font-serif select-none">॥</div>
         </div>
         
-        <div className="flex-1 p-4 sm:p-8 overflow-y-auto relative z-10">
+        <div className="flex-1 p-3 sm:p-8 overflow-y-auto relative z-10">
           <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl w-full mx-auto">
             <div 
-              className="backdrop-blur-md bg-gradient-to-br from-white/70 via-orange-50/50 to-amber-50/40 dark:from-card/80 dark:via-card/70 dark:to-orange-950/30 border border-primary/20 rounded-2xl p-6 sm:p-10 shadow-lg shadow-primary/5 relative overflow-hidden"
+              className="backdrop-blur-md bg-gradient-to-br from-white/70 via-orange-50/50 to-amber-50/40 dark:from-card/80 dark:via-card/70 dark:to-orange-950/30 border border-primary/20 rounded-xl sm:rounded-2xl p-4 sm:p-10 shadow-lg shadow-primary/5 relative overflow-hidden"
               data-testid={`verse-${currentVerse.verseNumber}`}
             >
-              {/* Decorative corner elements */}
-              <div className="absolute top-0 left-0 w-20 h-20 border-t-2 border-l-2 border-primary/20 rounded-tl-2xl"></div>
-              <div className="absolute bottom-0 right-0 w-20 h-20 border-b-2 border-r-2 border-primary/20 rounded-br-2xl"></div>
+              <div className="absolute top-0 left-0 w-12 sm:w-20 h-12 sm:h-20 border-t-2 border-l-2 border-primary/20 rounded-tl-xl sm:rounded-tl-2xl"></div>
+              <div className="absolute bottom-0 right-0 w-12 sm:w-20 h-12 sm:h-20 border-b-2 border-r-2 border-primary/20 rounded-br-xl sm:rounded-br-2xl"></div>
               
-              {/* Large Om watermark */}
-              <div className="absolute top-4 right-4 text-6xl text-primary/[0.08] font-serif select-none pointer-events-none">ॐ</div>
-              <div className="absolute bottom-4 left-4 text-4xl text-primary/[0.06] font-serif select-none pointer-events-none">ॐ</div>
+              <div className="absolute top-3 right-3 sm:top-4 sm:right-4 text-4xl sm:text-6xl text-primary/[0.08] font-serif select-none pointer-events-none">ॐ</div>
+              <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 text-3xl sm:text-4xl text-primary/[0.06] font-serif select-none pointer-events-none hidden sm:block">ॐ</div>
               
-              <div className="flex items-center justify-center gap-3 mb-6">
-                <span className="text-primary/40">॥</span>
-                <span className="text-sm font-medium text-primary bg-gradient-to-r from-primary/15 to-primary/10 px-4 py-1.5 rounded-full border border-primary/20 flex items-center gap-2">
+              <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                <span className="text-primary/40 text-sm sm:text-base">॥</span>
+                <span className="text-xs sm:text-sm font-medium text-primary bg-gradient-to-r from-primary/15 to-primary/10 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-primary/20 flex items-center gap-1.5 sm:gap-2">
                   {currentNumericLabel && (
-                    <span className="font-mono text-xs opacity-70" data-testid="text-verse-numeric">{currentNumericLabel}</span>
+                    <span className="font-mono text-[10px] sm:text-xs opacity-70" data-testid="text-verse-numeric">{currentNumericLabel}</span>
                   )}
-                  {currentVerse.sectionTitle || `Verse ${currentVerse.verseNumber}`}
+                  <span className="truncate max-w-[150px] sm:max-w-none">{currentVerse.sectionTitle || `Verse ${currentVerse.verseNumber}`}</span>
                 </span>
-                <span className="text-primary/40">॥</span>
+                <span className="text-primary/40 text-sm sm:text-base">॥</span>
               </div>
 
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
+              <div className="space-y-4 sm:space-y-6">
+                <div className="flex items-start gap-3 sm:gap-4">
                   <div className="relative flex-1 min-w-0">
-                    <div className="absolute -left-2 top-0 text-2xl text-primary/20 font-serif">❝</div>
+                    <div className="absolute -left-1 sm:-left-2 top-0 text-xl sm:text-2xl text-primary/20 font-serif">❝</div>
                     <div 
-                      className="font-serif text-xl sm:text-2xl leading-relaxed text-center px-4"
+                      className="font-serif text-lg sm:text-2xl leading-relaxed text-center px-2 sm:px-4"
                       data-testid={`text-original-${currentVerse.verseNumber}`}
                     >
                       <WordTooltip
@@ -734,7 +732,7 @@ export function BookReader({
                         sourceLanguage="devanagari"
                       />
                     </div>
-                    <div className="absolute -right-2 bottom-0 text-2xl text-primary/20 font-serif rotate-180">❝</div>
+                    <div className="absolute -right-1 sm:-right-2 bottom-0 text-xl sm:text-2xl text-primary/20 font-serif rotate-180">❝</div>
                   </div>
                   <img 
                     src={rishiImg} 
@@ -745,9 +743,9 @@ export function BookReader({
                 </div>
 
                 {isNonDevanagariSelected && translationText && (
-                  <div className="border-t border-primary/10 pt-4">
+                  <div className="border-t border-primary/10 pt-3 sm:pt-4">
                     <div 
-                      className="text-base sm:text-lg leading-relaxed text-center px-4 text-muted-foreground"
+                      className="text-sm sm:text-lg leading-relaxed text-center px-1 sm:px-4 text-muted-foreground"
                       data-testid={`text-translation-${currentVerse.verseNumber}`}
                     >
                       <WordTooltip
@@ -760,23 +758,23 @@ export function BookReader({
                 )}
                 
                 <div className="flex items-center justify-center">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground/70 bg-muted/30 px-3 py-1.5 rounded-full">
-                    <Sparkles className="h-3 w-3" />
-                    <span>Click any word for AI translation</span>
+                  <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground/70 bg-muted/30 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full">
+                    <Sparkles className="h-3 w-3 shrink-0" />
+                    <span>Tap any word for AI translation</span>
                   </div>
                 </div>
 
                 {hasCommentaryOptions && (
-                  <div className="mt-2 space-y-3">
+                  <div className="mt-1 sm:mt-2 space-y-3">
                     <div className="flex justify-center">
                       <button
                         onClick={() => setCommentaryExpanded(!commentaryExpanded)}
-                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors px-4 py-2 rounded-full border border-border/50 hover:border-primary/30 bg-background/60 backdrop-blur-sm"
+                        className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground hover:text-primary transition-colors px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-border/50 hover:border-primary/30 bg-background/60 backdrop-blur-sm"
                         data-testid="button-toggle-commentary"
                       >
-                        <MessageSquareText className="h-4 w-4" />
+                        <MessageSquareText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         <span>{commentaryExpanded ? "Hide Commentary" : "Show Commentary"}</span>
-                        <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${commentaryExpanded ? "rotate-180" : ""}`} />
+                        <ChevronDown className={`h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform duration-200 ${commentaryExpanded ? "rotate-180" : ""}`} />
                       </button>
                     </div>
 
@@ -796,12 +794,12 @@ export function BookReader({
                 <VerseNotes verseId={currentVerse.id} />
               </div>
 
-              <div className="flex items-center justify-between mt-8 pt-6 border-t border-border/50">
+              <div className="flex items-center justify-between mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-border/50">
                 <Button
                   variant="outline"
                   onClick={goToPrevPage}
                   disabled={currentPage === 0}
-                  className="gap-2"
+                  className="gap-1 sm:gap-2"
                   data-testid="button-prev-page"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -823,7 +821,7 @@ export function BookReader({
                       />
                     ))
                   ) : (
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-xs sm:text-sm text-muted-foreground">
                       {currentPage + 1} / {totalPages}
                     </span>
                   )}
@@ -833,7 +831,7 @@ export function BookReader({
                   variant="outline"
                   onClick={goToNextPage}
                   disabled={currentPage === totalPages - 1}
-                  className="gap-2"
+                  className="gap-1 sm:gap-2"
                   data-testid="button-next-page"
                 >
                   <span className="hidden sm:inline">Next</span>
@@ -844,7 +842,7 @@ export function BookReader({
           </div>
         </div>
 
-        <div className="border-t border-border px-4 sm:px-8 py-3 bg-background/80 backdrop-blur-sm">
+        <div className="border-t border-border px-3 sm:px-8 py-2 sm:py-3 bg-background/80 backdrop-blur-sm">
           <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto flex items-center justify-center">
             <VideoPopup 
               videoId="8ELHatzdtAk"
