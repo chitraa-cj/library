@@ -492,7 +492,7 @@ export function BookReader({
   if (isLoading) {
     return (
       <div className="flex-1 p-4 sm:p-8">
-        <div className="max-w-3xl mx-auto space-y-6">
+        <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto space-y-6">
           <Skeleton className="h-10 sm:h-12 w-3/4" />
           <Skeleton className="h-5 sm:h-6 w-1/2" />
           <div className="space-y-4 mt-8">
@@ -584,7 +584,7 @@ export function BookReader({
       onKeyDown={handleKeyDown}
     >
       <div className="border-b border-border px-4 sm:px-8 py-4 sm:py-5 bg-card/50 shrink-0">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
             <div className="space-y-1 flex-1">
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -635,7 +635,7 @@ export function BookReader({
         </div>
         
         <div className="flex-1 p-4 sm:p-8 overflow-y-auto relative z-10">
-          <div className="max-w-3xl w-full mx-auto">
+          <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl w-full mx-auto">
             <div 
               className="backdrop-blur-md bg-gradient-to-br from-white/70 via-orange-50/50 to-amber-50/40 dark:from-card/80 dark:via-card/70 dark:to-orange-950/30 border border-primary/20 rounded-2xl p-6 sm:p-10 shadow-lg shadow-primary/5 relative overflow-hidden"
               data-testid={`verse-${currentVerse.verseNumber}`}
@@ -845,7 +845,7 @@ export function BookReader({
         </div>
 
         <div className="border-t border-border px-4 sm:px-8 py-3 bg-background/80 backdrop-blur-sm">
-          <div className="max-w-3xl mx-auto flex items-center justify-center">
+          <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto flex items-center justify-center">
             <VideoPopup 
               videoId="8ELHatzdtAk"
               title="Introduction to Isha Upanishad"
