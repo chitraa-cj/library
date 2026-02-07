@@ -706,88 +706,88 @@ export function BookReader({
                 </div>
 
                 {hasCommentaryOptions && (
-                  <div className="mt-2">
-                    <button
-                      onClick={() => setCommentaryExpanded(!commentaryExpanded)}
-                      className="flex items-center gap-2 mx-auto text-sm text-muted-foreground hover:text-primary transition-colors px-4 py-2 rounded-full border border-border/50 hover:border-primary/30 bg-background/60 backdrop-blur-sm"
-                      data-testid="button-toggle-commentary"
-                    >
-                      <MessageSquareText className="h-4 w-4" />
-                      <span>{commentaryExpanded ? "Hide Commentary" : "Show Commentary"}</span>
-                      <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${commentaryExpanded ? "rotate-180" : ""}`} />
-                    </button>
-
-                    {commentaryExpanded && (
-                      <div className="mt-4 pt-4 border-t border-border/40 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                        <div className="flex flex-wrap items-center justify-center gap-3">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <Select
-                              value={selectedAuthor || "__all__"}
-                              onValueChange={handleAuthorChange}
+                  <div className="mt-2 space-y-3">
+                    <div className="flex flex-wrap items-center justify-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <Select
+                          value={selectedAuthor || "__all__"}
+                          onValueChange={handleAuthorChange}
+                        >
+                          <SelectTrigger 
+                            className="w-[180px] h-8 text-xs bg-background/80 backdrop-blur-sm border-primary/20" 
+                            data-testid="select-author"
+                          >
+                            <SelectValue placeholder="Select Author" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem 
+                              value="__all__"
+                              data-testid="option-author-all"
                             >
-                              <SelectTrigger 
-                                className="w-[180px] h-8 text-xs bg-background/80 backdrop-blur-sm border-primary/20" 
-                                data-testid="select-author"
+                              All Commentators
+                            </SelectItem>
+                            {availableAuthors.map((author) => (
+                              <SelectItem 
+                                key={author.authorName} 
+                                value={author.authorName}
+                                data-testid={`option-author-${author.authorName.toLowerCase().replace(/\s+/g, '-')}`}
                               >
-                                <SelectValue placeholder="Select Author" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem 
-                                  value="__all__"
-                                  data-testid="option-author-all"
-                                >
-                                  All Commentators
-                                </SelectItem>
-                                {availableAuthors.map((author) => (
-                                  <SelectItem 
-                                    key={author.authorName} 
-                                    value={author.authorName}
-                                    data-testid={`option-author-${author.authorName.toLowerCase().replace(/\s+/g, '-')}`}
-                                  >
-                                    {author.authorName}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
+                                {author.authorName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                          <div className="flex items-center gap-2">
-                            <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <Select
-                              value={selectedCommentaryLanguage || ""}
-                              onValueChange={handleLanguageChange}
-                              disabled={availableLanguagesForAuthor.length === 0}
-                            >
-                              <SelectTrigger 
-                                className="w-[140px] h-8 text-xs bg-background/80 backdrop-blur-sm border-primary/20" 
-                                data-testid="select-commentary-language"
+                      <div className="flex items-center gap-2">
+                        <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <Select
+                          value={selectedCommentaryLanguage || ""}
+                          onValueChange={handleLanguageChange}
+                          disabled={availableLanguagesForAuthor.length === 0}
+                        >
+                          <SelectTrigger 
+                            className="w-[140px] h-8 text-xs bg-background/80 backdrop-blur-sm border-primary/20" 
+                            data-testid="select-commentary-language"
+                          >
+                            <SelectValue placeholder="Language" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableLanguagesForAuthor.map((lang) => (
+                              <SelectItem 
+                                key={lang.code} 
+                                value={lang.code}
+                                data-testid={`option-lang-${lang.code}`}
                               >
-                                <SelectValue placeholder="Language" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {availableLanguagesForAuthor.map((lang) => (
-                                  <SelectItem 
-                                    key={lang.code} 
-                                    value={lang.code}
-                                    data-testid={`option-lang-${lang.code}`}
-                                  >
-                                    {lang.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
+                                {lang.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
 
-                        {selectedCommentaryLanguage && (
-                          <VerseExplanation 
-                            verseId={currentVerse.id} 
-                            languageCode={selectedCommentaryLanguage}
-                            authorName={isShowingAll ? null : selectedAuthor}
-                            showAll={isShowingAll}
-                          />
-                        )}
+                    <div className="flex justify-center">
+                      <button
+                        onClick={() => setCommentaryExpanded(!commentaryExpanded)}
+                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors px-4 py-2 rounded-full border border-border/50 hover:border-primary/30 bg-background/60 backdrop-blur-sm"
+                        data-testid="button-toggle-commentary"
+                      >
+                        <MessageSquareText className="h-4 w-4" />
+                        <span>{commentaryExpanded ? "Hide Commentary" : "Show Commentary"}</span>
+                        <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${commentaryExpanded ? "rotate-180" : ""}`} />
+                      </button>
+                    </div>
+
+                    {commentaryExpanded && selectedCommentaryLanguage && (
+                      <div className="pt-4 border-t border-border/40 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <VerseExplanation 
+                          verseId={currentVerse.id} 
+                          languageCode={selectedCommentaryLanguage}
+                          authorName={isShowingAll ? null : selectedAuthor}
+                          showAll={isShowingAll}
+                        />
                       </div>
                     )}
                   </div>
