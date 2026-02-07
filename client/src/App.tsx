@@ -42,7 +42,9 @@ function HomePage() {
   const [selectedCommentaryLanguage, setSelectedCommentaryLanguage] = useState<string | null>(null);
   const [navigateToVerse, setNavigateToVerse] = useState<number | null>(null);
   const [currentVerseNumber, setCurrentVerseNumber] = useState<number>(1);
-  const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
+  const [rightPanelCollapsed, setRightPanelCollapsed] = useState(() => {
+    return typeof window !== 'undefined' && window.innerWidth < 1024;
+  });
   const [verseBreadcrumb, setVerseBreadcrumb] = useState<VerseBreadcrumb | null>(null);
   const [pendingNoteText, setPendingNoteText] = useState<string | null>(null);
   const [urlInitialized, setUrlInitialized] = useState(false);
@@ -52,6 +54,16 @@ function HomePage() {
   const { data: allBooks } = useQuery<Book[]>({
     queryKey: ["/api/books"],
   });
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setRightPanelCollapsed(true);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const bookSlugFromUrl = params?.bookSlug || null;
   const verseNumberFromUrl = params?.verseNumber ? parseInt(params.verseNumber, 10) : null;

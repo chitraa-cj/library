@@ -245,7 +245,7 @@ export function TranslationPanel({
   }
 
   return (
-    <div className="w-80 border-l border-border bg-card/30 flex flex-col transition-all duration-300">
+    <div className="w-72 border-l border-border bg-card/30 flex flex-col transition-all duration-300">
       <div className="p-2 flex items-center justify-between border-b border-border">
         <h2 className="font-medium text-sm flex items-center gap-2 px-2">
           <Globe className="h-4 w-4" />
