@@ -352,6 +352,21 @@ export function BookReader({
     }
   }, [currentPage, book, onBreadcrumbChange]);
 
+  const availableTranslations = useMemo(() => {
+    if (!currentVerseDetails?.translations) return [];
+    return currentVerseDetails.translations.filter(
+      (t: VerseTranslation) => t.languageCode !== "devanagari"
+    );
+  }, [currentVerseDetails]);
+
+  const commentaryContext = useMemo(() => {
+    if (!selectedAuthor || !selectedCommentaryLanguage || !currentVerseDetails) return "";
+    const explanation = currentVerseDetails.explanations?.find(
+      (e: Explanation) => e.authorName === selectedAuthor && e.languageCode === selectedCommentaryLanguage
+    );
+    return explanation?.content || "";
+  }, [selectedAuthor, selectedCommentaryLanguage, currentVerseDetails]);
+
   useEffect(() => {
     if (currentVerse && currentVerseDetails) {
       const langCode = selectedCommentaryLanguage || "devanagari";
@@ -421,6 +436,8 @@ export function BookReader({
     }
   };
 
+  const originalDevanagari = currentVerseDetails ? getOriginalDevanagari(currentVerseDetails) : "";
+
   if (!currentVerse) {
     return (
       <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
@@ -431,20 +448,6 @@ export function BookReader({
       </div>
     );
   }
-
-  const originalDevanagari = currentVerseDetails ? getOriginalDevanagari(currentVerseDetails) : "";
-  const isNonDevanagariSelected = selectedCommentaryLanguage && selectedCommentaryLanguage !== "devanagari";
-  const translationText = isNonDevanagariSelected && currentVerseDetails
-    ? getTranslation(currentVerseDetails, selectedCommentaryLanguage)
-    : "";
-
-  const commentaryContext = (() => {
-    if (!selectedAuthor || !selectedCommentaryLanguage || !currentVerseDetails) return "";
-    const explanation = currentVerseDetails.explanations?.find(
-      (e: Explanation) => e.authorName === selectedAuthor && e.languageCode === selectedCommentaryLanguage
-    );
-    return explanation?.content || "";
-  })();
 
   return (
     <div 
@@ -642,19 +645,23 @@ export function BookReader({
                   />
                 </div>
 
-                {isNonDevanagariSelected && translationText && (
-                  <div className="border-t border-primary/10 pt-3 sm:pt-4">
-                    <div 
-                      className="text-sm sm:text-lg leading-relaxed text-center px-1 sm:px-4 text-muted-foreground"
-                      data-testid={`text-translation-${currentVerse.verseNumber}`}
-                    >
-                      <WordTooltip
-                        content={translationText}
-                        commentaryContent={commentaryContext}
-                        sourceLanguage={selectedCommentaryLanguage || "devanagari"}
-                        verseId={currentVerse.id}
-                      />
-                    </div>
+                {availableTranslations.length > 0 && (
+                  <div className="border-t border-primary/10 pt-3 sm:pt-4 space-y-3">
+                    {availableTranslations.map((translation: VerseTranslation) => (
+                      <div key={translation.id}>
+                        <div 
+                          className="text-sm sm:text-lg leading-relaxed text-center px-1 sm:px-4 text-muted-foreground"
+                          data-testid={`text-translation-${translation.languageCode}-${currentVerse.verseNumber}`}
+                        >
+                          <WordTooltip
+                            content={translation.content}
+                            commentaryContent={commentaryContext}
+                            sourceLanguage={translation.languageCode}
+                            verseId={currentVerse.id}
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
                 
@@ -693,6 +700,7 @@ export function BookReader({
                 )}
 
               </div>
+            </div>
             )}
 
             <div className="flex items-center justify-between mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-border/50">
@@ -739,7 +747,6 @@ export function BookReader({
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-          </div>
           </div>
         </div>
 
