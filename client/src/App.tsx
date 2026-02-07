@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { Switch, Route, useLocation } from "wouter";
+import { useState, useEffect, useCallback } from "react";
+import { Switch, Route, useLocation, useParams } from "wouter";
 import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -19,6 +19,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
+import type { Book } from "@shared/schema";
 
 interface VerseBreadcrumb {
   bookTitle: string;
@@ -31,6 +32,8 @@ interface VerseBreadcrumb {
 }
 
 function HomePage() {
+  const params = useParams<{ bookSlug?: string; verseNumber?: string }>();
+  const [location, setLocation] = useLocation();
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [selectedVerseId, setSelectedVerseId] = useState<string | null>(null);
   const [selectedContent, setSelectedContent] = useState("");
@@ -41,9 +44,39 @@ function HomePage() {
   const [currentVerseNumber, setCurrentVerseNumber] = useState<number>(1);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const [verseBreadcrumb, setVerseBreadcrumb] = useState<VerseBreadcrumb | null>(null);
+  const [urlInitialized, setUrlInitialized] = useState(false);
   const isMobile = useIsMobile();
-  const [, setLocation] = useLocation();
   const { user, isLoading: authLoading, isAuthenticated: isLoggedIn } = useAuth();
+
+  const { data: allBooks } = useQuery<Book[]>({
+    queryKey: ["/api/books"],
+  });
+
+  const bookSlugFromUrl = params?.bookSlug || null;
+  const verseNumberFromUrl = params?.verseNumber ? parseInt(params.verseNumber, 10) : null;
+
+  useEffect(() => {
+    if (urlInitialized || !allBooks) return;
+
+    if (bookSlugFromUrl) {
+      const matchedBook = allBooks.find(b => b.slug === bookSlugFromUrl);
+      if (matchedBook) {
+        setSelectedBookId(matchedBook.id);
+        if (verseNumberFromUrl !== null && !isNaN(verseNumberFromUrl)) {
+          setNavigateToVerse(verseNumberFromUrl);
+          setCurrentVerseNumber(verseNumberFromUrl);
+        }
+      } else {
+        setLocation("/");
+      }
+    }
+    setUrlInitialized(true);
+  }, [allBooks, bookSlugFromUrl, verseNumberFromUrl, urlInitialized, setLocation]);
+
+  const getBookSlug = useCallback((bookId: string): string | null => {
+    const book = allBooks?.find(b => b.id === bookId);
+    return book?.slug || null;
+  }, [allBooks]);
 
   const handleVerseSelect = (verseId: string, content: string) => {
     setSelectedVerseId(verseId);
@@ -63,6 +96,10 @@ function HomePage() {
     setNavigateToVerse(null);
     setCurrentVerseNumber(1);
     setVerseBreadcrumb(null);
+    const slug = getBookSlug(bookId);
+    if (slug) {
+      setLocation(`/${slug}`);
+    }
   };
 
   const handleGoHome = () => {
@@ -75,15 +112,25 @@ function HomePage() {
     setNavigateToVerse(null);
     setCurrentVerseNumber(1);
     setVerseBreadcrumb(null);
+    setLocation("/");
   };
 
   const handleSidebarVerseSelect = (verseNumber: number) => {
     setNavigateToVerse(verseNumber);
   };
 
-  const handleVerseChange = (verseNumber: number) => {
+  const handleVerseChange = useCallback((verseNumber: number) => {
     setCurrentVerseNumber(verseNumber);
-  };
+    if (selectedBookId) {
+      const slug = getBookSlug(selectedBookId);
+      if (slug) {
+        const targetPath = `/${slug}/${verseNumber}`;
+        if (location !== targetPath) {
+          setLocation(targetPath);
+        }
+      }
+    }
+  }, [selectedBookId, getBookSlug, location, setLocation]);
 
   const sidebarStyle = {
     "--sidebar-width": "22rem",
@@ -251,6 +298,8 @@ function Router() {
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/:bookSlug" component={HomePage} />
+      <Route path="/:bookSlug/:verseNumber" component={HomePage} />
       <Route component={NotFound} />
     </Switch>
   );

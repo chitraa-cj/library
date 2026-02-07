@@ -12,7 +12,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Frontend Architecture
 - **Framework**: React 18 with TypeScript
-- **Routing**: Wouter (lightweight React router)
+- **Routing**: Wouter (lightweight React router) with URL-based book/verse navigation
 - **State Management**: TanStack React Query for server state
 - **UI Components**: shadcn/ui component library built on Radix UI primitives
 - **Styling**: Tailwind CSS with custom CSS variables for theming (light/dark mode support)
@@ -34,6 +34,7 @@ The header displays a breadcrumb navigation showing the current position: Book >
 
 Key API endpoints:
 - `GET /api/books` - List all books
+- `GET /api/books/by-slug/:slug` - Get book by URL slug
 - `GET /api/books/:id` - Get book with details and verses
 - `GET /api/books/:id/commentary-options` - Get available authors and languages for commentaries
 - `GET /api/verses/:id` - Get single verse with translations
