@@ -8,6 +8,7 @@ import {
   bookTitles,
   languages,
   wordTranslations,
+  notes,
   type Book,
   type InsertBook,
   type Verse,
@@ -24,6 +25,8 @@ import {
   type VerseWithTranslations,
   type WordTranslation,
   type InsertWordTranslation,
+  type Note,
+  type InsertNote,
 } from "@shared/schema";
 
 export interface CommentaryOption {
@@ -63,6 +66,11 @@ export interface IStorage {
 
   getCachedWordTranslation(word: string, sourceLanguage: string, targetLanguage: string): Promise<WordTranslation | undefined>;
   cacheWordTranslation(translation: InsertWordTranslation): Promise<WordTranslation>;
+
+  getNotesByVerseAndUser(verseId: string, userId: string): Promise<Note[]>;
+  createNote(note: InsertNote): Promise<Note>;
+  updateNote(id: string, userId: string, content: string): Promise<Note | undefined>;
+  deleteNote(id: string, userId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -246,6 +254,35 @@ export class DatabaseStorage implements IStorage {
   async cacheWordTranslation(translation: InsertWordTranslation): Promise<WordTranslation> {
     const result = await db.insert(wordTranslations).values(translation).returning();
     return result[0];
+  }
+
+  async getNotesByVerseAndUser(verseId: string, userId: string): Promise<Note[]> {
+    return await db
+      .select()
+      .from(notes)
+      .where(and(eq(notes.verseId, verseId), eq(notes.userId, userId)));
+  }
+
+  async createNote(note: InsertNote): Promise<Note> {
+    const result = await db.insert(notes).values(note).returning();
+    return result[0];
+  }
+
+  async updateNote(id: string, userId: string, content: string): Promise<Note | undefined> {
+    const result = await db
+      .update(notes)
+      .set({ content, updatedAt: new Date() })
+      .where(and(eq(notes.id, id), eq(notes.userId, userId)))
+      .returning();
+    return result[0];
+  }
+
+  async deleteNote(id: string, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(notes)
+      .where(and(eq(notes.id, id), eq(notes.userId, userId)))
+      .returning();
+    return result.length > 0;
   }
 }
 

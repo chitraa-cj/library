@@ -40,6 +40,13 @@ Key API endpoints:
 - `GET /api/verses/:id/translations` - Get all translations for a verse
 - `GET /api/verses/:id/explanations` - Get scholarly explanations
 - `POST /api/translate-word` - AI-powered word translation with RAG context (uses OpenAI gpt-4o)
+- `GET /api/verses/:id/notes` - Get user's notes for a verse (auth required)
+- `POST /api/verses/:id/notes` - Create a note on a verse (auth required)
+- `PATCH /api/notes/:id` - Update a note (auth required)
+- `DELETE /api/notes/:id` - Delete a note (auth required)
+- `GET /api/auth/user` - Get current authenticated user
+- `/api/login` - Begin login flow (Replit OIDC)
+- `/api/logout` - Begin logout flow
 
 ### Data Model
 The database schema supports multi-language sacred texts:
@@ -50,6 +57,9 @@ The database schema supports multi-language sacred texts:
 - **verseTranslations**: Verse content in different languages/scripts
 - **explanations**: Scholar commentaries on verses
 - **wordTranslations**: Cached AI-generated word translations for performance
+- **notes**: Personal user notes on verses (userId, verseId, content, timestamps)
+- **users**: User accounts (Replit Auth OIDC - id, email, firstName, lastName, profileImageUrl)
+- **sessions**: Session storage for authentication
 
 ### AI Word Translation (RAG Feature)
 - **Component**: `WordTooltip` in `client/src/components/word-tooltip.tsx`

@@ -118,4 +118,18 @@ export const insertWordTranslationSchema = createInsertSchema(wordTranslations).
 export type InsertWordTranslation = z.infer<typeof insertWordTranslationSchema>;
 export type WordTranslation = typeof wordTranslations.$inferSelect;
 
+export const notes = pgTable("notes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  verseId: varchar("verse_id").notNull().references(() => verses.id),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertNoteSchema = createInsertSchema(notes).omit({ id: true, createdAt: true, updatedAt: true });
+
+export type InsertNote = z.infer<typeof insertNoteSchema>;
+export type Note = typeof notes.$inferSelect;
+
 export * from "./models/auth";

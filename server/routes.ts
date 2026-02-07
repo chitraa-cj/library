@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import { testStrapiConnection, STRAPI_URL } from "./strapi";
 import { translateWord } from "./openai";
 import { translateWordRequestSchema } from "@shared/schema";
+import { isAuthenticated } from "./replit_integrations/auth";
+import { z } from "zod";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -146,6 +148,64 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error translating word:", error);
       res.status(500).json({ error: "Failed to translate word" });
+    }
+  });
+
+  app.get("/api/verses/:id/notes", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const notes = await storage.getNotesByVerseAndUser(req.params.id, userId);
+      res.json(notes);
+    } catch (error) {
+      console.error("Error fetching notes:", error);
+      res.status(500).json({ error: "Failed to fetch notes" });
+    }
+  });
+
+  app.post("/api/verses/:id/notes", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const schema = z.object({ content: z.string().min(1).max(5000) });
+      const { content } = schema.parse(req.body);
+      const note = await storage.createNote({
+        userId,
+        verseId: req.params.id,
+        content,
+      });
+      res.status(201).json(note);
+    } catch (error) {
+      console.error("Error creating note:", error);
+      res.status(500).json({ error: "Failed to create note" });
+    }
+  });
+
+  app.patch("/api/notes/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const schema = z.object({ content: z.string().min(1).max(5000) });
+      const { content } = schema.parse(req.body);
+      const note = await storage.updateNote(req.params.id, userId, content);
+      if (!note) {
+        return res.status(404).json({ error: "Note not found" });
+      }
+      res.json(note);
+    } catch (error) {
+      console.error("Error updating note:", error);
+      res.status(500).json({ error: "Failed to update note" });
+    }
+  });
+
+  app.delete("/api/notes/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const deleted = await storage.deleteNote(req.params.id, userId);
+      if (!deleted) {
+        return res.status(404).json({ error: "Note not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting note:", error);
+      res.status(500).json({ error: "Failed to delete note" });
     }
   });
 
