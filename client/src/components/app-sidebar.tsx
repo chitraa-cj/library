@@ -118,6 +118,7 @@ interface AppSidebarProps {
 interface AdhyayGroup {
   adhyayNumber: number;
   adhyayTitle: string;
+  verses: Verse[];
   khandas: KhandaGroup[];
 }
 
@@ -127,45 +128,59 @@ interface KhandaGroup {
   verses: Verse[];
 }
 
-function hasHierarchyData(verses: Verse[]): boolean {
-  return verses.some((v) => v.adhyayNumber != null && v.khandaNumber != null);
+type HierarchyType = "three-level" | "two-level" | "flat";
+
+function detectHierarchyType(verses: Verse[]): HierarchyType {
+  const hasThreeLevel = verses.some((v) => v.adhyayNumber != null && v.khandaNumber != null);
+  if (hasThreeLevel) return "three-level";
+  const hasTwoLevel = verses.some((v) => v.adhyayNumber != null);
+  if (hasTwoLevel) return "two-level";
+  return "flat";
 }
 
 function buildHierarchy(verses: Verse[]): AdhyayGroup[] {
-  const hierarchyVerses = verses.filter(
-    (v) => v.adhyayNumber != null && v.khandaNumber != null
-  );
+  const type = detectHierarchyType(verses);
+  if (type === "flat") return [];
+
+  const hierarchyVerses = verses.filter((v) => v.adhyayNumber != null);
   if (hierarchyVerses.length === 0) return [];
 
   const adhyayMap = new Map<number, AdhyayGroup>();
 
   for (const verse of hierarchyVerses) {
     const adhyayNum = verse.adhyayNumber!;
-    const adhyayTitle = verse.adhyayTitle ?? `Adhyay ${adhyayNum}`;
-    const khandaNum = verse.khandaNumber!;
-    const khandaTitle = verse.khandaTitle ?? `Khanda ${khandaNum}`;
+    const adhyayTitle = verse.adhyayTitle ?? `Chapter ${adhyayNum}`;
 
     if (!adhyayMap.has(adhyayNum)) {
       adhyayMap.set(adhyayNum, {
         adhyayNumber: adhyayNum,
         adhyayTitle,
+        verses: [],
         khandas: [],
       });
     }
 
     const adhyay = adhyayMap.get(adhyayNum)!;
-    let khanda = adhyay.khandas.find((k) => k.khandaNumber === khandaNum);
-    if (!khanda) {
-      khanda = { khandaNumber: khandaNum, khandaTitle, verses: [] };
-      adhyay.khandas.push(khanda);
+
+    if (type === "three-level" && verse.khandaNumber != null) {
+      const khandaNum = verse.khandaNumber;
+      const khandaTitle = verse.khandaTitle ?? `Khanda ${khandaNum}`;
+      let khanda = adhyay.khandas.find((k) => k.khandaNumber === khandaNum);
+      if (!khanda) {
+        khanda = { khandaNumber: khandaNum, khandaTitle, verses: [] };
+        adhyay.khandas.push(khanda);
+      }
+      khanda.verses.push(verse);
+    } else {
+      adhyay.verses.push(verse);
     }
-    khanda.verses.push(verse);
   }
 
   const sorted = Array.from(adhyayMap.values()).sort(
     (a, b) => a.adhyayNumber - b.adhyayNumber
   );
   for (const adhyay of sorted) {
+    adhyay.verses.sort((a, b) => a.verseNumber - b.verseNumber);
     adhyay.khandas.sort((a, b) => a.khandaNumber - b.khandaNumber);
     for (const khanda of adhyay.khandas) {
       khanda.verses.sort((a, b) => a.verseNumber - b.verseNumber);
@@ -198,7 +213,8 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
     return buildHierarchy(selectedBookData.verses);
   }, [selectedBookData?.verses]);
 
-  const hasHierarchy = hierarchy.length > 0 && hasHierarchyData(selectedBookData?.verses ?? []);
+  const hierarchyType = useMemo(() => detectHierarchyType(selectedBookData?.verses ?? []), [selectedBookData?.verses]);
+  const hasHierarchy = hierarchy.length > 0 && hierarchyType !== "flat";
 
   const booksBySubCategory = useMemo(() => {
     const map: Record<string, Book[]> = {};
@@ -236,6 +252,34 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
       }
     }
   }, [selectedBookPath, selectedBookId]);
+
+  useEffect(() => {
+    if (selectedVerseNumber != null && hierarchy.length > 0 && selectedBookId) {
+      for (const adhyay of hierarchy) {
+        const adhyayKey = `${selectedBookId}-a${adhyay.adhyayNumber}`;
+        const inDirectVerses = adhyay.verses.some(v => v.verseNumber === selectedVerseNumber);
+        const inKhandaVerses = adhyay.khandas.some(k => k.verses.some(v => v.verseNumber === selectedVerseNumber));
+        if (inDirectVerses || inKhandaVerses) {
+          setExpandedAdhyays(prev => {
+            if (prev.has(adhyayKey)) return prev;
+            return new Set([...prev, adhyayKey]);
+          });
+          if (inKhandaVerses) {
+            for (const khanda of adhyay.khandas) {
+              if (khanda.verses.some(v => v.verseNumber === selectedVerseNumber)) {
+                const khandaKey = `${adhyayKey}-k${khanda.khandaNumber}`;
+                setExpandedKhandas(prev => {
+                  if (prev.has(khandaKey)) return prev;
+                  return new Set([...prev, khandaKey]);
+                });
+              }
+            }
+          }
+          break;
+        }
+      }
+    }
+  }, [selectedVerseNumber, hierarchy, selectedBookId]);
 
   const drillCategory = useMemo(() => {
     if (!drillCategoryId) return null;
@@ -335,14 +379,16 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
     if (verses.length === 0) return null;
 
     if (hasHierarchy) {
+      const isTwoLevel = hierarchyType === "two-level";
+
       return (
         <div className="pl-3 mt-1 space-y-0.5">
           {hierarchy.map((adhyay) => {
             const adhyayKey = `${book.id}-a${adhyay.adhyayNumber}`;
             const isAdhyayOpen = expandedAdhyays.has(adhyayKey);
-            const isCurrentAdhyay = adhyay.khandas.some(k =>
-              k.verses.some(v => v.verseNumber === selectedVerseNumber)
-            );
+            const isCurrentAdhyay = isTwoLevel
+              ? adhyay.verses.some(v => v.verseNumber === selectedVerseNumber)
+              : adhyay.khandas.some(k => k.verses.some(v => v.verseNumber === selectedVerseNumber));
 
             return (
               <div key={adhyayKey}>
@@ -363,10 +409,45 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
                   <Badge variant="secondary" className="text-[10px] px-1.5 h-4 shrink-0 font-mono">
                     {adhyay.adhyayNumber}
                   </Badge>
-                  <span className="text-xs font-medium truncate">{adhyay.adhyayTitle}</span>
+                  <span className="text-xs font-medium truncate">
+                    {adhyay.adhyayTitle}
+                  </span>
+                  {isTwoLevel && (
+                    <Badge variant="outline" className="text-[9px] px-1 h-4 shrink-0 font-mono border-muted-foreground/30 ml-auto">
+                      {adhyay.verses.length}
+                    </Badge>
+                  )}
                 </button>
 
-                {isAdhyayOpen && (
+                {isAdhyayOpen && isTwoLevel && (
+                  <div className="ml-3 pl-2 border-l border-border/40 mt-0.5 space-y-0.5">
+                    {adhyay.verses.map((verse, idx) => {
+                      const verseInChapter = idx + 1;
+                      const verseLabel = `${adhyay.adhyayNumber}.${verseInChapter}`;
+                      return (
+                        <button
+                          key={verse.id}
+                          onClick={() => handleVerseSelect(book.id, verse.verseNumber)}
+                          className={`flex items-center gap-2 w-full text-left text-xs py-2 px-2 rounded-md transition-colors ${
+                            selectedVerseNumber === verse.verseNumber
+                              ? "bg-primary/15 text-primary font-medium"
+                              : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
+                          }`}
+                          data-testid={`button-verse-nav-${verse.verseNumber}`}
+                        >
+                          <span className="font-mono text-[10px] text-primary/70 shrink-0 min-w-[2rem]">
+                            {verseLabel}
+                          </span>
+                          <span className="whitespace-normal leading-snug text-wrap break-words">
+                            Verse {verseInChapter}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {isAdhyayOpen && !isTwoLevel && (
                   <div className="ml-3 pl-2 border-l border-border/40 mt-0.5 space-y-0.5">
                     {adhyay.khandas.map((khanda) => {
                       const khandaKey = `${adhyayKey}-k${khanda.khandaNumber}`;
