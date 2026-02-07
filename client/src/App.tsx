@@ -108,21 +108,38 @@ function HomePage() {
               {selectedBookId && verseBreadcrumb ? (
                 <nav className="flex items-center gap-1 sm:gap-1.5 min-w-0 overflow-hidden" data-testid="breadcrumb-nav" aria-label="Current verse position" style={{ direction: "rtl" }}>
                   <div className="flex items-center gap-0.5 sm:gap-1 min-w-0 text-[11px] sm:text-xs text-muted-foreground overflow-hidden" style={{ direction: "ltr" }}>
-                    <span className="hidden lg:inline truncate max-w-[100px] font-medium text-foreground/70 shrink-0">{verseBreadcrumb.bookTitle}</span>
+                    <span
+                      className="hidden lg:inline truncate max-w-[120px] font-medium text-foreground/70 shrink-0 cursor-pointer hover:text-primary transition-colors"
+                      onClick={handleGoHome}
+                      title={verseBreadcrumb.bookTitle}
+                      data-testid="breadcrumb-book"
+                    >
+                      {verseBreadcrumb.bookTitle}
+                    </span>
                     {verseBreadcrumb.adhyayTitle && (
                       <>
                         <ChevronRight className="hidden lg:block h-3 w-3 shrink-0 text-muted-foreground/50" />
-                        <span className="hidden md:inline truncate max-w-[100px] lg:max-w-[120px] shrink-0">{verseBreadcrumb.adhyayTitle}</span>
+                        <span className="hidden lg:inline truncate max-w-[100px] shrink-0">{verseBreadcrumb.adhyayTitle}</span>
                       </>
                     )}
                     {verseBreadcrumb.khandaTitle && (
                       <>
-                        <ChevronRight className="hidden md:block h-3 w-3 shrink-0 text-muted-foreground/50" />
-                        <span className="hidden md:inline truncate max-w-[100px] lg:max-w-[120px] shrink-0">{verseBreadcrumb.khandaTitle}</span>
+                        <ChevronRight className="hidden xl:block h-3 w-3 shrink-0 text-muted-foreground/50" />
+                        <span className="hidden xl:inline truncate max-w-[100px] shrink-0">{verseBreadcrumb.khandaTitle}</span>
                       </>
                     )}
                     <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/50" />
-                    <span className="truncate text-foreground/80 font-medium">{verseBreadcrumb.verseLabel}</span>
+                    <span className="truncate text-foreground/80 font-medium max-w-[140px]" title={verseBreadcrumb.verseLabel} data-testid="breadcrumb-verse">
+                      {verseBreadcrumb.verseLabel}
+                    </span>
+                    {selectedAuthor && (
+                      <>
+                        <ChevronRight className="hidden md:block h-3 w-3 shrink-0 text-muted-foreground/50" />
+                        <span className="hidden md:inline truncate max-w-[130px] text-muted-foreground/70 shrink-0" title={selectedAuthor} data-testid="breadcrumb-commentary">
+                          {selectedAuthor}
+                        </span>
+                      </>
+                    )}
                   </div>
                   <Badge variant="secondary" className="font-mono text-[10px] sm:text-[11px] px-1.5 sm:px-2 h-5 shrink-0" data-testid="text-numeric-label" style={{ direction: "ltr" }}>
                     {verseBreadcrumb.numericLabel}

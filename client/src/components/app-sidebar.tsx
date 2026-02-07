@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, BookOpen, Loader2, ChevronRight, ChevronDown, Home, ArrowLeft } from "lucide-react";
+import { Search, BookOpen, Loader2, ChevronRight, ChevronDown, Home, Library, FolderOpen, Folder, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -9,24 +9,95 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import {
   Sidebar,
   SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import type { Book, Verse } from "@shared/schema";
+
+interface CatalogSubCategory {
+  id: string;
+  label: string;
+  categoryMatch?: string;
+}
+
+interface CatalogCategory {
+  id: string;
+  label: string;
+  children?: CatalogSubCategory[];
+  categoryMatch?: string;
+}
+
+const CATALOG_TREE: CatalogCategory[] = [
+  {
+    id: "prasthana-shankaracharya",
+    label: "Prasthana Thraya - Shankaracharya Bhashya",
+    children: [
+      { id: "pt-shankara-upanishad", label: "Upanishad", categoryMatch: "Upanishad" },
+      { id: "pt-shankara-gita", label: "Bhagavad Gita" },
+      { id: "pt-shankara-brahmasutra", label: "Brahma Sutra" },
+    ],
+  },
+  {
+    id: "other-shankara-works",
+    label: "Other Independent Works of Shankaracharya",
+  },
+  {
+    id: "prasthana-other-acharyas",
+    label: "Prasthana Thraya - Other Advaita Acharyas",
+    children: [
+      { id: "pt-other-upanishad", label: "Upanishad" },
+      { id: "pt-other-gita", label: "Bhagavad Gita" },
+      { id: "pt-other-brahmasutra", label: "Brahma Sutra" },
+    ],
+  },
+  {
+    id: "bhakthi-stotras",
+    label: "Bhakthi Stotras of Shankaracharya",
+  },
+  {
+    id: "prakarana-granthas",
+    label: "Prakarana Granthas",
+    children: [
+      { id: "pg-independent", label: "Independent Advaita Works" },
+      { id: "pg-other-gitas", label: "Other Gitas" },
+      { id: "pg-bhakthi", label: "Bhakthi Granthas" },
+      { id: "pg-other-languages", label: "Advaita in Other Languages" },
+      { id: "pg-modern", label: "Modern Advaita Works" },
+    ],
+  },
+  {
+    id: "shlokas-stotras",
+    label: "Shlokas, Sthuthis and Stotras based on Advaita",
+  },
+];
+
+function findBookPath(book: Book): { categoryId: string; subCategoryId: string | null } | null {
+  for (const cat of CATALOG_TREE) {
+    if (cat.children) {
+      for (const sub of cat.children) {
+        if (sub.categoryMatch && book.category === sub.categoryMatch) {
+          return { categoryId: cat.id, subCategoryId: sub.id };
+        }
+      }
+    }
+    if (cat.categoryMatch && book.category === cat.categoryMatch) {
+      return { categoryId: cat.id, subCategoryId: null };
+    }
+  }
+  return null;
+}
+
+export function getBookBreadcrumbPath(book: Book): string[] {
+  const path = findBookPath(book);
+  if (!path) return [book.category, book.title];
+  const cat = CATALOG_TREE.find(c => c.id === path.categoryId);
+  if (!cat) return [book.title];
+  if (path.subCategoryId && cat.children) {
+    const sub = cat.children.find(s => s.id === path.subCategoryId);
+    return [cat.label, sub?.label ?? "", book.title];
+  }
+  return [cat.label, book.title];
+}
 
 interface AppSidebarProps {
   selectedBookId: string | null;
@@ -98,11 +169,70 @@ function buildHierarchy(verses: Verse[]): AdhyayGroup[] {
 
 export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, selectedVerseNumber, onGoHome, onGoBack }: AppSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [expandedSubCategories, setExpandedSubCategories] = useState<Set<string>>(new Set());
   const [expandedBooks, setExpandedBooks] = useState<Set<string>>(new Set());
   const [expandedAdhyays, setExpandedAdhyays] = useState<Set<string>>(new Set());
   const [expandedKhandas, setExpandedKhandas] = useState<Set<string>>(new Set());
   const { isMobile, setOpenMobile, state } = useSidebar();
   const isCollapsed = state === "collapsed";
+
+  const { data: books = [], isLoading } = useQuery<Book[]>({
+    queryKey: ["/api/books"],
+  });
+
+  const { data: selectedBookData } = useQuery<{ book: Book; verses: Verse[] }>({
+    queryKey: ["/api/books", selectedBookId],
+    enabled: !!selectedBookId,
+  });
+
+  const hierarchy = useMemo(() => {
+    if (!selectedBookData?.verses) return [];
+    return buildHierarchy(selectedBookData.verses);
+  }, [selectedBookData?.verses]);
+
+  const hasHierarchy = hierarchy.length > 0 && hasHierarchyData(selectedBookData?.verses ?? []);
+
+  const booksBySubCategory = useMemo(() => {
+    const map: Record<string, Book[]> = {};
+    for (const book of books) {
+      const path = findBookPath(book);
+      if (path?.subCategoryId) {
+        if (!map[path.subCategoryId]) map[path.subCategoryId] = [];
+        map[path.subCategoryId].push(book);
+      } else if (path) {
+        if (!map[path.categoryId]) map[path.categoryId] = [];
+        map[path.categoryId].push(book);
+      }
+    }
+    return map;
+  }, [books]);
+
+  const selectedBookObj = useMemo(() => {
+    if (!selectedBookId) return null;
+    return books.find(b => b.id === selectedBookId) ?? selectedBookData?.book ?? null;
+  }, [selectedBookId, books, selectedBookData]);
+
+  const selectedBookPath = useMemo(() => {
+    if (!selectedBookObj) return null;
+    return findBookPath(selectedBookObj);
+  }, [selectedBookObj]);
+
+  useEffect(() => {
+    if (selectedBookPath) {
+      setExpandedCategories(new Set([selectedBookPath.categoryId]));
+      if (selectedBookPath.subCategoryId) {
+        setExpandedSubCategories(prev => {
+          const next = new Set(prev);
+          next.add(selectedBookPath.subCategoryId!);
+          return next;
+        });
+      }
+      if (selectedBookId) {
+        setExpandedBooks(new Set([selectedBookId]));
+      }
+    }
+  }, [selectedBookPath, selectedBookId]);
 
   const handleBookSelect = (bookId: string) => {
     onSelectBook(bookId);
@@ -124,14 +254,26 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
     }
   };
 
-  const toggleBookExpand = (bookId: string) => {
-    const newExpanded = new Set(expandedBooks);
-    if (newExpanded.has(bookId)) {
-      newExpanded.delete(bookId);
+  const toggleCategory = (catId: string) => {
+    if (expandedCategories.has(catId)) {
+      setExpandedCategories(new Set());
     } else {
-      newExpanded.add(bookId);
+      setExpandedCategories(new Set([catId]));
     }
-    setExpandedBooks(newExpanded);
+  };
+
+  const toggleSubCategory = (subId: string) => {
+    const next = new Set(expandedSubCategories);
+    if (next.has(subId)) next.delete(subId);
+    else next.add(subId);
+    setExpandedSubCategories(next);
+  };
+
+  const toggleBookExpand = (bookId: string) => {
+    const next = new Set(expandedBooks);
+    if (next.has(bookId)) next.delete(bookId);
+    else next.add(bookId);
+    setExpandedBooks(next);
   };
 
   const toggleAdhyay = (key: string) => {
@@ -148,61 +290,244 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
     setExpandedKhandas(next);
   };
 
-  const { data: books = [], isLoading } = useQuery<Book[]>({
-    queryKey: ["/api/books"],
-  });
+  const filteredTree = useMemo(() => {
+    if (!searchQuery.trim()) return CATALOG_TREE;
+    const q = searchQuery.toLowerCase();
+    return CATALOG_TREE.filter(cat => {
+      if (cat.label.toLowerCase().includes(q)) return true;
+      if (cat.children?.some(sub => sub.label.toLowerCase().includes(q))) return true;
+      const booksInCat = cat.children
+        ? cat.children.some(sub => booksBySubCategory[sub.id]?.some(b => b.title.toLowerCase().includes(q)))
+        : booksBySubCategory[cat.id]?.some(b => b.title.toLowerCase().includes(q));
+      return booksInCat;
+    });
+  }, [searchQuery, booksBySubCategory]);
 
-  const { data: selectedBookData } = useQuery<{ book: Book; verses: Verse[] }>({
-    queryKey: ["/api/books", selectedBookId],
-    enabled: !!selectedBookId,
-  });
+  const sidebarBreadcrumb = useMemo(() => {
+    if (!selectedBookObj) return null;
+    return getBookBreadcrumbPath(selectedBookObj);
+  }, [selectedBookObj]);
 
-  const filteredBooks = books.filter((book) =>
-    book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    book.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const renderVerseTree = (book: Book, verses: Verse[]) => {
+    if (verses.length === 0) return null;
 
-  const groupedBooks = filteredBooks.reduce((acc, book) => {
-    const category = book.category || "Other";
-    if (!acc[category]) acc[category] = [];
-    acc[category].push(book);
-    return acc;
-  }, {} as Record<string, Book[]>);
+    if (hasHierarchy) {
+      return (
+        <div className="pl-3 mt-1 space-y-0.5">
+          {hierarchy.map((adhyay) => {
+            const adhyayKey = `${book.id}-a${adhyay.adhyayNumber}`;
+            const isAdhyayOpen = expandedAdhyays.has(adhyayKey);
+            const isCurrentAdhyay = adhyay.khandas.some(k =>
+              k.verses.some(v => v.verseNumber === selectedVerseNumber)
+            );
 
-  const hierarchy = useMemo(() => {
-    if (!selectedBookData?.verses) return [];
-    return buildHierarchy(selectedBookData.verses);
-  }, [selectedBookData?.verses]);
+            return (
+              <div key={adhyayKey}>
+                <button
+                  onClick={() => toggleAdhyay(adhyayKey)}
+                  className={`flex items-center gap-1.5 w-full text-left text-xs py-1.5 px-2 rounded-md transition-colors ${
+                    isCurrentAdhyay && !isAdhyayOpen
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
+                  }`}
+                  data-testid={`button-adhyay-${adhyay.adhyayNumber}`}
+                >
+                  {isAdhyayOpen ? (
+                    <ChevronDown className="h-3 w-3 shrink-0 text-primary" />
+                  ) : (
+                    <ChevronRight className="h-3 w-3 shrink-0" />
+                  )}
+                  <Badge variant="secondary" className="text-[10px] px-1.5 h-4 shrink-0 font-mono">
+                    {adhyay.adhyayNumber}
+                  </Badge>
+                  <span className="text-xs font-medium truncate">{adhyay.adhyayTitle}</span>
+                </button>
 
-  const hasHierarchy = hierarchy.length > 0 && hasHierarchyData(selectedBookData?.verses ?? []);
+                {isAdhyayOpen && (
+                  <div className="ml-3 pl-2 border-l border-border/40 mt-0.5 space-y-0.5">
+                    {adhyay.khandas.map((khanda) => {
+                      const khandaKey = `${adhyayKey}-k${khanda.khandaNumber}`;
+                      const isKhandaOpen = expandedKhandas.has(khandaKey);
+                      const isCurrentKhanda = khanda.verses.some(
+                        (v) => v.verseNumber === selectedVerseNumber
+                      );
+
+                      return (
+                        <div key={khandaKey}>
+                          <button
+                            onClick={() => toggleKhanda(khandaKey)}
+                            className={`flex items-center gap-1.5 w-full text-left text-xs py-1.5 px-2 rounded-md transition-colors ${
+                              isCurrentKhanda && !isKhandaOpen
+                                ? "bg-primary/10 text-primary font-medium"
+                                : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
+                            }`}
+                            data-testid={`button-khanda-${adhyay.adhyayNumber}-${khanda.khandaNumber}`}
+                          >
+                            {isKhandaOpen ? (
+                              <ChevronDown className="h-3 w-3 shrink-0 text-primary" />
+                            ) : (
+                              <ChevronRight className="h-3 w-3 shrink-0" />
+                            )}
+                            <Badge variant="outline" className="text-[10px] px-1 h-4 shrink-0 font-mono border-muted-foreground/30">
+                              {adhyay.adhyayNumber}.{khanda.khandaNumber}
+                            </Badge>
+                            <span className="truncate">{khanda.khandaTitle}</span>
+                          </button>
+
+                          {isKhandaOpen && (
+                            <div className="ml-3 pl-2 border-l border-border/30 mt-0.5 space-y-0.5">
+                              {khanda.verses.map((verse, idx) => {
+                                const verseLabel = `${adhyay.adhyayNumber}.${khanda.khandaNumber}.${idx + 1}`;
+                                return (
+                                  <button
+                                    key={verse.id}
+                                    onClick={() => handleVerseSelect(book.id, verse.verseNumber)}
+                                    className={`flex items-center gap-2 w-full text-left text-xs py-1.5 px-2 rounded-md transition-colors ${
+                                      selectedVerseNumber === verse.verseNumber
+                                        ? "bg-primary/15 text-primary font-medium"
+                                        : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
+                                    }`}
+                                    data-testid={`button-verse-nav-${verse.verseNumber}`}
+                                  >
+                                    <span className="font-mono text-[10px] text-primary/70 shrink-0 min-w-[2rem]">
+                                      {verseLabel}
+                                    </span>
+                                    <span className="whitespace-normal leading-snug text-wrap break-words">
+                                      {verse.sectionTitle || `Mantra ${verse.verseNumber}`}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    return (
+      <div className="pl-3 mt-1 space-y-0.5">
+        {verses.map((verse) => (
+          <button
+            key={verse.id}
+            onClick={() => handleVerseSelect(book.id, verse.verseNumber)}
+            className={`flex items-center gap-2 w-full text-left text-xs py-1.5 px-2 rounded-md transition-colors ${
+              selectedVerseNumber === verse.verseNumber
+                ? "bg-primary/15 text-primary font-medium"
+                : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
+            }`}
+            data-testid={`button-verse-nav-${verse.verseNumber}`}
+          >
+            <span className="whitespace-normal leading-snug text-wrap break-words">
+              {verse.sectionTitle || `Verse ${verse.verseNumber}`}
+            </span>
+          </button>
+        ))}
+      </div>
+    );
+  };
+
+  const renderBookItem = (book: Book) => {
+    const isSelected = selectedBookId === book.id;
+    const isExpanded = expandedBooks.has(book.id) || isSelected;
+    const verses = isSelected && selectedBookData?.verses ? selectedBookData.verses : [];
+
+    return (
+      <div key={book.id}>
+        <button
+          onClick={() => {
+            handleBookSelect(book.id);
+            if (isSelected) toggleBookExpand(book.id);
+          }}
+          className={`flex items-center gap-2 w-full text-left text-xs py-2 px-2 rounded-md transition-colors ${
+            isSelected
+              ? "bg-primary/15 text-primary font-semibold"
+              : "text-foreground/80 hover:text-foreground hover:bg-sidebar-accent/30"
+          }`}
+          data-testid={`button-book-${book.id}`}
+        >
+          {isExpanded && verses.length > 0 ? (
+            <ChevronDown className="h-3 w-3 shrink-0 text-primary" />
+          ) : (
+            <BookOpen className={`h-3.5 w-3.5 shrink-0 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
+          )}
+          <span className="font-serif text-xs leading-snug flex-1 min-w-0">{book.title}</span>
+          {book.totalVerses && book.totalVerses > 0 && (
+            <Badge variant={isSelected ? "default" : "secondary"} className="text-[9px] font-medium px-1 h-4 shrink-0">
+              {book.totalVerses}
+            </Badge>
+          )}
+        </button>
+        {isExpanded && isSelected && renderVerseTree(book, verses)}
+      </div>
+    );
+  };
+
+  const renderSubCategory = (sub: CatalogSubCategory, catId: string) => {
+    const isExpanded = expandedSubCategories.has(sub.id);
+    const subBooks = booksBySubCategory[sub.id] ?? [];
+    const hasBooks = subBooks.length > 0;
+    const containsSelectedBook = selectedBookPath?.subCategoryId === sub.id;
+
+    return (
+      <div key={sub.id}>
+        <button
+          onClick={() => toggleSubCategory(sub.id)}
+          className={`flex items-center gap-1.5 w-full text-left text-xs py-1.5 px-2 rounded-md transition-colors ${
+            containsSelectedBook
+              ? "text-primary font-medium"
+              : "text-foreground/70 hover:text-foreground hover:bg-sidebar-accent/30"
+          }`}
+          data-testid={`button-subcat-${sub.id}`}
+        >
+          {isExpanded ? (
+            <ChevronDown className="h-3 w-3 shrink-0 text-primary" />
+          ) : (
+            <ChevronRight className="h-3 w-3 shrink-0" />
+          )}
+          {hasBooks ? (
+            <FolderOpen className="h-3.5 w-3.5 shrink-0 text-primary/60" />
+          ) : (
+            <Folder className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
+          )}
+          <span className="flex-1 min-w-0 truncate">{sub.label}</span>
+          {!hasBooks && (
+            <Lock className="h-3 w-3 shrink-0 text-muted-foreground/40" />
+          )}
+        </button>
+        {isExpanded && (
+          <div className="ml-3 pl-2 border-l border-border/30 mt-0.5">
+            {hasBooks ? (
+              subBooks.map(book => renderBookItem(book))
+            ) : (
+              <div className="py-2 px-2 text-[10px] text-muted-foreground/60 italic">
+                Coming soon...
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className={`border-b border-primary/30 bg-gradient-to-b from-primary/20 via-primary/10 to-transparent ${isCollapsed ? 'p-2' : 'p-4'}`}>
         {isCollapsed ? (
           <div className="flex flex-col items-center gap-2">
-            <img 
-              src="https://oneness.org.in/assets/img/favicon.png" 
+            <img
+              src="https://oneness.org.in/assets/img/favicon.png"
               alt="Ekatma Dham"
               className="h-8 w-8 object-contain cursor-pointer"
               onClick={onGoHome}
             />
-            {selectedBookId && onGoBack && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={onGoBack}
-                    data-testid="button-go-back-collapsed"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="right">Back</TooltipContent>
-              </Tooltip>
-            )}
             {onGoHome && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -226,8 +551,8 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
               <div className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer" onClick={onGoHome}>
                 <div className="relative">
                   <div className="absolute -inset-1 bg-primary/20 rounded-full blur-md"></div>
-                  <img 
-                    src="https://oneness.org.in/assets/img/favicon.png" 
+                  <img
+                    src="https://oneness.org.in/assets/img/favicon.png"
                     alt="Ekatma Dham"
                     className="h-10 w-10 object-contain relative"
                   />
@@ -241,17 +566,6 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
                 </div>
               </div>
               <div className="flex items-center gap-1 shrink-0">
-                {selectedBookId && onGoBack && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={onGoBack}
-                    title="Go back"
-                    data-testid="button-go-back"
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                  </Button>
-                )}
                 {onGoHome && (
                   <Button
                     variant="ghost"
@@ -265,6 +579,28 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
                 )}
               </div>
             </div>
+
+            {sidebarBreadcrumb && selectedBookId && (
+              <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-2 px-1 flex-wrap" data-testid="sidebar-breadcrumb">
+                {sidebarBreadcrumb.map((segment, idx) => (
+                  <span key={idx} className="flex items-center gap-1">
+                    {idx > 0 && <ChevronRight className="h-2.5 w-2.5 shrink-0 text-muted-foreground/40" />}
+                    <span
+                      className={`${idx === sidebarBreadcrumb.length - 1 ? 'text-primary font-medium' : 'hover:text-foreground cursor-pointer'} truncate max-w-[120px]`}
+                      onClick={() => {
+                        if (idx < sidebarBreadcrumb.length - 1 && onGoHome) {
+                          onGoHome();
+                        }
+                      }}
+                      title={segment}
+                    >
+                      {segment}
+                    </span>
+                  </span>
+                ))}
+              </div>
+            )}
+
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -285,200 +621,72 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
-          ) : Object.keys(groupedBooks).length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-              <BookOpen className="h-10 w-10 text-muted-foreground mb-3" />
-              <p className="text-sm text-muted-foreground">
-                {searchQuery ? "No texts found" : "No texts available yet"}
-              </p>
+          ) : isCollapsed ? (
+            <div className="flex flex-col items-center gap-1 py-2">
+              {books.map(book => (
+                <Tooltip key={book.id}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={selectedBookId === book.id ? "default" : "ghost"}
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => handleBookSelect(book.id)}
+                      data-testid={`button-book-${book.id}`}
+                    >
+                      <BookOpen className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{book.title}</TooltipContent>
+                </Tooltip>
+              ))}
             </div>
           ) : (
-            Object.entries(groupedBooks).map(([category, categoryBooks]) => (
-              <SidebarGroup key={category}>
-                {!isCollapsed && (
-                  <SidebarGroupLabel className="px-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    {category}
-                  </SidebarGroupLabel>
-                )}
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {categoryBooks.map((book) => {
-                      const isExpanded = expandedBooks.has(book.id) || selectedBookId === book.id;
-                      const verses = selectedBookId === book.id && selectedBookData?.verses ? selectedBookData.verses : [];
-                      
-                      return (
-                        <Collapsible
-                          key={book.id}
-                          open={isExpanded}
-                          onOpenChange={() => toggleBookExpand(book.id)}
-                        >
-                          <SidebarMenuItem>
-                            <CollapsibleTrigger asChild>
-                              <SidebarMenuButton
-                                onClick={() => handleBookSelect(book.id)}
-                                tooltip={book.title}
-                                className={`${isCollapsed ? 'mx-1 my-1 p-2 justify-center' : 'mx-2 px-3 py-3'} rounded-xl transition-all shadow-sm ${
-                                  selectedBookId === book.id
-                                    ? "bg-gradient-to-br from-primary/15 via-primary/10 to-orange-100/50 dark:to-orange-900/20 text-primary shadow-primary/10"
-                                    : "bg-gradient-to-br from-background/80 to-muted/30 hover:from-primary/5 hover:to-primary/10"
-                                }`}
-                                data-testid={`button-book-${book.id}`}
-                              >
-                                <div className={`${isCollapsed ? 'p-1.5' : 'p-2'} rounded-lg shrink-0 ${selectedBookId === book.id ? 'bg-primary/15' : 'bg-muted/50'}`}>
-                                  <BookOpen className={`h-4 w-4 ${selectedBookId === book.id ? 'text-primary' : 'text-muted-foreground'}`} />
-                                </div>
-                                {!isCollapsed && (
-                                  <>
-                                    <div className="flex flex-col flex-1 min-w-0 gap-0.5">
-                                      <span className={`font-serif text-sm leading-snug ${selectedBookId === book.id ? 'font-semibold text-primary' : 'font-medium'}`}>{book.title}</span>
-                                      {book.author && (
-                                        <span className={`text-xs leading-snug ${selectedBookId === book.id ? 'text-primary/60' : 'text-muted-foreground'}`}>
-                                          {book.author}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <div className="flex items-center gap-1 shrink-0">
-                                      {book.totalVerses && book.totalVerses > 0 && (
-                                        <Badge variant={selectedBookId === book.id ? "default" : "secondary"} className="text-[10px] font-medium px-1.5 h-5">
-                                          {book.totalVerses}
-                                        </Badge>
-                                      )}
-                                      <ChevronRight className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-90 text-primary' : 'text-muted-foreground'}`} />
-                                    </div>
-                                  </>
-                                )}
-                              </SidebarMenuButton>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                              {!isCollapsed && selectedBookId === book.id && verses.length > 0 && (
-                                <SidebarMenuSub className="py-2 space-y-0.5">
-                                  {hasHierarchy ? (
-                                    hierarchy.map((adhyay) => {
-                                      const adhyayKey = `${book.id}-a${adhyay.adhyayNumber}`;
-                                      const isAdhyayOpen = expandedAdhyays.has(adhyayKey);
-                                      const isCurrentAdhyay = adhyay.khandas.some(k =>
-                                        k.verses.some(v => v.verseNumber === selectedVerseNumber)
-                                      );
+            <div className="p-2 space-y-1">
+              {filteredTree.map((cat) => {
+                const isCatExpanded = expandedCategories.has(cat.id);
+                const containsSelectedBook = selectedBookPath?.categoryId === cat.id;
+                const directBooks = booksBySubCategory[cat.id] ?? [];
+                const hasChildren = !!cat.children && cat.children.length > 0;
+                const hasAnyContent = hasChildren || directBooks.length > 0;
 
-                                      return (
-                                        <SidebarMenuSubItem key={adhyayKey}>
-                                          <SidebarMenuSubButton
-                                            onClick={() => toggleAdhyay(adhyayKey)}
-                                            className={`text-sm py-2 px-2 rounded-md transition-colors h-auto min-h-[2rem] overflow-visible [&>span]:!truncate-none ${
-                                              isCurrentAdhyay && !isAdhyayOpen
-                                                ? "bg-primary/10 text-primary font-medium"
-                                                : "text-muted-foreground hover:text-foreground"
-                                            }`}
-                                            data-testid={`button-adhyay-${adhyay.adhyayNumber}`}
-                                          >
-                                            <span className="flex items-center gap-2 whitespace-normal leading-snug w-full">
-                                              {isAdhyayOpen ? (
-                                                <ChevronDown className="h-3 w-3 shrink-0 text-primary" />
-                                              ) : (
-                                                <ChevronRight className="h-3 w-3 shrink-0" />
-                                              )}
-                                              <Badge variant="secondary" className="text-[10px] px-1.5 h-4 shrink-0 font-mono">
-                                                {adhyay.adhyayNumber}
-                                              </Badge>
-                                              <span className="text-xs font-medium">{adhyay.adhyayTitle}</span>
-                                            </span>
-                                          </SidebarMenuSubButton>
+                return (
+                  <div key={cat.id} data-testid={`catalog-category-${cat.id}`}>
+                    <button
+                      onClick={() => toggleCategory(cat.id)}
+                      className={`flex items-center gap-2 w-full text-left text-[11px] py-2 px-2 rounded-md transition-colors font-medium ${
+                        containsSelectedBook
+                          ? "bg-primary/10 text-primary"
+                          : "text-foreground/80 hover:text-foreground hover:bg-sidebar-accent/30"
+                      }`}
+                      data-testid={`button-category-${cat.id}`}
+                    >
+                      {isCatExpanded ? (
+                        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-primary" />
+                      ) : (
+                        <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+                      )}
+                      <Library className={`h-3.5 w-3.5 shrink-0 ${containsSelectedBook ? 'text-primary' : 'text-muted-foreground/60'}`} />
+                      <span className="flex-1 min-w-0 leading-snug">{cat.label}</span>
+                    </button>
 
-                                          {isAdhyayOpen && (
-                                            <div className="ml-3 pl-2 border-l border-border/40 mt-1 space-y-0.5">
-                                              {adhyay.khandas.map((khanda) => {
-                                                const khandaKey = `${adhyayKey}-k${khanda.khandaNumber}`;
-                                                const isKhandaOpen = expandedKhandas.has(khandaKey);
-                                                const isCurrentKhanda = khanda.verses.some(
-                                                  (v) => v.verseNumber === selectedVerseNumber
-                                                );
-
-                                                return (
-                                                  <div key={khandaKey}>
-                                                    <button
-                                                      onClick={() => toggleKhanda(khandaKey)}
-                                                      className={`flex items-center gap-2 w-full text-left text-xs py-1.5 px-2 rounded-md transition-colors ${
-                                                        isCurrentKhanda && !isKhandaOpen
-                                                          ? "bg-primary/10 text-primary font-medium"
-                                                          : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
-                                                      }`}
-                                                      data-testid={`button-khanda-${adhyay.adhyayNumber}-${khanda.khandaNumber}`}
-                                                    >
-                                                      {isKhandaOpen ? (
-                                                        <ChevronDown className="h-3 w-3 shrink-0 text-primary" />
-                                                      ) : (
-                                                        <ChevronRight className="h-3 w-3 shrink-0" />
-                                                      )}
-                                                      <Badge variant="outline" className="text-[10px] px-1 h-4 shrink-0 font-mono border-muted-foreground/30">
-                                                        {adhyay.adhyayNumber}.{khanda.khandaNumber}
-                                                      </Badge>
-                                                      <span className="truncate">{khanda.khandaTitle}</span>
-                                                    </button>
-
-                                                    {isKhandaOpen && (
-                                                      <div className="ml-3 pl-2 border-l border-border/30 mt-0.5 space-y-0.5">
-                                                        {khanda.verses.map((verse, idx) => {
-                                                          const verseLabel = `${adhyay.adhyayNumber}.${khanda.khandaNumber}.${idx + 1}`;
-                                                          return (
-                                                            <button
-                                                              key={verse.id}
-                                                              onClick={() => handleVerseSelect(book.id, verse.verseNumber)}
-                                                              className={`flex items-center gap-2 w-full text-left text-xs py-1.5 px-2 rounded-md transition-colors ${
-                                                                selectedVerseNumber === verse.verseNumber
-                                                                  ? "bg-primary/15 text-primary font-medium"
-                                                                  : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
-                                                              }`}
-                                                              data-testid={`button-verse-nav-${verse.verseNumber}`}
-                                                            >
-                                                              <span className="font-mono text-[10px] text-primary/70 shrink-0 min-w-[2rem]">
-                                                                {verseLabel}
-                                                              </span>
-                                                              <span className="whitespace-normal leading-snug text-wrap break-words">
-                                                                {verse.sectionTitle || `Mantra ${verse.verseNumber}`}
-                                                              </span>
-                                                            </button>
-                                                          );
-                                                        })}
-                                                      </div>
-                                                    )}
-                                                  </div>
-                                                );
-                                              })}
-                                            </div>
-                                          )}
-                                        </SidebarMenuSubItem>
-                                      );
-                                    })
-                                  ) : (
-                                    verses.map((verse) => (
-                                      <SidebarMenuSubItem key={verse.id}>
-                                        <SidebarMenuSubButton
-                                          onClick={() => handleVerseSelect(book.id, verse.verseNumber)}
-                                          className={`text-sm py-2.5 px-3 rounded-md transition-colors h-auto min-h-[2.5rem] overflow-visible [&>span]:!truncate-none ${
-                                            selectedVerseNumber === verse.verseNumber
-                                              ? "bg-primary/15 text-primary font-medium border-l-2 border-primary"
-                                              : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
-                                          }`}
-                                          data-testid={`button-verse-nav-${verse.verseNumber}`}
-                                        >
-                                          <span className="whitespace-normal leading-snug text-wrap break-words">
-                                            {verse.sectionTitle || `Verse ${verse.verseNumber}`}
-                                          </span>
-                                        </SidebarMenuSubButton>
-                                      </SidebarMenuSubItem>
-                                    ))
-                                  )}
-                                </SidebarMenuSub>
-                              )}
-                            </CollapsibleContent>
-                          </SidebarMenuItem>
-                        </Collapsible>
-                      );
-                    })}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            ))
+                    {isCatExpanded && (
+                      <div className="ml-3 pl-2 border-l border-primary/15 mt-0.5 space-y-0.5">
+                        {hasChildren
+                          ? cat.children!.map(sub => renderSubCategory(sub, cat.id))
+                          : hasAnyContent
+                            ? directBooks.map(book => renderBookItem(book))
+                            : (
+                              <div className="py-2 px-2 text-[10px] text-muted-foreground/60 italic">
+                                Coming soon...
+                              </div>
+                            )
+                        }
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </ScrollArea>
       </SidebarContent>
