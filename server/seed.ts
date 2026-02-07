@@ -1366,3 +1366,69 @@ To such a Self, which is the subject matter of the Upanishad, no relation is pos
     console.log("Updated book title to complete Sanskrit name: Īśāvāsyopaniṣad");
   }
 }
+
+export async function updateIshaUpanishadHierarchy() {
+  console.log("Checking Isha Upanishad hierarchy (adhyay/khanda)...");
+
+  const existingBooks = await db.select().from(books).where(eq(books.slug, "isha-upanishad-bhashya"));
+  if (existingBooks.length === 0) {
+    console.log("Isha Upanishad not found, skipping hierarchy update");
+    return;
+  }
+
+  const bookId = existingBooks[0].id;
+  const bookVerses = await db.select().from(verses).where(eq(verses.bookId, bookId)).orderBy(verses.verseNumber);
+
+  if (bookVerses.length === 0) {
+    console.log("No verses found, skipping hierarchy update");
+    return;
+  }
+
+  const hasHierarchy = bookVerses.some(v => v.adhyayNumber != null);
+  if (hasHierarchy) {
+    console.log("Isha Upanishad hierarchy already set");
+    return;
+  }
+
+  console.log("Setting Isha Upanishad hierarchy...");
+
+  const hierarchy: Record<number, { adhyayNumber: number; adhyayTitle: string; khandaNumber: number; khandaTitle: string }> = {
+    0:  { adhyayNumber: 1, adhyayTitle: "Jñāna-Karma Kāṇḍa", khandaNumber: 1, khandaTitle: "Introduction & Renunciation" },
+    1:  { adhyayNumber: 1, adhyayTitle: "Jñāna-Karma Kāṇḍa", khandaNumber: 1, khandaTitle: "Introduction & Renunciation" },
+    2:  { adhyayNumber: 1, adhyayTitle: "Jñāna-Karma Kāṇḍa", khandaNumber: 1, khandaTitle: "Introduction & Renunciation" },
+    3:  { adhyayNumber: 1, adhyayTitle: "Jñāna-Karma Kāṇḍa", khandaNumber: 1, khandaTitle: "Introduction & Renunciation" },
+    4:  { adhyayNumber: 1, adhyayTitle: "Jñāna-Karma Kāṇḍa", khandaNumber: 2, khandaTitle: "Nature of the Self" },
+    5:  { adhyayNumber: 1, adhyayTitle: "Jñāna-Karma Kāṇḍa", khandaNumber: 2, khandaTitle: "Nature of the Self" },
+    6:  { adhyayNumber: 1, adhyayTitle: "Jñāna-Karma Kāṇḍa", khandaNumber: 2, khandaTitle: "Nature of the Self" },
+    7:  { adhyayNumber: 1, adhyayTitle: "Jñāna-Karma Kāṇḍa", khandaNumber: 2, khandaTitle: "Nature of the Self" },
+    8:  { adhyayNumber: 1, adhyayTitle: "Jñāna-Karma Kāṇḍa", khandaNumber: 2, khandaTitle: "Nature of the Self" },
+    9:  { adhyayNumber: 2, adhyayTitle: "Vidyā-Avidyā Vicāra", khandaNumber: 1, khandaTitle: "Vidyā & Avidyā" },
+    10: { adhyayNumber: 2, adhyayTitle: "Vidyā-Avidyā Vicāra", khandaNumber: 1, khandaTitle: "Vidyā & Avidyā" },
+    11: { adhyayNumber: 2, adhyayTitle: "Vidyā-Avidyā Vicāra", khandaNumber: 1, khandaTitle: "Vidyā & Avidyā" },
+    12: { adhyayNumber: 2, adhyayTitle: "Vidyā-Avidyā Vicāra", khandaNumber: 2, khandaTitle: "Sambhūti & Asambhūti" },
+    13: { adhyayNumber: 2, adhyayTitle: "Vidyā-Avidyā Vicāra", khandaNumber: 2, khandaTitle: "Sambhūti & Asambhūti" },
+    14: { adhyayNumber: 2, adhyayTitle: "Vidyā-Avidyā Vicāra", khandaNumber: 2, khandaTitle: "Sambhūti & Asambhūti" },
+    15: { adhyayNumber: 3, adhyayTitle: "Prārthanā Kāṇḍa", khandaNumber: 1, khandaTitle: "Prayers to the Sun" },
+    16: { adhyayNumber: 3, adhyayTitle: "Prārthanā Kāṇḍa", khandaNumber: 1, khandaTitle: "Prayers to the Sun" },
+    17: { adhyayNumber: 3, adhyayTitle: "Prārthanā Kāṇḍa", khandaNumber: 2, khandaTitle: "Final Prayers" },
+    18: { adhyayNumber: 3, adhyayTitle: "Prārthanā Kāṇḍa", khandaNumber: 2, khandaTitle: "Final Prayers" },
+  };
+
+  let updated = 0;
+  for (const verse of bookVerses) {
+    const h = hierarchy[verse.verseNumber];
+    if (h) {
+      await db.update(verses)
+        .set({
+          adhyayNumber: h.adhyayNumber,
+          adhyayTitle: h.adhyayTitle,
+          khandaNumber: h.khandaNumber,
+          khandaTitle: h.khandaTitle,
+        })
+        .where(eq(verses.id, verse.id));
+      updated++;
+    }
+  }
+
+  console.log(`Updated hierarchy for ${updated} Isha Upanishad verses`);
+}

@@ -2,8 +2,10 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
-import { seedDatabase, seedAdditionalCommentaries, updateIncompleteShankaraExplanations, seedEnglishVerseTranslations, updateVerseSectionTitles } from "./seed";
-// Gita seeding runs separately via: npx tsx server/run-seed-gita.ts
+import { seedDatabase, seedAdditionalCommentaries, updateIncompleteShankaraExplanations, seedEnglishVerseTranslations, updateVerseSectionTitles, updateIshaUpanishadHierarchy } from "./seed";
+import { seedBhagavadGita } from "./seed-gita";
+import { seedWordMeanings } from "./seed-word-meanings";
+import { seedGroupedWordMeanings } from "./seed-word-meanings-grouped";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 
 const app = express();
@@ -68,6 +70,10 @@ app.use((req, res, next) => {
   await updateIncompleteShankaraExplanations().catch(console.error);
   await seedEnglishVerseTranslations().catch(console.error);
   await updateVerseSectionTitles().catch(console.error);
+  await updateIshaUpanishadHierarchy().catch(console.error);
+  await seedBhagavadGita().catch(console.error);
+  await seedWordMeanings().catch(console.error);
+  await seedGroupedWordMeanings().catch(console.error);
   await setupAuth(app);
   registerAuthRoutes(app);
   await registerRoutes(httpServer, app);
