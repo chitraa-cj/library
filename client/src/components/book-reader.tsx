@@ -549,9 +549,11 @@ export function BookReader({
     );
   }
 
-  const verseText = selectedCommentaryLanguage 
-    ? getTranslation(currentVerse, selectedCommentaryLanguage) || getOriginalDevanagari(currentVerse)
-    : getOriginalDevanagari(currentVerse);
+  const originalDevanagari = getOriginalDevanagari(currentVerse);
+  const isNonDevanagariSelected = selectedCommentaryLanguage && selectedCommentaryLanguage !== "devanagari";
+  const translationText = isNonDevanagariSelected
+    ? getTranslation(currentVerse, selectedCommentaryLanguage)
+    : "";
 
   const getCommentaryContent = (verse: any): string => {
     if (!selectedAuthor || !selectedCommentaryLanguage) return "";
@@ -645,13 +647,28 @@ export function BookReader({
                     data-testid={`text-original-${currentVerse.verseNumber}`}
                   >
                     <WordTooltip
-                      content={verseText}
+                      content={originalDevanagari}
                       commentaryContent={commentaryContext}
-                      sourceLanguage={selectedCommentaryLanguage || "devanagari"}
+                      sourceLanguage="devanagari"
                     />
                   </div>
                   <div className="absolute -right-2 bottom-0 text-2xl text-primary/20 font-serif rotate-180">❝</div>
                 </div>
+
+                {isNonDevanagariSelected && translationText && (
+                  <div className="border-t border-primary/10 pt-4">
+                    <div 
+                      className="text-base sm:text-lg leading-relaxed text-center px-4 text-muted-foreground"
+                      data-testid={`text-translation-${currentVerse.verseNumber}`}
+                    >
+                      <WordTooltip
+                        content={translationText}
+                        commentaryContent={commentaryContext}
+                        sourceLanguage={selectedCommentaryLanguage || "devanagari"}
+                      />
+                    </div>
+                  </div>
+                )}
                 
                 <div className="flex items-center justify-center">
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground/70 bg-muted/30 px-3 py-1.5 rounded-full">
