@@ -621,6 +621,67 @@ export function BookReader({
               {book.description}
             </p>
           )}
+          {hasCommentaryOptions && (
+            <div className="flex flex-wrap items-center gap-3 mt-3">
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                <Select
+                  value={selectedAuthor || "__all__"}
+                  onValueChange={handleAuthorChange}
+                >
+                  <SelectTrigger 
+                    className="w-[180px] h-8 text-xs bg-background/80 backdrop-blur-sm border-primary/20" 
+                    data-testid="select-author"
+                  >
+                    <SelectValue placeholder="Select Author" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem 
+                      value="__all__"
+                      data-testid="option-author-all"
+                    >
+                      All Commentators
+                    </SelectItem>
+                    {availableAuthors.map((author) => (
+                      <SelectItem 
+                        key={author.authorName} 
+                        value={author.authorName}
+                        data-testid={`option-author-${author.authorName.toLowerCase().replace(/\s+/g, '-')}`}
+                      >
+                        {author.authorName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
+                <Select
+                  value={selectedCommentaryLanguage || ""}
+                  onValueChange={handleLanguageChange}
+                  disabled={availableLanguagesForAuthor.length === 0}
+                >
+                  <SelectTrigger 
+                    className="w-[140px] h-8 text-xs bg-background/80 backdrop-blur-sm border-primary/20" 
+                    data-testid="select-commentary-language"
+                  >
+                    <SelectValue placeholder="Language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableLanguagesForAuthor.map((lang) => (
+                      <SelectItem 
+                        key={lang.code} 
+                        value={lang.code}
+                        data-testid={`option-lang-${lang.code}`}
+                      >
+                        {lang.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -707,67 +768,6 @@ export function BookReader({
 
                 {hasCommentaryOptions && (
                   <div className="mt-2 space-y-3">
-                    <div className="flex flex-wrap items-center justify-center gap-3">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <Select
-                          value={selectedAuthor || "__all__"}
-                          onValueChange={handleAuthorChange}
-                        >
-                          <SelectTrigger 
-                            className="w-[180px] h-8 text-xs bg-background/80 backdrop-blur-sm border-primary/20" 
-                            data-testid="select-author"
-                          >
-                            <SelectValue placeholder="Select Author" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem 
-                              value="__all__"
-                              data-testid="option-author-all"
-                            >
-                              All Commentators
-                            </SelectItem>
-                            {availableAuthors.map((author) => (
-                              <SelectItem 
-                                key={author.authorName} 
-                                value={author.authorName}
-                                data-testid={`option-author-${author.authorName.toLowerCase().replace(/\s+/g, '-')}`}
-                              >
-                                {author.authorName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <Select
-                          value={selectedCommentaryLanguage || ""}
-                          onValueChange={handleLanguageChange}
-                          disabled={availableLanguagesForAuthor.length === 0}
-                        >
-                          <SelectTrigger 
-                            className="w-[140px] h-8 text-xs bg-background/80 backdrop-blur-sm border-primary/20" 
-                            data-testid="select-commentary-language"
-                          >
-                            <SelectValue placeholder="Language" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableLanguagesForAuthor.map((lang) => (
-                              <SelectItem 
-                                key={lang.code} 
-                                value={lang.code}
-                                data-testid={`option-lang-${lang.code}`}
-                              >
-                                {lang.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
                     <div className="flex justify-center">
                       <button
                         onClick={() => setCommentaryExpanded(!commentaryExpanded)}
