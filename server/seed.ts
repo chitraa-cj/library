@@ -679,7 +679,7 @@ export async function seedDatabase() {
     title: "Īśāvāsyopaniṣad",
     author: "Sri Shankaracharya",
     description: `The Īśāvāsyopaniṣad (ईशावास्योपनिषद्) is one of the shortest and most celebrated Upanishads. This text presents Shankaracharya's Bhashya (commentary) on the 18 mantras, providing deep philosophical insights into Advaita Vedanta.`,
-    category: "Upanishad Bhashya",
+    category: "Upanishad",
     coverImage: null,
     totalVerses: MANTRAS.length + 1, // +1 for introduction
   });
