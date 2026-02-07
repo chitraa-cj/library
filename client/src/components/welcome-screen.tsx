@@ -6,22 +6,25 @@ import shankaracharyaImg from "@assets/image_1770455528511.png";
 const features = [
   {
     icon: BookOpen,
+    image: null as string | null,
     title: "Isha Upanishad",
     description: "Study the complete 18 mantras of the Isha Upanishad with original Sanskrit text",
   },
   {
     icon: Globe,
+    image: null as string | null,
     title: "Multi-Script Support",
     description: "Read in Devanagari, Kannada, Telugu, Tamil, and English scripts",
   },
   {
-    icon: null,
-    image: shankaracharyaImg,
+    icon: MessageSquareText,
+    image: shankaracharyaImg as string | null,
     title: "Shankaracharya Bhashya",
     description: "Complete commentary by Adi Shankaracharya explaining the profound Advaita wisdom",
   },
   {
     icon: Sparkles,
+    image: null as string | null,
     title: "Translations & Insight",
     description: "Multiple translations by renowned scholars for deeper understanding",
   },

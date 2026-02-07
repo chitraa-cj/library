@@ -16,7 +16,7 @@ import {
 interface WordTranslation {
   word: string;
   translation: string;
-  grammaticalInfo: string;
+  grammaticalInfo: string | Record<string, string>;
   etymology: string;
   contextualMeaning: string;
   cached?: boolean;
@@ -295,7 +295,18 @@ export function WordTooltip({
                       <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
                       <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Grammar</span>
                     </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{translation.grammaticalInfo}</p>
+                    {typeof translation.grammaticalInfo === 'string' ? (
+                      <p className="text-xs text-muted-foreground leading-relaxed">{translation.grammaticalInfo}</p>
+                    ) : (
+                      <div className="space-y-1">
+                        {Object.entries(translation.grammaticalInfo).map(([key, value]) => (
+                          <p key={key} className="text-xs text-muted-foreground leading-relaxed">
+                            <span className="font-medium capitalize">{key.replace(/[/_]/g, ' ')}: </span>
+                            {String(value)}
+                          </p>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </>
               )}
