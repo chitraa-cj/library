@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import type { BookWithDetails, VerseTranslation, Explanation, Note } from "@shared/schema";
 import shankaracharyaImg from "@assets/image_1770455528511.png";
+import rishiImg from "@assets/image_1770455608411.png";
 
 interface CommentaryOption {
   authorName: string;
@@ -625,7 +626,8 @@ export function BookReader({
         </div>
         
         <div className="flex-1 p-4 sm:p-8 overflow-y-auto relative z-10">
-          <div className="max-w-3xl w-full mx-auto">
+          <div className="max-w-4xl w-full mx-auto flex items-start gap-6">
+            <div className="flex-1 min-w-0">
             <div 
               className="backdrop-blur-md bg-gradient-to-br from-white/70 via-orange-50/50 to-amber-50/40 dark:from-card/80 dark:via-card/70 dark:to-orange-950/30 border border-primary/20 rounded-2xl p-6 sm:p-10 shadow-lg shadow-primary/5 relative overflow-hidden"
               data-testid={`verse-${currentVerse.verseNumber}`}
@@ -822,6 +824,15 @@ export function BookReader({
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
+            </div>
+            </div>
+            <div className="hidden lg:flex flex-col items-center justify-start pt-8 shrink-0">
+              <img 
+                src={rishiImg} 
+                alt="Rishi reading scripture" 
+                className="w-36 opacity-80 drop-shadow-md select-none pointer-events-none"
+                data-testid="img-rishi"
+              />
             </div>
           </div>
         </div>
