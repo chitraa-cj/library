@@ -129,7 +129,7 @@ function HomePage() {
                     <div className="absolute -inset-0.5 bg-primary/15 rounded-full blur-sm"></div>
                     <img 
                       src="https://oneness.org.in/assets/img/favicon.png" 
-                      alt="Ekatma Dham"
+                      alt="Advaita Sharada"
                       className="h-8 w-8 object-contain relative"
                     />
                   </div>
@@ -137,11 +137,11 @@ function HomePage() {
                     <div className="flex items-center gap-1">
                       <span className="text-xs text-primary/50">ॐ</span>
                       <span className="font-serif text-sm font-bold text-primary">
-                        Ekatma Dham
+                        Advaita Sharada
                       </span>
                     </div>
                     <span className="text-[10px] text-muted-foreground tracking-wide">
-                      ABODE OF ONENESS
+                      ENCYCLOPAEDIA OF ADVAITA VEDANTA
                     </span>
                   </div>
                 </div>
