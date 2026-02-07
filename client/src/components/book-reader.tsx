@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { BookWithDetails, VerseTranslation, Explanation } from "@shared/schema";
+import type { BookWithVerseMeta, VerseMeta, VerseTranslation, Explanation, VerseWithTranslations } from "@shared/schema";
 import shankaracharyaImg from "@assets/image_1770455528511.png";
 import rishiImg from "@assets/image_1770455608411.png";
 import meditatingRishiImg from "@assets/image_1770455642043.png";
@@ -219,12 +219,20 @@ export function BookReader({
     return () => document.removeEventListener("mousedown", dismiss);
   }, []);
 
-  const { data: book, isLoading, error } = useQuery<BookWithDetails>({
+  const { data: book, isLoading, error } = useQuery<BookWithVerseMeta>({
     queryKey: ["/api/books", bookId],
   });
 
   const { data: commentaryOptions } = useQuery<CommentaryOptions>({
     queryKey: ["/api/books", bookId, "commentary-options"],
+  });
+
+  const verses = book?.verses || [];
+  const currentVerseMeta = verses[currentPage] || null;
+
+  const { data: currentVerseDetails, isLoading: isVerseLoading } = useQuery<VerseWithTranslations>({
+    queryKey: ["/api/verses", currentVerseMeta?.id],
+    enabled: !!currentVerseMeta?.id,
   });
 
   useEffect(() => {
@@ -243,6 +251,8 @@ export function BookReader({
   }, [commentaryOptions, initialized, onAuthorChange, onLanguageChange]);
 
   const isShowingAll = selectedAuthor === "__all__";
+
+  const currentVerse = currentVerseMeta;
 
   const availableLanguagesForAuthor = useMemo(() => {
     if (!commentaryOptions) return [];
@@ -283,17 +293,14 @@ export function BookReader({
   const hasCommentaryOptions = commentaryOptions && 
     (commentaryOptions.authors.length > 0 || commentaryOptions.languages.length > 0);
 
-  const verses = book?.verses || [];
-  const currentVerse = verses[currentPage] || null;
-
   const currentNumericLabel = useMemo(() => {
     if (!currentVerse || currentVerse.adhyayNumber == null || currentVerse.khandaNumber == null) {
       return null;
     }
     const khandaVerses = verses
-      .filter((v) => v.adhyayNumber === currentVerse.adhyayNumber && v.khandaNumber === currentVerse.khandaNumber)
-      .sort((a, b) => a.verseNumber - b.verseNumber);
-    const idx = khandaVerses.findIndex((v) => v.id === currentVerse.id);
+      .filter((v: VerseMeta) => v.adhyayNumber === currentVerse.adhyayNumber && v.khandaNumber === currentVerse.khandaNumber)
+      .sort((a: VerseMeta, b: VerseMeta) => a.verseNumber - b.verseNumber);
+    const idx = khandaVerses.findIndex((v: VerseMeta) => v.id === currentVerse.id);
     return `${currentVerse.adhyayNumber}.${currentVerse.khandaNumber}.${idx >= 0 ? idx + 1 : 1}`;
   }, [currentVerse, verses]);
 
@@ -302,31 +309,31 @@ export function BookReader({
   }, [bookId]);
 
   useEffect(() => {
-    if (navigateToVerse !== null && navigateToVerse !== undefined && book?.verses) {
-      const pageIndex = book.verses.findIndex(v => v.verseNumber === navigateToVerse);
+    if (navigateToVerse !== null && navigateToVerse !== undefined && verses.length > 0) {
+      const pageIndex = verses.findIndex(v => v.verseNumber === navigateToVerse);
       if (pageIndex >= 0 && pageIndex !== currentPage) {
         setCurrentPage(pageIndex);
       }
     }
-  }, [navigateToVerse, book?.verses]);
+  }, [navigateToVerse, verses]);
 
   useEffect(() => {
-    if (onVerseChange && book?.verses && book.verses[currentPage]) {
-      onVerseChange(book.verses[currentPage].verseNumber);
+    if (onVerseChange && currentVerse) {
+      onVerseChange(currentVerse.verseNumber);
     }
-  }, [currentPage, book?.verses, onVerseChange]);
+  }, [currentPage, currentVerse, onVerseChange]);
 
   useEffect(() => {
-    if (onBreadcrumbChange && book?.verses && book.verses[currentPage]) {
-      const verse = book.verses[currentPage];
+    if (onBreadcrumbChange && currentVerse) {
+      const verse = currentVerse;
       const adhyayNum = verse.adhyayNumber;
       const khandaNum = verse.khandaNumber;
 
       let numericLabel: string;
       if (adhyayNum != null && khandaNum != null) {
-        const khandaVerses = book.verses
-          .filter((v) => v.adhyayNumber === adhyayNum && v.khandaNumber === khandaNum)
-          .sort((a, b) => a.verseNumber - b.verseNumber);
+        const khandaVerses = verses
+          .filter((v: VerseMeta) => v.adhyayNumber === adhyayNum && v.khandaNumber === khandaNum)
+          .sort((a: VerseMeta, b: VerseMeta) => a.verseNumber - b.verseNumber);
         const idx = khandaVerses.findIndex((v) => v.id === verse.id);
         numericLabel = `${adhyayNum}.${khandaNum}.${idx >= 0 ? idx + 1 : 1}`;
       } else {
@@ -346,22 +353,12 @@ export function BookReader({
   }, [currentPage, book, onBreadcrumbChange]);
 
   useEffect(() => {
-    if (book && book.verses && book.verses.length > 0) {
-      const verse = book.verses[currentPage];
-      if (verse) {
-        const langCode = selectedCommentaryLanguage || "devanagari";
-        const content = getTranslationFromVerse(verse, langCode);
-        onVerseSelect(verse.id, content);
-      }
+    if (currentVerse && currentVerseDetails) {
+      const langCode = selectedCommentaryLanguage || "devanagari";
+      const content = getTranslation(currentVerseDetails, langCode);
+      onVerseSelect(currentVerse.id, content);
     }
-  }, [currentPage, book, selectedCommentaryLanguage]);
-
-  const getTranslationFromVerse = (verse: any, langCode: string): string => {
-    const translation = verse.translations?.find(
-      (t: VerseTranslation) => t.languageCode === langCode
-    );
-    return translation?.content || "";
-  };
+  }, [currentVerse, currentVerseDetails, selectedCommentaryLanguage]);
 
   if (isLoading) {
     return (
@@ -435,21 +432,19 @@ export function BookReader({
     );
   }
 
-  const originalDevanagari = getOriginalDevanagari(currentVerse);
+  const originalDevanagari = currentVerseDetails ? getOriginalDevanagari(currentVerseDetails) : "";
   const isNonDevanagariSelected = selectedCommentaryLanguage && selectedCommentaryLanguage !== "devanagari";
-  const translationText = isNonDevanagariSelected
-    ? getTranslation(currentVerse, selectedCommentaryLanguage)
+  const translationText = isNonDevanagariSelected && currentVerseDetails
+    ? getTranslation(currentVerseDetails, selectedCommentaryLanguage)
     : "";
 
-  const getCommentaryContent = (verse: any): string => {
-    if (!selectedAuthor || !selectedCommentaryLanguage) return "";
-    const explanation = verse.explanations?.find(
+  const commentaryContext = (() => {
+    if (!selectedAuthor || !selectedCommentaryLanguage || !currentVerseDetails) return "";
+    const explanation = currentVerseDetails.explanations?.find(
       (e: Explanation) => e.authorName === selectedAuthor && e.languageCode === selectedCommentaryLanguage
     );
     return explanation?.content || "";
-  };
-
-  const commentaryContext = getCommentaryContent(currentVerse);
+  })();
 
   return (
     <div 
@@ -590,6 +585,15 @@ export function BookReader({
             </div>
           )}
           <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl w-full mx-auto">
+            {isVerseLoading || !currentVerseDetails ? (
+              <div className="backdrop-blur-md bg-gradient-to-br from-white/70 via-orange-50/50 to-amber-50/40 dark:from-card/80 dark:via-card/70 dark:to-orange-950/30 border border-primary/20 rounded-xl sm:rounded-2xl p-4 sm:p-10 shadow-lg shadow-primary/5">
+                <div className="space-y-4">
+                  <Skeleton className="h-6 w-32 mx-auto" />
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-12 w-3/4 mx-auto" />
+                </div>
+              </div>
+            ) : (
             <div 
               className="backdrop-blur-md bg-gradient-to-br from-white/70 via-orange-50/50 to-amber-50/40 dark:from-card/80 dark:via-card/70 dark:to-orange-950/30 border border-primary/20 rounded-xl sm:rounded-2xl p-4 sm:p-10 shadow-lg shadow-primary/5 relative overflow-hidden"
               data-testid={`verse-${currentVerse.verseNumber}`}
@@ -689,52 +693,53 @@ export function BookReader({
                 )}
 
               </div>
+            )}
 
-              <div className="flex items-center justify-between mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-border/50">
-                <Button
-                  variant="outline"
-                  onClick={goToPrevPage}
-                  disabled={currentPage === 0}
-                  className="gap-1 sm:gap-2"
-                  data-testid="button-prev-page"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  <span className="hidden sm:inline">Previous</span>
-                </Button>
+            <div className="flex items-center justify-between mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-border/50">
+              <Button
+                variant="outline"
+                onClick={goToPrevPage}
+                disabled={currentPage === 0}
+                className="gap-1 sm:gap-2"
+                data-testid="button-prev-page"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">Previous</span>
+              </Button>
 
-                <div className="flex items-center gap-1">
-                  {totalPages <= 10 ? (
-                    Array.from({ length: totalPages }, (_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setCurrentPage(i)}
-                        className={`w-2 h-2 rounded-full transition-colors ${
-                          i === currentPage 
-                            ? "bg-primary" 
-                            : "bg-muted hover:bg-muted-foreground/30"
-                        }`}
-                        data-testid={`page-dot-${i + 1}`}
-                      />
-                    ))
-                  ) : (
-                    <span className="text-xs sm:text-sm text-muted-foreground">
-                      {currentPage + 1} / {totalPages}
-                    </span>
-                  )}
-                </div>
-
-                <Button
-                  variant="outline"
-                  onClick={goToNextPage}
-                  disabled={currentPage === totalPages - 1}
-                  className="gap-1 sm:gap-2"
-                  data-testid="button-next-page"
-                >
-                  <span className="hidden sm:inline">Next</span>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+              <div className="flex items-center gap-1">
+                {totalPages <= 10 ? (
+                  Array.from({ length: totalPages }, (_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentPage(i)}
+                      className={`w-2 h-2 rounded-full transition-colors ${
+                        i === currentPage 
+                          ? "bg-primary" 
+                          : "bg-muted hover:bg-muted-foreground/30"
+                      }`}
+                      data-testid={`page-dot-${i + 1}`}
+                    />
+                  ))
+                ) : (
+                  <span className="text-xs sm:text-sm text-muted-foreground">
+                    {currentPage + 1} / {totalPages}
+                  </span>
+                )}
               </div>
+
+              <Button
+                variant="outline"
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages - 1}
+                className="gap-1 sm:gap-2"
+                data-testid="button-next-page"
+              >
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
+          </div>
           </div>
         </div>
 

@@ -23,6 +23,8 @@ import {
   type Language,
   type InsertLanguage,
   type BookWithDetails,
+  type BookWithVerseMeta,
+  type VerseMeta,
   type VerseWithTranslations,
   type WordTranslation,
   type InsertWordTranslation,
@@ -45,6 +47,7 @@ export interface CommentaryOptions {
 export interface IStorage {
   getAllBooks(): Promise<Book[]>;
   getBookById(id: string): Promise<BookWithDetails | undefined>;
+  getBookWithVerseMeta(id: string): Promise<BookWithVerseMeta | undefined>;
   getBookBySlug(slug: string): Promise<Book | undefined>;
   createBook(book: InsertBook): Promise<Book>;
   updateBook(id: string, book: Partial<InsertBook>): Promise<Book | undefined>;
@@ -88,6 +91,33 @@ export class DatabaseStorage implements IStorage {
 
     const bookVerses = await this.getVersesByBookId(id);
     const titles = await this.getBookTitlesByBookId(id);
+
+    return {
+      ...book[0],
+      titles,
+      verses: bookVerses,
+    };
+  }
+
+  async getBookWithVerseMeta(id: string): Promise<BookWithVerseMeta | undefined> {
+    const book = await db.select().from(books).where(eq(books.id, id)).limit(1);
+    if (!book[0]) return undefined;
+
+    const titles = await this.getBookTitlesByBookId(id);
+    const bookVerses = await db
+      .select({
+        id: verses.id,
+        bookId: verses.bookId,
+        verseNumber: verses.verseNumber,
+        sectionTitle: verses.sectionTitle,
+        adhyayNumber: verses.adhyayNumber,
+        adhyayTitle: verses.adhyayTitle,
+        khandaNumber: verses.khandaNumber,
+        khandaTitle: verses.khandaTitle,
+      })
+      .from(verses)
+      .where(eq(verses.bookId, id))
+      .orderBy(verses.verseNumber);
 
     return {
       ...book[0],

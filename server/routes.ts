@@ -44,7 +44,7 @@ export async function registerRoutes(
 
   app.get("/api/books/:id", async (req, res) => {
     try {
-      const book = await storage.getBookById(req.params.id);
+      const book = await storage.getBookWithVerseMeta(req.params.id);
       if (!book) {
         return res.status(404).json({ error: "Book not found" });
       }

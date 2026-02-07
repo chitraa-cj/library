@@ -91,6 +91,13 @@ export interface BookWithDetails extends Book {
   verses: VerseWithTranslations[];
 }
 
+export type VerseMeta = Pick<Verse, 'id' | 'verseNumber' | 'sectionTitle' | 'adhyayNumber' | 'adhyayTitle' | 'khandaNumber' | 'khandaTitle' | 'bookId'>;
+
+export interface BookWithVerseMeta extends Book {
+  titles: BookTitle[];
+  verses: VerseMeta[];
+}
+
 
 export const wordTranslations = pgTable("word_translations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
