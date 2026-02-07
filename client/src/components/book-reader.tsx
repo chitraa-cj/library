@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BookOpen, ChevronLeft, ChevronRight, Play, User, Globe, Sparkles } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { VideoPopup } from "@/components/video-popup";
 import { WordTooltip } from "@/components/word-tooltip";
 import {
@@ -98,6 +99,7 @@ export function BookReader({
 }: BookReaderProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [initialized, setInitialized] = useState(false);
+  const isMobile = useIsMobile();
 
   const { data: book, isLoading, error } = useQuery<BookWithDetails>({
     queryKey: ["/api/books", bookId],
