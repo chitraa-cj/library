@@ -3,6 +3,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { VideoInline } from "@/components/video-popup";
+import ishaImg from "@/assets/images/book-isha-upanishad.png";
+import gitaImg from "@/assets/images/book-bhagavad-gita.png";
+import brahmaImg from "@/assets/images/book-brahma-sutra.png";
+import vivekImg from "@/assets/images/book-vivekachudamani.png";
+import upadesaImg from "@/assets/images/book-upadesa-sahasri.png";
 
 interface Book {
   id: string;
@@ -19,6 +24,11 @@ interface WelcomeScreenProps {
   onSelectBook: (bookId: string) => void;
 }
 
+const bookImages: Record<string, string> = {
+  "isha-upanishad-bhashya": ishaImg,
+  "bhagavad-gita": gitaImg,
+};
+
 const comingSoonBooks = [
   {
     title: "ब्रह्मसूत्र भाष्य",
@@ -26,6 +36,7 @@ const comingSoonBooks = [
     author: "Sri Shankaracharya",
     category: "Vedanta",
     description: "The foundational text of Advaita Vedanta — Shankaracharya's commentary on Badarayana's aphorisms establishing the nature of Brahman",
+    image: brahmaImg,
   },
   {
     title: "विवेकचूडामणि",
@@ -33,6 +44,7 @@ const comingSoonBooks = [
     author: "Sri Shankaracharya",
     category: "Prakarana Grantha",
     description: "The Crest-Jewel of Discrimination — a 580-verse poem guiding the seeker from ignorance to Self-realization through Advaita wisdom",
+    image: vivekImg,
   },
   {
     title: "उपदेशसाहस्री",
@@ -40,6 +52,7 @@ const comingSoonBooks = [
     author: "Sri Shankaracharya",
     category: "Prakarana Grantha",
     description: "A Thousand Teachings — Shankaracharya's independent prose and verse work on the method of realizing Brahman",
+    image: upadesaImg,
   },
 ];
 
@@ -92,31 +105,36 @@ export function WelcomeScreen({ books, onSelectBook }: WelcomeScreenProps) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {books.map((book) => {
-              const Icon = categoryIcon[book.category] || BookOpen;
+              const coverImg = bookImages[book.slug];
               return (
                 <Card
                   key={book.id}
-                  className="group p-0 border-primary/15 bg-card/90 backdrop-blur-sm hover-elevate active-elevate-2 cursor-pointer transition-all"
+                  className="group p-0 overflow-visible border-primary/15 bg-card/90 backdrop-blur-sm hover-elevate active-elevate-2 cursor-pointer transition-all"
                   onClick={() => onSelectBook(book.id)}
                   data-testid={`card-book-${book.slug}`}
                 >
-                  <div className="p-5 sm:p-6 space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center justify-center w-11 h-11 rounded-md bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20 shrink-0">
-                        <Icon className="w-5 h-5 text-primary" />
+                  {coverImg && (
+                    <div className="relative w-full aspect-[4/3] overflow-hidden rounded-t-md">
+                      <img
+                        src={coverImg}
+                        alt={book.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                      <div className="absolute bottom-3 left-4 right-4">
+                        <Badge variant="secondary" className="text-[10px] mb-1.5" data-testid={`badge-category-${book.slug}`}>
+                          {book.category}
+                        </Badge>
+                        <h3 className="font-serif text-lg sm:text-xl font-semibold text-white leading-tight drop-shadow-md" data-testid={`text-title-${book.slug}`}>
+                          {book.title}
+                        </h3>
                       </div>
-                      <Badge variant="secondary" className="text-[10px] shrink-0" data-testid={`badge-category-${book.slug}`}>
-                        {book.category}
-                      </Badge>
                     </div>
-                    <div className="space-y-1">
-                      <h3 className="font-serif text-base sm:text-lg font-semibold text-foreground leading-tight" data-testid={`text-title-${book.slug}`}>
-                        {book.title}
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
-                        {book.author}
-                      </p>
-                    </div>
+                  )}
+                  <div className="p-4 sm:p-5 space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      {book.author}
+                    </p>
                     <p className="text-xs text-muted-foreground/80 leading-relaxed line-clamp-2">
                       {book.description}
                     </p>
@@ -150,26 +168,31 @@ export function WelcomeScreen({ books, onSelectBook }: WelcomeScreenProps) {
               return (
                 <Card
                   key={book.titleEn}
-                  className="p-4 sm:p-5 border-border/60 bg-muted/30 backdrop-blur-sm opacity-75"
+                  className="p-0 overflow-hidden border-border/60 bg-muted/30 backdrop-blur-sm opacity-80"
                   data-testid={`card-coming-soon-${book.titleEn.toLowerCase().replace(/\s+/g, '-')}`}
                 >
-                  <div className="space-y-2.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center justify-center w-9 h-9 rounded-md bg-muted/60 border border-border/50 shrink-0">
-                        <Icon className="w-4 h-4 text-muted-foreground" />
-                      </div>
-                      <Badge variant="outline" className="text-[9px] text-muted-foreground border-border/50 shrink-0">
-                        {book.category}
+                  <div className="relative w-full aspect-[4/3] overflow-hidden">
+                    <img
+                      src={book.image}
+                      alt={book.titleEn}
+                      className="w-full h-full object-cover grayscale-[40%] opacity-80"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                    <div className="absolute top-2 right-2">
+                      <Badge variant="outline" className="text-[9px] bg-black/40 text-white/80 border-white/20 backdrop-blur-sm">
+                        Coming Soon
                       </Badge>
                     </div>
-                    <div className="space-y-0.5">
-                      <h3 className="font-serif text-sm font-semibold text-foreground/70 leading-tight">
+                    <div className="absolute bottom-2.5 left-3 right-3">
+                      <h3 className="font-serif text-sm font-semibold text-white/90 leading-tight drop-shadow-md">
                         {book.title}
                       </h3>
-                      <p className="text-[11px] text-muted-foreground/70">
+                      <p className="text-[11px] text-white/70">
                         {book.titleEn}
                       </p>
                     </div>
+                  </div>
+                  <div className="p-3 space-y-1.5">
                     <p className="text-[11px] text-muted-foreground/60 leading-relaxed line-clamp-2">
                       {book.description}
                     </p>
