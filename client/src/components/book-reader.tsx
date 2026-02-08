@@ -266,8 +266,10 @@ export function BookReader({
   }, [selectedAuthor, commentaryOptions, isShowingAll]);
 
   const availableAuthors = useMemo(() => {
-    return commentaryOptions?.authors || [];
-  }, [commentaryOptions]);
+    if (!commentaryOptions) return [];
+    if (!selectedCommentaryLanguage) return commentaryOptions.authors;
+    return commentaryOptions.authors.filter(a => a.languageCodes.includes(selectedCommentaryLanguage));
+  }, [commentaryOptions, selectedCommentaryLanguage]);
 
   const handleAuthorChange = (authorName: string) => {
     onAuthorChange(authorName);
@@ -289,6 +291,12 @@ export function BookReader({
 
   const handleLanguageChange = (langCode: string) => {
     onLanguageChange(langCode);
+    if (selectedAuthor && selectedAuthor !== "__all__") {
+      const author = commentaryOptions?.authors.find(a => a.authorName === selectedAuthor);
+      if (author && !author.languageCodes.includes(langCode)) {
+        onAuthorChange("__all__");
+      }
+    }
   };
 
   const hasCommentaryOptions = commentaryOptions && 
