@@ -48,6 +48,7 @@ function HomePage() {
   const [verseBreadcrumb, setVerseBreadcrumb] = useState<VerseBreadcrumb | null>(null);
   const [pendingNoteText, setPendingNoteText] = useState<string | null>(null);
   const [urlInitialized, setUrlInitialized] = useState(false);
+  const [mobileInitialPanelShown, setMobileInitialPanelShown] = useState(false);
   const isMobile = useIsMobile();
   const { user, isLoading: authLoading, isAuthenticated: isLoggedIn } = useAuth();
 
@@ -94,9 +95,6 @@ function HomePage() {
   const handleVerseSelect = (verseId: string, content: string) => {
     setSelectedVerseId(verseId);
     setSelectedContent(content);
-    if (isMobile) {
-      setShowTranslationPanel(true);
-    }
   };
 
   const handleBookSelect = (bookId: string) => {
@@ -104,6 +102,7 @@ function HomePage() {
     setSelectedVerseId(null);
     setSelectedContent("");
     setShowTranslationPanel(false);
+    setMobileInitialPanelShown(false);
     setSelectedAuthor(null);
     setSelectedCommentaryLanguage(null);
     setNavigateToVerse(null);
@@ -127,6 +126,13 @@ function HomePage() {
     setVerseBreadcrumb(null);
     setLocation("/");
   };
+
+  useEffect(() => {
+    if (isMobile && selectedBookId && selectedVerseId && !mobileInitialPanelShown) {
+      setShowTranslationPanel(true);
+      setMobileInitialPanelShown(true);
+    }
+  }, [isMobile, selectedBookId, selectedVerseId, mobileInitialPanelShown]);
 
   const handleSidebarVerseSelect = (verseNumber: number) => {
     setNavigateToVerse(verseNumber);

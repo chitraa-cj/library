@@ -18,6 +18,13 @@ import shankaracharyaImg from "@assets/image_1770455528511.png";
 import meditatingRishiImg from "@assets/image_1770480897044.png";
 import scholarImg from "@assets/image_1770480809898.png";
 
+const bookMediaConfig: Record<string, { videoId?: string; videoTitle?: string }> = {
+  "isha-upanishad-bhashya": {
+    videoId: "8ELHatzdtAk",
+    videoTitle: "Introduction to Isha Upanishad",
+  },
+};
+
 interface CommentaryOption {
   authorName: string;
   authorTitle: string | null;
@@ -798,14 +805,16 @@ export function BookReader({
           </div>
         </div>
 
-        <div className="border-t border-border px-3 sm:px-8 py-2 sm:py-3 bg-background/80 backdrop-blur-sm">
-          <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto flex items-center justify-center">
-            <VideoPopup 
-              videoId="8ELHatzdtAk"
-              title="Introduction to Isha Upanishad"
-            />
+        {book?.slug && bookMediaConfig[book.slug]?.videoId && (
+          <div className="border-t border-border px-3 sm:px-8 py-2 sm:py-3 bg-background/80 backdrop-blur-sm">
+            <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto flex items-center justify-center">
+              <VideoPopup 
+                videoId={bookMediaConfig[book.slug].videoId!}
+                title={bookMediaConfig[book.slug].videoTitle || "Introduction Video"}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

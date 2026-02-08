@@ -30,6 +30,13 @@ const bookImages: Record<string, string> = {
   "bhagavad-gita": gitaImg,
 };
 
+const bookVideoConfig: Record<string, { videoId: string; videoTitle: string }> = {
+  "isha-upanishad-bhashya": {
+    videoId: "8ELHatzdtAk",
+    videoTitle: "Introduction to Isha Upanishad",
+  },
+};
+
 const comingSoonBooks = [
   {
     title: "ब्रह्मसूत्र भाष्य",
@@ -207,20 +214,25 @@ export function WelcomeScreen({ books, onSelectBook }: WelcomeScreenProps) {
           </div>
         </div>
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-center gap-2">
-            <div className="h-px w-8 bg-primary/30"></div>
-            <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider" data-testid="heading-explanatory-videos">
-              Watch Introduction
-            </h2>
-            <div className="h-px w-8 bg-primary/30"></div>
+        {books.some(b => bookVideoConfig[b.slug]) && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-center gap-2">
+              <div className="h-px w-8 bg-primary/30"></div>
+              <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider" data-testid="heading-explanatory-videos">
+                Watch Introduction
+              </h2>
+              <div className="h-px w-8 bg-primary/30"></div>
+            </div>
+            {books.filter(b => bookVideoConfig[b.slug]).map(b => (
+              <VideoInline
+                key={b.slug}
+                videoId={bookVideoConfig[b.slug].videoId}
+                title={bookVideoConfig[b.slug].videoTitle}
+                className="max-w-xl mx-auto rounded-xl overflow-hidden border border-primary/20"
+              />
+            ))}
           </div>
-          <VideoInline
-            videoId="8ELHatzdtAk"
-            title="Introduction to Isha Upanishad"
-            className="max-w-xl mx-auto rounded-xl overflow-hidden border border-primary/20"
-          />
-        </div>
+        )}
 
         <div className="text-center pb-4">
           <div className="text-primary/25 text-xs tracking-widest font-serif">
