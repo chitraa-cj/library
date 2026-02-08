@@ -13,10 +13,11 @@ interface Book {
   id: string;
   slug: string;
   title: string;
-  author: string;
-  description: string;
+  author: string | null;
+  description: string | null;
   category: string;
-  totalVerses: number;
+  coverImage: string | null;
+  totalVerses: number | null;
 }
 
 interface WelcomeScreenProps {
@@ -140,7 +141,7 @@ export function WelcomeScreen({ books, onSelectBook }: WelcomeScreenProps) {
                     </p>
                     <div className="flex items-center justify-between gap-2 pt-1">
                       <span className="text-[11px] text-muted-foreground">
-                        {book.totalVerses} verses
+                        {book.totalVerses ?? 0} verses
                       </span>
                       <Button variant="ghost" size="sm" className="text-xs text-primary h-auto py-1 px-2" data-testid={`button-read-${book.slug}`}>
                         Start Reading
