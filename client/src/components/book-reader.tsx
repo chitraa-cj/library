@@ -355,25 +355,20 @@ export function BookReader({
 
   const availableTranslations = useMemo(() => {
     if (!currentVerseDetails?.translations) return [];
-    const primaryCodes = new Set(["devanagari", "sa"]);
-    const hasDevanagari = currentVerseDetails.translations.some(
-      (t: VerseTranslation) => t.languageCode === "devanagari"
-    );
-    const nonPrimary = currentVerseDetails.translations.filter((t: VerseTranslation) => {
-      if (t.languageCode === "devanagari") return false;
-      if (t.languageCode === "sa" && !hasDevanagari) return false;
-      return true;
-    });
-    if (!selectedCommentaryLanguage) return nonPrimary;
+    if (!selectedCommentaryLanguage || selectedCommentaryLanguage === "devanagari" || selectedCommentaryLanguage === "sa") {
+      return [];
+    }
     const langAliases: Record<string, string[]> = {
       "english": ["english", "en"],
       "en": ["english", "en"],
+      "hi": ["hi", "hindi"],
+      "hindi": ["hi", "hindi"],
     };
     const matchCodes = langAliases[selectedCommentaryLanguage] || [selectedCommentaryLanguage];
-    const filtered = nonPrimary.filter((t: VerseTranslation) =>
+    const filtered = currentVerseDetails.translations.filter((t: VerseTranslation) =>
       matchCodes.includes(t.languageCode)
     );
-    return filtered.length > 0 ? filtered : nonPrimary;
+    return filtered;
   }, [currentVerseDetails, selectedCommentaryLanguage]);
 
   const commentaryContext = useMemo(() => {
@@ -387,25 +382,25 @@ export function BookReader({
   useEffect(() => {
     if (currentVerse && currentVerseDetails) {
       const langCode = selectedCommentaryLanguage || "devanagari";
-      let content = getTranslation(currentVerseDetails, langCode);
-      if (!content) {
-        const langAliases: Record<string, string[]> = {
-          "hi": ["hi", "hindi"],
-          "hindi": ["hi", "hindi"],
-          "english": ["english", "en"],
-          "en": ["english", "en"],
-        };
-        const matchCodes = langAliases[langCode] || [langCode];
-        const matched = currentVerseDetails.translations?.find(
-          (t: VerseTranslation) => matchCodes.includes(t.languageCode)
-        );
-        content = matched?.content || "";
+      if (langCode === "devanagari" || langCode === "sa") {
+        const content = getOriginalDevanagari(currentVerseDetails);
+        onVerseSelect(currentVerse.id, content);
+        return;
       }
+      const langAliases: Record<string, string[]> = {
+        "english": ["english", "en"],
+        "en": ["english", "en"],
+        "hi": ["hi", "hindi"],
+        "hindi": ["hi", "hindi"],
+      };
+      const matchCodes = langAliases[langCode] || [langCode];
+      let content = "";
+      const matched = currentVerseDetails.translations?.find(
+        (t: VerseTranslation) => matchCodes.includes(t.languageCode)
+      );
+      content = matched?.content || "";
       if (!content) {
-        content = getTranslation(currentVerseDetails, "sa") || 
-                  getTranslation(currentVerseDetails, "en") || 
-                  getTranslation(currentVerseDetails, "english") || 
-                  getOriginalDevanagari(currentVerseDetails);
+        content = getOriginalDevanagari(currentVerseDetails);
       }
       onVerseSelect(currentVerse.id, content);
     }
