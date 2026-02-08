@@ -3,11 +3,11 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { VideoInline } from "@/components/video-popup";
-import ishaImg from "@/assets/images/book-isha-upanishad.png";
-import gitaImg from "@/assets/images/book-bhagavad-gita.png";
-import brahmaImg from "@/assets/images/book-brahma-sutra.png";
-import vivekImg from "@/assets/images/book-vivekachudamani.png";
-import upadesaImg from "@/assets/images/book-upadesa-sahasri.png";
+import ishaImg from "@/assets/images/book-isha-upanishad.jpg";
+import gitaImg from "@/assets/images/book-bhagavad-gita.jpg";
+import brahmaImg from "@/assets/images/book-brahma-sutra.jpg";
+import vivekImg from "@/assets/images/book-vivekachudamani.jpg";
+import upadesaImg from "@/assets/images/book-upadesa-sahasri.jpg";
 
 interface Book {
   id: string;
