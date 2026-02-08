@@ -1288,8 +1288,10 @@ export async function updateVerseSectionTitles() {
   for (const [verseNum, title] of Object.entries(verseTitles)) {
     const verseNumber = parseInt(verseNum);
     
-    // Find the verse
-    const existingVerses = await db.select().from(verses).where(eq(verses.verseNumber, verseNumber));
+    // Find the verse - filter by bookId to avoid updating other books' verses
+    const existingVerses = await db.select().from(verses).where(
+      and(eq(verses.verseNumber, verseNumber), eq(verses.bookId, bookId))
+    );
     
     if (existingVerses.length > 0) {
       const verse = existingVerses[0];

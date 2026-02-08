@@ -3,7 +3,7 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { seedDatabase, seedAdditionalCommentaries, updateIncompleteShankaraExplanations, seedEnglishVerseTranslations, updateVerseSectionTitles, updateIshaUpanishadHierarchy } from "./seed";
-import { seedBhagavadGita } from "./seed-gita";
+import { seedBhagavadGita, repairGitaSectionTitles } from "./seed-gita";
 import { seedWordMeaningsFromFile } from "./seed-word-meanings-local";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 
@@ -112,6 +112,7 @@ async function runSeedOperations() {
     await updateVerseSectionTitles().catch(console.error);
     await updateIshaUpanishadHierarchy().catch(console.error);
     await seedBhagavadGita().catch(console.error);
+    await repairGitaSectionTitles().catch(console.error);
     await seedWordMeaningsFromFile().catch(console.error);
     log("All seed operations completed");
   } catch (err) {

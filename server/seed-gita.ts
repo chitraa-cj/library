@@ -265,3 +265,35 @@ export async function seedBhagavadGita() {
 
   console.log(`Bhagavad Gita seeding complete! ${globalVerseNumber} verses seeded.`);
 }
+
+export async function repairGitaSectionTitles() {
+  const gitaBooks = await db.select().from(books).where(eq(books.slug, "bhagavad-gita"));
+  if (gitaBooks.length === 0) return;
+  const bookId = gitaBooks[0].id;
+
+  const gitaVerses = await db.select().from(verses).where(eq(verses.bookId, bookId));
+  let fixed = 0;
+  for (const verse of gitaVerses) {
+    const adhyay = verse.adhyayNumber || 1;
+    const kv = verse.khandaNumber;
+    let expectedVerseInChapter = verse.verseNumber;
+    let cumulative = 0;
+    for (const ch of CHAPTERS) {
+      if (ch.num === adhyay) {
+        expectedVerseInChapter = verse.verseNumber - cumulative;
+        break;
+      }
+      cumulative += ch.verses;
+    }
+    const expectedTitle = `${adhyay}.${expectedVerseInChapter}`;
+    if (verse.sectionTitle !== expectedTitle) {
+      await db.update(verses)
+        .set({ sectionTitle: expectedTitle })
+        .where(eq(verses.id, verse.id));
+      fixed++;
+    }
+  }
+  if (fixed > 0) {
+    console.log(`Repaired ${fixed} Gita verse section titles.`);
+  }
+}
