@@ -1245,6 +1245,86 @@ export async function seedEnglishVerseTranslations() {
 }
 
 /**
+ * Seed South Indian language (Tamil, Kannada, Telugu) verse translations if missing
+ */
+export async function seedSouthIndianVerseTranslations() {
+  console.log("Checking for missing South Indian language verse translations...");
+  
+  const existingBooks = await db.select().from(books).where(eq(books.slug, "isha-upanishad-bhashya"));
+  if (existingBooks.length === 0) {
+    console.log("Isha Upanishad book not found, skipping South Indian translations");
+    return;
+  }
+  
+  const book = existingBooks[0];
+  const bookVerses = await db.select().from(verses).where(eq(verses.bookId, book.id));
+  
+  if (bookVerses.length === 0) {
+    console.log("No verses found, skipping South Indian translations");
+    return;
+  }
+
+  const languages = ["kannada", "tamil", "telugu"] as const;
+  let totalAdded = 0;
+
+  for (const lang of languages) {
+    const existingTranslations = await db
+      .select()
+      .from(verseTranslations)
+      .innerJoin(verses, eq(verseTranslations.verseId, verses.id))
+      .where(and(
+        eq(verses.bookId, book.id),
+        eq(verseTranslations.languageCode, lang)
+      ));
+    
+    if (existingTranslations.length >= bookVerses.length) {
+      continue;
+    }
+
+    const existingVerseIds = new Set(existingTranslations.map(t => t.verse_translations.verseId));
+    let addedCount = 0;
+
+    for (const verse of bookVerses) {
+      if (existingVerseIds.has(verse.id)) continue;
+
+      let content: string | null = null;
+
+      if (verse.verseNumber === 0) {
+        const introContent: Record<string, string> = {
+          kannada: "ಈಶಾ ವಾಸ್ಯಮ್ ಇತ್ಯಾದಯೋ ಮಂತ್ರಾಃ ಆತ್ಮನೋ ಯಾಥಾತ್ಮ್ಯಪ್ರತಿಪಾದಕಾಃ ಕರ್ಮಸ್ವನುಪ್ರವೇಶಾಯೋಗಾತ್ ಕರ್ಮಣಿ ವಿನಿಯೋಗಂ ನ ಪ್ರಾಪ್ನುವಂತಿ ।",
+          tamil: "ஈஶா வாஸ்யம் இத்யாதயோ மந்த்ரா ஆத்மநோ யாதாத்ம்யப்ரதிபாதகா கர்மஸ்வனுப்ரவேஶாயோகாத் கர்மணி விநியோகம் ந ப்ராப்நுவந்தி ।",
+          telugu: "ఈశా వాస్యమ్ ఇత్యాదయో మన్త్రాః ఆత్మనో యాథాత్మ్యప్రతిపాదకాః కర్మస్వనుప్రవేశాయోగాత్ కర్మణి వినియోగం న ప్రాప్నువన్తి ।",
+        };
+        content = introContent[lang] || null;
+      } else {
+        const mantra = MANTRAS.find(m => m.number === verse.verseNumber);
+        if (mantra) {
+          content = mantra[lang]?.mula || null;
+        }
+      }
+
+      if (content) {
+        await storage.createTranslation({
+          verseId: verse.id,
+          languageCode: lang,
+          content,
+        });
+        addedCount++;
+      }
+    }
+
+    if (addedCount > 0) {
+      console.log(`Added ${addedCount} ${lang} verse translations`);
+      totalAdded += addedCount;
+    }
+  }
+
+  if (totalAdded === 0) {
+    console.log("All South Indian language verse translations already exist");
+  }
+}
+
+/**
  * Update verse section titles to use descriptive English names
  * This ensures production database has the correct chapter names
  * Also creates Introduction verse (verse 0) if missing

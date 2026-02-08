@@ -2,7 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
-import { seedDatabase, seedAdditionalCommentaries, updateIncompleteShankaraExplanations, seedEnglishVerseTranslations, updateVerseSectionTitles, updateIshaUpanishadHierarchy } from "./seed";
+import { seedDatabase, seedAdditionalCommentaries, updateIncompleteShankaraExplanations, seedEnglishVerseTranslations, seedSouthIndianVerseTranslations, updateVerseSectionTitles, updateIshaUpanishadHierarchy } from "./seed";
 import { seedBhagavadGita, repairGitaSectionTitles } from "./seed-gita";
 import { seedWordMeaningsFromFile } from "./seed-word-meanings-local";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
@@ -109,6 +109,7 @@ async function runSeedOperations() {
     await seedAdditionalCommentaries().catch(console.error);
     await updateIncompleteShankaraExplanations().catch(console.error);
     await seedEnglishVerseTranslations().catch(console.error);
+    await seedSouthIndianVerseTranslations().catch(console.error);
     await updateVerseSectionTitles().catch(console.error);
     await updateIshaUpanishadHierarchy().catch(console.error);
     await seedBhagavadGita().catch(console.error);
