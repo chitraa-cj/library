@@ -307,7 +307,7 @@ function HomePage() {
                 />
               </>
             ) : (
-              <WelcomeScreen />
+              <WelcomeScreen books={allBooks || []} onSelectBook={handleBookSelect} />
             )}
           </main>
         </div>

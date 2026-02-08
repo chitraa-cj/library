@@ -1,125 +1,207 @@
-import { BookOpen, Globe, MessageSquareText, Sparkles } from "lucide-react";
+import { BookOpen, Clock, Library, Scroll, BookMarked, Feather } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { VideoInline } from "@/components/video-popup";
-import shankaracharyaImg from "@assets/image_1770455528511.png";
 
-const features = [
+interface Book {
+  id: string;
+  slug: string;
+  title: string;
+  author: string;
+  description: string;
+  category: string;
+  totalVerses: number;
+}
+
+interface WelcomeScreenProps {
+  books: Book[];
+  onSelectBook: (bookId: string) => void;
+}
+
+const comingSoonBooks = [
   {
-    icon: BookOpen,
-    image: null as string | null,
-    title: "Isha Upanishad",
-    description: "Study the complete 18 mantras of the Isha Upanishad with original Sanskrit text",
+    title: "ब्रह्मसूत्र भाष्य",
+    titleEn: "Brahma Sutra Bhashya",
+    author: "Sri Shankaracharya",
+    category: "Vedanta",
+    description: "The foundational text of Advaita Vedanta — Shankaracharya's commentary on Badarayana's aphorisms establishing the nature of Brahman",
   },
   {
-    icon: Globe,
-    image: null as string | null,
-    title: "Multi-Script Support",
-    description: "Read in Devanagari, Kannada, Telugu, Tamil, and English scripts",
+    title: "विवेकचूडामणि",
+    titleEn: "Vivekachudamani",
+    author: "Sri Shankaracharya",
+    category: "Prakarana Grantha",
+    description: "The Crest-Jewel of Discrimination — a 580-verse poem guiding the seeker from ignorance to Self-realization through Advaita wisdom",
   },
   {
-    icon: MessageSquareText,
-    image: shankaracharyaImg as string | null,
-    title: "Shankaracharya Bhashya",
-    description: "Complete commentary by Adi Shankaracharya explaining the profound Advaita wisdom",
-  },
-  {
-    icon: Sparkles,
-    image: null as string | null,
-    title: "Translations & Insight",
-    description: "Multiple translations by renowned scholars for deeper understanding",
+    title: "उपदेशसाहस्री",
+    titleEn: "Upadesa Sahasri",
+    author: "Sri Shankaracharya",
+    category: "Prakarana Grantha",
+    description: "A Thousand Teachings — Shankaracharya's independent prose and verse work on the method of realizing Brahman",
   },
 ];
 
-export function WelcomeScreen() {
+const categoryIcon: Record<string, typeof BookOpen> = {
+  "Upanishad": Scroll,
+  "Gita": BookMarked,
+  "Vedanta": Library,
+  "Prakarana Grantha": Feather,
+};
+
+export function WelcomeScreen({ books, onSelectBook }: WelcomeScreenProps) {
   return (
-    <div className="flex-1 flex flex-col items-center p-4 sm:p-8 bg-gradient-to-b from-primary/10 via-background to-accent/20 relative overflow-y-auto">
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none select-none flex items-center justify-center overflow-hidden">
-        <span className="text-[20rem] sm:text-[30rem] font-serif text-primary">ॐ</span>
+    <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-gradient-to-b from-primary/10 via-background to-accent/10 relative overflow-y-auto">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
+        <div className="absolute top-16 left-12 text-[14rem] text-primary/[0.02] font-serif">ॐ</div>
+        <div className="absolute bottom-24 right-16 text-[10rem] text-primary/[0.02] font-serif rotate-12">ॐ</div>
+        <div className="absolute top-1/2 right-1/3 text-[7rem] text-primary/[0.015] font-serif -rotate-6">श्री</div>
       </div>
-      
-      <div className="max-w-2xl text-center space-y-6 sm:space-y-8 relative z-10 py-8">
-        <div className="space-y-3 sm:space-y-4">
+
+      <div className="max-w-4xl w-full relative z-10 py-4 sm:py-8 space-y-8 sm:space-y-12">
+        <div className="text-center space-y-3">
           <div className="relative inline-block">
             <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-full blur-xl"></div>
-            <img 
-              src="https://oneness.org.in/assets/img/favicon.png" 
-              alt="Ekatma Dham"
-              className="h-20 sm:h-24 w-20 sm:w-24 object-contain mx-auto relative"
+            <img
+              src="https://oneness.org.in/assets/img/favicon.png"
+              alt="Advaita Sharada"
+              className="h-16 sm:h-20 w-16 sm:w-20 object-contain mx-auto relative"
             />
           </div>
-          
-          <div className="flex items-center justify-center gap-3 mt-4">
-            <span className="text-2xl sm:text-3xl text-primary/60 font-serif">ॐ</span>
-            <h1 className="font-serif text-2xl sm:text-4xl font-semibold tracking-tight text-primary">
-              Ekatma Dham
+          <div className="flex items-center justify-center gap-2 sm:gap-3">
+            <span className="text-xl sm:text-2xl text-primary/50 font-serif">ॐ</span>
+            <h1 className="font-serif text-xl sm:text-3xl font-semibold tracking-tight text-primary">
+              Advaita Sharada
             </h1>
-            <span className="text-2xl sm:text-3xl text-primary/60 font-serif">ॐ</span>
+            <span className="text-xl sm:text-2xl text-primary/50 font-serif">ॐ</span>
           </div>
-          
-          <p className="text-xs sm:text-sm uppercase tracking-[0.3em] text-muted-foreground font-medium">
-            Abode of Oneness
-          </p>
-          
-          <div className="flex items-center justify-center gap-2 py-2">
-            <div className="h-px w-12 bg-gradient-to-r from-transparent to-primary/40"></div>
-            <span className="text-primary/50 text-lg">✦</span>
-            <div className="h-px w-12 bg-gradient-to-l from-transparent to-primary/40"></div>
-          </div>
-          
-          <p className="text-sm sm:text-lg text-muted-foreground max-w-md mx-auto">
-            Explore the Isha Upanishad with complete Shankaracharya Bhashya and multiple translations
+          <p className="text-[10px] sm:text-xs uppercase tracking-[0.25em] text-muted-foreground">
+            Encyclopaedia of Advaita Vedanta
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
-          {features.map((feature) => (
-            <Card
-              key={feature.title}
-              className="p-5 text-left hover-elevate transition-all border-primary/10 bg-card/80 backdrop-blur-sm"
-            >
-              <div className="flex items-start gap-4">
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 shrink-0 border border-primary/20">
-                  {'image' in feature && feature.image ? (
-                    <img src={feature.image} alt={feature.title} className="w-8 h-8 object-contain" />
-                  ) : feature.icon ? (
-                    <feature.icon className="w-5 h-5 text-primary" />
-                  ) : null}
-                </div>
-                <div className="space-y-1">
-                  <h3 className="font-medium text-sm text-foreground">{feature.title}</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              </div>
-            </Card>
-          ))}
+        <div className="space-y-4 sm:space-y-5">
+          <div className="flex items-center gap-3">
+            <Library className="h-5 w-5 text-primary shrink-0" />
+            <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground" data-testid="heading-browse-library">
+              Browse the Library
+            </h2>
+            <div className="h-px flex-1 bg-primary/15"></div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {books.map((book) => {
+              const Icon = categoryIcon[book.category] || BookOpen;
+              return (
+                <Card
+                  key={book.id}
+                  className="group p-0 border-primary/15 bg-card/90 backdrop-blur-sm hover-elevate active-elevate-2 cursor-pointer transition-all"
+                  onClick={() => onSelectBook(book.id)}
+                  data-testid={`card-book-${book.slug}`}
+                >
+                  <div className="p-5 sm:p-6 space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center justify-center w-11 h-11 rounded-md bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/20 shrink-0">
+                        <Icon className="w-5 h-5 text-primary" />
+                      </div>
+                      <Badge variant="secondary" className="text-[10px] shrink-0" data-testid={`badge-category-${book.slug}`}>
+                        {book.category}
+                      </Badge>
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="font-serif text-base sm:text-lg font-semibold text-foreground leading-tight" data-testid={`text-title-${book.slug}`}>
+                        {book.title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        {book.author}
+                      </p>
+                    </div>
+                    <p className="text-xs text-muted-foreground/80 leading-relaxed line-clamp-2">
+                      {book.description}
+                    </p>
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <span className="text-[11px] text-muted-foreground">
+                        {book.totalVerses} verses
+                      </span>
+                      <Button variant="ghost" size="sm" className="text-xs text-primary h-auto py-1 px-2" data-testid={`button-read-${book.slug}`}>
+                        Start Reading
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="mt-6 sm:mt-8 space-y-3">
+        <div className="space-y-4 sm:space-y-5">
+          <div className="flex items-center gap-3">
+            <Clock className="h-5 w-5 text-muted-foreground shrink-0" />
+            <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground" data-testid="heading-coming-soon">
+              Coming Soon
+            </h2>
+            <div className="h-px flex-1 bg-border"></div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            {comingSoonBooks.map((book) => {
+              const Icon = categoryIcon[book.category] || BookOpen;
+              return (
+                <Card
+                  key={book.titleEn}
+                  className="p-4 sm:p-5 border-border/60 bg-muted/30 backdrop-blur-sm opacity-75"
+                  data-testid={`card-coming-soon-${book.titleEn.toLowerCase().replace(/\s+/g, '-')}`}
+                >
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center justify-center w-9 h-9 rounded-md bg-muted/60 border border-border/50 shrink-0">
+                        <Icon className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                      <Badge variant="outline" className="text-[9px] text-muted-foreground border-border/50 shrink-0">
+                        {book.category}
+                      </Badge>
+                    </div>
+                    <div className="space-y-0.5">
+                      <h3 className="font-serif text-sm font-semibold text-foreground/70 leading-tight">
+                        {book.title}
+                      </h3>
+                      <p className="text-[11px] text-muted-foreground/70">
+                        {book.titleEn}
+                      </p>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground/60 leading-relaxed line-clamp-2">
+                      {book.description}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground/50 italic">
+                      {book.author}
+                    </p>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="space-y-3">
           <div className="flex items-center justify-center gap-2">
             <div className="h-px w-8 bg-primary/30"></div>
-            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider" data-testid="heading-explanatory-videos">
+            <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider" data-testid="heading-explanatory-videos">
               Watch Introduction
             </h2>
             <div className="h-px w-8 bg-primary/30"></div>
           </div>
-          <VideoInline 
+          <VideoInline
             videoId="8ELHatzdtAk"
             title="Introduction to Isha Upanishad"
             className="max-w-xl mx-auto rounded-xl overflow-hidden border border-primary/20"
           />
         </div>
 
-        <div className="pt-4">
-          <p className="text-sm text-muted-foreground">
-            <span className="hidden sm:inline">Select a text from the sidebar to begin reading</span>
-            <span className="sm:hidden">Tap the menu icon to browse texts</span>
-          </p>
-        </div>
-        
-        <div className="text-primary/30 text-xs tracking-widest">
-          ॥ सर्वं खल्विदं ब्रह्म ॥
+        <div className="text-center pb-4">
+          <div className="text-primary/25 text-xs tracking-widest font-serif">
+            ॥ सर्वं खल्विदं ब्रह्म ॥
+          </div>
         </div>
       </div>
     </div>
