@@ -92,6 +92,31 @@ function HomePageContent() {
     setUrlInitialized(true);
   }, [allBooks, bookSlugFromUrl, verseNumberFromUrl, urlInitialized, setLocation]);
 
+  useEffect(() => {
+    if (!urlInitialized || !allBooks) return;
+
+    if (!bookSlugFromUrl) {
+      if (selectedBookId) {
+        setSelectedBookId(null);
+        setSelectedCategoryId(null);
+        setNavigateToVerse(null);
+      }
+      return;
+    }
+
+    const matchedBook = allBooks.find(b => b.slug === bookSlugFromUrl);
+    if (!matchedBook) return;
+
+    if (matchedBook.id !== selectedBookId) {
+      setSelectedBookId(matchedBook.id);
+    }
+
+    if (verseNumberFromUrl !== null && !isNaN(verseNumberFromUrl) && verseNumberFromUrl !== currentVerseNumber) {
+      setNavigateToVerse(verseNumberFromUrl);
+      setCurrentVerseNumber(verseNumberFromUrl);
+    }
+  }, [urlInitialized, allBooks, bookSlugFromUrl, verseNumberFromUrl]);
+
   const getBookSlug = useCallback((bookId: string): string | null => {
     const book = allBooks?.find(b => b.id === bookId);
     return book?.slug || null;
