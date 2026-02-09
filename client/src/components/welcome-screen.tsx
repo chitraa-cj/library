@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { VideoInline } from "@/components/video-popup";
 import { CATALOG_TREE, type CatalogCategory } from "@/components/app-sidebar";
+import { MindMapCarousel } from "@/components/mindmap-carousel";
 import ishaImg from "@/assets/images/book-isha-upanishad.jpg";
 import gitaImg from "@/assets/images/book-bhagavad-gita.jpg";
 import brahmaImg from "@/assets/images/book-brahma-sutra.jpg";
@@ -102,6 +103,8 @@ export function WelcomeScreen({ books, onSelectBook }: WelcomeScreenProps) {
             Encyclopaedia of Advaita Vedanta
           </p>
         </div>
+
+        <MindMapCarousel />
 
         <div className="space-y-4 sm:space-y-5">
           <div className="flex items-center gap-3">
