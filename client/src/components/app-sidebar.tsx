@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, BookOpen, Loader2, ChevronRight, ChevronDown, Home, Library, FolderOpen, Folder, Lock } from "lucide-react";
+import { Search, BookOpen, Loader2, ChevronRight, ChevronDown, Home, Library, FolderOpen, Folder, Lock, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -196,7 +196,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
   const [expandedBooks, setExpandedBooks] = useState<Set<string>>(new Set());
   const [expandedAdhyays, setExpandedAdhyays] = useState<Set<string>>(new Set());
   const [expandedKhandas, setExpandedKhandas] = useState<Set<string>>(new Set());
-  const { isMobile, setOpenMobile, state } = useSidebar();
+  const { isMobile, setOpenMobile, state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
 
   const { data: books = [], isLoading } = useQuery<Book[]>({
@@ -705,6 +705,20 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
               className="h-8 w-8 object-contain cursor-pointer"
               onClick={onGoHome}
             />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={toggleSidebar}
+                  data-testid="button-expand-sidebar"
+                >
+                  <PanelLeftOpen className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Expand sidebar</TooltipContent>
+            </Tooltip>
             {onGoHome && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -754,6 +768,15 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
                     <Home className="h-4 w-4" />
                   </Button>
                 )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleSidebar}
+                  title="Collapse sidebar"
+                  data-testid="button-collapse-sidebar"
+                >
+                  <PanelLeftClose className="h-4 w-4" />
+                </Button>
               </div>
             </div>
 
