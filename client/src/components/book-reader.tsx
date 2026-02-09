@@ -117,6 +117,8 @@ interface BookReaderProps {
   chapterViewAdhyay?: number | null;
   chapterViewKhanda?: number | null;
   onExitChapterView?: () => void;
+  onSelectChapter?: (adhyayNumber: number) => void;
+  onSelectPart?: (adhyayNumber: number, khandaNumber: number) => void;
   onCoverPageChange?: (isOnCoverPage: boolean) => void;
 }
 
@@ -247,6 +249,8 @@ export function BookReader({
   chapterViewAdhyay,
   chapterViewKhanda,
   onExitChapterView,
+  onSelectChapter,
+  onSelectPart,
   onCoverPageChange,
 }: BookReaderProps) {
   const [currentPage, setCurrentPage] = useState(0);
@@ -652,17 +656,28 @@ export function BookReader({
                     const isExpanded = expandedTOCAdhyays.has(adhyay.adhyayNumber);
                     return (
                       <div key={adhyay.adhyayNumber}>
-                        <button
-                          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left hover-elevate active-elevate-2 transition-colors"
-                          onClick={() => toggleTOCAdhyay(adhyay.adhyayNumber)}
-                          data-testid={`toc-adhyay-${adhyay.adhyayNumber}`}
-                        >
-                          <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`} />
-                          <Badge variant="outline" className="font-mono text-[10px] sm:text-[11px] px-1.5 h-5 shrink-0 border-primary/30 text-primary">
-                            Ch. {adhyay.adhyayNumber}
-                          </Badge>
-                          <span className="text-sm sm:text-base font-medium truncate">{adhyay.adhyayTitle}</span>
-                        </button>
+                        <div className="flex items-center w-full rounded-lg hover-elevate active-elevate-2 transition-colors">
+                          <button
+                            className="shrink-0 px-2 py-2.5"
+                            onClick={() => toggleTOCAdhyay(adhyay.adhyayNumber)}
+                            data-testid={`toc-toggle-adhyay-${adhyay.adhyayNumber}`}
+                          >
+                            <ChevronRight className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`} />
+                          </button>
+                          <button
+                            className="flex items-center gap-2 flex-1 min-w-0 py-2.5 pr-3 text-left"
+                            onClick={() => {
+                              setShowCoverPage(false);
+                              onSelectChapter?.(adhyay.adhyayNumber);
+                            }}
+                            data-testid={`toc-adhyay-${adhyay.adhyayNumber}`}
+                          >
+                            <Badge variant="outline" className="font-mono text-[10px] sm:text-[11px] px-1.5 h-5 shrink-0 border-primary/30 text-primary">
+                              Ch. {adhyay.adhyayNumber}
+                            </Badge>
+                            <span className="text-sm sm:text-base font-medium truncate">{adhyay.adhyayTitle}</span>
+                          </button>
+                        </div>
 
                         {isExpanded && (
                           <div className="ml-5 sm:ml-6 pl-3 border-l border-primary/10 space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
@@ -672,17 +687,28 @@ export function BookReader({
                                 const isKhandaExpanded = expandedTOCKhandas.has(khandaKey);
                                 return (
                                   <div key={khandaKey}>
-                                    <button
-                                      className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-left hover-elevate active-elevate-2 transition-colors"
-                                      onClick={() => toggleTOCKhanda(khandaKey)}
-                                      data-testid={`toc-khanda-${adhyay.adhyayNumber}-${khanda.khandaNumber}`}
-                                    >
-                                      <ChevronRight className={`h-3 w-3 shrink-0 text-muted-foreground transition-transform duration-200 ${isKhandaExpanded ? "rotate-90" : ""}`} />
-                                      <Badge variant="outline" className="font-mono text-[10px] px-1.5 h-4.5 shrink-0 border-muted-foreground/30">
-                                        Part {adhyay.adhyayNumber}.{khanda.khandaNumber}
-                                      </Badge>
-                                      <span className="text-xs sm:text-sm text-muted-foreground truncate">{khanda.khandaTitle}</span>
-                                    </button>
+                                    <div className="flex items-center w-full rounded-lg hover-elevate active-elevate-2 transition-colors">
+                                      <button
+                                        className="shrink-0 px-2 py-2"
+                                        onClick={() => toggleTOCKhanda(khandaKey)}
+                                        data-testid={`toc-toggle-khanda-${adhyay.adhyayNumber}-${khanda.khandaNumber}`}
+                                      >
+                                        <ChevronRight className={`h-3 w-3 text-muted-foreground transition-transform duration-200 ${isKhandaExpanded ? "rotate-90" : ""}`} />
+                                      </button>
+                                      <button
+                                        className="flex items-center gap-2 flex-1 min-w-0 py-2 pr-2 text-left"
+                                        onClick={() => {
+                                          setShowCoverPage(false);
+                                          onSelectPart?.(adhyay.adhyayNumber, khanda.khandaNumber);
+                                        }}
+                                        data-testid={`toc-khanda-${adhyay.adhyayNumber}-${khanda.khandaNumber}`}
+                                      >
+                                        <Badge variant="outline" className="font-mono text-[10px] px-1.5 h-4.5 shrink-0 border-muted-foreground/30">
+                                          Part {adhyay.adhyayNumber}.{khanda.khandaNumber}
+                                        </Badge>
+                                        <span className="text-xs sm:text-sm text-muted-foreground truncate">{khanda.khandaTitle}</span>
+                                      </button>
+                                    </div>
 
                                     {isKhandaExpanded && (
                                       <div className="ml-4 pl-3 border-l border-border/50 space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-150">

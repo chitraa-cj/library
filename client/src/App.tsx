@@ -353,6 +353,8 @@ function HomePageContent() {
                   chapterViewAdhyay={chapterViewAdhyay}
                   chapterViewKhanda={chapterViewKhanda}
                   onExitChapterView={() => { setChapterViewAdhyay(null); setChapterViewKhanda(null); }}
+                  onSelectChapter={(adhyayNumber) => { setChapterViewAdhyay(adhyayNumber); setChapterViewKhanda(null); }}
+                  onSelectPart={(adhyayNumber, khandaNumber) => { setChapterViewAdhyay(adhyayNumber); setChapterViewKhanda(khandaNumber); }}
                   onCoverPageChange={setIsOnCoverPage}
                   onAddNoteWithText={(text) => {
                     setPendingNoteText(text);
