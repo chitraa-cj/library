@@ -423,7 +423,12 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
     const q = searchQuery.trim();
     return hierarchy.filter(adhyay => {
       if (adhyay.adhyayTitle && fuzzyMatch(adhyay.adhyayTitle, q)) return true;
-      if (adhyay.khandas.some(k => k.khandaTitle && fuzzyMatch(k.khandaTitle, q))) return true;
+      if (adhyay.verses.some(v => v.sectionTitle && fuzzyMatch(v.sectionTitle, q))) return true;
+      if (adhyay.khandas.some(k => {
+        if (k.khandaTitle && fuzzyMatch(k.khandaTitle, q)) return true;
+        if (k.verses.some(v => v.sectionTitle && fuzzyMatch(v.sectionTitle, q))) return true;
+        return false;
+      })) return true;
       return false;
     });
   }, [searchQuery, hierarchy]);
