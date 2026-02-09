@@ -185,7 +185,17 @@ function HomePageContent() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => window.history.back()}
+                onClick={() => {
+                  if (chapterViewKhanda !== null) {
+                    setChapterViewKhanda(null);
+                  } else if (chapterViewAdhyay !== null) {
+                    setChapterViewAdhyay(null);
+                  } else if (selectedBookId) {
+                    handleGoHome();
+                  } else if (selectedCategoryId) {
+                    setSelectedCategoryId(null);
+                  }
+                }}
                 title="Go back"
                 data-testid="button-go-back"
               >
