@@ -651,7 +651,7 @@ export function BookReader({
                         >
                           <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`} />
                           <Badge variant="outline" className="font-mono text-[10px] sm:text-[11px] px-1.5 h-5 shrink-0 border-primary/30 text-primary">
-                            {adhyay.adhyayNumber}
+                            Ch. {adhyay.adhyayNumber}
                           </Badge>
                           <span className="text-sm sm:text-base font-medium truncate">{adhyay.adhyayTitle}</span>
                         </button>
@@ -671,7 +671,7 @@ export function BookReader({
                                     >
                                       <ChevronRight className={`h-3 w-3 shrink-0 text-muted-foreground transition-transform duration-200 ${isKhandaExpanded ? "rotate-90" : ""}`} />
                                       <Badge variant="outline" className="font-mono text-[10px] px-1.5 h-4.5 shrink-0 border-muted-foreground/30">
-                                        {adhyay.adhyayNumber}.{khanda.khandaNumber}
+                                        Part {adhyay.adhyayNumber}.{khanda.khandaNumber}
                                       </Badge>
                                       <span className="text-xs sm:text-sm text-muted-foreground truncate">{khanda.khandaTitle}</span>
                                     </button>
@@ -685,11 +685,11 @@ export function BookReader({
                                             onClick={() => handleTOCVerseClick(v.verseNumber)}
                                             data-testid={`toc-verse-${v.verseNumber}`}
                                           >
-                                            <span className="font-mono text-[10px] text-muted-foreground shrink-0 w-10">
-                                              {adhyay.adhyayNumber}.{khanda.khandaNumber}.{idx + 1}
+                                            <span className="font-mono text-[10px] text-muted-foreground shrink-0 w-14">
+                                              Sl. {adhyay.adhyayNumber}.{khanda.khandaNumber}.{idx + 1}
                                             </span>
                                             <span className="text-xs text-muted-foreground truncate">
-                                              {v.sectionTitle || `Verse ${idx + 1}`}
+                                              {v.sectionTitle || `Mantra ${idx + 1}`}
                                             </span>
                                           </button>
                                         ))}
@@ -706,11 +706,11 @@ export function BookReader({
                                   onClick={() => handleTOCVerseClick(v.verseNumber)}
                                   data-testid={`toc-verse-${v.verseNumber}`}
                                 >
-                                  <span className="font-mono text-[10px] text-muted-foreground shrink-0 w-8">
-                                    {adhyay.adhyayNumber}.{idx + 1}
+                                  <span className="font-mono text-[10px] text-muted-foreground shrink-0 w-10">
+                                    Sl. {adhyay.adhyayNumber}.{idx + 1}
                                   </span>
                                   <span className="text-xs sm:text-sm text-muted-foreground truncate">
-                                    {v.sectionTitle || `Verse ${idx + 1}`}
+                                    {v.sectionTitle || `Sloka ${idx + 1}`}
                                   </span>
                                 </button>
                               ))

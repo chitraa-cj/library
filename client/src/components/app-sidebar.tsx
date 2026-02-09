@@ -456,7 +456,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
                     <ChevronRight className="h-3 w-3 shrink-0" />
                   )}
                   <Badge variant="secondary" className="text-[10px] px-1.5 h-4 shrink-0 font-mono">
-                    {adhyay.adhyayNumber}
+                    Ch. {adhyay.adhyayNumber}
                   </Badge>
                   <span className="text-xs font-medium truncate">
                     {adhyay.adhyayTitle}
@@ -484,11 +484,11 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
                           }`}
                           data-testid={`button-verse-nav-${verse.verseNumber}`}
                         >
-                          <span className="font-mono text-[10px] text-primary/70 shrink-0 min-w-[2rem]">
-                            {verseLabel}
+                          <span className="font-mono text-[10px] text-primary/70 shrink-0 min-w-[2.5rem]">
+                            Sl. {verseLabel}
                           </span>
                           <span className="whitespace-normal leading-snug text-wrap break-words">
-                            Verse {verseInChapter}
+                            Sloka {verseInChapter}
                           </span>
                         </button>
                       );
@@ -522,7 +522,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
                               <ChevronRight className="h-3 w-3 shrink-0" />
                             )}
                             <Badge variant="outline" className="text-[10px] px-1 h-4 shrink-0 font-mono border-muted-foreground/30">
-                              {adhyay.adhyayNumber}.{khanda.khandaNumber}
+                              Part {adhyay.adhyayNumber}.{khanda.khandaNumber}
                             </Badge>
                             <span className="truncate">{khanda.khandaTitle}</span>
                           </button>
@@ -542,8 +542,8 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
                                     }`}
                                     data-testid={`button-verse-nav-${verse.verseNumber}`}
                                   >
-                                    <span className="font-mono text-[10px] text-primary/70 shrink-0 min-w-[2rem]">
-                                      {verseLabel}
+                                    <span className="font-mono text-[10px] text-primary/70 shrink-0 min-w-[2.5rem]">
+                                      Sl. {verseLabel}
                                     </span>
                                     <span className="whitespace-normal leading-snug text-wrap break-words">
                                       {verse.sectionTitle || `Mantra ${verse.verseNumber}`}
