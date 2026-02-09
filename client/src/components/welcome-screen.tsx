@@ -1,13 +1,10 @@
 import { useState } from "react";
-import { BookOpen, Clock, Library, FolderOpen, Lock, ArrowLeft, ChevronRight, ScrollText, Feather, Users, Heart, BookMarked, Music } from "lucide-react";
+import { BookOpen, Library, FolderOpen, Lock, ArrowLeft, ChevronRight, ScrollText, Feather, Users, Heart, BookMarked, Music } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { VideoInline } from "@/components/video-popup";
 import { CATALOG_TREE, type CatalogCategory } from "@/components/app-sidebar";
-import brahmaImg from "@/assets/images/book-brahma-sutra.jpg";
-import vivekImg from "@/assets/images/book-vivekachudamani.jpg";
-import upadesaImg from "@/assets/images/book-upadesa-sahasri.jpg";
 
 const categoryIcons: Record<string, typeof ScrollText> = {
   "prasthana-shankaracharya": ScrollText,
@@ -40,30 +37,6 @@ const bookVideoConfig: Record<string, { videoId: string; videoTitle: string }> =
     videoTitle: "Introduction to Isha Upanishad",
   },
 };
-
-const comingSoonBooks = [
-  {
-    title: "ब्रह्मसूत्र भाष्य",
-    titleEn: "Brahma Sutra Bhashya",
-    category: "Vedanta",
-    description: "Shankaracharya's commentary on Badarayana's aphorisms establishing the nature of Brahman",
-    image: brahmaImg,
-  },
-  {
-    title: "विवेकचूडामणि",
-    titleEn: "Vivekachudamani",
-    category: "Prakarana Grantha",
-    description: "The Crest-Jewel of Discrimination — guiding the seeker from ignorance to Self-realization",
-    image: vivekImg,
-  },
-  {
-    title: "उपदेशसाहस्री",
-    titleEn: "Upadesa Sahasri",
-    category: "Prakarana Grantha",
-    description: "A Thousand Teachings — Shankaracharya's prose and verse work on realizing Brahman",
-    image: upadesaImg,
-  },
-];
 
 function getBooksForSubCategory(books: Book[], categoryMatch?: string, categoryAltMatch?: string): Book[] {
   if (!categoryMatch && !categoryAltMatch) return [];
@@ -229,53 +202,6 @@ export function WelcomeScreen({ books, onSelectBook }: WelcomeScreenProps) {
                 </Card>
               );
             })}
-          </div>
-        </div>
-
-        <div className="space-y-4 sm:space-y-5">
-          <div className="flex items-center gap-3">
-            <Clock className="h-5 w-5 text-muted-foreground shrink-0" />
-            <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground" data-testid="heading-coming-soon">
-              Coming Soon
-            </h2>
-            <div className="h-px flex-1 bg-border"></div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            {comingSoonBooks.map((book) => (
-              <Card
-                key={book.titleEn}
-                className="p-0 overflow-hidden border-border/60 bg-muted/30 backdrop-blur-sm opacity-80"
-                data-testid={`card-coming-soon-${book.titleEn.toLowerCase().replace(/\s+/g, '-')}`}
-              >
-                <div className="relative w-full aspect-[4/3] overflow-hidden">
-                  <img
-                    src={book.image}
-                    alt={book.titleEn}
-                    className="w-full h-full object-cover grayscale-[40%] opacity-80"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-                  <div className="absolute top-2 right-2">
-                    <Badge variant="outline" className="text-[9px] bg-black/40 text-white/80 border-white/20 backdrop-blur-sm">
-                      Coming Soon
-                    </Badge>
-                  </div>
-                  <div className="absolute bottom-2.5 left-3 right-3">
-                    <h3 className="font-serif text-sm font-semibold text-white/90 leading-tight drop-shadow-md">
-                      {book.title}
-                    </h3>
-                    <p className="text-[11px] text-white/70">
-                      {book.titleEn}
-                    </p>
-                  </div>
-                </div>
-                <div className="p-3 space-y-1.5">
-                  <p className="text-[11px] text-muted-foreground/60 leading-relaxed line-clamp-2">
-                    {book.description}
-                  </p>
-                </div>
-              </Card>
-            ))}
           </div>
         </div>
 
