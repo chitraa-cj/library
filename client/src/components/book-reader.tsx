@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, Globe, Sparkles, MessageSquareText, StickyNote, List } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, Globe, MessageSquareText, StickyNote, List } from "lucide-react";
 import { VideoPopup } from "@/components/video-popup";
 import { WordTooltip } from "@/components/word-tooltip";
 import {
@@ -1249,12 +1249,6 @@ export function BookReader({
                   </div>
                 )}
                 
-                <div className="flex items-center justify-center">
-                  <div className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground/70 bg-muted/30 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full">
-                    <Sparkles className="h-3 w-3 shrink-0" />
-                    <span>Tap any word for AI translation</span>
-                  </div>
-                </div>
 
                 {hasCommentaryOptions && (
                   <div className="mt-1 sm:mt-2 space-y-3">
