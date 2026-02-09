@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Switch, Route, useLocation, useParams } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -32,7 +32,6 @@ interface VerseBreadcrumb {
 }
 
 function HomePageContent() {
-  const params = useParams<{ bookSlug?: string; verseNumber?: string }>();
   const [location, setLocation] = useLocation();
   const { toggleSidebar, state: sidebarState } = useSidebar();
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
@@ -71,8 +70,9 @@ function HomePageContent() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const bookSlugFromUrl = params?.bookSlug || null;
-  const verseNumberFromUrl = params?.verseNumber ? parseInt(params.verseNumber, 10) : null;
+  const urlParts = location.replace(/^\//, '').split('/').filter(Boolean);
+  const bookSlugFromUrl = urlParts[0] && urlParts[0] !== 'auth' ? urlParts[0] : null;
+  const verseNumberFromUrl = urlParts[1] ? parseInt(urlParts[1], 10) : null;
 
   useEffect(() => {
     if (urlInitialized || !allBooks) return;
