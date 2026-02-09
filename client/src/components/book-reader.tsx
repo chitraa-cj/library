@@ -1028,11 +1028,6 @@ export function BookReader({
               </div>
             </div>
           </div>
-          {book.description && (
-            <p className="text-[11px] sm:text-sm text-muted-foreground mt-2 sm:mt-3 leading-relaxed">
-              {book.description}
-            </p>
-          )}
           {hasCommentaryOptions && (
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 sm:mt-3">
               <div className="flex items-center gap-1.5 sm:gap-2">
@@ -1150,17 +1145,9 @@ export function BookReader({
               <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 text-3xl sm:text-4xl text-primary/[0.06] font-serif select-none pointer-events-none hidden sm:block">ॐ</div>
               
               <div className="flex flex-col items-center gap-1.5 sm:gap-2 mb-4 sm:mb-6">
-                {currentVerse.adhyayTitle && (
-                  <span className="text-xs sm:text-sm font-serif text-muted-foreground" data-testid="text-chapter-title">
-                    {currentVerse.adhyayTitle}
-                  </span>
-                )}
                 <div className="flex items-center gap-2 sm:gap-3">
                   <span className="text-primary/40 text-sm sm:text-base">॥</span>
                   <span className="text-xs sm:text-sm font-medium text-primary bg-gradient-to-r from-primary/15 to-primary/10 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-primary/20 flex items-center gap-1.5 sm:gap-2">
-                    {currentNumericLabel && (
-                      <span className="font-mono text-[10px] sm:text-xs opacity-70" data-testid="text-verse-numeric">{currentNumericLabel}</span>
-                    )}
                     <span className="truncate max-w-[150px] sm:max-w-none">{currentVerse.sectionTitle || `Verse ${currentVerse.verseNumber}`}</span>
                   </span>
                   <span className="text-primary/40 text-sm sm:text-base">॥</span>
