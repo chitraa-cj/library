@@ -395,7 +395,14 @@ function HomePageContent() {
                 onGoBack={handleGoHome}
               />
             ) : (
-              <WelcomeScreen books={allBooks || []} onSelectBook={handleBookSelect} />
+              <WelcomeScreen
+                books={allBooks || []}
+                onSelectBook={handleBookSelect}
+                onSelectCategory={(categoryId) => {
+                  setSelectedCategoryId(categoryId);
+                  if (sidebarState === "expanded") toggleSidebar();
+                }}
+              />
             )}
           </main>
         </div>

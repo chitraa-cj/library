@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { BookOpen, Library, FolderOpen, Lock, ArrowLeft, ChevronRight, ScrollText, Feather, Users, Heart, BookMarked, Music } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +28,7 @@ interface Book {
 interface WelcomeScreenProps {
   books: Book[];
   onSelectBook: (bookId: string) => void;
+  onSelectCategory?: (categoryId: string) => void;
 }
 
 const bookVideoConfig: Record<string, { videoId: string; videoTitle: string }> = {
@@ -57,18 +57,7 @@ function getBooksForCategory(books: Book[], cat: CatalogCategory): Book[] {
   return [];
 }
 
-export function WelcomeScreen({ books, onSelectBook }: WelcomeScreenProps) {
-  const [expandedSubCategories, setExpandedSubCategories] = useState<Set<string>>(new Set());
-
-  const toggleSubCategory = (id: string) => {
-    setExpandedSubCategories(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
+export function WelcomeScreen({ books, onSelectBook, onSelectCategory }: WelcomeScreenProps) {
   return (
     <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-gradient-to-b from-primary/10 via-background to-accent/10 relative overflow-y-auto">
       <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
@@ -111,92 +100,27 @@ export function WelcomeScreen({ books, onSelectBook }: WelcomeScreenProps) {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4" data-testid="catalog-tree">
             {CATALOG_TREE.map(cat => {
               const catBooks = getBooksForCategory(books, cat);
-              const hasContent = catBooks.length > 0;
+              const hasContent = catBooks.length > 0 || (cat.children && cat.children.length > 0);
               const IconComponent = categoryIcons[cat.id] || Library;
 
               return (
                 <Card
                   key={cat.id}
-                  className="p-0 overflow-visible border-border/50 bg-card/80 flex flex-col"
+                  className="p-0 overflow-visible border-border/50 bg-card/80 flex flex-col cursor-pointer hover-elevate active-elevate-2 transition-all"
+                  onClick={() => onSelectCategory?.(cat.id)}
                   data-testid={`card-category-${cat.id}`}
                 >
-                  <div className="flex flex-col items-center justify-center py-5 sm:py-6 px-3 border-b border-border/30 bg-gradient-to-b from-primary/[0.06] to-transparent rounded-t-md">
+                  <div className="flex flex-col items-center justify-center py-5 sm:py-6 px-3 bg-gradient-to-b from-primary/[0.06] to-transparent rounded-t-md">
                     <div className="p-3 rounded-full bg-primary/10 mb-3">
                       <IconComponent className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
                     </div>
                     <h3 className="font-serif text-xs sm:text-sm font-semibold text-foreground text-center leading-tight px-1">
                       {cat.label}
                     </h3>
-                    {hasContent && (
+                    {catBooks.length > 0 && (
                       <Badge variant="secondary" className="text-[9px] mt-2">
                         {catBooks.length} {catBooks.length === 1 ? 'text' : 'texts'}
                       </Badge>
-                    )}
-                  </div>
-
-                  <div className="flex-1 px-2.5 py-2.5 space-y-0.5">
-                    {cat.children ? (
-                      cat.children.map(sub => {
-                        const subBooks = getBooksForSubCategory(books, sub.categoryMatch, sub.categoryAltMatch);
-                        const hasSubBooks = subBooks.length > 0;
-                        const isSubExpanded = expandedSubCategories.has(sub.id);
-
-                        return (
-                          <div key={sub.id}>
-                            <button
-                              className={`w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md text-left text-xs transition-colors ${hasSubBooks ? "hover-elevate active-elevate-2 text-primary font-medium" : "text-muted-foreground/50 cursor-default"}`}
-                              onClick={() => hasSubBooks && toggleSubCategory(sub.id)}
-                              data-testid={`button-subcat-${sub.id}`}
-                            >
-                              {hasSubBooks ? (
-                                <ChevronRight className={`h-3 w-3 shrink-0 transition-transform duration-200 ${isSubExpanded ? "rotate-90" : ""}`} />
-                              ) : (
-                                <Lock className="h-2.5 w-2.5 shrink-0 text-muted-foreground/30" />
-                              )}
-                              <span className="truncate">{sub.label}</span>
-                              {!hasSubBooks && (
-                                <span className="text-[9px] text-muted-foreground/30 ml-auto italic shrink-0">Soon</span>
-                              )}
-                            </button>
-
-                            {isSubExpanded && hasSubBooks && (
-                              <div className="ml-3 pl-2 border-l border-primary/15 space-y-0.5 py-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                                {subBooks.map(book => (
-                                  <button
-                                    key={book.id}
-                                    className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md text-left hover-elevate active-elevate-2 transition-colors group"
-                                    onClick={() => onSelectBook(book.id)}
-                                    data-testid={`button-book-${book.slug}`}
-                                  >
-                                    <BookOpen className="h-3 w-3 shrink-0 text-primary/50" />
-                                    <span className="text-xs font-serif text-foreground group-hover:text-primary transition-colors truncate">
-                                      {book.title}
-                                    </span>
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })
-                    ) : hasContent ? (
-                      catBooks.map(book => (
-                        <button
-                          key={book.id}
-                          className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md text-left hover-elevate active-elevate-2 transition-colors group"
-                          onClick={() => onSelectBook(book.id)}
-                          data-testid={`button-book-${book.slug}`}
-                        >
-                          <BookOpen className="h-3 w-3 shrink-0 text-primary/50" />
-                          <span className="text-xs font-serif text-foreground group-hover:text-primary transition-colors truncate">
-                            {book.title}
-                          </span>
-                        </button>
-                      ))
-                    ) : (
-                      <div className="py-2 text-center">
-                        <span className="text-[10px] text-muted-foreground/40 italic">Coming Soon</span>
-                      </div>
                     )}
                   </div>
                 </Card>
