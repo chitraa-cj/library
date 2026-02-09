@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BookOpen, Clock, Library, FolderOpen, Lock, ArrowLeft, ChevronRight } from "lucide-react";
+import { BookOpen, Clock, Library, FolderOpen, Lock, ArrowLeft, ChevronRight, ScrollText, Feather, Users, Heart, BookMarked, Music } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,20 +9,14 @@ import { MindMapCarousel } from "@/components/mindmap-carousel";
 import brahmaImg from "@/assets/images/book-brahma-sutra.jpg";
 import vivekImg from "@/assets/images/book-vivekachudamani.jpg";
 import upadesaImg from "@/assets/images/book-upadesa-sahasri.jpg";
-import catPrasthanaImg from "@/assets/images/cat-prasthana-shankaracharya.png";
-import catOtherShankaraImg from "@/assets/images/cat-other-shankara-works.png";
-import catOtherAcharyasImg from "@/assets/images/cat-prasthana-other-acharyas.png";
-import catBhakthiImg from "@/assets/images/cat-bhakthi-stotras.png";
-import catPrakaranaImg from "@/assets/images/cat-prakarana-granthas.png";
-import catShlokasImg from "@/assets/images/cat-shlokas-stotras.png";
 
-const categoryImages: Record<string, string> = {
-  "prasthana-shankaracharya": catPrasthanaImg,
-  "other-shankara-works": catOtherShankaraImg,
-  "prasthana-other-acharyas": catOtherAcharyasImg,
-  "bhakthi-stotras": catBhakthiImg,
-  "prakarana-granthas": catPrakaranaImg,
-  "shlokas-stotras": catShlokasImg,
+const categoryIcons: Record<string, typeof ScrollText> = {
+  "prasthana-shankaracharya": ScrollText,
+  "other-shankara-works": Feather,
+  "prasthana-other-acharyas": Users,
+  "bhakthi-stotras": Heart,
+  "prakarana-granthas": BookMarked,
+  "shlokas-stotras": Music,
 };
 
 interface Book {
@@ -92,17 +86,7 @@ function getBooksForCategory(books: Book[], cat: CatalogCategory): Book[] {
 }
 
 export function WelcomeScreen({ books, onSelectBook }: WelcomeScreenProps) {
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [expandedSubCategories, setExpandedSubCategories] = useState<Set<string>>(new Set());
-
-  const toggleCategory = (id: string) => {
-    setExpandedCategories(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
 
   const toggleSubCategory = (id: string) => {
     setExpandedSubCategories(prev => {
@@ -158,155 +142,97 @@ export function WelcomeScreen({ books, onSelectBook }: WelcomeScreenProps) {
             {CATALOG_TREE.map(cat => {
               const catBooks = getBooksForCategory(books, cat);
               const hasContent = catBooks.length > 0;
-              const catImage = categoryImages[cat.id];
+              const IconComponent = categoryIcons[cat.id] || Library;
 
               return (
                 <Card
                   key={cat.id}
-                  className={`group p-0 overflow-visible border-border/60 cursor-pointer hover-elevate active-elevate-2 transition-all ${hasContent ? 'bg-card/90 backdrop-blur-sm' : 'bg-muted/30 opacity-80'}`}
-                  onClick={() => toggleCategory(cat.id)}
-                  data-testid={`button-category-${cat.id}`}
+                  className="p-0 overflow-visible border-border/50 bg-card/80 flex flex-col"
+                  data-testid={`card-category-${cat.id}`}
                 >
-                  <div className="relative w-full aspect-[4/3] overflow-hidden rounded-md">
-                    {catImage && (
-                      <img
-                        src={catImage}
-                        alt={cat.label}
-                        className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${!hasContent ? 'grayscale-[40%] opacity-80' : ''}`}
-                      />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-                    {!hasContent && (
-                      <div className="absolute top-2 right-2">
-                        <Badge variant="outline" className="text-[9px] bg-black/40 text-white/80 border-white/20 backdrop-blur-sm">
-                          Coming Soon
-                        </Badge>
-                      </div>
-                    )}
-                    {hasContent && catBooks.length > 0 && (
-                      <div className="absolute top-2 right-2">
-                        <Badge variant="outline" className="text-[9px] bg-black/40 text-white/90 border-white/20 backdrop-blur-sm">
-                          {catBooks.length} {catBooks.length === 1 ? 'text' : 'texts'}
-                        </Badge>
-                      </div>
-                    )}
-                    <div className="absolute bottom-2.5 left-3 right-3">
-                      <h3 className="font-serif text-xs sm:text-sm font-semibold text-white/95 leading-tight drop-shadow-md">
-                        {cat.label}
-                      </h3>
+                  <div className="flex flex-col items-center justify-center py-5 sm:py-6 px-3 border-b border-border/30 bg-gradient-to-b from-primary/[0.06] to-transparent rounded-t-md">
+                    <div className="p-3 rounded-full bg-primary/10 mb-3">
+                      <IconComponent className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
                     </div>
+                    <h3 className="font-serif text-xs sm:text-sm font-semibold text-foreground text-center leading-tight px-1">
+                      {cat.label}
+                    </h3>
+                    {hasContent && (
+                      <Badge variant="secondary" className="text-[9px] mt-2">
+                        {catBooks.length} {catBooks.length === 1 ? 'text' : 'texts'}
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="flex-1 px-2.5 py-2.5 space-y-0.5">
+                    {cat.children ? (
+                      cat.children.map(sub => {
+                        const subBooks = getBooksForSubCategory(books, sub.categoryMatch, sub.categoryAltMatch);
+                        const hasSubBooks = subBooks.length > 0;
+                        const isSubExpanded = expandedSubCategories.has(sub.id);
+
+                        return (
+                          <div key={sub.id}>
+                            <button
+                              className={`w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md text-left text-xs transition-colors ${hasSubBooks ? "hover-elevate active-elevate-2 text-primary font-medium" : "text-muted-foreground/50 cursor-default"}`}
+                              onClick={() => hasSubBooks && toggleSubCategory(sub.id)}
+                              data-testid={`button-subcat-${sub.id}`}
+                            >
+                              {hasSubBooks ? (
+                                <ChevronRight className={`h-3 w-3 shrink-0 transition-transform duration-200 ${isSubExpanded ? "rotate-90" : ""}`} />
+                              ) : (
+                                <Lock className="h-2.5 w-2.5 shrink-0 text-muted-foreground/30" />
+                              )}
+                              <span className="truncate">{sub.label}</span>
+                              {!hasSubBooks && (
+                                <span className="text-[9px] text-muted-foreground/30 ml-auto italic shrink-0">Soon</span>
+                              )}
+                            </button>
+
+                            {isSubExpanded && hasSubBooks && (
+                              <div className="ml-3 pl-2 border-l border-primary/15 space-y-0.5 py-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                                {subBooks.map(book => (
+                                  <button
+                                    key={book.id}
+                                    className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md text-left hover-elevate active-elevate-2 transition-colors group"
+                                    onClick={() => onSelectBook(book.id)}
+                                    data-testid={`button-book-${book.slug}`}
+                                  >
+                                    <BookOpen className="h-3 w-3 shrink-0 text-primary/50" />
+                                    <span className="text-xs font-serif text-foreground group-hover:text-primary transition-colors truncate">
+                                      {book.title}
+                                    </span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    ) : hasContent ? (
+                      catBooks.map(book => (
+                        <button
+                          key={book.id}
+                          className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md text-left hover-elevate active-elevate-2 transition-colors group"
+                          onClick={() => onSelectBook(book.id)}
+                          data-testid={`button-book-${book.slug}`}
+                        >
+                          <BookOpen className="h-3 w-3 shrink-0 text-primary/50" />
+                          <span className="text-xs font-serif text-foreground group-hover:text-primary transition-colors truncate">
+                            {book.title}
+                          </span>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="py-2 text-center">
+                        <span className="text-[10px] text-muted-foreground/40 italic">Coming Soon</span>
+                      </div>
+                    )}
                   </div>
                 </Card>
               );
             })}
           </div>
-
-          {expandedCategories.size > 0 && CATALOG_TREE.map(cat => {
-            if (!expandedCategories.has(cat.id)) return null;
-            const catBooks = getBooksForCategory(books, cat);
-
-            return (
-              <div key={`expanded-${cat.id}`} className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200" data-testid={`expanded-category-${cat.id}`}>
-                <div className="flex items-center gap-2.5">
-                  <FolderOpen className="h-4 w-4 text-primary/70 shrink-0" />
-                  <h3 className="font-serif text-sm sm:text-base font-semibold text-primary">{cat.label}</h3>
-                  <div className="h-px flex-1 bg-primary/15"></div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs text-muted-foreground gap-1"
-                    onClick={() => toggleCategory(cat.id)}
-                    data-testid={`button-close-category-${cat.id}`}
-                  >
-                    Close
-                  </Button>
-                </div>
-
-                {cat.children ? (
-                  <div className="space-y-0.5 pl-2">
-                    {cat.children.map(sub => {
-                      const subBooks = getBooksForSubCategory(books, sub.categoryMatch, sub.categoryAltMatch);
-                      const isSubExpanded = expandedSubCategories.has(sub.id);
-                      const hasSubBooks = subBooks.length > 0;
-
-                      return (
-                        <div key={sub.id} data-testid={`catalog-subcat-${sub.id}`}>
-                          <button
-                            className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left transition-colors ${hasSubBooks ? "hover-elevate active-elevate-2" : "opacity-50 cursor-default"}`}
-                            onClick={() => hasSubBooks && toggleSubCategory(sub.id)}
-                            data-testid={`button-subcat-${sub.id}`}
-                          >
-                            {hasSubBooks ? (
-                              <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200 ${isSubExpanded ? "rotate-90" : ""}`} />
-                            ) : (
-                              <Lock className="h-3 w-3 shrink-0 text-muted-foreground/40" />
-                            )}
-                            <span className={`text-sm ${hasSubBooks ? "text-primary font-medium" : "text-muted-foreground/60"}`}>
-                              {sub.label}
-                            </span>
-                            {hasSubBooks && (
-                              <Badge variant="outline" className="text-[10px] ml-auto shrink-0 border-primary/20">
-                                {subBooks.length} {subBooks.length === 1 ? "text" : "texts"}
-                              </Badge>
-                            )}
-                            {!hasSubBooks && (
-                              <span className="text-[10px] text-muted-foreground/40 ml-auto italic">Coming soon</span>
-                            )}
-                          </button>
-
-                          {isSubExpanded && hasSubBooks && (
-                            <div className="ml-4 pl-3 border-l border-border/40 space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-150 py-1">
-                              {subBooks.map(book => (
-                                <button
-                                  key={book.id}
-                                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left hover-elevate active-elevate-2 transition-colors group"
-                                  onClick={() => onSelectBook(book.id)}
-                                  data-testid={`button-book-${book.slug}`}
-                                >
-                                  <BookOpen className="h-3.5 w-3.5 shrink-0 text-primary/60" />
-                                  <span className="text-sm font-serif font-medium text-foreground group-hover:text-primary transition-colors truncate">
-                                    {book.title}
-                                  </span>
-                                  <span className="text-[10px] text-muted-foreground ml-auto shrink-0">
-                                    {book.totalVerses ?? 0} verses
-                                  </span>
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  catBooks.length > 0 ? (
-                    <div className="space-y-0.5 pl-2">
-                      {catBooks.map(book => (
-                        <button
-                          key={book.id}
-                          className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left hover-elevate active-elevate-2 transition-colors group"
-                          onClick={() => onSelectBook(book.id)}
-                          data-testid={`button-book-${book.slug}`}
-                        >
-                          <BookOpen className="h-3.5 w-3.5 shrink-0 text-primary/60" />
-                          <span className="text-sm font-serif font-medium text-foreground group-hover:text-primary transition-colors truncate">
-                            {book.title}
-                          </span>
-                          <span className="text-[10px] text-muted-foreground ml-auto shrink-0">
-                            {book.totalVerses ?? 0} verses
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="px-3 py-4 text-center">
-                      <span className="text-xs text-muted-foreground/50 italic">Coming soon...</span>
-                    </div>
-                  )
-                )}
-              </div>
-            );
-          })}
         </div>
 
         <div className="space-y-4 sm:space-y-5">
