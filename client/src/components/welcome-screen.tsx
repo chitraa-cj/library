@@ -1,8 +1,9 @@
-import { BookOpen, Clock, Library, Scroll, BookMarked, Feather } from "lucide-react";
+import { BookOpen, Clock, Library, Scroll, BookMarked, Feather, FolderOpen, Lock, ArrowLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { VideoInline } from "@/components/video-popup";
+import { CATALOG_TREE, type CatalogCategory } from "@/components/app-sidebar";
 import ishaImg from "@/assets/images/book-isha-upanishad.jpg";
 import gitaImg from "@/assets/images/book-bhagavad-gita.jpg";
 import brahmaImg from "@/assets/images/book-brahma-sutra.jpg";
@@ -231,6 +232,219 @@ export function WelcomeScreen({ books, onSelectBook }: WelcomeScreenProps) {
                 className="max-w-xl mx-auto rounded-xl overflow-hidden border border-primary/20"
               />
             ))}
+          </div>
+        )}
+
+        <div className="text-center pb-4">
+          <div className="text-primary/25 text-xs tracking-widest font-serif">
+            ॥ सर्वं खल्विदं ब्रह्म ॥
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function matchesCategory(matcher: string | undefined, altMatcher: string | undefined, bookCategory: string): boolean {
+  if (matcher && bookCategory === matcher) return true;
+  if (altMatcher && bookCategory === altMatcher) return true;
+  return false;
+}
+
+interface CategoryDetailViewProps {
+  categoryId: string;
+  books: Book[];
+  onSelectBook: (bookId: string) => void;
+  onGoBack: () => void;
+}
+
+export function CategoryDetailView({ categoryId, books, onSelectBook, onGoBack }: CategoryDetailViewProps) {
+  const category = CATALOG_TREE.find(c => c.id === categoryId);
+  if (!category) return null;
+
+  const booksBySubCategory: Record<string, Book[]> = {};
+  for (const book of books) {
+    if (category.children) {
+      for (const sub of category.children) {
+        if (matchesCategory(sub.categoryMatch, sub.categoryAltMatch, book.category)) {
+          if (!booksBySubCategory[sub.id]) booksBySubCategory[sub.id] = [];
+          booksBySubCategory[sub.id].push(book);
+        }
+      }
+    }
+    if (category.categoryMatch && book.category === category.categoryMatch) {
+      if (!booksBySubCategory[category.id]) booksBySubCategory[category.id] = [];
+      booksBySubCategory[category.id].push(book);
+    }
+  }
+
+  return (
+    <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-gradient-to-b from-primary/10 via-background to-accent/10 relative overflow-y-auto">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
+        <div className="absolute top-16 left-12 text-[14rem] text-primary/[0.02] font-serif">ॐ</div>
+        <div className="absolute bottom-24 right-16 text-[10rem] text-primary/[0.02] font-serif rotate-12">ॐ</div>
+      </div>
+
+      <div className="max-w-4xl w-full relative z-10 py-4 sm:py-8 space-y-6 sm:space-y-8">
+        <div className="space-y-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onGoBack}
+            className="gap-1.5 text-xs text-muted-foreground"
+            data-testid="button-category-back"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to Home
+          </Button>
+          <div className="flex items-center gap-3">
+            <Library className="h-6 w-6 text-primary shrink-0" />
+            <h1 className="font-serif text-lg sm:text-2xl font-semibold text-primary" data-testid="text-category-title">
+              {category.label}
+            </h1>
+          </div>
+          <div className="h-px bg-primary/15"></div>
+        </div>
+
+        {category.children ? (
+          <div className="space-y-8">
+            {category.children.map(sub => {
+              const subBooks = booksBySubCategory[sub.id] ?? [];
+              const hasBooks = subBooks.length > 0;
+
+              return (
+                <div key={sub.id} className="space-y-3" data-testid={`section-subcat-${sub.id}`}>
+                  <div className="flex items-center gap-2">
+                    {hasBooks ? (
+                      <FolderOpen className="h-5 w-5 text-primary/70 shrink-0" />
+                    ) : (
+                      <Lock className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                    )}
+                    <h2 className={`font-serif text-base sm:text-lg font-semibold ${hasBooks ? 'text-foreground' : 'text-muted-foreground/50'}`}>
+                      {sub.label}
+                    </h2>
+                    {hasBooks && (
+                      <Badge variant="secondary" className="text-[10px]">
+                        {subBooks.length} {subBooks.length === 1 ? 'text' : 'texts'}
+                      </Badge>
+                    )}
+                    <div className="h-px flex-1 bg-border/50"></div>
+                  </div>
+
+                  {hasBooks ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {subBooks.map(book => {
+                        const coverImg = bookImages[book.slug];
+                        return (
+                          <Card
+                            key={book.id}
+                            className="group p-0 overflow-visible border-primary/15 bg-card/90 backdrop-blur-sm hover-elevate active-elevate-2 cursor-pointer transition-all"
+                            onClick={() => onSelectBook(book.id)}
+                            data-testid={`card-catbook-${book.slug}`}
+                          >
+                            {coverImg && (
+                              <div className="relative w-full aspect-[4/3] overflow-hidden rounded-t-md">
+                                <img
+                                  src={coverImg}
+                                  alt={book.title}
+                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                                <div className="absolute bottom-3 left-4 right-4">
+                                  <h3 className="font-serif text-lg font-semibold text-white leading-tight drop-shadow-md">
+                                    {book.title}
+                                  </h3>
+                                </div>
+                              </div>
+                            )}
+                            <div className="p-4 space-y-2">
+                              {!coverImg && (
+                                <h3 className="font-serif text-base font-semibold text-foreground">{book.title}</h3>
+                              )}
+                              {book.author && (
+                                <p className="text-xs font-medium text-muted-foreground">{book.author}</p>
+                              )}
+                              {book.description && (
+                                <p className="text-xs text-muted-foreground/80 leading-relaxed line-clamp-2">{book.description}</p>
+                              )}
+                              <div className="flex items-center justify-between gap-2 pt-1">
+                                <span className="text-[11px] text-muted-foreground">
+                                  {book.totalVerses ?? 0} verses
+                                </span>
+                                <Button variant="ghost" size="sm" className="text-xs text-primary h-auto py-1 px-2" data-testid={`button-catread-${book.slug}`}>
+                                  Start Reading
+                                </Button>
+                              </div>
+                            </div>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="py-6 px-4 text-center">
+                      <p className="text-sm text-muted-foreground/60 italic">Coming soon...</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div>
+            {booksBySubCategory[category.id]?.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {booksBySubCategory[category.id].map(book => {
+                  const coverImg = bookImages[book.slug];
+                  return (
+                    <Card
+                      key={book.id}
+                      className="group p-0 overflow-visible border-primary/15 bg-card/90 backdrop-blur-sm hover-elevate active-elevate-2 cursor-pointer transition-all"
+                      onClick={() => onSelectBook(book.id)}
+                      data-testid={`card-catbook-${book.slug}`}
+                    >
+                      {coverImg && (
+                        <div className="relative w-full aspect-[4/3] overflow-hidden rounded-t-md">
+                          <img
+                            src={coverImg}
+                            alt={book.title}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                          <div className="absolute bottom-3 left-4 right-4">
+                            <h3 className="font-serif text-lg font-semibold text-white leading-tight drop-shadow-md">
+                              {book.title}
+                            </h3>
+                          </div>
+                        </div>
+                      )}
+                      <div className="p-4 space-y-2">
+                        {!coverImg && (
+                          <h3 className="font-serif text-base font-semibold text-foreground">{book.title}</h3>
+                        )}
+                        {book.author && (
+                          <p className="text-xs font-medium text-muted-foreground">{book.author}</p>
+                        )}
+                        {book.description && (
+                          <p className="text-xs text-muted-foreground/80 leading-relaxed line-clamp-2">{book.description}</p>
+                        )}
+                        <div className="flex items-center justify-between gap-2 pt-1">
+                          <span className="text-[11px] text-muted-foreground">
+                            {book.totalVerses ?? 0} verses
+                          </span>
+                          <Button variant="ghost" size="sm" className="text-xs text-primary h-auto py-1 px-2" data-testid={`button-catread-${book.slug}`}>
+                            Start Reading
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="py-8 text-center">
+                <p className="text-sm text-muted-foreground/60 italic">Coming soon...</p>
+              </div>
+            )}
           </div>
         )}
 

@@ -4,11 +4,11 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AppSidebar } from "@/components/app-sidebar";
-import { WelcomeScreen } from "@/components/welcome-screen";
+import { WelcomeScreen, CategoryDetailView } from "@/components/welcome-screen";
 import { BookReader } from "@/components/book-reader";
 import { TranslationPanel } from "@/components/translation-panel";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -31,9 +31,10 @@ interface VerseBreadcrumb {
   numericLabel: string;
 }
 
-function HomePage() {
+function HomePageContent() {
   const params = useParams<{ bookSlug?: string; verseNumber?: string }>();
   const [location, setLocation] = useLocation();
+  const { toggleSidebar, state: sidebarState } = useSidebar();
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [selectedVerseId, setSelectedVerseId] = useState<string | null>(null);
   const [selectedContent, setSelectedContent] = useState("");
@@ -44,6 +45,7 @@ function HomePage() {
   const [currentVerseNumber, setCurrentVerseNumber] = useState<number>(1);
   const [chapterViewAdhyay, setChapterViewAdhyay] = useState<number | null>(null);
   const [chapterViewKhanda, setChapterViewKhanda] = useState<number | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(() => {
     return typeof window !== 'undefined' && window.innerWidth < 1024;
   });
@@ -112,6 +114,7 @@ function HomePage() {
     setVerseBreadcrumb(null);
     setChapterViewAdhyay(null);
     setChapterViewKhanda(null);
+    setSelectedCategoryId(null);
     const slug = getBookSlug(bookId);
     if (slug) {
       setLocation(`/${slug}`);
@@ -128,6 +131,7 @@ function HomePage() {
     setNavigateToVerse(null);
     setCurrentVerseNumber(1);
     setVerseBreadcrumb(null);
+    setSelectedCategoryId(null);
     setLocation("/");
   };
 
@@ -157,13 +161,7 @@ function HomePage() {
     }
   }, [selectedBookId, getBookSlug, location, setLocation]);
 
-  const sidebarStyle = {
-    "--sidebar-width": "22rem",
-    "--sidebar-width-icon": "3rem",
-  } as React.CSSProperties;
-
   return (
-    <SidebarProvider style={sidebarStyle}>
       <div className="flex h-screen w-full overflow-hidden">
         <AppSidebar
           selectedBookId={selectedBookId}
@@ -171,6 +169,11 @@ function HomePage() {
           onSelectVerse={handleSidebarVerseSelect}
           onSelectChapter={(adhyayNumber) => { setChapterViewAdhyay(adhyayNumber); setChapterViewKhanda(null); }}
           onSelectPart={(adhyayNumber, khandaNumber) => { setChapterViewAdhyay(adhyayNumber); setChapterViewKhanda(khandaNumber); }}
+          onSelectCategory={(categoryId) => {
+            setSelectedCategoryId(categoryId);
+            setSelectedBookId(null);
+            if (sidebarState === "expanded") toggleSidebar();
+          }}
           selectedVerseNumber={currentVerseNumber}
           onGoHome={handleGoHome}
           onGoBack={selectedBookId ? handleGoHome : undefined}
@@ -331,12 +334,31 @@ function HomePage() {
                   onPendingNoteTextConsumed={() => setPendingNoteText(null)}
                 />
               </>
+            ) : selectedCategoryId ? (
+              <CategoryDetailView
+                categoryId={selectedCategoryId}
+                books={allBooks || []}
+                onSelectBook={handleBookSelect}
+                onGoBack={handleGoHome}
+              />
             ) : (
               <WelcomeScreen books={allBooks || []} onSelectBook={handleBookSelect} />
             )}
           </main>
         </div>
       </div>
+  );
+}
+
+function HomePage() {
+  const sidebarStyle = {
+    "--sidebar-width": "22rem",
+    "--sidebar-width-icon": "3rem",
+  } as React.CSSProperties;
+
+  return (
+    <SidebarProvider style={sidebarStyle}>
+      <HomePageContent />
     </SidebarProvider>
   );
 }

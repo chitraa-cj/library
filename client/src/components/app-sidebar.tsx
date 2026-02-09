@@ -112,6 +112,7 @@ interface AppSidebarProps {
   onSelectVerse?: (verseNumber: number) => void;
   onSelectChapter?: (adhyayNumber: number) => void;
   onSelectPart?: (adhyayNumber: number, khandaNumber: number) => void;
+  onSelectCategory?: (categoryId: string) => void;
   selectedVerseNumber?: number;
   onGoHome?: () => void;
   onGoBack?: () => void;
@@ -191,13 +192,16 @@ function buildHierarchy(verses: Verse[]): AdhyayGroup[] {
   return sorted;
 }
 
-export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSelectChapter, onSelectPart, selectedVerseNumber, onGoHome, onGoBack }: AppSidebarProps) {
+export { CATALOG_TREE, type CatalogCategory, type CatalogSubCategory };
+
+export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSelectChapter, onSelectPart, onSelectCategory, selectedVerseNumber, onGoHome, onGoBack }: AppSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [drillCategoryId, setDrillCategoryId] = useState<string | null>(null);
   const [drillSubCategoryId, setDrillSubCategoryId] = useState<string | null>(null);
   const [expandedBooks, setExpandedBooks] = useState<Set<string>>(new Set());
   const [expandedAdhyays, setExpandedAdhyays] = useState<Set<string>>(new Set());
   const [expandedKhandas, setExpandedKhandas] = useState<Set<string>>(new Set());
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const { isMobile, setOpenMobile, state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
 
@@ -675,6 +679,157 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
     );
   };
 
+  const toggleCategory = (catId: string) => {
+    const next = new Set(expandedCategories);
+    if (next.has(catId)) next.delete(catId);
+    else next.add(catId);
+    setExpandedCategories(next);
+  };
+
+  const renderCategoryTree = () => {
+    const items = searchQuery.trim() ? filteredTree : CATALOG_TREE;
+    return (
+      <div className="space-y-0.5">
+        {items.map((cat) => {
+          const directBooks = booksBySubCategory[cat.id] ?? [];
+          const hasChildren = !!cat.children && cat.children.length > 0;
+          const hasAnyContent = hasChildren || directBooks.length > 0;
+          const isExpanded = expandedCategories.has(cat.id);
+
+          return (
+            <div key={cat.id}>
+              <div className={`flex items-center w-full text-[11px] rounded-md transition-colors font-medium ${
+                !hasAnyContent
+                  ? "text-muted-foreground/50 cursor-default"
+                  : "text-foreground/80 hover:text-foreground hover:bg-sidebar-accent/30"
+              }`}>
+                {hasAnyContent ? (
+                  <button
+                    onClick={() => toggleCategory(cat.id)}
+                    className="shrink-0 py-2.5 pl-2 pr-1"
+                    data-testid={`button-toggle-category-${cat.id}`}
+                  >
+                    {isExpanded ? (
+                      <ChevronDown className="h-3 w-3 shrink-0 text-primary" />
+                    ) : (
+                      <ChevronRight className="h-3 w-3 shrink-0" />
+                    )}
+                  </button>
+                ) : (
+                  <span className="shrink-0 py-2.5 pl-2 pr-1">
+                    <Lock className="h-3 w-3 shrink-0 text-muted-foreground/30" />
+                  </span>
+                )}
+                <button
+                  onClick={() => {
+                    if (hasAnyContent) {
+                      onSelectCategory?.(cat.id);
+                    }
+                  }}
+                  className="flex items-center gap-2 flex-1 min-w-0 text-left py-2.5 pr-2"
+                  data-testid={`button-category-${cat.id}`}
+                  disabled={!hasAnyContent}
+                >
+                  <Library className={`h-3.5 w-3.5 shrink-0 ${hasAnyContent ? 'text-muted-foreground/60' : 'text-muted-foreground/30'}`} />
+                  <span className="flex-1 min-w-0 leading-snug">{cat.label}</span>
+                </button>
+              </div>
+
+              {isExpanded && hasChildren && (
+                <div className="ml-3 pl-2 border-l border-border/40 mt-0.5 space-y-0.5">
+                  {cat.children!.map(sub => {
+                    const subBooks = booksBySubCategory[sub.id] ?? [];
+                    const hasBooks = subBooks.length > 0;
+                    return (
+                      <div key={sub.id}>
+                        <button
+                          onClick={() => {
+                            if (hasBooks && subBooks.length === 1) {
+                              handleBookSelect(subBooks[0].id);
+                            } else if (hasBooks) {
+                              onSelectCategory?.(cat.id);
+                            }
+                          }}
+                          className={`flex items-center gap-2 w-full text-left text-xs py-2 px-2 rounded-md transition-colors ${
+                            !hasBooks
+                              ? "text-muted-foreground/50 cursor-default"
+                              : "text-foreground/80 hover:text-foreground hover:bg-sidebar-accent/30"
+                          }`}
+                          data-testid={`button-subcat-${sub.id}`}
+                          disabled={!hasBooks}
+                        >
+                          {hasBooks ? (
+                            <FolderOpen className="h-3.5 w-3.5 shrink-0 text-primary/60" />
+                          ) : (
+                            <Folder className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
+                          )}
+                          <span className="flex-1 min-w-0 truncate">{sub.label}</span>
+                          {hasBooks && (
+                            <Badge variant="secondary" className="text-[9px] px-1 h-4 shrink-0">
+                              {subBooks.length}
+                            </Badge>
+                          )}
+                          {!hasBooks && (
+                            <Lock className="h-3 w-3 shrink-0 text-muted-foreground/30" />
+                          )}
+                        </button>
+                        {hasBooks && subBooks.length > 1 && (
+                          <div className="ml-3 pl-2 border-l border-border/30 mt-0.5 space-y-0.5">
+                            {subBooks.map(book => (
+                              <button
+                                key={book.id}
+                                onClick={() => handleBookSelect(book.id)}
+                                className={`flex items-center gap-2 w-full text-left text-xs py-1.5 px-2 rounded-md transition-colors ${
+                                  selectedBookId === book.id
+                                    ? "bg-primary/15 text-primary font-semibold"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
+                                }`}
+                                data-testid={`button-book-tree-${book.id}`}
+                              >
+                                <BookOpen className="h-3 w-3 shrink-0" />
+                                <span className="font-serif text-[11px] leading-snug flex-1 min-w-0 truncate">{book.title}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {isExpanded && !hasChildren && directBooks.length > 0 && (
+                <div className="ml-3 pl-2 border-l border-border/40 mt-0.5 space-y-0.5">
+                  {directBooks.map(book => (
+                    <button
+                      key={book.id}
+                      onClick={() => handleBookSelect(book.id)}
+                      className={`flex items-center gap-2 w-full text-left text-xs py-1.5 px-2 rounded-md transition-colors ${
+                        selectedBookId === book.id
+                          ? "bg-primary/15 text-primary font-semibold"
+                          : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
+                      }`}
+                      data-testid={`button-book-tree-${book.id}`}
+                    >
+                      <BookOpen className="h-3 w-3 shrink-0" />
+                      <span className="font-serif text-[11px] leading-snug flex-1 min-w-0 truncate">{book.title}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {isExpanded && !hasChildren && directBooks.length === 0 && (
+                <div className="ml-3 pl-2 border-l border-border/40 mt-0.5">
+                  <span className="text-[10px] text-muted-foreground/50 italic px-2 py-1 block">Coming soon...</span>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   const renderCategoryList = () => {
     const items = searchQuery.trim() ? filteredTree : CATALOG_TREE;
     return (
@@ -693,7 +848,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                   ? "text-muted-foreground/50 cursor-default"
                   : "text-foreground/80 hover:text-foreground hover:bg-sidebar-accent/30"
               }`}
-              data-testid={`button-category-${cat.id}`}
+              data-testid={`button-category-drill-${cat.id}`}
               disabled={!hasAnyContent}
             >
               <Library className={`h-3.5 w-3.5 shrink-0 ${hasAnyContent ? 'text-muted-foreground/60' : 'text-muted-foreground/30'}`} />
@@ -909,10 +1064,16 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
             </div>
           ) : (
             <div className="p-2 space-y-1">
-              {renderDrillBreadcrumb()}
-              {!drillCategoryId && renderCategoryList()}
-              {drillCategoryId && !drillSubCategoryId && renderSubCategoryList()}
-              {drillCategoryId && drillSubCategoryId && renderBookList()}
+              {selectedBookId ? (
+                <>
+                  {renderDrillBreadcrumb()}
+                  {!drillCategoryId && renderCategoryList()}
+                  {drillCategoryId && !drillSubCategoryId && renderSubCategoryList()}
+                  {drillCategoryId && drillSubCategoryId && renderBookList()}
+                </>
+              ) : (
+                renderCategoryTree()
+              )}
             </div>
           )}
         </ScrollArea>
