@@ -179,7 +179,8 @@ function HomePageContent() {
           onGoBack={selectedBookId ? handleGoHome : undefined}
         />
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-          <header className="flex items-center justify-between gap-4 px-3 sm:px-4 py-2 sm:py-3 border-b border-primary/25 bg-gradient-to-r from-primary/15 via-primary/8 to-accent/5 backdrop-blur-sm sticky top-0 z-10 shrink-0">
+          <header className="border-b border-primary/25 bg-gradient-to-r from-primary/15 via-primary/8 to-accent/5 backdrop-blur-sm sticky top-0 z-10 shrink-0">
+            <div className="flex items-center justify-between gap-4 px-3 sm:px-4 py-2 sm:py-3">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <Button
                 variant="ghost"
@@ -291,6 +292,21 @@ function HomePageContent() {
                 )
               )}
             </div>
+            </div>
+            {(() => {
+              const selectedBook = selectedBookId && allBooks ? allBooks.find(b => b.id === selectedBookId) : null;
+              if (selectedBook?.description) {
+                const shortDesc = selectedBook.description.length > 120 
+                  ? selectedBook.description.slice(0, 120).replace(/\s+\S*$/, '') + '...'
+                  : selectedBook.description;
+                return (
+                  <p className="px-3 sm:px-4 pb-1.5 pt-0 text-[10px] sm:text-[11px] text-muted-foreground/80 leading-snug truncate" data-testid="text-header-description" title={selectedBook.description}>
+                    {shortDesc}
+                  </p>
+                );
+              }
+              return null;
+            })()}
           </header>
           <main className="flex flex-1 min-h-0 overflow-hidden">
             {selectedBookId ? (

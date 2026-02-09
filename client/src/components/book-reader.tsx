@@ -614,14 +614,6 @@ export function BookReader({
                 </Badge>
               </div>
 
-              {book.description && (
-                <div className="mb-6 sm:mb-8">
-                  <p className="text-sm sm:text-base leading-relaxed text-muted-foreground text-center max-w-2xl mx-auto" data-testid="text-cover-description">
-                    {book.description}
-                  </p>
-                </div>
-              )}
-
               <div className="flex items-center justify-center mb-4 sm:mb-6">
                 <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
                   <span className="text-primary/40">॥</span>
