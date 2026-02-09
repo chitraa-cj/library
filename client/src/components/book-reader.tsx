@@ -891,12 +891,17 @@ export function BookReader({
                                 }}
                                 data-testid={`chapter-verse-${verse.verseNumber}`}
                               >
-                                <div className="flex items-center justify-center gap-2 mb-2 sm:mb-3">
-                                  <span className="text-primary/40 text-xs sm:text-sm">॥</span>
-                                  <Badge variant="outline" className="font-mono text-[9px] sm:text-[10px] px-1.5 h-4 sm:h-5 border-primary/20 text-primary/70">
-                                    Sl. {verseLabel}
-                                  </Badge>
-                                  <span className="text-primary/40 text-xs sm:text-sm">॥</span>
+                                <div className="flex flex-col items-center gap-1 mb-2 sm:mb-3">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-primary/40 text-xs sm:text-sm">॥</span>
+                                    <Badge variant="outline" className="font-mono text-[9px] sm:text-[10px] px-1.5 h-4 sm:h-5 border-primary/20 text-primary/70">
+                                      Sl. {verseLabel}
+                                    </Badge>
+                                    <span className="text-primary/40 text-xs sm:text-sm">॥</span>
+                                  </div>
+                                  {verse.sectionTitle && (
+                                    <span className="text-[11px] sm:text-xs text-muted-foreground font-serif">{verse.sectionTitle}</span>
+                                  )}
                                 </div>
                                 {devanagari && (
                                   <div className="font-serif text-base sm:text-lg leading-relaxed text-center px-1 sm:px-4">
@@ -938,12 +943,17 @@ export function BookReader({
                         }}
                         data-testid={`chapter-verse-${verse.verseNumber}`}
                       >
-                        <div className="flex items-center justify-center gap-2 mb-2 sm:mb-3">
-                          <span className="text-primary/40 text-xs sm:text-sm">॥</span>
-                          <Badge variant="outline" className="font-mono text-[9px] sm:text-[10px] px-1.5 h-4 sm:h-5 border-primary/20 text-primary/70">
-                            Sl. {verseLabel}
-                          </Badge>
-                          <span className="text-primary/40 text-xs sm:text-sm">॥</span>
+                        <div className="flex flex-col items-center gap-1 mb-2 sm:mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-primary/40 text-xs sm:text-sm">॥</span>
+                            <Badge variant="outline" className="font-mono text-[9px] sm:text-[10px] px-1.5 h-4 sm:h-5 border-primary/20 text-primary/70">
+                              Sl. {verseLabel}
+                            </Badge>
+                            <span className="text-primary/40 text-xs sm:text-sm">॥</span>
+                          </div>
+                          {verse.sectionTitle && (
+                            <span className="text-[11px] sm:text-xs text-muted-foreground font-serif">{verse.sectionTitle}</span>
+                          )}
                         </div>
                         {devanagari && (
                           <div className="font-serif text-base sm:text-lg leading-relaxed text-center px-1 sm:px-4">
