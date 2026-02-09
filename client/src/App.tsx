@@ -212,15 +212,7 @@ function HomePageContent() {
                 variant="ghost"
                 size="icon"
                 onClick={() => {
-                  if (chapterViewKhanda !== null) {
-                    setChapterViewKhanda(null);
-                  } else if (chapterViewAdhyay !== null) {
-                    setChapterViewAdhyay(null);
-                  } else if (selectedBookId) {
-                    handleGoHome();
-                  } else if (selectedCategoryId) {
-                    setSelectedCategoryId(null);
-                  }
+                  window.history.back();
                 }}
                 title="Go back"
                 data-testid="button-go-back"
