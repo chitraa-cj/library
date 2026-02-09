@@ -304,26 +304,26 @@ function HomePageContent() {
                     </Avatar>
                     <Button
                       variant="ghost"
-                      size="icon"
+                      size="sm"
                       onClick={async () => {
                         await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
                         queryClient.setQueryData(["/api/auth/user"], null);
                       }}
-                      title="Log out"
                       data-testid="button-logout"
                     >
                       <LogOut className="h-4 w-4" />
+                      <span>Log Out</span>
                     </Button>
                   </div>
                 ) : (
                   <Button
                     variant="ghost"
-                    size="icon"
+                    size="sm"
                     onClick={() => { setLocation("/auth"); }}
-                    title="Log in"
                     data-testid="button-login"
                   >
                     <LogIn className="h-4 w-4" />
+                    <span>Log In</span>
                   </Button>
                 )
               )}
