@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, Globe, MessageSquareText, StickyNote, List } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareText, StickyNote, List } from "lucide-react";
 import { VideoPopup } from "@/components/video-popup";
 import { WordTooltip } from "@/components/word-tooltip";
 import {
@@ -109,7 +109,6 @@ interface BookReaderProps {
   selectedAuthor: string | null;
   selectedCommentaryLanguage: string | null;
   onAuthorChange: (author: string | null) => void;
-  onLanguageChange: (lang: string | null) => void;
   navigateToVerse?: number | null;
   onVerseChange?: (verseNumber: number) => void;
   onBreadcrumbChange?: (breadcrumb: VerseBreadcrumb) => void;
@@ -241,7 +240,6 @@ export function BookReader({
   selectedAuthor,
   selectedCommentaryLanguage,
   onAuthorChange,
-  onLanguageChange,
   navigateToVerse,
   onVerseChange,
   onBreadcrumbChange,
@@ -327,26 +325,13 @@ export function BookReader({
   useEffect(() => {
     if (commentaryOptions && !initialized) {
       onAuthorChange("__all__");
-      if (commentaryOptions.languages.length > 0) {
-        onLanguageChange(commentaryOptions.languages[0].code);
-      }
       setInitialized(true);
     }
-  }, [commentaryOptions, initialized, onAuthorChange, onLanguageChange]);
+  }, [commentaryOptions, initialized, onAuthorChange]);
 
   const isShowingAll = selectedAuthor === "__all__";
 
   const currentVerse = currentVerseMeta;
-
-  const availableLanguagesForAuthor = useMemo(() => {
-    if (!commentaryOptions) return [];
-    if (isShowingAll) {
-      return commentaryOptions.languages;
-    }
-    const author = commentaryOptions.authors.find(a => a.authorName === selectedAuthor);
-    if (!author) return [];
-    return commentaryOptions.languages.filter(l => author.languageCodes.includes(l.code));
-  }, [selectedAuthor, commentaryOptions, isShowingAll]);
 
   const availableAuthors = useMemo(() => {
     if (!commentaryOptions) return [];
@@ -356,30 +341,6 @@ export function BookReader({
 
   const handleAuthorChange = (authorName: string) => {
     onAuthorChange(authorName);
-    if (authorName === "__all__") {
-      if (commentaryOptions && commentaryOptions.languages.length > 0) {
-        if (!selectedCommentaryLanguage) {
-          onLanguageChange(commentaryOptions.languages[0].code);
-        }
-      }
-    } else {
-      const author = commentaryOptions?.authors.find(a => a.authorName === authorName);
-      if (author && author.languageCodes.length > 0) {
-        if (!selectedCommentaryLanguage || !author.languageCodes.includes(selectedCommentaryLanguage)) {
-          onLanguageChange(author.languageCodes[0]);
-        }
-      }
-    }
-  };
-
-  const handleLanguageChange = (langCode: string) => {
-    onLanguageChange(langCode);
-    if (selectedAuthor && selectedAuthor !== "__all__") {
-      const author = commentaryOptions?.authors.find(a => a.authorName === selectedAuthor);
-      if (author && !author.languageCodes.includes(langCode)) {
-        onAuthorChange("__all__");
-      }
-    }
   };
 
   const hasCommentaryOptions = commentaryOptions && 
@@ -837,30 +798,6 @@ export function BookReader({
                 <p className="text-xs sm:text-sm text-muted-foreground font-serif">{headerSubtitle}</p>
               </div>
               <div className="flex items-center gap-2">
-                {hasCommentaryOptions && (
-                  <div className="flex items-center gap-1.5 sm:gap-2">
-                    <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
-                    <Select
-                      value={selectedCommentaryLanguage || ""}
-                      onValueChange={handleLanguageChange}
-                      disabled={availableLanguagesForAuthor.length === 0}
-                    >
-                      <SelectTrigger
-                        className="w-[120px] sm:w-[140px] h-7 sm:h-8 text-[11px] sm:text-xs bg-background/80 backdrop-blur-sm border-primary/20"
-                        data-testid="select-chapter-language"
-                      >
-                        <SelectValue placeholder="Language" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableLanguagesForAuthor.map((lang) => (
-                          <SelectItem key={lang.code} value={lang.code}>
-                            {lang.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
                 {onExitChapterView && (
                   <Button
                     variant="outline"
@@ -1106,32 +1043,6 @@ export function BookReader({
                         data-testid={`option-author-${author.authorName.toLowerCase().replace(/\s+/g, '-')}`}
                       >
                         {author.authorName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
-                <Select
-                  value={selectedCommentaryLanguage || ""}
-                  onValueChange={handleLanguageChange}
-                  disabled={availableLanguagesForAuthor.length === 0}
-                >
-                  <SelectTrigger 
-                    className="w-[120px] sm:w-[140px] h-7 sm:h-8 text-[11px] sm:text-xs bg-background/80 backdrop-blur-sm border-primary/20" 
-                    data-testid="select-commentary-language"
-                  >
-                    <SelectValue placeholder="Language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableLanguagesForAuthor.map((lang) => (
-                      <SelectItem 
-                        key={lang.code} 
-                        value={lang.code}
-                        data-testid={`option-lang-${lang.code}`}
-                      >
-                        {lang.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

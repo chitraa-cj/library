@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Globe, MessageSquare, Play, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -29,7 +29,6 @@ interface TranslationPanelProps {
   selectedAuthor: string | null;
   selectedCommentaryLanguage: string | null;
   onAuthorChange: (author: string | null) => void;
-  onLanguageChange: (lang: string | null) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   collapsed?: boolean;
@@ -45,14 +44,13 @@ function PanelContent({
   selectedAuthor,
   selectedCommentaryLanguage,
   onAuthorChange,
-  onLanguageChange,
   pendingNoteText,
   onPendingNoteTextConsumed,
 }: Omit<TranslationPanelProps, 'open' | 'onOpenChange' | 'collapsed' | 'onCollapsedChange'>) {
   const [selectedExplanation, setSelectedExplanation] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
 
-  const { data: commentaryOptions, isLoading: isLoadingOptions } = useQuery<CommentaryOptions>({
+  const { data: commentaryOptions } = useQuery<CommentaryOptions>({
     queryKey: ["/api/books", bookId, "commentary-options"],
   });
 
@@ -70,50 +68,9 @@ function PanelContent({
   useEffect(() => {
     if (commentaryOptions && !initialized && !selectedAuthor) {
       onAuthorChange("__all__");
-      if (commentaryOptions.languages.length > 0) {
-        onLanguageChange(commentaryOptions.languages[0].code);
-      }
       setInitialized(true);
     }
-  }, [commentaryOptions, initialized, selectedAuthor, onAuthorChange, onLanguageChange]);
-
-  useEffect(() => {
-    if (selectedAuthor && selectedAuthor !== "__all__" && commentaryOptions && initialized) {
-      const author = commentaryOptions.authors.find(a => a.authorName === selectedAuthor);
-      if (author && author.languageCodes.length > 0) {
-        if (!selectedCommentaryLanguage || !author.languageCodes.includes(selectedCommentaryLanguage)) {
-          onLanguageChange(author.languageCodes[0]);
-        }
-      }
-    }
-  }, [selectedAuthor, commentaryOptions, selectedCommentaryLanguage, initialized, onLanguageChange]);
-
-  const availableLanguagesForAuthor = useMemo(() => {
-    if (!commentaryOptions) return [];
-    if (isShowingAll) return commentaryOptions.languages;
-    if (!selectedAuthor) return [];
-    const author = commentaryOptions.authors.find(a => a.authorName === selectedAuthor);
-    if (!author) return [];
-    return commentaryOptions.languages.filter(l => author.languageCodes.includes(l.code));
-  }, [selectedAuthor, commentaryOptions, isShowingAll]);
-
-  const availableAuthors = useMemo(() => {
-    return commentaryOptions?.authors || [];
-  }, [commentaryOptions]);
-
-  const handleAuthorChange = (authorName: string) => {
-    onAuthorChange(authorName);
-    const author = commentaryOptions?.authors.find(a => a.authorName === authorName);
-    if (author && author.languageCodes.length > 0) {
-      if (!selectedCommentaryLanguage || !author.languageCodes.includes(selectedCommentaryLanguage)) {
-        onLanguageChange(author.languageCodes[0]);
-      }
-    }
-  };
-
-  const handleLanguageChange = (langCode: string) => {
-    onLanguageChange(langCode);
-  };
+  }, [commentaryOptions, initialized, selectedAuthor, onAuthorChange]);
 
   const filteredExplanations = explanations.filter(
     (e) => e.languageCode === selectedCommentaryLanguage && (isShowingAll || e.authorName === selectedAuthor)
@@ -184,7 +141,6 @@ export function TranslationPanel({
   selectedAuthor,
   selectedCommentaryLanguage,
   onAuthorChange,
-  onLanguageChange,
   open,
   onOpenChange,
   collapsed,
@@ -219,7 +175,6 @@ export function TranslationPanel({
             selectedAuthor={selectedAuthor}
             selectedCommentaryLanguage={selectedCommentaryLanguage}
             onAuthorChange={onAuthorChange}
-            onLanguageChange={onLanguageChange}
             pendingNoteText={pendingNoteText}
             onPendingNoteTextConsumed={onPendingNoteTextConsumed}
           />
@@ -268,7 +223,6 @@ export function TranslationPanel({
         selectedAuthor={selectedAuthor}
         selectedCommentaryLanguage={selectedCommentaryLanguage}
         onAuthorChange={onAuthorChange}
-        onLanguageChange={onLanguageChange}
         pendingNoteText={pendingNoteText}
         onPendingNoteTextConsumed={onPendingNoteTextConsumed}
       />

@@ -8,6 +8,7 @@ export interface IAuthStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  updateUserPreferredLanguage(userId: string, language: string): Promise<void>;
 }
 
 class AuthStorage implements IAuthStorage {
@@ -34,6 +35,10 @@ class AuthStorage implements IAuthStorage {
       })
       .returning();
     return user;
+  }
+
+  async updateUserPreferredLanguage(userId: string, language: string): Promise<void> {
+    await db.update(users).set({ preferredLanguage: language, updatedAt: new Date() }).where(eq(users.id, userId));
   }
 }
 

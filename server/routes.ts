@@ -5,6 +5,7 @@ import { testStrapiConnection, STRAPI_URL } from "./strapi";
 import { translateWord } from "./openai";
 import { translateWordRequestSchema } from "@shared/schema";
 import { isAuthenticated } from "./replit_integrations/auth";
+import { authStorage } from "./replit_integrations/auth/storage";
 import { z } from "zod";
 
 function getUserId(req: any): string {
@@ -237,6 +238,21 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error updating note:", error);
       res.status(500).json({ error: "Failed to update note" });
+    }
+  });
+
+  app.patch("/api/user/preferred-language", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const { language } = req.body;
+      if (!language || typeof language !== "string") {
+        return res.status(400).json({ error: "Language code is required" });
+      }
+      await authStorage.updateUserPreferredLanguage(userId, language);
+      res.json({ success: true, language });
+    } catch (error) {
+      console.error("Error updating preferred language:", error);
+      res.status(500).json({ error: "Failed to update preferred language" });
     }
   });
 

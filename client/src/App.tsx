@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Switch, Route, useLocation } from "wouter";
-import { queryClient } from "./lib/queryClient";
+import { queryClient, apiRequest } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,12 +14,13 @@ import { TranslationPanel } from "@/components/translation-panel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ChevronRight, LogIn, LogOut } from "lucide-react";
+import { ArrowLeft, ChevronRight, LogIn, LogOut, Globe } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
-import type { Book } from "@shared/schema";
+import type { Book, Language } from "@shared/schema";
 
 interface VerseBreadcrumb {
   bookTitle: string;
@@ -39,7 +40,12 @@ function HomePageContent() {
   const [selectedContent, setSelectedContent] = useState("");
   const [showTranslationPanel, setShowTranslationPanel] = useState(false);
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
-  const [selectedCommentaryLanguage, setSelectedCommentaryLanguage] = useState<string | null>(null);
+  const [selectedCommentaryLanguage, setSelectedCommentaryLanguage] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('preferredLanguage') || 'english';
+    }
+    return 'english';
+  });
   const [navigateToVerse, setNavigateToVerse] = useState<number | null>(null);
   const [currentVerseNumber, setCurrentVerseNumber] = useState<number>(1);
   const [chapterViewAdhyay, setChapterViewAdhyay] = useState<number | null>(null);
@@ -59,6 +65,25 @@ function HomePageContent() {
   const { data: allBooks } = useQuery<Book[]>({
     queryKey: ["/api/books"],
   });
+
+  const { data: allLanguages } = useQuery<Language[]>({
+    queryKey: ["/api/languages"],
+  });
+
+  useEffect(() => {
+    if (user?.preferredLanguage && user.preferredLanguage !== selectedCommentaryLanguage) {
+      setSelectedCommentaryLanguage(user.preferredLanguage);
+      localStorage.setItem('preferredLanguage', user.preferredLanguage);
+    }
+  }, [user?.preferredLanguage]);
+
+  const handleGlobalLanguageChange = useCallback((langCode: string) => {
+    setSelectedCommentaryLanguage(langCode);
+    localStorage.setItem('preferredLanguage', langCode);
+    if (isLoggedIn) {
+      apiRequest("PATCH", "/api/user/preferred-language", { language: langCode }).catch(console.error);
+    }
+  }, [isLoggedIn]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -134,7 +159,6 @@ function HomePageContent() {
     setShowTranslationPanel(false);
     setMobileInitialPanelShown(false);
     setSelectedAuthor(null);
-    setSelectedCommentaryLanguage(null);
     setNavigateToVerse(null);
     setCurrentVerseNumber(1);
     setVerseBreadcrumb(null);
@@ -153,7 +177,6 @@ function HomePageContent() {
     setSelectedContent("");
     setShowTranslationPanel(false);
     setSelectedAuthor(null);
-    setSelectedCommentaryLanguage(null);
     setNavigateToVerse(null);
     setCurrentVerseNumber(1);
     setVerseBreadcrumb(null);
@@ -284,6 +307,29 @@ function HomePageContent() {
               )}
             </div>
             <div className="flex items-center gap-2">
+              {allLanguages && allLanguages.length > 0 && (
+                <div className="flex items-center gap-1">
+                  <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0 hidden sm:block" />
+                  <Select
+                    value={selectedCommentaryLanguage || "english"}
+                    onValueChange={handleGlobalLanguageChange}
+                  >
+                    <SelectTrigger
+                      className="w-[100px] sm:w-[120px] h-7 sm:h-8 text-[11px] sm:text-xs bg-background/80 backdrop-blur-sm border-primary/20"
+                      data-testid="select-global-language"
+                    >
+                      <SelectValue placeholder="Language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allLanguages.map((lang) => (
+                        <SelectItem key={lang.code} value={lang.code} data-testid={`option-global-lang-${lang.code}`}>
+                          {lang.nativeName || lang.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <ThemeToggle />
               {!authLoading && (
                 isLoggedIn && user ? (
@@ -346,7 +392,6 @@ function HomePageContent() {
                   selectedAuthor={selectedAuthor}
                   selectedCommentaryLanguage={selectedCommentaryLanguage}
                   onAuthorChange={setSelectedAuthor}
-                  onLanguageChange={setSelectedCommentaryLanguage}
                   navigateToVerse={navigateToVerse}
                   onVerseChange={handleVerseChange}
                   onBreadcrumbChange={setVerseBreadcrumb}
@@ -372,7 +417,6 @@ function HomePageContent() {
                   selectedAuthor={selectedAuthor}
                   selectedCommentaryLanguage={selectedCommentaryLanguage}
                   onAuthorChange={setSelectedAuthor}
-                  onLanguageChange={setSelectedCommentaryLanguage}
                   open={showTranslationPanel}
                   onOpenChange={setShowTranslationPanel}
                   collapsed={rightPanelCollapsed}
