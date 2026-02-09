@@ -14,7 +14,7 @@ import { TranslationPanel } from "@/components/translation-panel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, LogIn, LogOut } from "lucide-react";
+import { ArrowLeft, ChevronRight, LogIn, LogOut } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
@@ -170,6 +170,15 @@ function HomePage() {
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
           <header className="flex items-center justify-between gap-4 px-3 sm:px-4 py-2 sm:py-3 border-b border-primary/25 bg-gradient-to-r from-primary/15 via-primary/8 to-accent/5 backdrop-blur-sm sticky top-0 z-10 shrink-0">
             <div className="flex items-center gap-3 min-w-0 flex-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => window.history.back()}
+                title="Go back"
+                data-testid="button-go-back"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
               {selectedBookId && verseBreadcrumb ? (
                 <nav className="flex items-center gap-1 sm:gap-1.5 min-w-0 overflow-hidden" data-testid="breadcrumb-nav" aria-label="Current verse position" style={{ direction: "rtl" }}>
                   <div className="flex items-center gap-0.5 sm:gap-1 min-w-0 text-[11px] sm:text-xs text-muted-foreground overflow-hidden" style={{ direction: "ltr" }}>
