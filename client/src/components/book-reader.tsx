@@ -114,6 +114,8 @@ interface BookReaderProps {
   onVerseChange?: (verseNumber: number) => void;
   onBreadcrumbChange?: (breadcrumb: VerseBreadcrumb) => void;
   onAddNoteWithText?: (text: string) => void;
+  chapterViewAdhyay?: number | null;
+  onExitChapterView?: () => void;
 }
 
 function isShankaracharya(name: string): boolean {
@@ -240,6 +242,8 @@ export function BookReader({
   onVerseChange,
   onBreadcrumbChange,
   onAddNoteWithText,
+  chapterViewAdhyay,
+  onExitChapterView,
 }: BookReaderProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [initialized, setInitialized] = useState(false);
@@ -299,7 +303,12 @@ export function BookReader({
 
   const { data: currentVerseDetails, isLoading: isVerseLoading } = useQuery<VerseWithTranslations>({
     queryKey: ["/api/verses", currentVerseMeta?.id],
-    enabled: !!currentVerseMeta?.id,
+    enabled: !!currentVerseMeta?.id && chapterViewAdhyay == null,
+  });
+
+  const { data: chapterVerses, isLoading: isChapterLoading } = useQuery<VerseWithTranslations[]>({
+    queryKey: ["/api/books", bookId, "chapter", chapterViewAdhyay, "verses"],
+    enabled: chapterViewAdhyay != null,
   });
 
   useEffect(() => {
@@ -736,6 +745,228 @@ export function BookReader({
             </div>
           </div>
         )}
+      </div>
+    );
+  }
+
+  if (chapterViewAdhyay != null && book) {
+    const chapterInfo = tocHierarchy.groups.find(g => g.adhyayNumber === chapterViewAdhyay);
+    const chapterTitle = chapterInfo?.adhyayTitle || `Chapter ${chapterViewAdhyay}`;
+
+    const getChapterTranslation = (verse: VerseWithTranslations, langCode: string): string => {
+      const langAliases: Record<string, string[]> = {
+        "english": ["english", "en"],
+        "en": ["english", "en"],
+        "hi": ["hi", "hindi"],
+        "hindi": ["hi", "hindi"],
+      };
+      const matchCodes = langAliases[langCode] || [langCode];
+      const t = verse.translations?.find(tr => matchCodes.includes(tr.languageCode));
+      return t?.content || "";
+    };
+
+    const getChapterDevanagari = (verse: VerseWithTranslations): string => {
+      const devText = verse.translations?.find(t => t.languageCode === "devanagari")?.content;
+      if (devText) return devText;
+      return verse.translations?.find(t => t.languageCode === "sa")?.content || "";
+    };
+
+    const showTranslation = selectedCommentaryLanguage && selectedCommentaryLanguage !== "devanagari" && selectedCommentaryLanguage !== "sa";
+
+    const groupedByKhanda = chapterInfo && tocHierarchy.type === "three-level"
+      ? chapterInfo.khandas.map(k => ({
+          khandaNumber: k.khandaNumber,
+          khandaTitle: k.khandaTitle,
+          verseNumbers: k.verses.map(v => v.verseNumber),
+        }))
+      : null;
+
+    return (
+      <div className="flex-1 flex flex-col min-w-0">
+        <div className="border-b border-border px-3 sm:px-8 py-3 sm:py-5 bg-card/50 shrink-0">
+          <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto">
+            <div className="flex items-center justify-between gap-2 sm:gap-4">
+              <div className="space-y-0.5 sm:space-y-1 flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-3">
+                  <h1 className="font-serif text-base sm:text-xl font-semibold tracking-tight truncate">
+                    {book.title}
+                  </h1>
+                  <Badge variant="secondary" className="shrink-0 text-[10px] sm:text-xs">
+                    Ch. {chapterViewAdhyay}
+                  </Badge>
+                </div>
+                <p className="text-xs sm:text-sm text-muted-foreground font-serif">{chapterTitle}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {hasCommentaryOptions && (
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
+                    <Select
+                      value={selectedCommentaryLanguage || ""}
+                      onValueChange={handleLanguageChange}
+                      disabled={availableLanguagesForAuthor.length === 0}
+                    >
+                      <SelectTrigger
+                        className="w-[120px] sm:w-[140px] h-7 sm:h-8 text-[11px] sm:text-xs bg-background/80 backdrop-blur-sm border-primary/20"
+                        data-testid="select-chapter-language"
+                      >
+                        <SelectValue placeholder="Language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableLanguagesForAuthor.map((lang) => (
+                          <SelectItem key={lang.code} value={lang.code}>
+                            {lang.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {onExitChapterView && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onExitChapterView}
+                    className="gap-1.5 text-xs"
+                    data-testid="button-exit-chapter-view"
+                  >
+                    <BookOpen className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Single Verse</span>
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto relative">
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-10 left-10 text-[12rem] text-primary/[0.03] font-serif select-none">ॐ</div>
+            <div className="absolute bottom-20 right-10 text-[10rem] text-primary/[0.03] font-serif select-none rotate-12">ॐ</div>
+          </div>
+
+          <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto p-3 sm:p-8 relative z-10">
+            {isChapterLoading ? (
+              <div className="space-y-6">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="space-y-3">
+                    <Skeleton className="h-5 w-20 mx-auto" />
+                    <Skeleton className="h-16 w-full" />
+                    <Skeleton className="h-10 w-3/4 mx-auto" />
+                  </div>
+                ))}
+              </div>
+            ) : chapterVerses && chapterVerses.length > 0 ? (
+              <div className="space-y-4 sm:space-y-6">
+                {groupedByKhanda ? (
+                  groupedByKhanda.map(khanda => {
+                    const khandaVerses = chapterVerses.filter(v => khanda.verseNumbers.includes(v.verseNumber));
+                    if (khandaVerses.length === 0) return null;
+                    return (
+                      <div key={khanda.khandaNumber}>
+                        <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                          <div className="h-px flex-1 bg-primary/10"></div>
+                          <span className="text-xs sm:text-sm font-serif text-primary/70 px-2 sm:px-3">
+                            Part {chapterViewAdhyay}.{khanda.khandaNumber} - {khanda.khandaTitle}
+                          </span>
+                          <div className="h-px flex-1 bg-primary/10"></div>
+                        </div>
+                        <div className="space-y-3 sm:space-y-4">
+                          {khandaVerses.map((verse, idx) => {
+                            const devanagari = getChapterDevanagari(verse);
+                            const translation = showTranslation ? getChapterTranslation(verse, selectedCommentaryLanguage!) : "";
+                            const verseLabel = `${chapterViewAdhyay}.${khanda.khandaNumber}.${idx + 1}`;
+                            return (
+                              <div
+                                key={verse.id}
+                                className="backdrop-blur-md bg-gradient-to-br from-white/70 via-orange-50/50 to-amber-50/40 dark:from-card/80 dark:via-card/70 dark:to-orange-950/30 border border-primary/15 rounded-lg sm:rounded-xl p-3 sm:p-6 relative overflow-hidden cursor-pointer hover-elevate"
+                                onClick={() => {
+                                  const pageIdx = verses.findIndex(v => v.verseNumber === verse.verseNumber);
+                                  if (pageIdx >= 0) {
+                                    setCurrentPage(pageIdx);
+                                    setShowCoverPage(false);
+                                    onExitChapterView?.();
+                                  }
+                                }}
+                                data-testid={`chapter-verse-${verse.verseNumber}`}
+                              >
+                                <div className="flex items-center justify-center gap-2 mb-2 sm:mb-3">
+                                  <span className="text-primary/40 text-xs sm:text-sm">॥</span>
+                                  <Badge variant="outline" className="font-mono text-[9px] sm:text-[10px] px-1.5 h-4 sm:h-5 border-primary/20 text-primary/70">
+                                    Sl. {verseLabel}
+                                  </Badge>
+                                  <span className="text-primary/40 text-xs sm:text-sm">॥</span>
+                                </div>
+                                {devanagari && (
+                                  <div className="font-serif text-base sm:text-lg leading-relaxed text-center px-1 sm:px-4">
+                                    {devanagari}
+                                  </div>
+                                )}
+                                {translation && (
+                                  <div className="border-t border-primary/10 mt-2 sm:mt-3 pt-2 sm:pt-3">
+                                    <div className="text-xs sm:text-sm leading-relaxed text-center px-1 sm:px-4 text-muted-foreground">
+                                      {translation}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  chapterVerses.map((verse, idx) => {
+                    const devanagari = getChapterDevanagari(verse);
+                    const translation = showTranslation ? getChapterTranslation(verse, selectedCommentaryLanguage!) : "";
+                    const verseLabel = `${chapterViewAdhyay}.${idx + 1}`;
+                    return (
+                      <div
+                        key={verse.id}
+                        className="backdrop-blur-md bg-gradient-to-br from-white/70 via-orange-50/50 to-amber-50/40 dark:from-card/80 dark:via-card/70 dark:to-orange-950/30 border border-primary/15 rounded-lg sm:rounded-xl p-3 sm:p-6 relative overflow-hidden cursor-pointer hover-elevate"
+                        onClick={() => {
+                          const pageIdx = verses.findIndex(v => v.verseNumber === verse.verseNumber);
+                          if (pageIdx >= 0) {
+                            setCurrentPage(pageIdx);
+                            setShowCoverPage(false);
+                            onExitChapterView?.();
+                          }
+                        }}
+                        data-testid={`chapter-verse-${verse.verseNumber}`}
+                      >
+                        <div className="flex items-center justify-center gap-2 mb-2 sm:mb-3">
+                          <span className="text-primary/40 text-xs sm:text-sm">॥</span>
+                          <Badge variant="outline" className="font-mono text-[9px] sm:text-[10px] px-1.5 h-4 sm:h-5 border-primary/20 text-primary/70">
+                            Sl. {verseLabel}
+                          </Badge>
+                          <span className="text-primary/40 text-xs sm:text-sm">॥</span>
+                        </div>
+                        {devanagari && (
+                          <div className="font-serif text-base sm:text-lg leading-relaxed text-center px-1 sm:px-4">
+                            {devanagari}
+                          </div>
+                        )}
+                        {translation && (
+                          <div className="border-t border-primary/10 mt-2 sm:mt-3 pt-2 sm:pt-3">
+                            <div className="text-xs sm:text-sm leading-relaxed text-center px-1 sm:px-4 text-muted-foreground">
+                              {translation}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground">No verses found in this chapter</p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     );
   }

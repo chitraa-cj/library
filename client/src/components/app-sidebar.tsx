@@ -110,6 +110,7 @@ interface AppSidebarProps {
   selectedBookId: string | null;
   onSelectBook: (bookId: string) => void;
   onSelectVerse?: (verseNumber: number) => void;
+  onSelectChapter?: (adhyayNumber: number) => void;
   selectedVerseNumber?: number;
   onGoHome?: () => void;
   onGoBack?: () => void;
@@ -189,7 +190,7 @@ function buildHierarchy(verses: Verse[]): AdhyayGroup[] {
   return sorted;
 }
 
-export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, selectedVerseNumber, onGoHome, onGoBack }: AppSidebarProps) {
+export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSelectChapter, selectedVerseNumber, onGoHome, onGoBack }: AppSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [drillCategoryId, setDrillCategoryId] = useState<string | null>(null);
   const [drillSubCategoryId, setDrillSubCategoryId] = useState<string | null>(null);
@@ -441,8 +442,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
 
             return (
               <div key={adhyayKey}>
-                <button
-                  onClick={() => toggleAdhyay(adhyayKey)}
+                <div
                   className={`flex items-center gap-1.5 w-full text-left text-xs py-2 px-2 rounded-md transition-colors ${
                     isCurrentAdhyay && !isAdhyayOpen
                       ? "bg-primary/10 text-primary font-medium"
@@ -450,23 +450,43 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
                   }`}
                   data-testid={`button-adhyay-${adhyay.adhyayNumber}`}
                 >
-                  {isAdhyayOpen ? (
-                    <ChevronDown className="h-3 w-3 shrink-0 text-primary" />
-                  ) : (
-                    <ChevronRight className="h-3 w-3 shrink-0" />
-                  )}
-                  <Badge variant="secondary" className="text-[10px] px-1.5 h-4 shrink-0 font-mono">
-                    Ch. {adhyay.adhyayNumber}
-                  </Badge>
-                  <span className="text-xs font-medium truncate">
-                    {adhyay.adhyayTitle}
-                  </span>
+                  <button
+                    onClick={() => toggleAdhyay(adhyayKey)}
+                    className="shrink-0 p-0.5 rounded hover:bg-sidebar-accent/40"
+                    data-testid={`button-toggle-adhyay-${adhyay.adhyayNumber}`}
+                  >
+                    {isAdhyayOpen ? (
+                      <ChevronDown className="h-3 w-3 shrink-0 text-primary" />
+                    ) : (
+                      <ChevronRight className="h-3 w-3 shrink-0" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      toggleAdhyay(adhyayKey);
+                      if (onSelectChapter) {
+                        onSelectChapter(adhyay.adhyayNumber);
+                      }
+                      if (isMobile) {
+                        setOpenMobile(false);
+                      }
+                    }}
+                    className="flex items-center gap-1.5 flex-1 min-w-0 text-left"
+                    data-testid={`button-chapter-view-${adhyay.adhyayNumber}`}
+                  >
+                    <Badge variant="secondary" className="text-[10px] px-1.5 h-4 shrink-0 font-mono">
+                      Ch. {adhyay.adhyayNumber}
+                    </Badge>
+                    <span className="text-xs font-medium truncate">
+                      {adhyay.adhyayTitle}
+                    </span>
+                  </button>
                   {isTwoLevel && (
                     <Badge variant="outline" className="text-[9px] px-1 h-4 shrink-0 font-mono border-muted-foreground/30 ml-auto">
                       {adhyay.verses.length}
                     </Badge>
                   )}
-                </button>
+                </div>
 
                 {isAdhyayOpen && isTwoLevel && (
                   <div className="ml-3 pl-2 border-l border-border/40 mt-0.5 space-y-0.5">

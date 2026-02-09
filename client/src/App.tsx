@@ -42,6 +42,7 @@ function HomePage() {
   const [selectedCommentaryLanguage, setSelectedCommentaryLanguage] = useState<string | null>(null);
   const [navigateToVerse, setNavigateToVerse] = useState<number | null>(null);
   const [currentVerseNumber, setCurrentVerseNumber] = useState<number>(1);
+  const [chapterViewAdhyay, setChapterViewAdhyay] = useState<number | null>(null);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(() => {
     return typeof window !== 'undefined' && window.innerWidth < 1024;
   });
@@ -108,6 +109,7 @@ function HomePage() {
     setNavigateToVerse(null);
     setCurrentVerseNumber(1);
     setVerseBreadcrumb(null);
+    setChapterViewAdhyay(null);
     const slug = getBookSlug(bookId);
     if (slug) {
       setLocation(`/${slug}`);
@@ -135,6 +137,7 @@ function HomePage() {
   }, [isMobile, selectedBookId, selectedVerseId, mobileInitialPanelShown]);
 
   const handleSidebarVerseSelect = (verseNumber: number) => {
+    setChapterViewAdhyay(null);
     setNavigateToVerse(verseNumber);
   };
 
@@ -163,6 +166,7 @@ function HomePage() {
           selectedBookId={selectedBookId}
           onSelectBook={handleBookSelect}
           onSelectVerse={handleSidebarVerseSelect}
+          onSelectChapter={(adhyayNumber) => setChapterViewAdhyay(adhyayNumber)}
           selectedVerseNumber={currentVerseNumber}
           onGoHome={handleGoHome}
           onGoBack={selectedBookId ? handleGoHome : undefined}
@@ -295,6 +299,8 @@ function HomePage() {
                   navigateToVerse={navigateToVerse}
                   onVerseChange={handleVerseChange}
                   onBreadcrumbChange={setVerseBreadcrumb}
+                  chapterViewAdhyay={chapterViewAdhyay}
+                  onExitChapterView={() => setChapterViewAdhyay(null)}
                   onAddNoteWithText={(text) => {
                     setPendingNoteText(text);
                     if (isMobile) {

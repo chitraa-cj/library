@@ -54,6 +54,7 @@ export interface IStorage {
 
   getVersesByBookId(bookId: string): Promise<VerseWithTranslations[]>;
   getVerseById(id: string): Promise<VerseWithTranslations | undefined>;
+  getChapterVerses(bookId: string, adhyayNumber: number): Promise<VerseWithTranslations[]>;
   createVerse(verse: InsertVerse): Promise<Verse>;
 
   getTranslationsByVerseId(verseId: string): Promise<VerseTranslation[]>;
@@ -159,6 +160,25 @@ export class DatabaseStorage implements IStorage {
       });
     }
     return versesWithDetails;
+  }
+
+  async getChapterVerses(bookId: string, adhyayNumber: number): Promise<VerseWithTranslations[]> {
+    const chapterVerses = await db
+      .select()
+      .from(verses)
+      .where(and(eq(verses.bookId, bookId), eq(verses.adhyayNumber, adhyayNumber)))
+      .orderBy(verses.verseNumber);
+
+    const result: VerseWithTranslations[] = [];
+    for (const verse of chapterVerses) {
+      const translations = await this.getTranslationsByVerseId(verse.id);
+      result.push({
+        ...verse,
+        translations,
+        explanations: [],
+      });
+    }
+    return result;
   }
 
   async getVerseById(id: string): Promise<VerseWithTranslations | undefined> {

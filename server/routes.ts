@@ -88,6 +88,20 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/books/:id/chapter/:adhyayNumber/verses", async (req, res) => {
+    try {
+      const adhyayNumber = parseInt(req.params.adhyayNumber, 10);
+      if (isNaN(adhyayNumber)) {
+        return res.status(400).json({ error: "Invalid chapter number" });
+      }
+      const chapterVerses = await storage.getChapterVerses(req.params.id, adhyayNumber);
+      res.json(chapterVerses);
+    } catch (error) {
+      console.error("Error fetching chapter verses:", error);
+      res.status(500).json({ error: "Failed to fetch chapter verses" });
+    }
+  });
+
   app.get("/api/books/:id/commentary-options", async (req, res) => {
     try {
       const options = await storage.getCommentaryOptionsByBookId(req.params.id);
