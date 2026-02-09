@@ -111,6 +111,7 @@ interface AppSidebarProps {
   onSelectBook: (bookId: string) => void;
   onSelectVerse?: (verseNumber: number) => void;
   onSelectChapter?: (adhyayNumber: number) => void;
+  onSelectPart?: (adhyayNumber: number, khandaNumber: number) => void;
   selectedVerseNumber?: number;
   onGoHome?: () => void;
   onGoBack?: () => void;
@@ -190,7 +191,7 @@ function buildHierarchy(verses: Verse[]): AdhyayGroup[] {
   return sorted;
 }
 
-export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSelectChapter, selectedVerseNumber, onGoHome, onGoBack }: AppSidebarProps) {
+export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSelectChapter, onSelectPart, selectedVerseNumber, onGoHome, onGoBack }: AppSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [drillCategoryId, setDrillCategoryId] = useState<string | null>(null);
   const [drillSubCategoryId, setDrillSubCategoryId] = useState<string | null>(null);
@@ -527,25 +528,33 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
 
                       return (
                         <div key={khandaKey}>
-                          <button
-                            onClick={() => toggleKhanda(khandaKey)}
-                            className={`flex items-center gap-1.5 w-full text-left text-xs py-2 px-2 rounded-md transition-colors ${
+                          <div className={`flex items-center w-full text-xs rounded-md transition-colors ${
                               isCurrentKhanda && !isKhandaOpen
                                 ? "bg-primary/10 text-primary font-medium"
                                 : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
-                            }`}
-                            data-testid={`button-khanda-${adhyay.adhyayNumber}-${khanda.khandaNumber}`}
-                          >
-                            {isKhandaOpen ? (
-                              <ChevronDown className="h-3 w-3 shrink-0 text-primary" />
-                            ) : (
-                              <ChevronRight className="h-3 w-3 shrink-0" />
-                            )}
-                            <Badge variant="outline" className="text-[10px] px-1 h-4 shrink-0 font-mono border-muted-foreground/30">
-                              Part {adhyay.adhyayNumber}.{khanda.khandaNumber}
-                            </Badge>
-                            <span className="truncate">{khanda.khandaTitle}</span>
-                          </button>
+                            }`}>
+                            <button
+                              onClick={() => toggleKhanda(khandaKey)}
+                              className="shrink-0 py-2 pl-2 pr-1"
+                              data-testid={`button-toggle-khanda-${adhyay.adhyayNumber}-${khanda.khandaNumber}`}
+                            >
+                              {isKhandaOpen ? (
+                                <ChevronDown className="h-3 w-3 shrink-0 text-primary" />
+                              ) : (
+                                <ChevronRight className="h-3 w-3 shrink-0" />
+                              )}
+                            </button>
+                            <button
+                              onClick={() => onSelectPart?.(adhyay.adhyayNumber, khanda.khandaNumber)}
+                              className="flex items-center gap-1.5 flex-1 min-w-0 text-left py-2 pr-2"
+                              data-testid={`button-part-view-${adhyay.adhyayNumber}-${khanda.khandaNumber}`}
+                            >
+                              <Badge variant="outline" className="text-[10px] px-1 h-4 shrink-0 font-mono border-muted-foreground/30">
+                                Part {adhyay.adhyayNumber}.{khanda.khandaNumber}
+                              </Badge>
+                              <span className="truncate">{khanda.khandaTitle}</span>
+                            </button>
+                          </div>
 
                           {isKhandaOpen && (
                             <div className="ml-3 pl-2 border-l border-border/30 mt-0.5 space-y-0.5">

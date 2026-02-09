@@ -115,6 +115,7 @@ interface BookReaderProps {
   onBreadcrumbChange?: (breadcrumb: VerseBreadcrumb) => void;
   onAddNoteWithText?: (text: string) => void;
   chapterViewAdhyay?: number | null;
+  chapterViewKhanda?: number | null;
   onExitChapterView?: () => void;
 }
 
@@ -243,6 +244,7 @@ export function BookReader({
   onBreadcrumbChange,
   onAddNoteWithText,
   chapterViewAdhyay,
+  chapterViewKhanda,
   onExitChapterView,
 }: BookReaderProps) {
   const [currentPage, setCurrentPage] = useState(0);
@@ -752,6 +754,9 @@ export function BookReader({
   if (chapterViewAdhyay != null && book) {
     const chapterInfo = tocHierarchy.groups.find(g => g.adhyayNumber === chapterViewAdhyay);
     const chapterTitle = chapterInfo?.adhyayTitle || `Chapter ${chapterViewAdhyay}`;
+    const selectedKhandaInfo = chapterViewKhanda != null && chapterInfo
+      ? chapterInfo.khandas.find(k => k.khandaNumber === chapterViewKhanda)
+      : null;
 
     const getChapterTranslation = (verse: VerseWithTranslations, langCode: string): string => {
       const langAliases: Record<string, string[]> = {
@@ -773,13 +778,24 @@ export function BookReader({
 
     const showTranslation = selectedCommentaryLanguage && selectedCommentaryLanguage !== "devanagari" && selectedCommentaryLanguage !== "sa";
 
-    const groupedByKhanda = chapterInfo && tocHierarchy.type === "three-level"
+    const filteredChapterVerses = chapterViewKhanda != null && selectedKhandaInfo
+      ? chapterVerses?.filter(v => selectedKhandaInfo.verses.some(sv => sv.verseNumber === v.verseNumber))
+      : chapterVerses;
+
+    const groupedByKhanda = chapterViewKhanda == null && chapterInfo && tocHierarchy.type === "three-level"
       ? chapterInfo.khandas.map(k => ({
           khandaNumber: k.khandaNumber,
           khandaTitle: k.khandaTitle,
           verseNumbers: k.verses.map(v => v.verseNumber),
         }))
       : null;
+
+    const headerBadge = chapterViewKhanda != null
+      ? `Part ${chapterViewAdhyay}.${chapterViewKhanda}`
+      : `Ch. ${chapterViewAdhyay}`;
+    const headerSubtitle = selectedKhandaInfo
+      ? selectedKhandaInfo.khandaTitle
+      : chapterTitle;
 
     return (
       <div className="flex-1 flex flex-col min-w-0">
@@ -792,10 +808,10 @@ export function BookReader({
                     {book.title}
                   </h1>
                   <Badge variant="secondary" className="shrink-0 text-[10px] sm:text-xs">
-                    Ch. {chapterViewAdhyay}
+                    {headerBadge}
                   </Badge>
                 </div>
-                <p className="text-xs sm:text-sm text-muted-foreground font-serif">{chapterTitle}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground font-serif">{headerSubtitle}</p>
               </div>
               <div className="flex items-center gap-2">
                 {hasCommentaryOptions && (
@@ -856,11 +872,11 @@ export function BookReader({
                   </div>
                 ))}
               </div>
-            ) : chapterVerses && chapterVerses.length > 0 ? (
+            ) : filteredChapterVerses && filteredChapterVerses.length > 0 ? (
               <div className="space-y-4 sm:space-y-6">
                 {groupedByKhanda ? (
                   groupedByKhanda.map(khanda => {
-                    const khandaVerses = chapterVerses.filter(v => khanda.verseNumbers.includes(v.verseNumber));
+                    const khandaVerses = filteredChapterVerses.filter(v => khanda.verseNumbers.includes(v.verseNumber));
                     if (khandaVerses.length === 0) return null;
                     return (
                       <div key={khanda.khandaNumber}>
@@ -917,10 +933,12 @@ export function BookReader({
                     );
                   })
                 ) : (
-                  chapterVerses.map((verse, idx) => {
+                  filteredChapterVerses.map((verse, idx) => {
                     const devanagari = getChapterDevanagari(verse);
                     const translation = showTranslation ? getChapterTranslation(verse, selectedCommentaryLanguage!) : "";
-                    const verseLabel = `${chapterViewAdhyay}.${idx + 1}`;
+                    const verseLabel = chapterViewKhanda != null
+                      ? `${chapterViewAdhyay}.${chapterViewKhanda}.${idx + 1}`
+                      : `${chapterViewAdhyay}.${idx + 1}`;
                     return (
                       <div
                         key={verse.id}

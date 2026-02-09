@@ -43,6 +43,7 @@ function HomePage() {
   const [navigateToVerse, setNavigateToVerse] = useState<number | null>(null);
   const [currentVerseNumber, setCurrentVerseNumber] = useState<number>(1);
   const [chapterViewAdhyay, setChapterViewAdhyay] = useState<number | null>(null);
+  const [chapterViewKhanda, setChapterViewKhanda] = useState<number | null>(null);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(() => {
     return typeof window !== 'undefined' && window.innerWidth < 1024;
   });
@@ -110,6 +111,7 @@ function HomePage() {
     setCurrentVerseNumber(1);
     setVerseBreadcrumb(null);
     setChapterViewAdhyay(null);
+    setChapterViewKhanda(null);
     const slug = getBookSlug(bookId);
     if (slug) {
       setLocation(`/${slug}`);
@@ -138,6 +140,7 @@ function HomePage() {
 
   const handleSidebarVerseSelect = (verseNumber: number) => {
     setChapterViewAdhyay(null);
+    setChapterViewKhanda(null);
     setNavigateToVerse(verseNumber);
   };
 
@@ -166,7 +169,8 @@ function HomePage() {
           selectedBookId={selectedBookId}
           onSelectBook={handleBookSelect}
           onSelectVerse={handleSidebarVerseSelect}
-          onSelectChapter={(adhyayNumber) => setChapterViewAdhyay(adhyayNumber)}
+          onSelectChapter={(adhyayNumber) => { setChapterViewAdhyay(adhyayNumber); setChapterViewKhanda(null); }}
+          onSelectPart={(adhyayNumber, khandaNumber) => { setChapterViewAdhyay(adhyayNumber); setChapterViewKhanda(khandaNumber); }}
           selectedVerseNumber={currentVerseNumber}
           onGoHome={handleGoHome}
           onGoBack={selectedBookId ? handleGoHome : undefined}
@@ -300,7 +304,8 @@ function HomePage() {
                   onVerseChange={handleVerseChange}
                   onBreadcrumbChange={setVerseBreadcrumb}
                   chapterViewAdhyay={chapterViewAdhyay}
-                  onExitChapterView={() => setChapterViewAdhyay(null)}
+                  chapterViewKhanda={chapterViewKhanda}
+                  onExitChapterView={() => { setChapterViewAdhyay(null); setChapterViewKhanda(null); }}
                   onAddNoteWithText={(text) => {
                     setPendingNoteText(text);
                     if (isMobile) {
