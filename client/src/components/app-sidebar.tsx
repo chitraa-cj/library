@@ -358,8 +358,23 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
 
   const toggleAdhyay = (key: string) => {
     const next = new Set(expandedAdhyays);
-    if (next.has(key)) next.delete(key);
-    else next.add(key);
+    if (next.has(key)) {
+      next.delete(key);
+      const khandaKeysToRemove = Array.from(expandedKhandas).filter(k => k.startsWith(key + "-k"));
+      if (khandaKeysToRemove.length > 0) {
+        const nextK = new Set(expandedKhandas);
+        khandaKeysToRemove.forEach(k => nextK.delete(k));
+        setExpandedKhandas(nextK);
+      }
+    } else {
+      next.add(key);
+      const adhyay = hierarchy.find(a => key.endsWith(`-a${a.adhyayNumber}`));
+      if (adhyay && adhyay.khandas.length > 0) {
+        const nextK = new Set(expandedKhandas);
+        adhyay.khandas.forEach(k => nextK.add(`${key}-k${k.khandaNumber}`));
+        setExpandedKhandas(nextK);
+      }
+    }
     setExpandedAdhyays(next);
   };
 
