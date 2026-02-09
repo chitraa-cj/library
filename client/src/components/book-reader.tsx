@@ -601,11 +601,7 @@ export function BookReader({
               <div className="absolute top-3 right-3 sm:top-4 sm:right-4 text-4xl sm:text-6xl text-primary/[0.08] font-serif select-none pointer-events-none">ॐ</div>
 
               <div className="flex flex-col items-center text-center mb-6 sm:mb-8">
-                <img
-                  src={shankaracharyaImg}
-                  alt="Shankaracharya"
-                  className="h-20 w-20 sm:h-28 sm:w-28 object-contain mb-4 opacity-80 select-none pointer-events-none"
-                />
+                <span className="text-5xl sm:text-7xl text-primary/30 font-serif mb-4 select-none pointer-events-none">ॐ</span>
                 <h1 className="font-serif text-xl sm:text-3xl font-bold text-foreground tracking-tight" data-testid="text-cover-title">
                   {book.title}
                 </h1>
