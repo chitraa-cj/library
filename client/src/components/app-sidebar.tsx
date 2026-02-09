@@ -488,7 +488,9 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                   </button>
                   <button
                     onClick={() => {
-                      toggleAdhyay(adhyayKey);
+                      if (!isAdhyayOpen) {
+                        toggleAdhyay(adhyayKey);
+                      }
                       if (onSelectChapter) {
                         onSelectChapter(adhyay.adhyayNumber);
                       }
@@ -569,7 +571,15 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                               )}
                             </button>
                             <button
-                              onClick={() => onSelectPart?.(adhyay.adhyayNumber, khanda.khandaNumber)}
+                              onClick={() => {
+                                if (!isKhandaOpen) {
+                                  toggleKhanda(khandaKey);
+                                }
+                                onSelectPart?.(adhyay.adhyayNumber, khanda.khandaNumber);
+                                if (isMobile) {
+                                  setOpenMobile(false);
+                                }
+                              }}
                               className="flex items-center gap-1.5 flex-1 min-w-0 text-left py-2 pr-2"
                               data-testid={`button-part-view-${adhyay.adhyayNumber}-${khanda.khandaNumber}`}
                             >
