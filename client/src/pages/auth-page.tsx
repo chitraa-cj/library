@@ -99,7 +99,7 @@ export default function AuthPage() {
                 onClick={() => { setMode("register"); setError(""); }}
                 data-testid="tab-register"
               >
-                Register
+                Sign Up
               </Button>
             </div>
           </CardHeader>
@@ -167,7 +167,7 @@ export default function AuthPage() {
                 data-testid="button-auth-submit"
               >
                 {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                {mode === "login" ? "Log In" : "Create Account"}
+                {mode === "login" ? "Log In" : "Sign Up"}
               </Button>
             </form>
 
@@ -181,7 +181,7 @@ export default function AuthPage() {
                     onClick={() => { setMode("register"); setError(""); }}
                     data-testid="link-switch-to-register"
                   >
-                    Register
+                    Sign up
                   </button>
                 </>
               ) : (
