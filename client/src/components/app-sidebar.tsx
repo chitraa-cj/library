@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, BookOpen, Loader2, ChevronRight, ChevronDown, Home, Library, FolderOpen, Folder, Lock, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -295,12 +295,12 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
     const crumbs: { label: string; onClick: () => void }[] = [];
     crumbs.push({
       label: "All Categories",
-      onClick: () => { setDrillCategoryId(null); setDrillSubCategoryId(null); },
+      onClick: () => { setDrillCategoryId(null); setDrillSubCategoryId(null); setSearchQuery(""); },
     });
     if (drillCategory) {
       crumbs.push({
         label: drillCategory.label,
-        onClick: () => { setDrillSubCategoryId(null); },
+        onClick: () => { setDrillSubCategoryId(null); setSearchQuery(""); },
       });
     }
     if (drillSubCategory) {
@@ -335,10 +335,12 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
   const handleDrillCategory = (catId: string) => {
     setDrillCategoryId(catId);
     setDrillSubCategoryId(null);
+    setSearchQuery("");
   };
 
   const handleDrillSubCategory = (subId: string) => {
     setDrillSubCategoryId(subId);
+    setSearchQuery("");
   };
 
   const toggleBookExpand = (bookId: string) => {
@@ -362,18 +364,63 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
     setExpandedKhandas(next);
   };
 
+  const fuzzyMatch = useCallback((text: string, query: string): boolean => {
+    const t = text.toLowerCase();
+    const q = query.toLowerCase();
+    if (t.includes(q)) return true;
+    const words = t.split(/[\s\-–—,.]+/);
+    return words.some(w => w.startsWith(q) || q.startsWith(w));
+  }, []);
+
   const filteredTree = useMemo(() => {
     if (!searchQuery.trim()) return CATALOG_TREE;
-    const q = searchQuery.toLowerCase();
+    const q = searchQuery.trim();
     return CATALOG_TREE.filter(cat => {
-      if (cat.label.toLowerCase().includes(q)) return true;
-      if (cat.children?.some(sub => sub.label.toLowerCase().includes(q))) return true;
+      if (fuzzyMatch(cat.label, q)) return true;
+      if (cat.children?.some(sub => fuzzyMatch(sub.label, q))) return true;
       const booksInCat = cat.children
-        ? cat.children.some(sub => booksBySubCategory[sub.id]?.some(b => b.title.toLowerCase().includes(q)))
-        : booksBySubCategory[cat.id]?.some(b => b.title.toLowerCase().includes(q));
+        ? cat.children.some(sub => booksBySubCategory[sub.id]?.some(b => fuzzyMatch(b.title, q)))
+        : booksBySubCategory[cat.id]?.some(b => fuzzyMatch(b.title, q));
       return booksInCat;
     });
-  }, [searchQuery, booksBySubCategory]);
+  }, [searchQuery, booksBySubCategory, fuzzyMatch]);
+
+  const filteredSubCategories = useMemo(() => {
+    if (!searchQuery.trim() || !drillCategory?.children) return drillCategory?.children ?? [];
+    const q = searchQuery.trim();
+    return drillCategory.children.filter(sub => {
+      if (fuzzyMatch(sub.label, q)) return true;
+      const subBooks = booksBySubCategory[sub.id] ?? [];
+      return subBooks.some(b => fuzzyMatch(b.title, q));
+    });
+  }, [searchQuery, drillCategory, booksBySubCategory, fuzzyMatch]);
+
+  const filteredBooks = useMemo(() => {
+    if (!drillSubCategoryId) return [];
+    const subBooks = booksBySubCategory[drillSubCategoryId] ?? [];
+    if (!searchQuery.trim()) return subBooks;
+    const q = searchQuery.trim();
+    return subBooks.filter(b => {
+      if (fuzzyMatch(b.title, q)) return true;
+      if (b.id === selectedBookId && hierarchy.length > 0) {
+        return hierarchy.some(adhyay =>
+          (adhyay.adhyayTitle && fuzzyMatch(adhyay.adhyayTitle, q)) ||
+          adhyay.khandas.some(k => k.khandaTitle && fuzzyMatch(k.khandaTitle, q))
+        );
+      }
+      return false;
+    });
+  }, [searchQuery, drillSubCategoryId, booksBySubCategory, selectedBookId, hierarchy, fuzzyMatch]);
+
+  const filteredHierarchy = useMemo(() => {
+    if (!searchQuery.trim() || hierarchy.length === 0) return hierarchy;
+    const q = searchQuery.trim();
+    return hierarchy.filter(adhyay => {
+      if (adhyay.adhyayTitle && fuzzyMatch(adhyay.adhyayTitle, q)) return true;
+      if (adhyay.khandas.some(k => k.khandaTitle && fuzzyMatch(k.khandaTitle, q))) return true;
+      return false;
+    });
+  }, [searchQuery, hierarchy]);
 
   const renderVerseTree = (book: Book, verses: Verse[]) => {
     if (verses.length === 0) return null;
@@ -381,11 +428,13 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
     if (hasHierarchy) {
       const isTwoLevel = hierarchyType === "two-level";
 
+      const displayHierarchy = searchQuery.trim() ? filteredHierarchy : hierarchy;
+
       return (
         <div className="pl-3 mt-1 space-y-0.5">
-          {hierarchy.map((adhyay) => {
+          {displayHierarchy.map((adhyay) => {
             const adhyayKey = `${book.id}-a${adhyay.adhyayNumber}`;
-            const isAdhyayOpen = expandedAdhyays.has(adhyayKey);
+            const isAdhyayOpen = expandedAdhyays.has(adhyayKey) || !!searchQuery.trim();
             const isCurrentAdhyay = isTwoLevel
               ? adhyay.verses.some(v => v.verseNumber === selectedVerseNumber)
               : adhyay.khandas.some(k => k.verses.some(v => v.verseNumber === selectedVerseNumber));
@@ -645,9 +694,11 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
       );
     }
 
+    const displaySubs = searchQuery.trim() ? filteredSubCategories : drillCategory.children;
+
     return (
       <div className="space-y-0.5">
-        {drillCategory.children.map((sub) => {
+        {displaySubs.map((sub) => {
           const subBooks = booksBySubCategory[sub.id] ?? [];
           const hasBooks = subBooks.length > 0;
 
@@ -683,15 +734,15 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
 
   const renderBookList = () => {
     if (!drillSubCategoryId) return null;
-    const subBooks = booksBySubCategory[drillSubCategoryId] ?? [];
-    if (subBooks.length === 0) {
+    const displayBooks = searchQuery.trim() ? filteredBooks : (booksBySubCategory[drillSubCategoryId] ?? []);
+    if (displayBooks.length === 0) {
       return (
         <div className="py-4 px-2 text-xs text-muted-foreground/60 italic text-center">
-          Coming soon...
+          {searchQuery.trim() ? "No matches found" : "Coming soon..."}
         </div>
       );
     }
-    return <div className="space-y-0.5">{subBooks.map(book => renderBookItem(book))}</div>;
+    return <div className="space-y-0.5">{displayBooks.map(book => renderBookItem(book))}</div>;
   };
 
   return (
@@ -783,7 +834,15 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, select
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search texts..."
+                placeholder={
+                  selectedBookId && selectedBookData?.verses
+                    ? "Search chapters..."
+                    : drillSubCategoryId
+                      ? "Search books..."
+                      : drillCategoryId
+                        ? "Search subcategories..."
+                        : "Search categories..."
+                }
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
