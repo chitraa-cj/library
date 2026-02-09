@@ -53,6 +53,7 @@ function HomePageContent() {
   const [pendingNoteText, setPendingNoteText] = useState<string | null>(null);
   const [urlInitialized, setUrlInitialized] = useState(false);
   const [mobileInitialPanelShown, setMobileInitialPanelShown] = useState(false);
+  const [isOnCoverPage, setIsOnCoverPage] = useState(true);
   const isMobile = useIsMobile();
   const { user, isLoading: authLoading, isAuthenticated: isLoggedIn } = useAuth();
 
@@ -305,7 +306,7 @@ function HomePageContent() {
             </div>
             {(() => {
               const selectedBook = selectedBookId && allBooks ? allBooks.find(b => b.id === selectedBookId) : null;
-              if (selectedBook?.description) {
+              if (selectedBook?.description && !isOnCoverPage) {
                 const shortDesc = selectedBook.description.length > 120 
                   ? selectedBook.description.slice(0, 120).replace(/\s+\S*$/, '') + '...'
                   : selectedBook.description;
@@ -335,6 +336,7 @@ function HomePageContent() {
                   chapterViewAdhyay={chapterViewAdhyay}
                   chapterViewKhanda={chapterViewKhanda}
                   onExitChapterView={() => { setChapterViewAdhyay(null); setChapterViewKhanda(null); }}
+                  onCoverPageChange={setIsOnCoverPage}
                   onAddNoteWithText={(text) => {
                     setPendingNoteText(text);
                     if (isMobile) {

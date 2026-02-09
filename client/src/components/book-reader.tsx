@@ -117,6 +117,7 @@ interface BookReaderProps {
   chapterViewAdhyay?: number | null;
   chapterViewKhanda?: number | null;
   onExitChapterView?: () => void;
+  onCoverPageChange?: (isOnCoverPage: boolean) => void;
 }
 
 function isShankaracharya(name: string): boolean {
@@ -246,6 +247,7 @@ export function BookReader({
   chapterViewAdhyay,
   chapterViewKhanda,
   onExitChapterView,
+  onCoverPageChange,
 }: BookReaderProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [initialized, setInitialized] = useState(false);
@@ -396,6 +398,10 @@ export function BookReader({
     setExpandedTOCAdhyays(new Set());
     setExpandedTOCKhandas(new Set());
   }, [bookId]);
+
+  useEffect(() => {
+    onCoverPageChange?.(showCoverPage);
+  }, [showCoverPage, onCoverPageChange]);
 
   useEffect(() => {
     if (navigateToVerse !== null && navigateToVerse !== undefined && verses.length > 0) {
@@ -609,6 +615,12 @@ export function BookReader({
                   {book.category}
                 </Badge>
               </div>
+
+              {book.description && (
+                <p className="text-xs sm:text-sm text-muted-foreground/80 leading-relaxed text-center mb-4 sm:mb-6 max-w-lg mx-auto" data-testid="text-cover-description">
+                  {book.description}
+                </p>
+              )}
 
               <div className="flex items-center justify-center mb-4 sm:mb-6">
                 <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">

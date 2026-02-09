@@ -1,12 +1,11 @@
-import { BookOpen, Clock, Library, Scroll, BookMarked, Feather, FolderOpen, Lock, ArrowLeft } from "lucide-react";
+import { useState } from "react";
+import { BookOpen, Clock, Library, FolderOpen, Lock, ArrowLeft, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { VideoInline } from "@/components/video-popup";
 import { CATALOG_TREE, type CatalogCategory } from "@/components/app-sidebar";
 import { MindMapCarousel } from "@/components/mindmap-carousel";
-import ishaImg from "@/assets/images/book-isha-upanishad.jpg";
-import gitaImg from "@/assets/images/book-bhagavad-gita.jpg";
 import brahmaImg from "@/assets/images/book-brahma-sutra.jpg";
 import vivekImg from "@/assets/images/book-vivekachudamani.jpg";
 import upadesaImg from "@/assets/images/book-upadesa-sahasri.jpg";
@@ -27,11 +26,6 @@ interface WelcomeScreenProps {
   onSelectBook: (bookId: string) => void;
 }
 
-const bookImages: Record<string, string> = {
-  "isha-upanishad-bhashya": ishaImg,
-  "bhagavad-gita": gitaImg,
-};
-
 const bookVideoConfig: Record<string, { videoId: string; videoTitle: string }> = {
   "isha-upanishad-bhashya": {
     videoId: "8ELHatzdtAk",
@@ -43,37 +37,67 @@ const comingSoonBooks = [
   {
     title: "ब्रह्मसूत्र भाष्य",
     titleEn: "Brahma Sutra Bhashya",
-    author: "Sri Shankaracharya",
     category: "Vedanta",
-    description: "The foundational text of Advaita Vedanta — Shankaracharya's commentary on Badarayana's aphorisms establishing the nature of Brahman",
+    description: "Shankaracharya's commentary on Badarayana's aphorisms establishing the nature of Brahman",
     image: brahmaImg,
   },
   {
     title: "विवेकचूडामणि",
     titleEn: "Vivekachudamani",
-    author: "Sri Shankaracharya",
     category: "Prakarana Grantha",
-    description: "The Crest-Jewel of Discrimination — a 580-verse poem guiding the seeker from ignorance to Self-realization through Advaita wisdom",
+    description: "The Crest-Jewel of Discrimination — guiding the seeker from ignorance to Self-realization",
     image: vivekImg,
   },
   {
     title: "उपदेशसाहस्री",
     titleEn: "Upadesa Sahasri",
-    author: "Sri Shankaracharya",
     category: "Prakarana Grantha",
-    description: "A Thousand Teachings — Shankaracharya's independent prose and verse work on the method of realizing Brahman",
+    description: "A Thousand Teachings — Shankaracharya's prose and verse work on realizing Brahman",
     image: upadesaImg,
   },
 ];
 
-const categoryIcon: Record<string, typeof BookOpen> = {
-  "Upanishad": Scroll,
-  "Gita": BookMarked,
-  "Vedanta": Library,
-  "Prakarana Grantha": Feather,
-};
+function getBooksForSubCategory(books: Book[], categoryMatch?: string, categoryAltMatch?: string): Book[] {
+  if (!categoryMatch && !categoryAltMatch) return [];
+  return books.filter(b => matchesCategory(categoryMatch, categoryAltMatch, b.category));
+}
+
+function getBooksForCategory(books: Book[], cat: CatalogCategory): Book[] {
+  if (cat.categoryMatch) {
+    return books.filter(b => b.category === cat.categoryMatch);
+  }
+  if (cat.children) {
+    const matched: Book[] = [];
+    for (const sub of cat.children) {
+      matched.push(...getBooksForSubCategory(books, sub.categoryMatch, sub.categoryAltMatch));
+    }
+    return matched;
+  }
+  return [];
+}
 
 export function WelcomeScreen({ books, onSelectBook }: WelcomeScreenProps) {
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [expandedSubCategories, setExpandedSubCategories] = useState<Set<string>>(new Set());
+
+  const toggleCategory = (id: string) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSubCategory = (id: string) => {
+    setExpandedSubCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   return (
     <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-gradient-to-b from-primary/10 via-background to-accent/10 relative overflow-y-auto">
       <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
@@ -115,51 +139,112 @@ export function WelcomeScreen({ books, onSelectBook }: WelcomeScreenProps) {
             <div className="h-px flex-1 bg-primary/15"></div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {books.map((book) => {
-              const coverImg = bookImages[book.slug];
+          <div className="space-y-1" data-testid="catalog-tree">
+            {CATALOG_TREE.map(cat => {
+              const isExpanded = expandedCategories.has(cat.id);
+              const catBooks = getBooksForCategory(books, cat);
+              const hasContent = catBooks.length > 0 || (cat.children && cat.children.length > 0);
+
               return (
-                <Card
-                  key={book.id}
-                  className="group p-0 overflow-visible border-primary/15 bg-card/90 backdrop-blur-sm hover-elevate active-elevate-2 cursor-pointer transition-all"
-                  onClick={() => onSelectBook(book.id)}
-                  data-testid={`card-book-${book.slug}`}
-                >
-                  {coverImg && (
-                    <div className="relative w-full aspect-[4/3] overflow-hidden rounded-t-md">
-                      <img
-                        src={coverImg}
-                        alt={book.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                      <div className="absolute bottom-3 left-4 right-4">
-                        <Badge variant="secondary" className="text-[10px] mb-1.5" data-testid={`badge-category-${book.slug}`}>
-                          {book.category}
-                        </Badge>
-                        <h3 className="font-serif text-lg sm:text-xl font-semibold text-white leading-tight drop-shadow-md" data-testid={`text-title-${book.slug}`}>
-                          {book.title}
-                        </h3>
-                      </div>
+                <div key={cat.id} data-testid={`catalog-category-${cat.id}`}>
+                  <button
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 sm:py-3 rounded-lg text-left hover-elevate active-elevate-2 transition-colors"
+                    onClick={() => toggleCategory(cat.id)}
+                    data-testid={`button-category-${cat.id}`}
+                  >
+                    <ChevronRight className={`h-4 w-4 shrink-0 text-primary/60 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`} />
+                    <FolderOpen className="h-4 w-4 shrink-0 text-primary/50" />
+                    <span className="font-serif text-sm sm:text-base font-medium text-foreground truncate">{cat.label}</span>
+                    {catBooks.length > 0 && (
+                      <Badge variant="secondary" className="text-[10px] ml-auto shrink-0">
+                        {catBooks.length}
+                      </Badge>
+                    )}
+                  </button>
+
+                  {isExpanded && (
+                    <div className="ml-5 sm:ml-7 pl-3 border-l border-primary/10 space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-150 pb-2">
+                      {cat.children ? (
+                        cat.children.map(sub => {
+                          const subBooks = getBooksForSubCategory(books, sub.categoryMatch, sub.categoryAltMatch);
+                          const isSubExpanded = expandedSubCategories.has(sub.id);
+                          const hasSubBooks = subBooks.length > 0;
+
+                          return (
+                            <div key={sub.id} data-testid={`catalog-subcat-${sub.id}`}>
+                              <button
+                                className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left transition-colors ${hasSubBooks ? "hover-elevate active-elevate-2" : "opacity-50 cursor-default"}`}
+                                onClick={() => hasSubBooks && toggleSubCategory(sub.id)}
+                                data-testid={`button-subcat-${sub.id}`}
+                              >
+                                {hasSubBooks ? (
+                                  <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200 ${isSubExpanded ? "rotate-90" : ""}`} />
+                                ) : (
+                                  <Lock className="h-3 w-3 shrink-0 text-muted-foreground/40" />
+                                )}
+                                <span className={`text-sm ${hasSubBooks ? "text-primary font-medium" : "text-muted-foreground/60"}`}>
+                                  {sub.label}
+                                </span>
+                                {hasSubBooks && (
+                                  <Badge variant="outline" className="text-[10px] ml-auto shrink-0 border-primary/20">
+                                    {subBooks.length} {subBooks.length === 1 ? "text" : "texts"}
+                                  </Badge>
+                                )}
+                                {!hasSubBooks && (
+                                  <span className="text-[10px] text-muted-foreground/40 ml-auto italic">Coming soon</span>
+                                )}
+                              </button>
+
+                              {isSubExpanded && hasSubBooks && (
+                                <div className="ml-4 pl-3 border-l border-border/40 space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-150 py-1">
+                                  {subBooks.map(book => (
+                                    <button
+                                      key={book.id}
+                                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left hover-elevate active-elevate-2 transition-colors group"
+                                      onClick={() => onSelectBook(book.id)}
+                                      data-testid={`button-book-${book.slug}`}
+                                    >
+                                      <BookOpen className="h-3.5 w-3.5 shrink-0 text-primary/60" />
+                                      <span className="text-sm font-serif font-medium text-foreground group-hover:text-primary transition-colors truncate">
+                                        {book.title}
+                                      </span>
+                                      <span className="text-[10px] text-muted-foreground ml-auto shrink-0">
+                                        {book.totalVerses ?? 0} verses
+                                      </span>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
+                      ) : (
+                        catBooks.length > 0 ? (
+                          catBooks.map(book => (
+                            <button
+                              key={book.id}
+                              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left hover-elevate active-elevate-2 transition-colors group"
+                              onClick={() => onSelectBook(book.id)}
+                              data-testid={`button-book-${book.slug}`}
+                            >
+                              <BookOpen className="h-3.5 w-3.5 shrink-0 text-primary/60" />
+                              <span className="text-sm font-serif font-medium text-foreground group-hover:text-primary transition-colors truncate">
+                                {book.title}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground ml-auto shrink-0">
+                                {book.totalVerses ?? 0} verses
+                              </span>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-3 py-2">
+                            <span className="text-xs text-muted-foreground/50 italic">Coming soon...</span>
+                          </div>
+                        )
+                      )}
                     </div>
                   )}
-                  <div className="p-4 sm:p-5 space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground">
-                      {book.author}
-                    </p>
-                    <p className="text-xs text-muted-foreground/80 leading-relaxed line-clamp-2">
-                      {book.description}
-                    </p>
-                    <div className="flex items-center justify-between gap-2 pt-1">
-                      <span className="text-[11px] text-muted-foreground">
-                        {book.totalVerses ?? 0} verses
-                      </span>
-                      <Button variant="ghost" size="sm" className="text-xs text-primary h-auto py-1 px-2" data-testid={`button-read-${book.slug}`}>
-                        Start Reading
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
+                </div>
               );
             })}
           </div>
@@ -175,46 +260,40 @@ export function WelcomeScreen({ books, onSelectBook }: WelcomeScreenProps) {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            {comingSoonBooks.map((book) => {
-              const Icon = categoryIcon[book.category] || BookOpen;
-              return (
-                <Card
-                  key={book.titleEn}
-                  className="p-0 overflow-hidden border-border/60 bg-muted/30 backdrop-blur-sm opacity-80"
-                  data-testid={`card-coming-soon-${book.titleEn.toLowerCase().replace(/\s+/g, '-')}`}
-                >
-                  <div className="relative w-full aspect-[4/3] overflow-hidden">
-                    <img
-                      src={book.image}
-                      alt={book.titleEn}
-                      className="w-full h-full object-cover grayscale-[40%] opacity-80"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-                    <div className="absolute top-2 right-2">
-                      <Badge variant="outline" className="text-[9px] bg-black/40 text-white/80 border-white/20 backdrop-blur-sm">
-                        Coming Soon
-                      </Badge>
-                    </div>
-                    <div className="absolute bottom-2.5 left-3 right-3">
-                      <h3 className="font-serif text-sm font-semibold text-white/90 leading-tight drop-shadow-md">
-                        {book.title}
-                      </h3>
-                      <p className="text-[11px] text-white/70">
-                        {book.titleEn}
-                      </p>
-                    </div>
+            {comingSoonBooks.map((book) => (
+              <Card
+                key={book.titleEn}
+                className="p-0 overflow-hidden border-border/60 bg-muted/30 backdrop-blur-sm opacity-80"
+                data-testid={`card-coming-soon-${book.titleEn.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                <div className="relative w-full aspect-[4/3] overflow-hidden">
+                  <img
+                    src={book.image}
+                    alt={book.titleEn}
+                    className="w-full h-full object-cover grayscale-[40%] opacity-80"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                  <div className="absolute top-2 right-2">
+                    <Badge variant="outline" className="text-[9px] bg-black/40 text-white/80 border-white/20 backdrop-blur-sm">
+                      Coming Soon
+                    </Badge>
                   </div>
-                  <div className="p-3 space-y-1.5">
-                    <p className="text-[11px] text-muted-foreground/60 leading-relaxed line-clamp-2">
-                      {book.description}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground/50 italic">
-                      {book.author}
+                  <div className="absolute bottom-2.5 left-3 right-3">
+                    <h3 className="font-serif text-sm font-semibold text-white/90 leading-tight drop-shadow-md">
+                      {book.title}
+                    </h3>
+                    <p className="text-[11px] text-white/70">
+                      {book.titleEn}
                     </p>
                   </div>
-                </Card>
-              );
-            })}
+                </div>
+                <div className="p-3 space-y-1.5">
+                  <p className="text-[11px] text-muted-foreground/60 leading-relaxed line-clamp-2">
+                    {book.description}
+                  </p>
+                </div>
+              </Card>
+            ))}
           </div>
         </div>
 
@@ -281,6 +360,27 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onGoBack }
     }
   }
 
+  const renderBookList = (bookList: Book[]) => (
+    <div className="space-y-0.5 pl-2">
+      {bookList.map(book => (
+        <button
+          key={book.id}
+          className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left hover-elevate active-elevate-2 transition-colors group"
+          onClick={() => onSelectBook(book.id)}
+          data-testid={`button-catbook-${book.slug}`}
+        >
+          <BookOpen className="h-3.5 w-3.5 shrink-0 text-primary/60" />
+          <span className="text-sm font-serif font-medium text-foreground group-hover:text-primary transition-colors truncate">
+            {book.title}
+          </span>
+          <span className="text-[10px] text-muted-foreground ml-auto shrink-0">
+            {book.totalVerses ?? 0} verses
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-gradient-to-b from-primary/10 via-background to-accent/10 relative overflow-y-auto">
       <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
@@ -310,20 +410,20 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onGoBack }
         </div>
 
         {category.children ? (
-          <div className="space-y-8">
+          <div className="space-y-6">
             {category.children.map(sub => {
               const subBooks = booksBySubCategory[sub.id] ?? [];
               const hasBooks = subBooks.length > 0;
 
               return (
-                <div key={sub.id} className="space-y-3" data-testid={`section-subcat-${sub.id}`}>
+                <div key={sub.id} className="space-y-2" data-testid={`section-subcat-${sub.id}`}>
                   <div className="flex items-center gap-2">
                     {hasBooks ? (
-                      <FolderOpen className="h-5 w-5 text-primary/70 shrink-0" />
+                      <FolderOpen className="h-4 w-4 text-primary/70 shrink-0" />
                     ) : (
-                      <Lock className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                      <Lock className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
                     )}
-                    <h2 className={`font-serif text-base sm:text-lg font-semibold ${hasBooks ? 'text-foreground' : 'text-muted-foreground/50'}`}>
+                    <h2 className={`font-serif text-sm sm:text-base font-semibold ${hasBooks ? 'text-foreground' : 'text-muted-foreground/50'}`}>
                       {sub.label}
                     </h2>
                     {hasBooks && (
@@ -334,58 +434,9 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onGoBack }
                     <div className="h-px flex-1 bg-border/50"></div>
                   </div>
 
-                  {hasBooks ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {subBooks.map(book => {
-                        const coverImg = bookImages[book.slug];
-                        return (
-                          <Card
-                            key={book.id}
-                            className="group p-0 overflow-visible border-primary/15 bg-card/90 backdrop-blur-sm hover-elevate active-elevate-2 cursor-pointer transition-all"
-                            onClick={() => onSelectBook(book.id)}
-                            data-testid={`card-catbook-${book.slug}`}
-                          >
-                            {coverImg && (
-                              <div className="relative w-full aspect-[4/3] overflow-hidden rounded-t-md">
-                                <img
-                                  src={coverImg}
-                                  alt={book.title}
-                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                                <div className="absolute bottom-3 left-4 right-4">
-                                  <h3 className="font-serif text-lg font-semibold text-white leading-tight drop-shadow-md">
-                                    {book.title}
-                                  </h3>
-                                </div>
-                              </div>
-                            )}
-                            <div className="p-4 space-y-2">
-                              {!coverImg && (
-                                <h3 className="font-serif text-base font-semibold text-foreground">{book.title}</h3>
-                              )}
-                              {book.author && (
-                                <p className="text-xs font-medium text-muted-foreground">{book.author}</p>
-                              )}
-                              {book.description && (
-                                <p className="text-xs text-muted-foreground/80 leading-relaxed line-clamp-2">{book.description}</p>
-                              )}
-                              <div className="flex items-center justify-between gap-2 pt-1">
-                                <span className="text-[11px] text-muted-foreground">
-                                  {book.totalVerses ?? 0} verses
-                                </span>
-                                <Button variant="ghost" size="sm" className="text-xs text-primary h-auto py-1 px-2" data-testid={`button-catread-${book.slug}`}>
-                                  Start Reading
-                                </Button>
-                              </div>
-                            </div>
-                          </Card>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="py-6 px-4 text-center">
-                      <p className="text-sm text-muted-foreground/60 italic">Coming soon...</p>
+                  {hasBooks ? renderBookList(subBooks) : (
+                    <div className="py-3 px-4 text-center">
+                      <p className="text-xs text-muted-foreground/50 italic">Coming soon...</p>
                     </div>
                   )}
                 </div>
@@ -395,54 +446,7 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onGoBack }
         ) : (
           <div>
             {booksBySubCategory[category.id]?.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {booksBySubCategory[category.id].map(book => {
-                  const coverImg = bookImages[book.slug];
-                  return (
-                    <Card
-                      key={book.id}
-                      className="group p-0 overflow-visible border-primary/15 bg-card/90 backdrop-blur-sm hover-elevate active-elevate-2 cursor-pointer transition-all"
-                      onClick={() => onSelectBook(book.id)}
-                      data-testid={`card-catbook-${book.slug}`}
-                    >
-                      {coverImg && (
-                        <div className="relative w-full aspect-[4/3] overflow-hidden rounded-t-md">
-                          <img
-                            src={coverImg}
-                            alt={book.title}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                          <div className="absolute bottom-3 left-4 right-4">
-                            <h3 className="font-serif text-lg font-semibold text-white leading-tight drop-shadow-md">
-                              {book.title}
-                            </h3>
-                          </div>
-                        </div>
-                      )}
-                      <div className="p-4 space-y-2">
-                        {!coverImg && (
-                          <h3 className="font-serif text-base font-semibold text-foreground">{book.title}</h3>
-                        )}
-                        {book.author && (
-                          <p className="text-xs font-medium text-muted-foreground">{book.author}</p>
-                        )}
-                        {book.description && (
-                          <p className="text-xs text-muted-foreground/80 leading-relaxed line-clamp-2">{book.description}</p>
-                        )}
-                        <div className="flex items-center justify-between gap-2 pt-1">
-                          <span className="text-[11px] text-muted-foreground">
-                            {book.totalVerses ?? 0} verses
-                          </span>
-                          <Button variant="ghost" size="sm" className="text-xs text-primary h-auto py-1 px-2" data-testid={`button-catread-${book.slug}`}>
-                            Start Reading
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
+              renderBookList(booksBySubCategory[category.id])
             ) : (
               <div className="py-8 text-center">
                 <p className="text-sm text-muted-foreground/60 italic">Coming soon...</p>
