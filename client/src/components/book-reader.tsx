@@ -858,7 +858,7 @@ export function BookReader({
             <div className="absolute bottom-20 right-10 text-[10rem] text-primary/[0.03] font-serif select-none rotate-12">ॐ</div>
           </div>
 
-          <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto p-3 sm:p-8 relative z-10">
+          <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto px-3 sm:px-8 py-6 sm:py-10 relative z-10">
             {isChapterLoading ? (
               <div className="space-y-6">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -870,29 +870,36 @@ export function BookReader({
                 ))}
               </div>
             ) : filteredChapterVerses && filteredChapterVerses.length > 0 ? (
-              <div className="space-y-4 sm:space-y-6">
+              <div>
                 {groupedByKhanda ? (
-                  groupedByKhanda.map(khanda => {
+                  groupedByKhanda.map((khanda, kIdx) => {
                     const khandaVerses = filteredChapterVerses.filter(v => khanda.verseNumbers.includes(v.verseNumber));
                     if (khandaVerses.length === 0) return null;
                     return (
                       <div key={khanda.khandaNumber}>
-                        <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                          <div className="h-px flex-1 bg-primary/10"></div>
-                          <span className="text-xs sm:text-sm font-serif text-primary/70 px-2 sm:px-3">
-                            Part {chapterViewAdhyay}.{khanda.khandaNumber} - {khanda.khandaTitle}
+                        {kIdx > 0 && (
+                          <div className="my-8 sm:my-10 flex items-center gap-4">
+                            <div className="h-px flex-1 bg-primary/20"></div>
+                            <span className="text-primary/30 text-lg">✦</span>
+                            <div className="h-px flex-1 bg-primary/20"></div>
+                          </div>
+                        )}
+                        <div className="text-center mb-6 sm:mb-8">
+                          <span className="text-xs sm:text-sm font-serif text-primary/60 tracking-wider uppercase">
+                            Part {chapterViewAdhyay}.{khanda.khandaNumber}
                           </span>
-                          <div className="h-px flex-1 bg-primary/10"></div>
+                          <h3 className="font-serif text-sm sm:text-base text-foreground/80 mt-1">
+                            {khanda.khandaTitle}
+                          </h3>
                         </div>
-                        <div className="space-y-3 sm:space-y-4">
-                          {khandaVerses.map((verse, idx) => {
-                            const devanagari = getChapterDevanagari(verse);
-                            const translation = showTranslation ? getChapterTranslation(verse, selectedCommentaryLanguage!) : "";
-                            const verseLabel = `${chapterViewAdhyay}.${khanda.khandaNumber}.${idx + 1}`;
-                            return (
+                        {khandaVerses.map((verse, idx) => {
+                          const devanagari = getChapterDevanagari(verse);
+                          const translation = showTranslation ? getChapterTranslation(verse, selectedCommentaryLanguage!) : "";
+                          const verseLabel = `${chapterViewAdhyay}.${khanda.khandaNumber}.${idx + 1}`;
+                          return (
+                            <div key={verse.id}>
                               <div
-                                key={verse.id}
-                                className="backdrop-blur-md bg-gradient-to-br from-white/70 via-orange-50/50 to-amber-50/40 dark:from-card/80 dark:via-card/70 dark:to-orange-950/30 border border-primary/15 rounded-lg sm:rounded-xl p-3 sm:p-6 relative overflow-hidden cursor-pointer hover-elevate"
+                                className="py-4 sm:py-6 text-center cursor-pointer group"
                                 onClick={() => {
                                   const pageIdx = verses.findIndex(v => v.verseNumber === verse.verseNumber);
                                   if (pageIdx >= 0) {
@@ -903,34 +910,33 @@ export function BookReader({
                                 }}
                                 data-testid={`chapter-verse-${verse.verseNumber}`}
                               >
-                                <div className="flex flex-col items-center gap-1 mb-2 sm:mb-3">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-primary/40 text-xs sm:text-sm">॥</span>
-                                    <Badge variant="outline" className="font-mono text-[9px] sm:text-[10px] px-1.5 h-4 sm:h-5 border-primary/20 text-primary/70">
-                                      Sl. {verseLabel}
-                                    </Badge>
-                                    <span className="text-primary/40 text-xs sm:text-sm">॥</span>
-                                  </div>
-                                  {verse.sectionTitle && (
-                                    <span className="text-[11px] sm:text-xs text-muted-foreground font-serif">{verse.sectionTitle}</span>
-                                  )}
-                                </div>
                                 {devanagari && (
-                                  <div className="font-serif text-base sm:text-lg leading-relaxed text-center px-1 sm:px-4">
+                                  <div className="font-serif text-base sm:text-xl leading-loose sm:leading-loose text-center px-2 sm:px-8 group-hover:text-primary transition-colors">
                                     {devanagari}
                                   </div>
                                 )}
+                                <div className="mt-2 sm:mt-3 text-primary/50 text-xs sm:text-sm font-serif">
+                                  ॥ {verseLabel} ॥
+                                </div>
+                                {verse.sectionTitle && (
+                                  <div className="text-[11px] sm:text-xs text-muted-foreground/60 font-serif mt-1 italic">
+                                    {verse.sectionTitle}
+                                  </div>
+                                )}
                                 {translation && (
-                                  <div className="border-t border-primary/10 mt-2 sm:mt-3 pt-2 sm:pt-3">
-                                    <div className="text-xs sm:text-sm leading-relaxed text-center px-1 sm:px-4 text-muted-foreground">
-                                      {translation}
-                                    </div>
+                                  <div className="mt-3 sm:mt-4 text-xs sm:text-sm leading-relaxed text-center px-4 sm:px-12 text-muted-foreground">
+                                    {translation}
                                   </div>
                                 )}
                               </div>
-                            );
-                          })}
-                        </div>
+                              {idx < khandaVerses.length - 1 && (
+                                <div className="flex justify-center py-1">
+                                  <div className="w-16 h-px bg-primary/15"></div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     );
                   })
@@ -942,41 +948,41 @@ export function BookReader({
                       ? `${chapterViewAdhyay}.${chapterViewKhanda}.${idx + 1}`
                       : `${chapterViewAdhyay}.${idx + 1}`;
                     return (
-                      <div
-                        key={verse.id}
-                        className="backdrop-blur-md bg-gradient-to-br from-white/70 via-orange-50/50 to-amber-50/40 dark:from-card/80 dark:via-card/70 dark:to-orange-950/30 border border-primary/15 rounded-lg sm:rounded-xl p-3 sm:p-6 relative overflow-hidden cursor-pointer hover-elevate"
-                        onClick={() => {
-                          const pageIdx = verses.findIndex(v => v.verseNumber === verse.verseNumber);
-                          if (pageIdx >= 0) {
-                            setCurrentPage(pageIdx);
-                            setShowCoverPage(false);
-                            onExitChapterView?.();
-                          }
-                        }}
-                        data-testid={`chapter-verse-${verse.verseNumber}`}
-                      >
-                        <div className="flex flex-col items-center gap-1 mb-2 sm:mb-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-primary/40 text-xs sm:text-sm">॥</span>
-                            <Badge variant="outline" className="font-mono text-[9px] sm:text-[10px] px-1.5 h-4 sm:h-5 border-primary/20 text-primary/70">
-                              Sl. {verseLabel}
-                            </Badge>
-                            <span className="text-primary/40 text-xs sm:text-sm">॥</span>
+                      <div key={verse.id}>
+                        <div
+                          className="py-4 sm:py-6 text-center cursor-pointer group"
+                          onClick={() => {
+                            const pageIdx = verses.findIndex(v => v.verseNumber === verse.verseNumber);
+                            if (pageIdx >= 0) {
+                              setCurrentPage(pageIdx);
+                              setShowCoverPage(false);
+                              onExitChapterView?.();
+                            }
+                          }}
+                          data-testid={`chapter-verse-${verse.verseNumber}`}
+                        >
+                          {devanagari && (
+                            <div className="font-serif text-base sm:text-xl leading-loose sm:leading-loose text-center px-2 sm:px-8 group-hover:text-primary transition-colors">
+                              {devanagari}
+                            </div>
+                          )}
+                          <div className="mt-2 sm:mt-3 text-primary/50 text-xs sm:text-sm font-serif">
+                            ॥ {verseLabel} ॥
                           </div>
                           {verse.sectionTitle && (
-                            <span className="text-[11px] sm:text-xs text-muted-foreground font-serif">{verse.sectionTitle}</span>
+                            <div className="text-[11px] sm:text-xs text-muted-foreground/60 font-serif mt-1 italic">
+                              {verse.sectionTitle}
+                            </div>
                           )}
-                        </div>
-                        {devanagari && (
-                          <div className="font-serif text-base sm:text-lg leading-relaxed text-center px-1 sm:px-4">
-                            {devanagari}
-                          </div>
-                        )}
-                        {translation && (
-                          <div className="border-t border-primary/10 mt-2 sm:mt-3 pt-2 sm:pt-3">
-                            <div className="text-xs sm:text-sm leading-relaxed text-center px-1 sm:px-4 text-muted-foreground">
+                          {translation && (
+                            <div className="mt-3 sm:mt-4 text-xs sm:text-sm leading-relaxed text-center px-4 sm:px-12 text-muted-foreground">
                               {translation}
                             </div>
+                          )}
+                        </div>
+                        {idx < filteredChapterVerses.length - 1 && (
+                          <div className="flex justify-center py-1">
+                            <div className="w-16 h-px bg-primary/15"></div>
                           </div>
                         )}
                       </div>
