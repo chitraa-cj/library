@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, Globe, Sparkles, MessageSquareText, StickyNote } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, Globe, Sparkles, MessageSquareText, StickyNote, List } from "lucide-react";
 import { VideoPopup } from "@/components/video-popup";
 import { WordTooltip } from "@/components/word-tooltip";
 import {
@@ -17,6 +17,62 @@ import type { BookWithVerseMeta, VerseMeta, VerseTranslation, Explanation, Verse
 import shankaracharyaImg from "@assets/image_1770455528511.png";
 import meditatingRishiImg from "@assets/image_1770480897044.png";
 import scholarImg from "@assets/image_1770480809898.png";
+
+interface TOCAdhyay {
+  adhyayNumber: number;
+  adhyayTitle: string;
+  verses: VerseMeta[];
+  khandas: TOCKhanda[];
+}
+
+interface TOCKhanda {
+  khandaNumber: number;
+  khandaTitle: string;
+  verses: VerseMeta[];
+}
+
+function buildTOCHierarchy(verses: VerseMeta[]): { type: "three-level" | "two-level" | "flat"; groups: TOCAdhyay[] } {
+  const hasThreeLevel = verses.some(v => v.adhyayNumber != null && v.khandaNumber != null);
+  const hasTwoLevel = verses.some(v => v.adhyayNumber != null);
+  if (!hasThreeLevel && !hasTwoLevel) return { type: "flat", groups: [] };
+
+  const type = hasThreeLevel ? "three-level" : "two-level";
+  const hierarchyVerses = verses.filter(v => v.adhyayNumber != null);
+  const adhyayMap = new Map<number, TOCAdhyay>();
+
+  for (const verse of hierarchyVerses) {
+    const adhyayNum = verse.adhyayNumber!;
+    if (!adhyayMap.has(adhyayNum)) {
+      adhyayMap.set(adhyayNum, {
+        adhyayNumber: adhyayNum,
+        adhyayTitle: verse.adhyayTitle ?? `Chapter ${adhyayNum}`,
+        verses: [],
+        khandas: [],
+      });
+    }
+    const adhyay = adhyayMap.get(adhyayNum)!;
+    if (type === "three-level" && verse.khandaNumber != null) {
+      let khanda = adhyay.khandas.find(k => k.khandaNumber === verse.khandaNumber);
+      if (!khanda) {
+        khanda = { khandaNumber: verse.khandaNumber, khandaTitle: verse.khandaTitle ?? `Section ${verse.khandaNumber}`, verses: [] };
+        adhyay.khandas.push(khanda);
+      }
+      khanda.verses.push(verse);
+    } else {
+      adhyay.verses.push(verse);
+    }
+  }
+
+  const sorted = Array.from(adhyayMap.values()).sort((a, b) => a.adhyayNumber - b.adhyayNumber);
+  for (const adhyay of sorted) {
+    adhyay.verses.sort((a, b) => a.verseNumber - b.verseNumber);
+    adhyay.khandas.sort((a, b) => a.khandaNumber - b.khandaNumber);
+    for (const khanda of adhyay.khandas) {
+      khanda.verses.sort((a, b) => a.verseNumber - b.verseNumber);
+    }
+  }
+  return { type, groups: sorted };
+}
 
 const bookMediaConfig: Record<string, { videoId?: string; videoTitle?: string }> = {
   "isha-upanishad-bhashya": {
@@ -189,6 +245,9 @@ export function BookReader({
   const [initialized, setInitialized] = useState(false);
   const [commentaryExpanded, setCommentaryExpanded] = useState(false);
   const [selectionPopup, setSelectionPopup] = useState<{ text: string; x: number; y: number } | null>(null);
+  const [showCoverPage, setShowCoverPage] = useState(true);
+  const [expandedTOCAdhyays, setExpandedTOCAdhyays] = useState<Set<number>>(new Set());
+  const [expandedTOCKhandas, setExpandedTOCKhandas] = useState<Set<string>>(new Set());
 
   const handleTextSelect = useCallback(() => {
     const selection = window.getSelection();
@@ -322,6 +381,9 @@ export function BookReader({
 
   useEffect(() => {
     setCurrentPage(0);
+    setShowCoverPage(true);
+    setExpandedTOCAdhyays(new Set());
+    setExpandedTOCKhandas(new Set());
   }, [bookId]);
 
   useEffect(() => {
@@ -329,18 +391,19 @@ export function BookReader({
       const pageIndex = verses.findIndex(v => v.verseNumber === navigateToVerse);
       if (pageIndex >= 0 && pageIndex !== currentPage) {
         setCurrentPage(pageIndex);
+        setShowCoverPage(false);
       }
     }
   }, [navigateToVerse, verses]);
 
   useEffect(() => {
-    if (onVerseChange && currentVerse) {
+    if (onVerseChange && currentVerse && !showCoverPage) {
       onVerseChange(currentVerse.verseNumber);
     }
-  }, [currentPage, currentVerse, onVerseChange]);
+  }, [currentPage, currentVerse, onVerseChange, showCoverPage]);
 
   useEffect(() => {
-    if (onBreadcrumbChange && currentVerse) {
+    if (onBreadcrumbChange && currentVerse && !showCoverPage && book) {
       const verse = currentVerse;
       const adhyayNum = verse.adhyayNumber;
       const khandaNum = verse.khandaNumber;
@@ -366,7 +429,7 @@ export function BookReader({
         numericLabel,
       });
     }
-  }, [currentPage, book, onBreadcrumbChange]);
+  }, [currentPage, book, onBreadcrumbChange, showCoverPage]);
 
   const availableTranslations = useMemo(() => {
     if (!currentVerseDetails?.translations) return [];
@@ -420,6 +483,8 @@ export function BookReader({
       onVerseSelect(currentVerse.id, content);
     }
   }, [currentVerse, currentVerseDetails, selectedCommentaryLanguage]);
+
+  const tocHierarchy = useMemo(() => buildTOCHierarchy(verses), [verses]);
 
   if (isLoading) {
     return (
@@ -485,6 +550,195 @@ export function BookReader({
   };
 
   const originalDevanagari = currentVerseDetails ? getOriginalDevanagari(currentVerseDetails) : "";
+
+  const handleTOCVerseClick = (verseNumber: number) => {
+    const pageIndex = verses.findIndex(v => v.verseNumber === verseNumber);
+    if (pageIndex >= 0) {
+      setCurrentPage(pageIndex);
+      setShowCoverPage(false);
+    }
+  };
+
+  const toggleTOCAdhyay = (adhyayNumber: number) => {
+    const next = new Set(expandedTOCAdhyays);
+    if (next.has(adhyayNumber)) next.delete(adhyayNumber);
+    else next.add(adhyayNumber);
+    setExpandedTOCAdhyays(next);
+  };
+
+  const toggleTOCKhanda = (key: string) => {
+    const next = new Set(expandedTOCKhandas);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    setExpandedTOCKhandas(next);
+  };
+
+  if (showCoverPage && book && !isLoading) {
+    return (
+      <div className="flex-1 flex flex-col min-w-0 focus:outline-none">
+        <div className="flex-1 overflow-y-auto relative">
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-10 left-10 text-[12rem] text-primary/[0.03] font-serif select-none">ॐ</div>
+            <div className="absolute bottom-20 right-10 text-[10rem] text-primary/[0.03] font-serif select-none rotate-12">ॐ</div>
+            <div className="absolute top-1/2 left-1/4 text-[8rem] text-primary/[0.02] font-serif select-none -rotate-6">श्री</div>
+          </div>
+
+          <div className="relative z-10 p-4 sm:p-8 max-w-3xl xl:max-w-4xl mx-auto">
+            <div className="backdrop-blur-md bg-gradient-to-br from-white/70 via-orange-50/50 to-amber-50/40 dark:from-card/80 dark:via-card/70 dark:to-orange-950/30 border border-primary/20 rounded-xl sm:rounded-2xl p-5 sm:p-10 shadow-lg shadow-primary/5 relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-12 sm:w-20 h-12 sm:h-20 border-t-2 border-l-2 border-primary/20 rounded-tl-xl sm:rounded-tl-2xl"></div>
+              <div className="absolute bottom-0 right-0 w-12 sm:w-20 h-12 sm:h-20 border-b-2 border-r-2 border-primary/20 rounded-br-xl sm:rounded-br-2xl"></div>
+              <div className="absolute top-3 right-3 sm:top-4 sm:right-4 text-4xl sm:text-6xl text-primary/[0.08] font-serif select-none pointer-events-none">ॐ</div>
+
+              <div className="flex flex-col items-center text-center mb-6 sm:mb-8">
+                <img
+                  src={shankaracharyaImg}
+                  alt="Shankaracharya"
+                  className="h-20 w-20 sm:h-28 sm:w-28 object-contain mb-4 opacity-80 select-none pointer-events-none"
+                />
+                <h1 className="font-serif text-xl sm:text-3xl font-bold text-foreground tracking-tight" data-testid="text-cover-title">
+                  {book.title}
+                </h1>
+                {book.author && (
+                  <p className="text-sm sm:text-base text-muted-foreground mt-1.5" data-testid="text-cover-author">{book.author}</p>
+                )}
+                <Badge variant="secondary" className="mt-2 text-[10px] sm:text-xs">
+                  {book.category}
+                </Badge>
+              </div>
+
+              {book.description && (
+                <div className="mb-6 sm:mb-8">
+                  <p className="text-sm sm:text-base leading-relaxed text-muted-foreground text-center max-w-2xl mx-auto" data-testid="text-cover-description">
+                    {book.description}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex items-center justify-center mb-4 sm:mb-6">
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                  <span className="text-primary/40">॥</span>
+                  <span>{verses.length} verses</span>
+                  <span className="text-primary/40">॥</span>
+                </div>
+              </div>
+
+              <Button
+                className="w-full mb-6 gap-2"
+                onClick={() => { setCurrentPage(0); setShowCoverPage(false); }}
+                data-testid="button-start-reading"
+              >
+                <BookOpen className="h-4 w-4" />
+                Start Reading
+              </Button>
+            </div>
+
+            {tocHierarchy.groups.length > 0 && (
+              <div className="mt-6 sm:mt-8">
+                <div className="flex items-center gap-2 mb-4">
+                  <List className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  <h2 className="font-serif text-base sm:text-lg font-semibold" data-testid="text-toc-heading">Table of Contents</h2>
+                </div>
+
+                <div className="space-y-1" data-testid="toc-list">
+                  {tocHierarchy.groups.map(adhyay => {
+                    const isExpanded = expandedTOCAdhyays.has(adhyay.adhyayNumber);
+                    return (
+                      <div key={adhyay.adhyayNumber}>
+                        <button
+                          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left hover-elevate active-elevate-2 transition-colors"
+                          onClick={() => toggleTOCAdhyay(adhyay.adhyayNumber)}
+                          data-testid={`toc-adhyay-${adhyay.adhyayNumber}`}
+                        >
+                          <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`} />
+                          <Badge variant="outline" className="font-mono text-[10px] sm:text-[11px] px-1.5 h-5 shrink-0 border-primary/30 text-primary">
+                            {adhyay.adhyayNumber}
+                          </Badge>
+                          <span className="text-sm sm:text-base font-medium truncate">{adhyay.adhyayTitle}</span>
+                        </button>
+
+                        {isExpanded && (
+                          <div className="ml-5 sm:ml-6 pl-3 border-l border-primary/10 space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                            {tocHierarchy.type === "three-level" ? (
+                              adhyay.khandas.map(khanda => {
+                                const khandaKey = `${adhyay.adhyayNumber}-${khanda.khandaNumber}`;
+                                const isKhandaExpanded = expandedTOCKhandas.has(khandaKey);
+                                return (
+                                  <div key={khandaKey}>
+                                    <button
+                                      className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-left hover-elevate active-elevate-2 transition-colors"
+                                      onClick={() => toggleTOCKhanda(khandaKey)}
+                                      data-testid={`toc-khanda-${adhyay.adhyayNumber}-${khanda.khandaNumber}`}
+                                    >
+                                      <ChevronRight className={`h-3 w-3 shrink-0 text-muted-foreground transition-transform duration-200 ${isKhandaExpanded ? "rotate-90" : ""}`} />
+                                      <Badge variant="outline" className="font-mono text-[10px] px-1.5 h-4.5 shrink-0 border-muted-foreground/30">
+                                        {adhyay.adhyayNumber}.{khanda.khandaNumber}
+                                      </Badge>
+                                      <span className="text-xs sm:text-sm text-muted-foreground truncate">{khanda.khandaTitle}</span>
+                                    </button>
+
+                                    {isKhandaExpanded && (
+                                      <div className="ml-4 pl-3 border-l border-border/50 space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                                        {khanda.verses.map((v, idx) => (
+                                          <button
+                                            key={v.id}
+                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left hover-elevate active-elevate-2 transition-colors"
+                                            onClick={() => handleTOCVerseClick(v.verseNumber)}
+                                            data-testid={`toc-verse-${v.verseNumber}`}
+                                          >
+                                            <span className="font-mono text-[10px] text-muted-foreground shrink-0 w-10">
+                                              {adhyay.adhyayNumber}.{khanda.khandaNumber}.{idx + 1}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground truncate">
+                                              {v.sectionTitle || `Verse ${idx + 1}`}
+                                            </span>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })
+                            ) : (
+                              adhyay.verses.map((v, idx) => (
+                                <button
+                                  key={v.id}
+                                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left hover-elevate active-elevate-2 transition-colors"
+                                  onClick={() => handleTOCVerseClick(v.verseNumber)}
+                                  data-testid={`toc-verse-${v.verseNumber}`}
+                                >
+                                  <span className="font-mono text-[10px] text-muted-foreground shrink-0 w-8">
+                                    {adhyay.adhyayNumber}.{idx + 1}
+                                  </span>
+                                  <span className="text-xs sm:text-sm text-muted-foreground truncate">
+                                    {v.sectionTitle || `Verse ${idx + 1}`}
+                                  </span>
+                                </button>
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {book?.slug && bookMediaConfig[book.slug]?.videoId && (
+          <div className="border-t border-border px-3 sm:px-8 py-2 sm:py-3 bg-background/80 backdrop-blur-sm">
+            <div className="max-w-3xl xl:max-w-4xl mx-auto flex items-center justify-center">
+              <VideoPopup
+                videoId={bookMediaConfig[book.slug].videoId!}
+                title={bookMediaConfig[book.slug].videoTitle || "Introduction Video"}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   if (!currentVerse) {
     return (
