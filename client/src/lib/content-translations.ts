@@ -309,13 +309,23 @@ export const verseSectionTitleTranslations: ContentMap = {
   },
 };
 
+const langNameToCode: Record<string, string> = {
+  english: "en",
+  hindi: "hi",
+  sanskrit: "sa",
+  devanagari: "sa",
+  kannada: "kn",
+  telugu: "te",
+  tamil: "ta",
+};
+
 export function translateContent(
   text: string | null | undefined,
   map: ContentMap,
   lang: string
 ): string {
   if (!text) return "";
-  const normalizedLang = lang === "english" ? "en" : lang;
+  const normalizedLang = langNameToCode[lang.toLowerCase()] || lang;
   const entry = map[text];
   if (entry && entry[normalizedLang]) {
     return entry[normalizedLang];

@@ -133,6 +133,7 @@ function VerseExplanation({
   authorName: string | null;
   showAll: boolean;
 }) {
+  const { t } = useTranslation(languageCode);
   const [showMoreCommentaries, setShowMoreCommentaries] = useState(false);
   const { data: explanations, isLoading } = useQuery<Explanation[]>({
     queryKey: ["/api/verses", verseId, "explanations"],
