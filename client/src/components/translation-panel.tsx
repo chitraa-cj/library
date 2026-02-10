@@ -169,11 +169,13 @@ export function TranslationPanel({
 }: TranslationPanelProps) {
   const isMobile = useIsMobile();
 
+  const { t } = useTranslation();
+
   const header = (
     <div className="p-4 border-b border-border">
       <h2 className="font-medium text-sm flex items-center gap-2">
         <Globe className="h-4 w-4" />
-        Commentary & Insight
+        {t("commentaryAndInsight")}
       </h2>
     </div>
   );
@@ -183,7 +185,7 @@ export function TranslationPanel({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="bottom" className="h-[85vh] flex flex-col p-0">
           <SheetHeader className="sr-only">
-            <SheetTitle>Commentary & Insight</SheetTitle>
+            <SheetTitle>{t("commentaryAndInsight")}</SheetTitle>
             <p>View translations and scholarly explanations for the selected verse</p>
           </SheetHeader>
           {header}
@@ -223,7 +225,7 @@ export function TranslationPanel({
       <div className="p-2 flex items-center justify-between border-b border-border">
         <h2 className="font-medium text-sm flex items-center gap-2 px-2">
           <Globe className="h-4 w-4" />
-          Commentary & Insight
+          {t("commentaryAndInsight")}
         </h2>
         <Button
           variant="ghost"

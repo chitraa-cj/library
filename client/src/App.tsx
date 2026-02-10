@@ -21,6 +21,7 @@ import { PreferencesDialog } from "@/components/preferences-dialog";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import { useTranslation } from "@/lib/translations";
+import { translateContent, bookAuthorTranslations } from "@/lib/content-translations";
 import type { Book, Language } from "@shared/schema";
 
 interface CommentaryOption {
@@ -74,7 +75,8 @@ function HomePageContent() {
   const isMobile = useIsMobile();
   const { user, isLoading: authLoading, isAuthenticated: isLoggedIn } = useAuth();
   const { setTheme } = useTheme();
-  const { t } = useTranslation(selectedCommentaryLanguage);
+  const { t, locale } = useTranslation(selectedCommentaryLanguage);
+  const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, locale);
 
   const { data: allBooks } = useQuery<Book[]>({
     queryKey: ["/api/books"],
@@ -483,7 +485,7 @@ function HomePageContent() {
                     <SelectContent>
                       {headerAuthors.map((author) => (
                         <SelectItem key={author.authorName} value={author.authorName} data-testid={`option-header-author-${author.authorName}`}>
-                          {author.authorName}
+                          {tc(author.authorName, bookAuthorTranslations)}
                         </SelectItem>
                       ))}
                     </SelectContent>

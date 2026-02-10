@@ -133,7 +133,8 @@ function VerseExplanation({
   authorName: string | null;
   showAll: boolean;
 }) {
-  const { t } = useTranslation(languageCode);
+  const { t, locale } = useTranslation(languageCode);
+  const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, locale);
   const [showMoreCommentaries, setShowMoreCommentaries] = useState(false);
   const { data: explanations, isLoading } = useQuery<Explanation[]>({
     queryKey: ["/api/verses", verseId, "explanations"],
@@ -185,7 +186,7 @@ function VerseExplanation({
         ) : (
           <User className="h-4 w-4 text-primary/70 shrink-0" />
         )}
-        <h4 className="text-sm font-semibold text-foreground">{group.authorName}</h4>
+        <h4 className="text-sm font-semibold text-foreground">{tc(group.authorName, bookAuthorTranslations)}</h4>
         {group.authorTitle && (
           <span className="text-xs text-muted-foreground">- {group.authorTitle}</span>
         )}
