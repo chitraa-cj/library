@@ -117,6 +117,19 @@ The database schema supports multi-language sacred texts:
 - **Session compatibility**: Passport v0.6+ polyfill for regenerate/save on session store
 - **Password field**: Added to users table (nullable, only set for email-registered users)
 
+### Seed & Data Integrity Architecture
+The commentary data (Shankaracharya bhashya, Anandagiri teeka, etc.) uses a multi-layer protection system:
+
+1. **`seedDatabase()`** (server/seed.ts): Runs ONCE when database is empty. Creates all verses, translations, and commentary entries. Verse 0 (introduction) Anandagiri teeka is created here directly.
+2. **`seedAdditionalCommentaries()`** (server/seed.ts): Adds Hiriyanna, Anandagiri (v1-18), Sudarsana, and English Shankaracharya commentaries. Only inserts if the entry doesn't already exist (won't overwrite).
+3. **`updateIncompleteShankaraExplanations()`** (server/index.ts): Runs on EVERY restart. Compares DB content length against authoritative data in `server/complete-bhashya-data.ts`. If DB content is shorter (truncated), replaces it with the full version. Covers ALL verses 0-18 in all 5 languages.
+4. **`server/complete-bhashya-data.ts`**: Authoritative source for complete Shankaracharya bhashya in devanagari, english, kannada, tamil, telugu for ALL 19 verses (0-18).
+
+**Key Points:**
+- MANTRAS in seed.ts may have truncated bhashya; the full content is maintained in complete-bhashya-data.ts
+- Manual DB fixes to commentary content persist across restarts (since seedDatabase only runs once)
+- The auto-update function provides an additional safety net against content truncation
+
 ## Notes
 - **SendGrid Integration**: User dismissed the Replit SendGrid connector and chose to leave email OTP authentication out for now. Can revisit later if needed.
 - **Branding**: Main header uses "Advaita Vaaridhi - Encyclopaedia of Advaita Vedanta". Sidebar still shows "Ekatma Dham - Abode of Oneness" branding with oneness.org.in logo.

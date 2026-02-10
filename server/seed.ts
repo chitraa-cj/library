@@ -1070,7 +1070,7 @@ export async function updateIncompleteShankaraExplanations() {
   
   for (const explanation of shankaraExplanations) {
     const verseNumber = verseIdToNumber.get(explanation.verseId);
-    if (!verseNumber) continue;
+    if (verseNumber === undefined || verseNumber === null) continue;
     
     const completeData = COMPLETE_SHANKARA_BHASHYA[verseNumber];
     if (!completeData) continue;
