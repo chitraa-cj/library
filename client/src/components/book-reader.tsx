@@ -6,13 +6,6 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareText, StickyNote, List } from "lucide-react";
 import { VideoPopup } from "@/components/video-popup";
 import { WordTooltip } from "@/components/word-tooltip";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import type { BookWithVerseMeta, VerseMeta, VerseTranslation, Explanation, VerseWithTranslations } from "@shared/schema";
 import shankaracharyaImg from "@assets/image_1770455528511.png";
 
@@ -1038,36 +1031,6 @@ export function BookReader({
                         <span>{commentaryExpanded ? "Hide Commentary" : "Commentary"}</span>
                         <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${commentaryExpanded ? "rotate-180" : ""}`} />
                       </button>
-                      {hasCommentaryOptions && commentaryExpanded && (
-                        <Select
-                          value={selectedAuthor || "__all__"}
-                          onValueChange={handleAuthorChange}
-                        >
-                          <SelectTrigger 
-                            className="w-[140px] sm:w-[160px] h-7 text-[11px] sm:text-xs border-border/50" 
-                            data-testid="select-author"
-                          >
-                            <SelectValue placeholder="Select Author" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem 
-                              value="__all__"
-                              data-testid="option-author-all"
-                            >
-                              All Commentators
-                            </SelectItem>
-                            {availableAuthors.map((author) => (
-                              <SelectItem 
-                                key={author.authorName} 
-                                value={author.authorName}
-                                data-testid={`option-author-${author.authorName.toLowerCase().replace(/\s+/g, '-')}`}
-                              >
-                                {author.authorName}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
                     </div>
 
                     {commentaryExpanded && selectedCommentaryLanguage && (

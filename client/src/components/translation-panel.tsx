@@ -1,11 +1,18 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Globe, MessageSquare, Play, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { Globe, MessageSquare, Play, PanelRightClose, PanelRightOpen, User } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { VideoInline } from "@/components/video-popup";
 import { VerseNotes } from "@/components/verse-notes";
@@ -79,6 +86,12 @@ function PanelContent({
   const hasCommentaryOptions = commentaryOptions && 
     (commentaryOptions.authors.length > 0 || commentaryOptions.languages.length > 0);
 
+  const availableAuthors = commentaryOptions
+    ? (selectedCommentaryLanguage
+        ? commentaryOptions.authors.filter(a => a.languageCodes.includes(selectedCommentaryLanguage))
+        : commentaryOptions.authors)
+    : [];
+
   return (
     <ScrollArea className="flex-1">
       <div className="p-4 space-y-6">
@@ -94,6 +107,46 @@ function PanelContent({
                 </p>
               </Card>
             </div>
+
+            {hasCommentaryOptions && availableAuthors.length > 0 && (
+              <>
+                <Separator />
+                <div className="space-y-2">
+                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                    <User className="h-3 w-3" />
+                    Commentator
+                  </h3>
+                  <Select
+                    value={selectedAuthor || "__all__"}
+                    onValueChange={(val) => onAuthorChange(val)}
+                  >
+                    <SelectTrigger
+                      className="w-full h-8 text-xs border-border/50"
+                      data-testid="select-author"
+                    >
+                      <SelectValue placeholder="Select Commentator" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem
+                        value="__all__"
+                        data-testid="option-author-all"
+                      >
+                        All Commentators
+                      </SelectItem>
+                      {availableAuthors.map((author) => (
+                        <SelectItem
+                          key={author.authorName}
+                          value={author.authorName}
+                          data-testid={`option-author-${author.authorName.toLowerCase().replace(/\s+/g, '-')}`}
+                        >
+                          {author.authorName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
 
             <Separator />
 
