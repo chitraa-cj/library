@@ -106,6 +106,7 @@ interface BookReaderProps {
   selectedCommentaryLanguage: string | null;
   onAuthorChange: (author: string | null) => void;
   navigateToVerse?: number | null;
+  onNavigateComplete?: () => void;
   onVerseChange?: (verseNumber: number) => void;
   onBreadcrumbChange?: (breadcrumb: VerseBreadcrumb) => void;
   onAddNoteWithText?: (text: string) => void;
@@ -244,6 +245,7 @@ export function BookReader({
   selectedCommentaryLanguage,
   onAuthorChange,
   navigateToVerse,
+  onNavigateComplete,
   onVerseChange,
   onBreadcrumbChange,
   onAddNoteWithText,
@@ -376,6 +378,7 @@ export function BookReader({
         setCurrentPage(pageIndex);
         setShowCoverPage(false);
       }
+      onNavigateComplete?.();
     } else if (chapterViewAdhyay == null && navigateToVerse == null && !showCoverPage) {
       setShowCoverPage(true);
     }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient, apiRequest } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
@@ -47,6 +47,8 @@ interface VerseBreadcrumb {
 
 function HomePageContent() {
   const [location, setLocation] = useLocation();
+  const locationRef = useRef(location);
+  locationRef.current = location;
   const { toggleSidebar, state: sidebarState } = useSidebar();
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [selectedVerseId, setSelectedVerseId] = useState<string | null>(null);
@@ -350,12 +352,12 @@ function HomePageContent() {
       const slug = getBookSlug(selectedBookId);
       if (slug) {
         const targetPath = `/${slug}/${verseNumber}`;
-        if (location !== targetPath) {
+        if (locationRef.current !== targetPath) {
           setLocation(targetPath);
         }
       }
     }
-  }, [selectedBookId, getBookSlug, location, setLocation]);
+  }, [selectedBookId, getBookSlug, setLocation]);
 
   return (
       <div className="flex h-screen w-full overflow-hidden">
@@ -572,6 +574,7 @@ function HomePageContent() {
                   selectedCommentaryLanguage={selectedCommentaryLanguage}
                   onAuthorChange={setSelectedAuthor}
                   navigateToVerse={navigateToVerse}
+                  onNavigateComplete={() => setNavigateToVerse(null)}
                   onVerseChange={handleVerseChange}
                   onBreadcrumbChange={setVerseBreadcrumb}
                   chapterViewAdhyay={chapterViewAdhyay}
