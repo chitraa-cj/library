@@ -589,6 +589,7 @@ function HomePageContent() {
                 books={allBooks || []}
                 onSelectBook={handleBookSelect}
                 onGoBack={handleGoHome}
+                languageCode={selectedCommentaryLanguage}
               />
             ) : (
               <WelcomeScreen
@@ -598,6 +599,7 @@ function HomePageContent() {
                   setSelectedCategoryId(categoryId);
                   if (sidebarState === "expanded") toggleSidebar();
                 }}
+                languageCode={selectedCommentaryLanguage}
               />
             )}
           </main>

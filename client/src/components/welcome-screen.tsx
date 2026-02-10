@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { VideoInline } from "@/components/video-popup";
 import { CATALOG_TREE, type CatalogCategory } from "@/components/app-sidebar";
+import { useTranslation } from "@/lib/translations";
 
 const categoryIcons: Record<string, typeof ScrollText> = {
   "prasthana-shankaracharya": ScrollText,
@@ -29,6 +30,7 @@ interface WelcomeScreenProps {
   books: Book[];
   onSelectBook: (bookId: string) => void;
   onSelectCategory?: (categoryId: string) => void;
+  languageCode?: string | null;
 }
 
 const bookVideoConfig: Record<string, { videoId: string; videoTitle: string }> = {
@@ -57,7 +59,8 @@ function getBooksForCategory(books: Book[], cat: CatalogCategory): Book[] {
   return [];
 }
 
-export function WelcomeScreen({ books, onSelectBook, onSelectCategory }: WelcomeScreenProps) {
+export function WelcomeScreen({ books, onSelectBook, onSelectCategory, languageCode }: WelcomeScreenProps) {
+  const { t } = useTranslation(languageCode ?? null);
   return (
     <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-gradient-to-b from-primary/10 via-background to-accent/10 relative overflow-y-auto">
       <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
@@ -79,12 +82,12 @@ export function WelcomeScreen({ books, onSelectBook, onSelectCategory }: Welcome
           <div className="flex items-center justify-center gap-2 sm:gap-3">
             <span className="text-xl sm:text-2xl text-primary/50 font-serif">ॐ</span>
             <h1 className="font-serif text-xl sm:text-3xl font-semibold tracking-tight text-primary">
-              Advaita Vaaridhi
+              {t("advaitaVaaridhi")}
             </h1>
             <span className="text-xl sm:text-2xl text-primary/50 font-serif">ॐ</span>
           </div>
           <p className="text-[10px] sm:text-xs uppercase tracking-[0.25em] text-muted-foreground">
-            Encyclopaedia of Advaita Vedanta
+            {t("encyclopaediaOfAdvaitaVedanta")}
           </p>
         </div>
 
@@ -92,7 +95,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectCategory }: Welcome
           <div className="flex items-center gap-3">
             <Library className="h-5 w-5 text-primary shrink-0" />
             <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground" data-testid="heading-browse-library">
-              Browse the Library
+              {t("browseTheLibrary")}
             </h2>
             <div className="h-px flex-1 bg-primary/15"></div>
           </div>
@@ -118,11 +121,11 @@ export function WelcomeScreen({ books, onSelectBook, onSelectCategory }: Welcome
                       <IconComponent className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
                     </div>
                     <h3 className="font-serif text-xs sm:text-sm font-semibold text-foreground text-center leading-tight px-1">
-                      {cat.label}
+                      {getTranslatedLabel(cat, t)}
                     </h3>
                     {catBooks.length > 0 && (
                       <Badge variant="secondary" className="text-[9px] mt-2">
-                        {catBooks.length} {catBooks.length === 1 ? 'text' : 'texts'}
+                        {catBooks.length} {catBooks.length === 1 ? t("textSingular") : t("textPlural")}
                       </Badge>
                     )}
                   </div>
@@ -144,9 +147,9 @@ export function WelcomeScreen({ books, onSelectBook, onSelectCategory }: Welcome
                             ) : (
                               <Lock className="h-2.5 w-2.5 shrink-0 text-muted-foreground/30" />
                             )}
-                            <span className="truncate">{sub.label}</span>
+                            <span className="truncate">{getTranslatedLabel(sub, t)}</span>
                             {!hasSubBooks && (
-                              <span className="text-[9px] text-muted-foreground/30 ml-auto italic shrink-0">Soon</span>
+                              <span className="text-[9px] text-muted-foreground/30 ml-auto italic shrink-0">{t("soon")}</span>
                             )}
                           </button>
                         );
@@ -167,7 +170,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectCategory }: Welcome
                       ))
                     ) : (
                       <div className="py-2 text-center">
-                        <span className="text-[10px] text-muted-foreground/40 italic">Coming Soon</span>
+                        <span className="text-[10px] text-muted-foreground/40 italic">{t("comingSoon")}</span>
                       </div>
                     )}
                   </div>
@@ -213,16 +216,26 @@ function matchesCategory(matcher: string | undefined, altMatcher: string | undef
   return false;
 }
 
+function getTranslatedLabel(item: { label: string; labelKey?: string }, t: (key: any) => string): string {
+  if (item.labelKey) {
+    const translated = t(item.labelKey);
+    if (translated !== item.labelKey) return translated;
+  }
+  return item.label;
+}
+
 interface CategoryDetailViewProps {
   categoryId: string;
   books: Book[];
   onSelectBook: (bookId: string) => void;
   onGoBack: () => void;
+  languageCode?: string | null;
 }
 
-export function CategoryDetailView({ categoryId, books, onSelectBook, onGoBack }: CategoryDetailViewProps) {
+export function CategoryDetailView({ categoryId, books, onSelectBook, onGoBack, languageCode }: CategoryDetailViewProps) {
   const category = CATALOG_TREE.find(c => c.id === categoryId);
   if (!category) return null;
+  const { t } = useTranslation(languageCode ?? null);
 
   const booksBySubCategory: Record<string, Book[]> = {};
   for (const book of books) {
@@ -254,7 +267,7 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onGoBack }
             {book.title}
           </span>
           <span className="text-[10px] text-muted-foreground ml-auto shrink-0">
-            {book.totalVerses ?? 0} verses
+            {book.totalVerses ?? 0} {t("verses")}
           </span>
         </button>
       ))}
@@ -278,12 +291,12 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onGoBack }
             data-testid="button-category-back"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Back to Home
+            {(t as any)("backToHome") || "Back to Home"}
           </Button>
           <div className="flex items-center gap-3">
             <Library className="h-6 w-6 text-primary shrink-0" />
             <h1 className="font-serif text-lg sm:text-2xl font-semibold text-primary" data-testid="text-category-title">
-              {category.label}
+              {getTranslatedLabel(category, t)}
             </h1>
           </div>
           <div className="h-px bg-primary/15"></div>
@@ -304,11 +317,11 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onGoBack }
                       <Lock className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
                     )}
                     <h2 className={`font-serif text-sm sm:text-base font-semibold ${hasBooks ? 'text-foreground' : 'text-muted-foreground/50'}`}>
-                      {sub.label}
+                      {getTranslatedLabel(sub, t)}
                     </h2>
                     {hasBooks && (
                       <Badge variant="secondary" className="text-[10px]">
-                        {subBooks.length} {subBooks.length === 1 ? 'text' : 'texts'}
+                        {subBooks.length} {subBooks.length === 1 ? t("textSingular") : t("textPlural")}
                       </Badge>
                     )}
                     <div className="h-px flex-1 bg-border/50"></div>
@@ -316,7 +329,7 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onGoBack }
 
                   {hasBooks ? renderBookList(subBooks) : (
                     <div className="py-3 px-4 text-center">
-                      <p className="text-xs text-muted-foreground/50 italic">Coming soon...</p>
+                      <p className="text-xs text-muted-foreground/50 italic">{t("comingSoon")}...</p>
                     </div>
                   )}
                 </div>
@@ -329,7 +342,7 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onGoBack }
               renderBookList(booksBySubCategory[category.id])
             ) : (
               <div className="py-8 text-center">
-                <p className="text-sm text-muted-foreground/60 italic">Coming soon...</p>
+                <p className="text-sm text-muted-foreground/60 italic">{t("comingSoon")}...</p>
               </div>
             )}
           </div>

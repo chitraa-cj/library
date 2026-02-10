@@ -18,6 +18,7 @@ import type { Book, Verse } from "@shared/schema";
 interface CatalogSubCategory {
   id: string;
   label: string;
+  labelKey?: string;
   categoryMatch?: string;
   categoryAltMatch?: string;
 }
@@ -25,6 +26,7 @@ interface CatalogSubCategory {
 interface CatalogCategory {
   id: string;
   label: string;
+  labelKey?: string;
   children?: CatalogSubCategory[];
   categoryMatch?: string;
 }
@@ -33,43 +35,49 @@ const CATALOG_TREE: CatalogCategory[] = [
   {
     id: "prasthana-shankaracharya",
     label: "Prasthana Thraya - Shankaracharya Bhashya",
+    labelKey: "prasthanaThrayaShankaracharyaBhashya",
     children: [
-      { id: "pt-shankara-upanishad", label: "Upanishad", categoryMatch: "Upanishad", categoryAltMatch: "Upanishad Bhashya" },
-      { id: "pt-shankara-gita", label: "Bhagavad Gita", categoryMatch: "Gita" },
-      { id: "pt-shankara-brahmasutra", label: "Brahma Sutra" },
+      { id: "pt-shankara-upanishad", label: "Upanishad", labelKey: "upanishad", categoryMatch: "Upanishad", categoryAltMatch: "Upanishad Bhashya" },
+      { id: "pt-shankara-gita", label: "Bhagavad Gita", labelKey: "bhagavadGita", categoryMatch: "Gita" },
+      { id: "pt-shankara-brahmasutra", label: "Brahma Sutra", labelKey: "brahmaSutra" },
     ],
   },
   {
     id: "other-shankara-works",
     label: "Other Independent Works of Shankaracharya",
+    labelKey: "otherIndependentWorksShankaracharya",
   },
   {
     id: "prasthana-other-acharyas",
     label: "Prasthana Thraya - Other Advaita Acharyas",
+    labelKey: "prasthanaThrayaOtherAdvaitaAcharyas",
     children: [
-      { id: "pt-other-upanishad", label: "Upanishad" },
-      { id: "pt-other-gita", label: "Bhagavad Gita" },
-      { id: "pt-other-brahmasutra", label: "Brahma Sutra" },
+      { id: "pt-other-upanishad", label: "Upanishad", labelKey: "upanishad" },
+      { id: "pt-other-gita", label: "Bhagavad Gita", labelKey: "bhagavadGita" },
+      { id: "pt-other-brahmasutra", label: "Brahma Sutra", labelKey: "brahmaSutra" },
     ],
   },
   {
     id: "bhakthi-stotras",
     label: "Bhakthi Stotras of Shankaracharya",
+    labelKey: "bhakthiStotrasShankaracharya",
   },
   {
     id: "prakarana-granthas",
     label: "Prakarana Granthas",
+    labelKey: "prakaranaGranthas",
     children: [
-      { id: "pg-independent", label: "Independent Advaita Works" },
-      { id: "pg-other-gitas", label: "Other Gitas" },
-      { id: "pg-bhakthi", label: "Bhakthi Granthas" },
-      { id: "pg-other-languages", label: "Advaita in Other Languages" },
-      { id: "pg-modern", label: "Modern Advaita Works" },
+      { id: "pg-independent", label: "Independent Advaita Works", labelKey: "independentAdvaitaWorks" },
+      { id: "pg-other-gitas", label: "Other Gitas", labelKey: "otherGitas" },
+      { id: "pg-bhakthi", label: "Bhakthi Granthas", labelKey: "bhakthiGranthas" },
+      { id: "pg-other-languages", label: "Advaita in Other Languages", labelKey: "advaitaInOtherLanguages" },
+      { id: "pg-modern", label: "Modern Advaita Works", labelKey: "modernAdvaitaWorks" },
     ],
   },
   {
     id: "shlokas-stotras",
     label: "Shlokas, Sthuthis and Stotras based on Advaita",
+    labelKey: "shlokasStothrasAdvaita",
   },
 ];
 
@@ -95,16 +103,25 @@ function findBookPath(book: Book): { categoryId: string; subCategoryId: string |
   return null;
 }
 
-export function getBookBreadcrumbPath(book: Book): string[] {
+function resolveLabel(item: { label: string; labelKey?: string }, t: (key: any) => string): string {
+  if (item.labelKey) {
+    const translated = t(item.labelKey);
+    if (translated !== item.labelKey) return translated;
+  }
+  return item.label;
+}
+
+export function getBookBreadcrumbPath(book: Book, t?: (key: any) => string): string[] {
+  const resolver = (item: { label: string; labelKey?: string }) => t ? resolveLabel(item, t) : item.label;
   const path = findBookPath(book);
   if (!path) return [book.category, book.title];
   const cat = CATALOG_TREE.find(c => c.id === path.categoryId);
   if (!cat) return [book.title];
   if (path.subCategoryId && cat.children) {
     const sub = cat.children.find(s => s.id === path.subCategoryId);
-    return [cat.label, sub?.label ?? "", book.title];
+    return [resolver(cat), sub ? resolver(sub) : "", book.title];
   }
-  return [cat.label, book.title];
+  return [resolver(cat), book.title];
 }
 
 interface AppSidebarProps {
@@ -316,23 +333,23 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
   const drillBreadcrumb = useMemo(() => {
     const crumbs: { label: string; onClick: () => void }[] = [];
     crumbs.push({
-      label: "All Categories",
+      label: (t as any)("allCategories") || "All Categories",
       onClick: () => { setDrillCategoryId(null); setDrillSubCategoryId(null); setSearchQuery(""); },
     });
     if (drillCategory) {
       crumbs.push({
-        label: drillCategory.label,
+        label: resolveLabel(drillCategory, t),
         onClick: () => { setDrillSubCategoryId(null); setSearchQuery(""); },
       });
     }
     if (drillSubCategory) {
       crumbs.push({
-        label: drillSubCategory.label,
+        label: resolveLabel(drillSubCategory, t),
         onClick: () => {},
       });
     }
     return crumbs;
-  }, [drillCategory, drillSubCategory]);
+  }, [drillCategory, drillSubCategory, t]);
 
   const handleBookSelect = (bookId: string) => {
     onSelectBook(bookId);
@@ -413,24 +430,25 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
     if (!searchQuery.trim()) return CATALOG_TREE;
     const q = searchQuery.trim();
     return CATALOG_TREE.filter(cat => {
+      if (fuzzyMatch(resolveLabel(cat, t), q)) return true;
       if (fuzzyMatch(cat.label, q)) return true;
-      if (cat.children?.some(sub => fuzzyMatch(sub.label, q))) return true;
+      if (cat.children?.some(sub => fuzzyMatch(resolveLabel(sub, t), q) || fuzzyMatch(sub.label, q))) return true;
       const booksInCat = cat.children
         ? cat.children.some(sub => booksBySubCategory[sub.id]?.some(b => fuzzyMatch(b.title, q)))
         : booksBySubCategory[cat.id]?.some(b => fuzzyMatch(b.title, q));
       return booksInCat;
     });
-  }, [searchQuery, booksBySubCategory, fuzzyMatch]);
+  }, [searchQuery, booksBySubCategory, fuzzyMatch, t]);
 
   const filteredSubCategories = useMemo(() => {
     if (!searchQuery.trim() || !drillCategory?.children) return drillCategory?.children ?? [];
     const q = searchQuery.trim();
     return drillCategory.children.filter(sub => {
-      if (fuzzyMatch(sub.label, q)) return true;
+      if (fuzzyMatch(resolveLabel(sub, t), q) || fuzzyMatch(sub.label, q)) return true;
       const subBooks = booksBySubCategory[sub.id] ?? [];
       return subBooks.some(b => fuzzyMatch(b.title, q));
     });
-  }, [searchQuery, drillCategory, booksBySubCategory, fuzzyMatch]);
+  }, [searchQuery, drillCategory, booksBySubCategory, fuzzyMatch, t]);
 
   const filteredBooks = useMemo(() => {
     if (!drillSubCategoryId) return [];
@@ -805,7 +823,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                   disabled={!hasAnyContent}
                 >
                   <Library className={`h-3.5 w-3.5 shrink-0 ${hasAnyContent ? 'text-muted-foreground/60' : 'text-muted-foreground/30'}`} />
-                  <span className="flex-1 min-w-0 leading-snug">{cat.label}</span>
+                  <span className="flex-1 min-w-0 leading-snug">{resolveLabel(cat, t)}</span>
                 </button>
               </div>
 
@@ -837,7 +855,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                           ) : (
                             <Folder className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
                           )}
-                          <span className="flex-1 min-w-0 truncate">{sub.label}</span>
+                          <span className="flex-1 min-w-0 truncate">{resolveLabel(sub, t)}</span>
                           {hasBooks && (
                             <Badge variant="secondary" className="text-[9px] px-1 h-4 shrink-0">
                               {subBooks.length}
@@ -926,7 +944,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
               disabled={!hasAnyContent}
             >
               <Library className={`h-3.5 w-3.5 shrink-0 ${hasAnyContent ? 'text-muted-foreground/60' : 'text-muted-foreground/30'}`} />
-              <span className="flex-1 min-w-0 leading-snug">{cat.label}</span>
+              <span className="flex-1 min-w-0 leading-snug">{resolveLabel(cat, t)}</span>
               {hasAnyContent ? (
                 <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
               ) : (
@@ -947,7 +965,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
       }
       return (
         <div className="py-4 px-2 text-xs text-muted-foreground/60 italic text-center">
-          Coming soon...
+          {t("comingSoon")}...
         </div>
       );
     }
@@ -977,7 +995,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
               ) : (
                 <Folder className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
               )}
-              <span className="flex-1 min-w-0 truncate">{sub.label}</span>
+              <span className="flex-1 min-w-0 truncate">{resolveLabel(sub, t)}</span>
               {hasBooks ? (
                 <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
               ) : (
@@ -1060,9 +1078,9 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1">
                     <span className="text-xs text-primary/50">ॐ</span>
-                    <span className="font-serif font-bold text-base text-primary">Ekatma Dham</span>
+                    <span className="font-serif font-bold text-base text-primary">{t("ekatmaDham")}</span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground tracking-widest uppercase">Abode of Oneness</span>
+                  <span className="text-[10px] text-muted-foreground tracking-widest uppercase">{t("abodeOfOneness")}</span>
                 </div>
               </div>
               <div className="flex items-center gap-1 shrink-0">
