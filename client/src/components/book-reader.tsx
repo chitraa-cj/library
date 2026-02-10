@@ -328,10 +328,7 @@ export function BookReader({
 
   useEffect(() => {
     if (commentaryOptions && !initialized) {
-      const firstAuthor = commentaryOptions.authors.length > 0
-        ? commentaryOptions.authors[0].authorName
-        : "__all__";
-      onAuthorChange(firstAuthor);
+      onAuthorChange("__all__");
       setInitialized(true);
     }
   }, [commentaryOptions, initialized, onAuthorChange]);
