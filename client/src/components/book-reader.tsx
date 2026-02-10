@@ -589,7 +589,6 @@ export function BookReader({
                 onClick={() => {
                   if (tocHierarchy.groups.length > 0) {
                     onSelectChapter?.(tocHierarchy.groups[0].adhyayNumber);
-                    setShowCoverPage(false);
                   } else {
                     setCurrentPage(0);
                     setShowCoverPage(false);
@@ -625,7 +624,6 @@ export function BookReader({
                           <button
                             className="flex items-center gap-2 flex-1 min-w-0 py-2.5 pr-3 text-left"
                             onClick={() => {
-                              setShowCoverPage(false);
                               onSelectChapter?.(adhyay.adhyayNumber);
                             }}
                             data-testid={`toc-adhyay-${adhyay.adhyayNumber}`}
@@ -656,7 +654,6 @@ export function BookReader({
                                       <button
                                         className="flex items-center gap-2 flex-1 min-w-0 py-2 pr-2 text-left"
                                         onClick={() => {
-                                          setShowCoverPage(false);
                                           onSelectPart?.(adhyay.adhyayNumber, khanda.khandaNumber);
                                         }}
                                         data-testid={`toc-khanda-${adhyay.adhyayNumber}-${khanda.khandaNumber}`}
