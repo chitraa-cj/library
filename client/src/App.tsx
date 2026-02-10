@@ -58,7 +58,6 @@ function HomePageContent() {
   const [pendingNoteText, setPendingNoteText] = useState<string | null>(null);
   const [urlInitialized, setUrlInitialized] = useState(false);
   const [mobileInitialPanelShown, setMobileInitialPanelShown] = useState(false);
-  const [isOnCoverPage, setIsOnCoverPage] = useState(true);
   const isMobile = useIsMobile();
   const { user, isLoading: authLoading, isAuthenticated: isLoggedIn } = useAuth();
 
@@ -367,20 +366,6 @@ function HomePageContent() {
               )}
             </div>
             </div>
-            {(() => {
-              const selectedBook = selectedBookId && allBooks ? allBooks.find(b => b.id === selectedBookId) : null;
-              if (selectedBook?.description && !isOnCoverPage) {
-                const shortDesc = selectedBook.description.length > 120 
-                  ? selectedBook.description.slice(0, 120).replace(/\s+\S*$/, '') + '...'
-                  : selectedBook.description;
-                return (
-                  <p className="px-3 sm:px-4 pb-1.5 pt-0 text-[10px] sm:text-[11px] text-muted-foreground/80 leading-snug truncate" data-testid="text-header-description" title={selectedBook.description}>
-                    {shortDesc}
-                  </p>
-                );
-              }
-              return null;
-            })()}
           </header>
           <main className="flex flex-1 min-h-0 overflow-hidden">
             {selectedBookId ? (
@@ -400,7 +385,6 @@ function HomePageContent() {
                   onExitChapterView={() => { setChapterViewAdhyay(null); setChapterViewKhanda(null); }}
                   onSelectChapter={(adhyayNumber) => { setChapterViewAdhyay(adhyayNumber); setChapterViewKhanda(null); }}
                   onSelectPart={(adhyayNumber, khandaNumber) => { setChapterViewAdhyay(adhyayNumber); setChapterViewKhanda(khandaNumber); }}
-                  onCoverPageChange={setIsOnCoverPage}
                   onAddNoteWithText={(text) => {
                     setPendingNoteText(text);
                     if (isMobile) {

@@ -15,8 +15,6 @@ import {
 } from "@/components/ui/select";
 import type { BookWithVerseMeta, VerseMeta, VerseTranslation, Explanation, VerseWithTranslations } from "@shared/schema";
 import shankaracharyaImg from "@assets/image_1770455528511.png";
-import meditatingRishiImg from "@assets/image_1770480897044.png";
-import scholarImg from "@assets/image_1770480809898.png";
 
 interface TOCAdhyay {
   adhyayNumber: number;
@@ -118,7 +116,6 @@ interface BookReaderProps {
   onExitChapterView?: () => void;
   onSelectChapter?: (adhyayNumber: number) => void;
   onSelectPart?: (adhyayNumber: number, khandaNumber: number) => void;
-  onCoverPageChange?: (isOnCoverPage: boolean) => void;
 }
 
 function isShankaracharya(name: string): boolean {
@@ -249,7 +246,6 @@ export function BookReader({
   onExitChapterView,
   onSelectChapter,
   onSelectPart,
-  onCoverPageChange,
 }: BookReaderProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [initialized, setInitialized] = useState(false);
@@ -363,10 +359,6 @@ export function BookReader({
     setExpandedTOCAdhyays(new Set());
     setExpandedTOCKhandas(new Set());
   }, [bookId]);
-
-  useEffect(() => {
-    onCoverPageChange?.(showCoverPage);
-  }, [showCoverPage, onCoverPageChange]);
 
   useEffect(() => {
     if (navigateToVerse !== null && navigateToVerse !== undefined && verses.length > 0) {
@@ -558,45 +550,34 @@ export function BookReader({
   if (showCoverPage && book && !isLoading) {
     return (
       <div className="flex-1 flex flex-col min-w-0 focus:outline-none">
-        <div className="flex-1 overflow-y-auto relative">
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-10 left-10 text-[12rem] text-primary/[0.03] font-serif select-none">ॐ</div>
-            <div className="absolute bottom-20 right-10 text-[10rem] text-primary/[0.03] font-serif select-none rotate-12">ॐ</div>
-            <div className="absolute top-1/2 left-1/4 text-[8rem] text-primary/[0.02] font-serif select-none -rotate-6">श्री</div>
-          </div>
-
-          <div className="relative z-10 p-4 sm:p-8 max-w-3xl xl:max-w-4xl mx-auto">
-            <div className="backdrop-blur-md bg-gradient-to-br from-white/70 via-orange-50/50 to-amber-50/40 dark:from-card/80 dark:via-card/70 dark:to-orange-950/30 border border-primary/20 rounded-xl sm:rounded-2xl p-5 sm:p-10 shadow-lg shadow-primary/5 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-12 sm:w-20 h-12 sm:h-20 border-t-2 border-l-2 border-primary/20 rounded-tl-xl sm:rounded-tl-2xl"></div>
-              <div className="absolute bottom-0 right-0 w-12 sm:w-20 h-12 sm:h-20 border-b-2 border-r-2 border-primary/20 rounded-br-xl sm:rounded-br-2xl"></div>
-              <div className="absolute top-3 right-3 sm:top-4 sm:right-4 text-4xl sm:text-6xl text-primary/[0.08] font-serif select-none pointer-events-none">ॐ</div>
-
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4 sm:p-8 max-w-2xl xl:max-w-3xl mx-auto">
+            <div className="py-6 sm:py-10">
               <div className="flex flex-col items-center text-center mb-6 sm:mb-8">
-                <span className="text-5xl sm:text-7xl text-primary/30 font-serif mb-4 select-none pointer-events-none">ॐ</span>
-                <h1 className="font-serif text-xl sm:text-3xl font-bold text-foreground tracking-tight" data-testid="text-cover-title">
+                <span className="text-3xl sm:text-4xl text-primary/20 font-serif mb-3 select-none pointer-events-none">ॐ</span>
+                <h1 className="font-serif text-xl sm:text-2xl font-bold text-foreground tracking-tight" data-testid="text-cover-title">
                   {book.title}
                 </h1>
+                {book.author && (
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1">{book.author}</p>
+                )}
                 <Badge variant="secondary" className="mt-2 text-[10px] sm:text-xs">
                   {book.category}
                 </Badge>
               </div>
 
               {book.description && (
-                <p className="text-xs sm:text-sm text-muted-foreground/80 leading-relaxed text-center mb-4 sm:mb-6 max-w-lg mx-auto" data-testid="text-cover-description">
+                <p className="text-xs sm:text-sm text-muted-foreground/80 leading-relaxed text-center mb-5 sm:mb-6 max-w-lg mx-auto" data-testid="text-cover-description">
                   {book.description}
                 </p>
               )}
 
-              <div className="flex items-center justify-center mb-4 sm:mb-6">
-                <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-                  <span className="text-primary/40">॥</span>
-                  <span>{verses.length} verses</span>
-                  <span className="text-primary/40">॥</span>
-                </div>
+              <div className="flex items-center justify-center mb-4 sm:mb-5">
+                <span className="text-xs text-muted-foreground">{verses.length} verses</span>
               </div>
 
               <Button
-                className="w-full mb-6 gap-2"
+                className="w-full gap-2"
                 onClick={() => { setCurrentPage(0); setShowCoverPage(false); }}
                 data-testid="button-start-reading"
               >
@@ -783,45 +764,33 @@ export function BookReader({
 
     return (
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="border-b border-border px-3 sm:px-8 py-3 sm:py-5 bg-card/50 shrink-0">
-          <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto">
-            <div className="flex items-center justify-between gap-2 sm:gap-4">
-              <div className="space-y-0.5 sm:space-y-1 flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-1.5 sm:gap-3">
-                  <h1 className="font-serif text-base sm:text-xl font-semibold tracking-tight truncate">
-                    {book.title}
-                  </h1>
-                  <Badge variant="secondary" className="shrink-0 text-[10px] sm:text-xs">
-                    {headerBadge}
-                  </Badge>
-                </div>
-                <p className="text-xs sm:text-sm text-muted-foreground font-serif">{headerSubtitle}</p>
+        <div className="border-b border-border/50 px-4 sm:px-8 py-2 sm:py-3 shrink-0">
+          <div className="max-w-2xl xl:max-w-3xl mx-auto">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <span className="text-xs sm:text-sm font-serif text-muted-foreground truncate">
+                  {headerSubtitle}
+                </span>
+                <span className="text-[10px] font-mono text-muted-foreground/60 shrink-0">{headerBadge}</span>
               </div>
-              <div className="flex items-center gap-2">
-                {onExitChapterView && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onExitChapterView}
-                    className="gap-1.5 text-xs"
-                    data-testid="button-exit-chapter-view"
-                  >
-                    <BookOpen className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Single Verse</span>
-                  </Button>
-                )}
-              </div>
+              {onExitChapterView && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onExitChapterView}
+                  className="gap-1.5 text-xs"
+                  data-testid="button-exit-chapter-view"
+                >
+                  <BookOpen className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Single Verse</span>
+                </Button>
+              )}
             </div>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto relative">
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-10 left-10 text-[12rem] text-primary/[0.03] font-serif select-none">ॐ</div>
-            <div className="absolute bottom-20 right-10 text-[10rem] text-primary/[0.03] font-serif select-none rotate-12">ॐ</div>
-          </div>
-
-          <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto px-3 sm:px-8 py-6 sm:py-10 relative z-10">
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-2xl xl:max-w-3xl mx-auto px-4 sm:px-8 py-4 sm:py-6">
             {isChapterLoading ? (
               <div className="space-y-6">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -982,88 +951,8 @@ export function BookReader({
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
-      <div className="border-b border-border px-3 sm:px-8 py-3 sm:py-5 bg-card/50 shrink-0">
-        <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto">
-          <div className="flex items-start justify-between gap-2 sm:gap-4">
-            <div className="space-y-0.5 sm:space-y-1 flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-1.5 sm:gap-3">
-                <h1 className="font-serif text-base sm:text-xl font-semibold tracking-tight truncate">
-                  {book.title}
-                </h1>
-                <Badge variant="secondary" className="shrink-0 text-[10px] sm:text-xs">
-                  {book.category}
-                </Badge>
-              </div>
-              {book.author && (
-                <p className="text-[11px] sm:text-sm text-muted-foreground">{book.author}</p>
-              )}
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <img 
-                src={scholarImg} 
-                alt="Sanskrit scholar" 
-                className="h-14 w-14 object-contain select-none hidden sm:block opacity-80"
-                data-testid="img-scholar"
-              />
-              <div className="flex flex-col items-end gap-0.5 sm:gap-1 text-xs sm:text-sm text-muted-foreground">
-                {currentNumericLabel && (
-                  <Badge variant="outline" className="font-mono text-[10px] sm:text-[11px] px-1.5 sm:px-2 h-4 sm:h-5 border-muted-foreground/30" data-testid="text-header-numeric">
-                    {currentNumericLabel}
-                  </Badge>
-                )}
-                <span className="text-[11px] sm:text-sm">{currentPage + 1} / {totalPages}</span>
-              </div>
-            </div>
-          </div>
-          {hasCommentaryOptions && (
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2 sm:mt-3">
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
-                <Select
-                  value={selectedAuthor || "__all__"}
-                  onValueChange={handleAuthorChange}
-                >
-                  <SelectTrigger 
-                    className="w-[140px] sm:w-[180px] h-7 sm:h-8 text-[11px] sm:text-xs bg-background/80 backdrop-blur-sm border-primary/20" 
-                    data-testid="select-author"
-                  >
-                    <SelectValue placeholder="Select Author" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem 
-                      value="__all__"
-                      data-testid="option-author-all"
-                    >
-                      All Commentators
-                    </SelectItem>
-                    {availableAuthors.map((author) => (
-                      <SelectItem 
-                        key={author.authorName} 
-                        value={author.authorName}
-                        data-testid={`option-author-${author.authorName.toLowerCase().replace(/\s+/g, '-')}`}
-                      >
-                        {author.authorName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
-        {/* Dharmic background pattern */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-10 left-10 text-[12rem] text-primary/[0.03] font-serif select-none">ॐ</div>
-          <div className="absolute bottom-20 right-10 text-[10rem] text-primary/[0.03] font-serif select-none rotate-12">ॐ</div>
-          <div className="absolute top-1/2 left-1/4 text-[8rem] text-primary/[0.02] font-serif select-none -rotate-6">श्री</div>
-          <div className="absolute top-1/3 right-1/4 text-6xl text-primary/[0.03] font-serif select-none">॥</div>
-          <div className="absolute bottom-1/3 left-1/3 text-5xl text-primary/[0.03] font-serif select-none">॥</div>
-        </div>
-        
-        <div className="flex-1 p-3 sm:p-8 overflow-y-auto relative z-10">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6">
           {selectionPopup && onAddNoteWithText && (
             <div
               className="fixed z-50 animate-in fade-in slide-in-from-bottom-1 duration-150"
@@ -1083,69 +972,46 @@ export function BookReader({
               </Button>
             </div>
           )}
-          <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl w-full mx-auto">
+          <div className="max-w-2xl xl:max-w-3xl w-full mx-auto">
             {isVerseLoading || !currentVerseDetails ? (
-              <div className="backdrop-blur-md bg-gradient-to-br from-white/70 via-orange-50/50 to-amber-50/40 dark:from-card/80 dark:via-card/70 dark:to-orange-950/30 border border-primary/20 rounded-xl sm:rounded-2xl p-4 sm:p-10 shadow-lg shadow-primary/5">
-                <div className="space-y-4">
-                  <Skeleton className="h-6 w-32 mx-auto" />
-                  <Skeleton className="h-20 w-full" />
-                  <Skeleton className="h-12 w-3/4 mx-auto" />
-                </div>
+              <div className="space-y-4 py-8">
+                <Skeleton className="h-6 w-32 mx-auto" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-12 w-3/4 mx-auto" />
               </div>
             ) : (
             <div 
-              className="backdrop-blur-md bg-gradient-to-br from-white/70 via-orange-50/50 to-amber-50/40 dark:from-card/80 dark:via-card/70 dark:to-orange-950/30 border border-primary/20 rounded-xl sm:rounded-2xl p-4 sm:p-10 shadow-lg shadow-primary/5 relative overflow-hidden"
+              className="py-2"
               data-testid={`verse-${currentVerse.verseNumber}`}
               onMouseUp={handleTextSelect}
               onTouchEnd={handleTextSelect}
             >
-              <div className="absolute top-0 left-0 w-12 sm:w-20 h-12 sm:h-20 border-t-2 border-l-2 border-primary/20 rounded-tl-xl sm:rounded-tl-2xl"></div>
-              <div className="absolute bottom-0 right-0 w-12 sm:w-20 h-12 sm:h-20 border-b-2 border-r-2 border-primary/20 rounded-br-xl sm:rounded-br-2xl"></div>
-              
-              <div className="absolute top-3 right-3 sm:top-4 sm:right-4 text-4xl sm:text-6xl text-primary/[0.08] font-serif select-none pointer-events-none">ॐ</div>
-              <div className="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 text-3xl sm:text-4xl text-primary/[0.06] font-serif select-none pointer-events-none hidden sm:block">ॐ</div>
-              
-              <div className="flex flex-col items-center gap-1.5 sm:gap-2 mb-4 sm:mb-6">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <span className="text-primary/40 text-sm sm:text-base">॥</span>
-                  <span className="text-xs sm:text-sm font-medium text-primary bg-gradient-to-r from-primary/15 to-primary/10 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-primary/20 flex items-center gap-1.5 sm:gap-2">
-                    <span className="truncate max-w-[150px] sm:max-w-none">{currentVerse.sectionTitle || `Verse ${currentVerse.verseNumber}`}</span>
-                  </span>
-                  <span className="text-primary/40 text-sm sm:text-base">॥</span>
-                </div>
+              <div className="text-center mb-4 sm:mb-5">
+                <span className="text-xs text-muted-foreground font-serif">
+                  {currentVerse.sectionTitle || `Verse ${currentVerse.verseNumber}`}
+                  {currentNumericLabel && <span className="ml-2 font-mono text-[10px] text-muted-foreground/60">({currentNumericLabel})</span>}
+                </span>
               </div>
 
-              <div className="space-y-4 sm:space-y-6">
-                <div className="flex items-start gap-3 sm:gap-4">
-                  <div className="relative flex-1 min-w-0">
-                    <div className="absolute -left-1 sm:-left-2 top-0 text-xl sm:text-2xl text-primary/20 font-serif">❝</div>
-                    <div 
-                      className="font-serif text-lg sm:text-2xl leading-relaxed text-center px-2 sm:px-4"
-                      data-testid={`text-original-${currentVerse.verseNumber}`}
-                    >
-                      <WordTooltip
-                        content={originalDevanagari}
-                        commentaryContent={commentaryContext}
-                        sourceLanguage="devanagari"
-                        verseId={currentVerse.id}
-                      />
-                    </div>
-                    <div className="absolute -right-1 sm:-right-2 bottom-0 text-xl sm:text-2xl text-primary/20 font-serif rotate-180">❝</div>
-                  </div>
-                  <img 
-                    src={meditatingRishiImg} 
-                    alt="Meditating rishi" 
-                    className="w-28 shrink-0 opacity-80 select-none pointer-events-none hidden sm:block"
-                    data-testid="img-rishi"
+              <div className="space-y-4 sm:space-y-5">
+                <div 
+                  className="font-serif text-lg sm:text-xl leading-relaxed sm:leading-loose text-center"
+                  data-testid={`text-original-${currentVerse.verseNumber}`}
+                >
+                  <WordTooltip
+                    content={originalDevanagari}
+                    commentaryContent={commentaryContext}
+                    sourceLanguage="devanagari"
+                    verseId={currentVerse.id}
                   />
                 </div>
 
                 {availableTranslations.length > 0 && (
-                  <div className="border-t border-primary/10 pt-3 sm:pt-4 space-y-3">
+                  <div className="border-t border-border/30 pt-3 sm:pt-4 space-y-3">
                     {availableTranslations.map((translation: VerseTranslation) => (
                       <div key={translation.id}>
                         <div 
-                          className="text-sm sm:text-lg leading-relaxed text-center px-1 sm:px-4 text-muted-foreground"
+                          className="text-sm sm:text-base leading-relaxed text-center text-muted-foreground"
                           data-testid={`text-translation-${translation.languageCode}-${currentVerse.verseNumber}`}
                         >
                           <WordTooltip
@@ -1159,24 +1025,53 @@ export function BookReader({
                     ))}
                   </div>
                 )}
-                
 
                 {hasCommentaryOptions && (
-                  <div className="mt-1 sm:mt-2 space-y-3">
-                    <div className="flex justify-center">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-center gap-3">
                       <button
                         onClick={() => setCommentaryExpanded(!commentaryExpanded)}
-                        className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground hover:text-primary transition-colors px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-border/50 hover:border-primary/30 bg-background/60 backdrop-blur-sm"
+                        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
                         data-testid="button-toggle-commentary"
                       >
-                        <MessageSquareText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                        <span>{commentaryExpanded ? "Hide Commentary" : "Show Commentary"}</span>
-                        <ChevronDown className={`h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform duration-200 ${commentaryExpanded ? "rotate-180" : ""}`} />
+                        <MessageSquareText className="h-3.5 w-3.5" />
+                        <span>{commentaryExpanded ? "Hide Commentary" : "Commentary"}</span>
+                        <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${commentaryExpanded ? "rotate-180" : ""}`} />
                       </button>
+                      {hasCommentaryOptions && commentaryExpanded && (
+                        <Select
+                          value={selectedAuthor || "__all__"}
+                          onValueChange={handleAuthorChange}
+                        >
+                          <SelectTrigger 
+                            className="w-[140px] sm:w-[160px] h-7 text-[11px] sm:text-xs border-border/50" 
+                            data-testid="select-author"
+                          >
+                            <SelectValue placeholder="Select Author" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem 
+                              value="__all__"
+                              data-testid="option-author-all"
+                            >
+                              All Commentators
+                            </SelectItem>
+                            {availableAuthors.map((author) => (
+                              <SelectItem 
+                                key={author.authorName} 
+                                value={author.authorName}
+                                data-testid={`option-author-${author.authorName.toLowerCase().replace(/\s+/g, '-')}`}
+                              >
+                                {author.authorName}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                     </div>
 
                     {commentaryExpanded && selectedCommentaryLanguage && (
-                      <div className="pt-4 border-t border-border/40 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="pt-3 border-t border-border/30 animate-in fade-in slide-in-from-top-2 duration-200">
                         <VerseExplanation 
                           verseId={currentVerse.id} 
                           languageCode={selectedCommentaryLanguage}
@@ -1187,61 +1082,47 @@ export function BookReader({
                     )}
                   </div>
                 )}
-
               </div>
             </div>
             )}
+          </div>
+        </div>
 
-            <div className="flex items-center justify-between mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-border/50">
-              <Button
-                variant="outline"
-                onClick={goToPrevPage}
-                disabled={currentPage === 0}
-                className="gap-1 sm:gap-2"
-                data-testid="button-prev-page"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                <span className="hidden sm:inline">Previous</span>
-              </Button>
+        <div className="shrink-0 border-t border-border/50 px-4 sm:px-8 py-2 sm:py-3">
+          <div className="max-w-2xl xl:max-w-3xl mx-auto flex items-center justify-between gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={goToPrevPage}
+              disabled={currentPage === 0}
+              className="gap-1"
+              data-testid="button-prev-page"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Previous</span>
+            </Button>
 
-              <div className="flex items-center gap-1">
-                {totalPages <= 10 ? (
-                  Array.from({ length: totalPages }, (_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setCurrentPage(i)}
-                      className={`w-2 h-2 rounded-full transition-colors ${
-                        i === currentPage 
-                          ? "bg-primary" 
-                          : "bg-muted hover:bg-muted-foreground/30"
-                      }`}
-                      data-testid={`page-dot-${i + 1}`}
-                    />
-                  ))
-                ) : (
-                  <span className="text-xs sm:text-sm text-muted-foreground">
-                    {currentPage + 1} / {totalPages}
-                  </span>
-                )}
-              </div>
+            <span className="text-xs text-muted-foreground">
+              {currentPage + 1} / {totalPages}
+            </span>
 
-              <Button
-                variant="outline"
-                onClick={goToNextPage}
-                disabled={currentPage === totalPages - 1}
-                className="gap-1 sm:gap-2"
-                data-testid="button-next-page"
-              >
-                <span className="hidden sm:inline">Next</span>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages - 1}
+              className="gap-1"
+              data-testid="button-next-page"
+            >
+              <span className="hidden sm:inline">Next</span>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
         {book?.slug && bookMediaConfig[book.slug]?.videoId && (
-          <div className="border-t border-border px-3 sm:px-8 py-2 sm:py-3 bg-background/80 backdrop-blur-sm">
-            <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto flex items-center justify-center">
+          <div className="border-t border-border px-3 sm:px-8 py-2 bg-background/80">
+            <div className="max-w-2xl xl:max-w-3xl mx-auto flex items-center justify-center">
               <VideoPopup 
                 videoId={bookMediaConfig[book.slug].videoId!}
                 title={bookMediaConfig[book.slug].videoTitle || "Introduction Video"}
