@@ -258,7 +258,7 @@ export function BookReader({
   const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, lang);
   const [currentPage, setCurrentPage] = useState(0);
   const [initialized, setInitialized] = useState(false);
-  const [commentaryExpanded, setCommentaryExpanded] = useState(false);
+  const [commentaryExpanded, setCommentaryExpanded] = useState(true);
   const [selectionPopup, setSelectionPopup] = useState<{ text: string; x: number; y: number } | null>(null);
   const [showCoverPage, setShowCoverPage] = useState(true);
   const [expandedTOCAdhyays, setExpandedTOCAdhyays] = useState<Set<number>>(new Set());
