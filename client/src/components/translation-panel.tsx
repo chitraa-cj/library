@@ -113,46 +113,6 @@ function PanelContent({
               </Card>
             </div>
 
-            {hasCommentaryOptions && availableAuthors.length > 0 && (
-              <>
-                <Separator />
-                <div className="space-y-2">
-                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                    <User className="h-3 w-3" />
-                    {t("commentator")}
-                  </h3>
-                  <Select
-                    value={selectedAuthor || "__all__"}
-                    onValueChange={(val) => onAuthorChange(val)}
-                  >
-                    <SelectTrigger
-                      className="w-full h-8 text-xs border-border/50"
-                      data-testid="select-author"
-                    >
-                      <SelectValue placeholder={t("selectCommentator")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem
-                        value="__all__"
-                        data-testid="option-author-all"
-                      >
-                        {t("allCommentators")}
-                      </SelectItem>
-                      {availableAuthors.map((author) => (
-                        <SelectItem
-                          key={author.authorName}
-                          value={author.authorName}
-                          data-testid={`option-author-${author.authorName.toLowerCase().replace(/\s+/g, '-')}`}
-                        >
-                          {author.authorName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </>
-            )}
-
             <Separator />
 
             <VerseNotes
