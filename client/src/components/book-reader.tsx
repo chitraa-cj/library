@@ -726,6 +726,7 @@ export function BookReader({
               <VideoPopup
                 videoId={bookMediaConfig[book.slug].videoId!}
                 title={bookMediaConfig[book.slug].videoTitle || t("introductionVideo")}
+                buttonLabel={t("watchVideo")}
               />
             </div>
           </div>
@@ -1118,7 +1119,7 @@ export function BookReader({
               data-testid="button-prev-page"
             >
               <ChevronLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">Previous</span>
+              <span className="hidden sm:inline">{t("previous")}</span>
             </Button>
 
             <span className="text-xs text-muted-foreground">
@@ -1133,7 +1134,7 @@ export function BookReader({
               className="gap-1"
               data-testid="button-next-page"
             >
-              <span className="hidden sm:inline">Next</span>
+              <span className="hidden sm:inline">{t("next")}</span>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -1145,6 +1146,7 @@ export function BookReader({
               <VideoPopup 
                 videoId={bookMediaConfig[book.slug].videoId!}
                 title={bookMediaConfig[book.slug].videoTitle || t("introductionVideo")}
+                buttonLabel={t("watchVideo")}
               />
             </div>
           </div>

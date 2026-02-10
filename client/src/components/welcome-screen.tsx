@@ -185,7 +185,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectCategory, languageC
             <div className="flex items-center justify-center gap-2">
               <div className="h-px w-8 bg-primary/30"></div>
               <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider" data-testid="heading-explanatory-videos">
-                Watch Introduction
+                {t("watchIntroduction")}
               </h2>
               <div className="h-px w-8 bg-primary/30"></div>
             </div>

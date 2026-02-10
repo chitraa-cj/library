@@ -14,12 +14,14 @@ interface VideoPopupProps {
   videoId?: string;
   title?: string;
   triggerClassName?: string;
+  buttonLabel?: string;
 }
 
 export function VideoPopup({ 
   videoId = "8ELHatzdtAk",
   title = "Introduction Video",
-  triggerClassName = ""
+  triggerClassName = "",
+  buttonLabel = "Watch Video"
 }: VideoPopupProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -33,7 +35,7 @@ export function VideoPopup({
           data-testid="button-video-popup"
         >
           <Play className="h-4 w-4 mr-2" />
-          Watch Video
+          {buttonLabel}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden">
