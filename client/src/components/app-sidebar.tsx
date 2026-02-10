@@ -113,8 +113,10 @@ interface AppSidebarProps {
   onSelectChapter?: (adhyayNumber: number) => void;
   onSelectPart?: (adhyayNumber: number, khandaNumber: number) => void;
   onSelectCategory?: (categoryId: string) => void;
+  onShowCoverPage?: () => void;
   selectedVerseNumber?: number;
   chapterViewAdhyay?: number | null;
+  chapterViewKhanda?: number | null;
   onGoHome?: () => void;
   onGoBack?: () => void;
 }
@@ -195,7 +197,7 @@ function buildHierarchy(verses: Verse[]): AdhyayGroup[] {
 
 export { CATALOG_TREE, type CatalogCategory, type CatalogSubCategory };
 
-export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSelectChapter, onSelectPart, onSelectCategory, selectedVerseNumber, chapterViewAdhyay, onGoHome, onGoBack }: AppSidebarProps) {
+export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSelectChapter, onSelectPart, onSelectCategory, onShowCoverPage, selectedVerseNumber, chapterViewAdhyay, chapterViewKhanda, onGoHome, onGoBack }: AppSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [drillCategoryId, setDrillCategoryId] = useState<string | null>(null);
   const [drillSubCategoryId, setDrillSubCategoryId] = useState<string | null>(null);
@@ -472,6 +474,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
           {displayHierarchy.map((adhyay) => {
             const adhyayKey = `${book.id}-a${adhyay.adhyayNumber}`;
             const isAdhyayOpen = expandedAdhyays.has(adhyayKey) || !!searchQuery.trim();
+            const isExactChapterView = chapterViewAdhyay === adhyay.adhyayNumber && chapterViewKhanda == null;
             const isCurrentAdhyay = (chapterViewAdhyay != null && adhyay.adhyayNumber === chapterViewAdhyay)
               || (chapterViewAdhyay == null && (isTwoLevel
                 ? adhyay.verses.some(v => v.verseNumber === selectedVerseNumber)
@@ -481,9 +484,11 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
               <div key={adhyayKey}>
                 <div
                   className={`flex items-center gap-1.5 w-full text-left text-xs py-2 px-2 rounded-md transition-colors ${
-                    isCurrentAdhyay
+                    isExactChapterView
                       ? "bg-primary/10 text-primary font-medium"
-                      : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
+                      : isCurrentAdhyay
+                        ? "text-primary font-medium"
+                        : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
                   }`}
                   data-testid={`button-adhyay-${adhyay.adhyayNumber}`}
                 >
@@ -560,14 +565,15 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                     {adhyay.khandas.map((khanda) => {
                       const khandaKey = `${adhyayKey}-k${khanda.khandaNumber}`;
                       const isKhandaOpen = expandedKhandas.has(khandaKey);
-                      const isCurrentKhanda = khanda.verses.some(
-                        (v) => v.verseNumber === selectedVerseNumber
-                      );
+                      const isCurrentKhanda = (chapterViewAdhyay === adhyay.adhyayNumber && chapterViewKhanda === khanda.khandaNumber)
+                        || (chapterViewAdhyay == null && khanda.verses.some(
+                          (v) => v.verseNumber === selectedVerseNumber
+                        ));
 
                       return (
                         <div key={khandaKey}>
                           <div className={`flex items-center w-full text-xs rounded-md transition-colors ${
-                              isCurrentKhanda && !isKhandaOpen
+                              isCurrentKhanda
                                 ? "bg-primary/10 text-primary font-medium"
                                 : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
                             }`}>
@@ -669,30 +675,53 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
 
     return (
       <div key={book.id}>
-        <button
-          onClick={() => {
-            handleBookSelect(book.id);
-            if (isSelected) toggleBookExpand(book.id);
-          }}
-          className={`flex items-center gap-2 w-full text-left text-xs py-2.5 px-2 rounded-md transition-colors ${
-            isSelected
+        <div className={`flex items-center w-full text-xs rounded-md transition-colors ${
+            isSelected && chapterViewAdhyay == null
               ? "bg-primary/15 text-primary font-semibold"
-              : "text-foreground/80 hover:text-foreground hover:bg-sidebar-accent/30"
-          }`}
-          data-testid={`button-book-${book.id}`}
-        >
-          {isExpanded && verses.length > 0 ? (
-            <ChevronDown className="h-3 w-3 shrink-0 text-primary" />
-          ) : (
-            <BookOpen className={`h-3.5 w-3.5 shrink-0 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
+              : isSelected
+                ? "text-primary font-semibold"
+                : "text-foreground/80 hover:text-foreground hover:bg-sidebar-accent/30"
+          }`}>
+          {isSelected && verses.length > 0 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleBookExpand(book.id);
+              }}
+              className="shrink-0 py-2.5 pl-2 pr-1"
+              data-testid={`button-toggle-book-${book.id}`}
+            >
+              {isExpanded ? (
+                <ChevronDown className="h-3 w-3 text-primary" />
+              ) : (
+                <ChevronRight className="h-3 w-3 text-primary" />
+              )}
+            </button>
           )}
-          <span className="font-serif text-xs leading-snug flex-1 min-w-0">{book.title}</span>
-          {book.totalVerses && book.totalVerses > 0 && (
-            <Badge variant={isSelected ? "default" : "secondary"} className="text-[9px] font-medium px-1 h-4 shrink-0">
-              {book.totalVerses}
-            </Badge>
-          )}
-        </button>
+          <button
+            onClick={() => {
+              if (isSelected) {
+                onShowCoverPage?.();
+                if (isMobile) setOpenMobile(false);
+              } else {
+                handleBookSelect(book.id);
+              }
+            }}
+            className="flex items-center gap-2 flex-1 min-w-0 text-left py-2.5 pr-2"
+            style={!isSelected || verses.length === 0 ? { paddingLeft: '0.5rem' } : undefined}
+            data-testid={`button-book-${book.id}`}
+          >
+            {(!isSelected || verses.length === 0) && (
+              <BookOpen className={`h-3.5 w-3.5 shrink-0 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
+            )}
+            <span className="font-serif text-xs leading-snug flex-1 min-w-0">{book.title}</span>
+            {book.totalVerses && book.totalVerses > 0 && (
+              <Badge variant={isSelected ? "default" : "secondary"} className="text-[9px] font-medium px-1 h-4 shrink-0">
+                {book.totalVerses}
+              </Badge>
+            )}
+          </button>
+        </div>
         {isExpanded && isSelected && renderVerseTree(book, verses)}
       </div>
     );

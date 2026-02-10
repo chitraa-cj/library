@@ -275,6 +275,16 @@ function HomePageContent() {
     }
   }, [isMobile, selectedBookId, selectedVerseId, mobileInitialPanelShown]);
 
+  const handleShowCoverPage = useCallback(() => {
+    setChapterViewAdhyay(null);
+    setChapterViewKhanda(null);
+    setNavigateToVerse(null);
+    const slug = selectedBookId ? getBookSlug(selectedBookId) : null;
+    if (slug) {
+      setLocation(`/${slug}`);
+    }
+  }, [selectedBookId, getBookSlug]);
+
   const handleSidebarVerseSelect = (verseNumber: number) => {
     setChapterViewAdhyay(null);
     setChapterViewKhanda(null);
@@ -329,8 +339,10 @@ function HomePageContent() {
             setSelectedBookId(null);
             if (sidebarState === "expanded") toggleSidebar();
           }}
+          onShowCoverPage={handleShowCoverPage}
           selectedVerseNumber={currentVerseNumber}
           chapterViewAdhyay={chapterViewAdhyay}
+          chapterViewKhanda={chapterViewKhanda}
           onGoHome={handleGoHome}
           onGoBack={selectedBookId ? handleGoHome : undefined}
         />
