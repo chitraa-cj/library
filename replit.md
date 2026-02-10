@@ -119,7 +119,7 @@ The database schema supports multi-language sacred texts:
 
 ## Notes
 - **SendGrid Integration**: User dismissed the Replit SendGrid connector and chose to leave email OTP authentication out for now. Can revisit later if needed.
-- **Branding**: Main header uses "Advaita Sharada - Encyclopaedia of Advaita Vedanta". Sidebar still shows "Ekatma Dham - Abode of Oneness" branding with oneness.org.in logo.
+- **Branding**: Main header uses "Advaita Vaaridhi - Encyclopaedia of Advaita Vedanta". Sidebar still shows "Ekatma Dham - Abode of Oneness" branding with oneness.org.in logo.
 - **Book-specific media**: Videos/audio are per-book, configured in `bookMediaConfig` (book-reader.tsx) and `bookVideoConfig` (welcome-screen.tsx). Only books with config show video. Currently only Isha Upanishad has a video.
 - **Mobile panel behavior**: On mobile, the translation panel (bottom sheet) auto-opens once when a book first loads, then only opens when manually triggered. Controlled via `mobileInitialPanelShown` state in App.tsx, reset on book change.
 - **User Preferences (Configure button)**: Header has a gear icon that opens a preferences dialog (requires login). Users can set language, preferred commentator, and light/dark theme. Preferences are saved to the database and applied on app load. The old inline language selector and theme toggle have been replaced by this Configure dialog. Component: `client/src/components/preferences-dialog.tsx`.

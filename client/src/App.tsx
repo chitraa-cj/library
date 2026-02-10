@@ -293,7 +293,7 @@ function HomePageContent() {
                     <div className="absolute -inset-0.5 bg-primary/15 rounded-full blur-sm"></div>
                     <img 
                       src="https://oneness.org.in/assets/img/favicon.png" 
-                      alt="Advaita Sharada"
+                      alt="Advaita Vaaridhi"
                       className="h-8 w-8 object-contain relative"
                     />
                   </div>
@@ -301,7 +301,7 @@ function HomePageContent() {
                     <div className="flex items-center gap-1">
                       <span className="text-xs text-primary/50">ॐ</span>
                       <span className="font-serif text-sm font-bold text-primary">
-                        Advaita Sharada
+                        Advaita Vaaridhi
                       </span>
                     </div>
                     <span className="text-[10px] text-muted-foreground tracking-wide">

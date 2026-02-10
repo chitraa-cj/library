@@ -242,7 +242,7 @@ This is the final prayer for guidance on the path of virtue and liberation.`
  * Source: https://advaitasharada.sringeri.net/display/bhashya/Isha/
  * Available in: devanagari, kn (Kannada), te (Telugu), ta (Tamil)
  * 
- * This data is from the Advaita Sharada website maintained by
+ * This data is from the Advaita Vaaridhi website maintained by
  * Sringeri Sharada Peetham.
  */
 

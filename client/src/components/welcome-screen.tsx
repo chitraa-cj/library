@@ -72,14 +72,14 @@ export function WelcomeScreen({ books, onSelectBook, onSelectCategory }: Welcome
             <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-full blur-xl"></div>
             <img
               src="https://oneness.org.in/assets/img/favicon.png"
-              alt="Advaita Sharada"
+              alt="Advaita Vaaridhi"
               className="h-16 sm:h-20 w-16 sm:w-20 object-contain mx-auto relative"
             />
           </div>
           <div className="flex items-center justify-center gap-2 sm:gap-3">
             <span className="text-xl sm:text-2xl text-primary/50 font-serif">ॐ</span>
             <h1 className="font-serif text-xl sm:text-3xl font-semibold tracking-tight text-primary">
-              Advaita Sharada
+              Advaita Vaaridhi
             </h1>
             <span className="text-xl sm:text-2xl text-primary/50 font-serif">ॐ</span>
           </div>

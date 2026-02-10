@@ -74,10 +74,10 @@ export default function AuthPage() {
           <div className="flex items-center justify-center gap-2 mb-2">
             <img
               src="https://oneness.org.in/assets/img/favicon.png"
-              alt="Advaita Sharada"
+              alt="Advaita Vaaridhi"
               className="h-10 w-10 object-contain"
             />
-            <h1 className="font-serif text-xl font-bold text-primary">Advaita Sharada</h1>
+            <h1 className="font-serif text-xl font-bold text-primary">Advaita Vaaridhi</h1>
           </div>
           <p className="text-xs text-muted-foreground tracking-wide">ENCYCLOPAEDIA OF ADVAITA VEDANTA</p>
         </div>
