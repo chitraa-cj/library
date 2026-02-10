@@ -494,7 +494,7 @@ function HomePageContent() {
               )}
               <Button
                 variant="ghost"
-                size="icon"
+                size="sm"
                 onClick={() => {
                   if (isLoggedIn && user) {
                     setShowPreferences(true);
@@ -506,6 +506,7 @@ function HomePageContent() {
                 data-testid="button-configure"
               >
                 <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline text-xs">{t("configurePreferences")}</span>
               </Button>
               {!authLoading && (
                 isLoggedIn && user ? (
