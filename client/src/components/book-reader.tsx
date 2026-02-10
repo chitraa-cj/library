@@ -138,12 +138,17 @@ function VerseExplanation({
 
   const allForLanguage = explanations?.filter(e => e.languageCode === languageCode) || [];
 
+  let effectiveAuthor = authorName;
+  if (!showAll && authorName && !allForLanguage.some(e => e.authorName === authorName) && allForLanguage.length > 0) {
+    effectiveAuthor = allForLanguage[0].authorName;
+  }
+
   const primaryExplanations = showAll
     ? allForLanguage
-    : allForLanguage.filter(e => !authorName || e.authorName === authorName);
+    : allForLanguage.filter(e => !effectiveAuthor || e.authorName === effectiveAuthor);
 
-  const otherExplanations = !showAll && authorName
-    ? allForLanguage.filter(e => e.authorName !== authorName)
+  const otherExplanations = !showAll && effectiveAuthor
+    ? allForLanguage.filter(e => e.authorName !== effectiveAuthor)
     : [];
 
   if (primaryExplanations.length === 0 && otherExplanations.length === 0) {
