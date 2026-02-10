@@ -9,6 +9,7 @@ export interface IAuthStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserPreferredLanguage(userId: string, language: string): Promise<void>;
+  updateUserPreferences(userId: string, prefs: { preferredLanguage?: string | null; preferredAuthor?: string | null; preferredTheme?: string | null }): Promise<void>;
 }
 
 class AuthStorage implements IAuthStorage {
@@ -39,6 +40,14 @@ class AuthStorage implements IAuthStorage {
 
   async updateUserPreferredLanguage(userId: string, language: string): Promise<void> {
     await db.update(users).set({ preferredLanguage: language, updatedAt: new Date() }).where(eq(users.id, userId));
+  }
+
+  async updateUserPreferences(userId: string, prefs: { preferredLanguage?: string | null; preferredAuthor?: string | null; preferredTheme?: string | null }): Promise<void> {
+    const updateData: Record<string, any> = { updatedAt: new Date() };
+    if (prefs.preferredLanguage !== undefined) updateData.preferredLanguage = prefs.preferredLanguage;
+    if (prefs.preferredAuthor !== undefined) updateData.preferredAuthor = prefs.preferredAuthor;
+    if (prefs.preferredTheme !== undefined) updateData.preferredTheme = prefs.preferredTheme;
+    await db.update(users).set(updateData).where(eq(users.id, userId));
   }
 }
 

@@ -63,6 +63,7 @@ export interface IStorage {
   getExplanationsByVerseId(verseId: string): Promise<Explanation[]>;
   createExplanation(explanation: InsertExplanation): Promise<Explanation>;
   getCommentaryOptionsByBookId(bookId: string): Promise<CommentaryOptions>;
+  getAllAuthors(): Promise<string[]>;
 
   getAllLanguages(): Promise<Language[]>;
   createLanguage(language: InsertLanguage): Promise<Language>;
@@ -270,6 +271,14 @@ export class DatabaseStorage implements IStorage {
     }));
 
     return { authors, languages: languagesResult };
+  }
+
+  async getAllAuthors(): Promise<string[]> {
+    const result = await db
+      .selectDistinct({ authorName: explanations.authorName })
+      .from(explanations)
+      .orderBy(explanations.authorName);
+    return result.map(r => r.authorName);
   }
 
   async getAllLanguages(): Promise<Language[]> {

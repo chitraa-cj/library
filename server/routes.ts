@@ -123,6 +123,16 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/authors", async (req, res) => {
+    try {
+      const authors = await storage.getAllAuthors();
+      res.json(authors);
+    } catch (error) {
+      console.error("Error fetching authors:", error);
+      res.status(500).json({ error: "Failed to fetch authors" });
+    }
+  });
+
   app.get("/api/strapi/status", async (req, res) => {
     try {
       const status = await testStrapiConnection();
@@ -253,6 +263,27 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error updating preferred language:", error);
       res.status(500).json({ error: "Failed to update preferred language" });
+    }
+  });
+
+  app.patch("/api/user/preferences", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const { preferredLanguage, preferredAuthor, preferredTheme } = req.body;
+      const validThemes = ["light", "dark"];
+      if (preferredTheme !== undefined && preferredTheme !== null && !validThemes.includes(preferredTheme)) {
+        return res.status(400).json({ error: "Invalid theme value" });
+      }
+      await authStorage.updateUserPreferences(userId, {
+        preferredLanguage: preferredLanguage !== undefined ? (preferredLanguage || null) : undefined,
+        preferredAuthor: preferredAuthor !== undefined ? (preferredAuthor || null) : undefined,
+        preferredTheme: preferredTheme !== undefined ? (preferredTheme || null) : undefined,
+      });
+      const updatedUser = await authStorage.getUser(userId);
+      res.json({ success: true, user: updatedUser });
+    } catch (error) {
+      console.error("Error updating preferences:", error);
+      res.status(500).json({ error: "Failed to update preferences" });
     }
   });
 

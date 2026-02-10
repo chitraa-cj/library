@@ -45,6 +45,8 @@ Key API endpoints:
 - `POST /api/verses/:id/notes` - Create a note on a verse (auth required)
 - `PATCH /api/notes/:id` - Update a note (auth required)
 - `DELETE /api/notes/:id` - Delete a note (auth required)
+- `PATCH /api/user/preferences` - Save user preferences (language, author, theme; auth required)
+- `GET /api/authors` - List all distinct commentary authors
 - `GET /api/auth/user` - Get current authenticated user
 - `/api/login` - Begin login flow (Replit OIDC)
 - `/api/logout` - Begin logout flow
@@ -59,7 +61,7 @@ The database schema supports multi-language sacred texts:
 - **explanations**: Scholar commentaries on verses
 - **wordTranslations**: Cached AI-generated word translations for performance
 - **notes**: Personal user notes on verses (userId, verseId, content, timestamps)
-- **users**: User accounts (Replit Auth OIDC - id, email, firstName, lastName, profileImageUrl)
+- **users**: User accounts (Replit Auth OIDC - id, email, firstName, lastName, profileImageUrl, preferredLanguage, preferredAuthor, preferredTheme)
 - **sessions**: Session storage for authentication
 
 ### Word-by-Word Meanings (Direct Mapping)
@@ -120,3 +122,4 @@ The database schema supports multi-language sacred texts:
 - **Branding**: Main header uses "Advaita Sharada - Encyclopaedia of Advaita Vedanta". Sidebar still shows "Ekatma Dham - Abode of Oneness" branding with oneness.org.in logo.
 - **Book-specific media**: Videos/audio are per-book, configured in `bookMediaConfig` (book-reader.tsx) and `bookVideoConfig` (welcome-screen.tsx). Only books with config show video. Currently only Isha Upanishad has a video.
 - **Mobile panel behavior**: On mobile, the translation panel (bottom sheet) auto-opens once when a book first loads, then only opens when manually triggered. Controlled via `mobileInitialPanelShown` state in App.tsx, reset on book change.
+- **User Preferences (Configure button)**: Header has a gear icon that opens a preferences dialog (requires login). Users can set language, preferred commentator, and light/dark theme. Preferences are saved to the database and applied on app load. The old inline language selector and theme toggle have been replaced by this Configure dialog. Component: `client/src/components/preferences-dialog.tsx`.

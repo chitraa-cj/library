@@ -23,6 +23,8 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   password: varchar("password"),
   preferredLanguage: varchar("preferred_language", { length: 20 }),
+  preferredAuthor: varchar("preferred_author", { length: 200 }),
+  preferredTheme: varchar("preferred_theme", { length: 10 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

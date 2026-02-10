@@ -5,8 +5,7 @@ import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
-import { ThemeProvider } from "@/components/theme-provider";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeProvider, useTheme } from "@/components/theme-provider";
 import { AppSidebar } from "@/components/app-sidebar";
 import { WelcomeScreen, CategoryDetailView } from "@/components/welcome-screen";
 import { BookReader } from "@/components/book-reader";
@@ -14,13 +13,13 @@ import { TranslationPanel } from "@/components/translation-panel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ChevronRight, LogIn, LogOut, Globe } from "lucide-react";
+import { ArrowLeft, ChevronRight, LogIn, LogOut, Settings } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
+import { PreferencesDialog } from "@/components/preferences-dialog";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
-import type { Book, Language } from "@shared/schema";
+import type { Book } from "@shared/schema";
 
 interface VerseBreadcrumb {
   bookTitle: string;
@@ -58,23 +57,30 @@ function HomePageContent() {
   const [pendingNoteText, setPendingNoteText] = useState<string | null>(null);
   const [urlInitialized, setUrlInitialized] = useState(false);
   const [mobileInitialPanelShown, setMobileInitialPanelShown] = useState(false);
+  const [showPreferences, setShowPreferences] = useState(false);
   const isMobile = useIsMobile();
   const { user, isLoading: authLoading, isAuthenticated: isLoggedIn } = useAuth();
+  const { setTheme } = useTheme();
 
   const { data: allBooks } = useQuery<Book[]>({
     queryKey: ["/api/books"],
   });
 
-  const { data: allLanguages } = useQuery<Language[]>({
-    queryKey: ["/api/languages"],
-  });
-
+  const [prefsApplied, setPrefsApplied] = useState(false);
   useEffect(() => {
-    if (user?.preferredLanguage && user.preferredLanguage !== selectedCommentaryLanguage) {
+    if (!user || prefsApplied) return;
+    if (user.preferredLanguage) {
       setSelectedCommentaryLanguage(user.preferredLanguage);
       localStorage.setItem('preferredLanguage', user.preferredLanguage);
     }
-  }, [user?.preferredLanguage]);
+    if (user.preferredAuthor) {
+      setSelectedAuthor(user.preferredAuthor);
+    }
+    if (user.preferredTheme && (user.preferredTheme === "light" || user.preferredTheme === "dark")) {
+      setTheme(user.preferredTheme);
+    }
+    setPrefsApplied(true);
+  }, [user]);
 
   const handleGlobalLanguageChange = useCallback((langCode: string) => {
     setSelectedCommentaryLanguage(langCode);
@@ -306,30 +312,21 @@ function HomePageContent() {
               )}
             </div>
             <div className="flex items-center gap-2">
-              {allLanguages && allLanguages.length > 0 && (
-                <div className="flex items-center gap-1">
-                  <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0 hidden sm:block" />
-                  <Select
-                    value={selectedCommentaryLanguage || "english"}
-                    onValueChange={handleGlobalLanguageChange}
-                  >
-                    <SelectTrigger
-                      className="w-[100px] sm:w-[120px] h-7 sm:h-8 text-[11px] sm:text-xs bg-background/80 backdrop-blur-sm border-primary/20"
-                      data-testid="select-global-language"
-                    >
-                      <SelectValue placeholder="Language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {allLanguages.map((lang) => (
-                        <SelectItem key={lang.code} value={lang.code} data-testid={`option-global-lang-${lang.code}`}>
-                          {lang.nativeName || lang.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-              <ThemeToggle />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  if (isLoggedIn && user) {
+                    setShowPreferences(true);
+                  } else {
+                    setLocation("/auth");
+                  }
+                }}
+                title="Configure preferences"
+                data-testid="button-configure"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
               {!authLoading && (
                 isLoggedIn && user ? (
                   <div className="flex items-center gap-2">
@@ -349,7 +346,7 @@ function HomePageContent() {
                       data-testid="button-logout"
                     >
                       <LogOut className="h-4 w-4" />
-                      <span>Log Out</span>
+                      <span className="hidden sm:inline">Log Out</span>
                     </Button>
                   </div>
                 ) : (
@@ -428,6 +425,17 @@ function HomePageContent() {
             )}
           </main>
         </div>
+        {isLoggedIn && user && (
+          <PreferencesDialog
+            open={showPreferences}
+            onOpenChange={setShowPreferences}
+            user={user}
+            currentLanguage={selectedCommentaryLanguage}
+            currentAuthor={selectedAuthor}
+            onLanguageChange={handleGlobalLanguageChange}
+            onAuthorChange={setSelectedAuthor}
+          />
+        )}
       </div>
   );
 }
