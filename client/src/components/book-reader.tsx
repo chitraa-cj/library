@@ -109,6 +109,7 @@ interface BookReaderProps {
   onExitChapterView?: () => void;
   onSelectChapter?: (adhyayNumber: number) => void;
   onSelectPart?: (adhyayNumber: number, khandaNumber: number) => void;
+  onShowCoverPage?: () => void;
 }
 
 function isShankaracharya(name: string): boolean {
@@ -244,6 +245,7 @@ export function BookReader({
   onExitChapterView,
   onSelectChapter,
   onSelectPart,
+  onShowCoverPage,
 }: BookReaderProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [initialized, setInitialized] = useState(false);
@@ -359,6 +361,12 @@ export function BookReader({
     setExpandedTOCAdhyays(new Set());
     setExpandedTOCKhandas(new Set());
   }, [bookId]);
+
+  useEffect(() => {
+    if (chapterViewAdhyay == null && navigateToVerse == null && !showCoverPage) {
+      setShowCoverPage(true);
+    }
+  }, [chapterViewAdhyay, navigateToVerse]);
 
   useEffect(() => {
     if (navigateToVerse !== null && navigateToVerse !== undefined && verses.length > 0) {
@@ -775,11 +783,38 @@ export function BookReader({
         <div className="border-b border-border/50 px-4 sm:px-8 py-2 sm:py-3 shrink-0">
           <div className="max-w-2xl xl:max-w-3xl mx-auto">
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <span className="text-xs sm:text-sm font-serif text-muted-foreground truncate">
-                  {headerSubtitle}
+              <div className="flex items-center gap-1.5 flex-1 min-w-0 text-xs sm:text-sm">
+                <span
+                  className="font-serif text-muted-foreground/70 truncate max-w-[120px] cursor-pointer hover:text-primary transition-colors shrink-0 hidden sm:inline"
+                  onClick={onShowCoverPage}
+                  data-testid="chapter-nav-book"
+                >
+                  {book.title}
                 </span>
-                <span className="text-[10px] font-mono text-muted-foreground/60 shrink-0">{headerBadge}</span>
+                {chapterViewKhanda != null ? (
+                  <>
+                    <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/40 hidden sm:block" />
+                    <span
+                      className="font-serif text-muted-foreground/70 truncate max-w-[100px] cursor-pointer hover:text-primary transition-colors shrink-0"
+                      onClick={() => onSelectChapter?.(chapterViewAdhyay!)}
+                      data-testid="chapter-nav-adhyay"
+                    >
+                      {chapterTitle}
+                    </span>
+                    <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/40" />
+                    <span className="font-serif text-foreground/80 font-medium truncate">
+                      {headerSubtitle}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/40 hidden sm:block" />
+                    <span className="font-serif text-foreground/80 font-medium truncate">
+                      {headerSubtitle}
+                    </span>
+                  </>
+                )}
+                <Badge variant="secondary" className="font-mono text-[10px] px-1.5 h-4.5 shrink-0">{headerBadge}</Badge>
               </div>
               {onExitChapterView && (
                 <Button
@@ -824,11 +859,15 @@ export function BookReader({
                             <div className="h-px flex-1 bg-primary/20"></div>
                           </div>
                         )}
-                        <div className="text-center mb-6 sm:mb-8">
-                          <span className="text-xs sm:text-sm font-serif text-primary/60 tracking-wider uppercase">
+                        <div
+                          className="text-center mb-6 sm:mb-8 cursor-pointer group"
+                          onClick={() => onSelectPart?.(chapterViewAdhyay!, khanda.khandaNumber)}
+                          data-testid={`chapter-view-khanda-${khanda.khandaNumber}`}
+                        >
+                          <span className="text-xs sm:text-sm font-serif text-primary/60 tracking-wider uppercase group-hover:text-primary transition-colors">
                             Part {chapterViewAdhyay}.{khanda.khandaNumber}
                           </span>
-                          <h3 className="font-serif text-sm sm:text-base text-foreground/80 mt-1">
+                          <h3 className="font-serif text-sm sm:text-base text-foreground/80 mt-1 group-hover:text-primary transition-colors">
                             {khanda.khandaTitle}
                           </h3>
                         </div>

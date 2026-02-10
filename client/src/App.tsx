@@ -366,7 +366,7 @@ function HomePageContent() {
                   <div className="flex items-center gap-0.5 sm:gap-1 min-w-0 text-[11px] sm:text-xs text-muted-foreground overflow-hidden" style={{ direction: "ltr" }}>
                     <span
                       className="hidden lg:inline truncate max-w-[120px] font-medium text-foreground/70 shrink-0 cursor-pointer hover:text-primary transition-colors"
-                      onClick={handleGoHome}
+                      onClick={handleShowCoverPage}
                       title={verseBreadcrumb.bookTitle}
                       data-testid="breadcrumb-book"
                     >
@@ -375,13 +375,25 @@ function HomePageContent() {
                     {verseBreadcrumb.adhyayTitle && (
                       <>
                         <ChevronRight className="hidden lg:block h-3 w-3 shrink-0 text-muted-foreground/50" />
-                        <span className="hidden lg:inline truncate max-w-[100px] shrink-0">{verseBreadcrumb.adhyayTitle}</span>
+                        <span
+                          className="hidden lg:inline truncate max-w-[100px] shrink-0 cursor-pointer hover:text-primary transition-colors"
+                          onClick={() => verseBreadcrumb.adhyayNumber != null && handleSelectChapter(verseBreadcrumb.adhyayNumber)}
+                          data-testid="breadcrumb-adhyay"
+                        >
+                          {verseBreadcrumb.adhyayTitle}
+                        </span>
                       </>
                     )}
                     {verseBreadcrumb.khandaTitle && (
                       <>
                         <ChevronRight className="hidden xl:block h-3 w-3 shrink-0 text-muted-foreground/50" />
-                        <span className="hidden xl:inline truncate max-w-[100px] shrink-0">{verseBreadcrumb.khandaTitle}</span>
+                        <span
+                          className="hidden xl:inline truncate max-w-[100px] shrink-0 cursor-pointer hover:text-primary transition-colors"
+                          onClick={() => verseBreadcrumb.adhyayNumber != null && verseBreadcrumb.khandaNumber != null && handleSelectPart(verseBreadcrumb.adhyayNumber, verseBreadcrumb.khandaNumber)}
+                          data-testid="breadcrumb-khanda"
+                        >
+                          {verseBreadcrumb.khandaTitle}
+                        </span>
                       </>
                     )}
                     <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/50" />
@@ -543,6 +555,7 @@ function HomePageContent() {
                   }}
                   onSelectChapter={handleSelectChapter}
                   onSelectPart={handleSelectPart}
+                  onShowCoverPage={handleShowCoverPage}
                   onAddNoteWithText={(text) => {
                     setPendingNoteText(text);
                     if (isMobile) {
