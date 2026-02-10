@@ -542,7 +542,7 @@ export function BookReader({
     setExpandedTOCKhandas(next);
   };
 
-  if (showCoverPage && book && !isLoading) {
+  if (showCoverPage && book && !isLoading && chapterViewAdhyay == null) {
     return (
       <div className="flex-1 flex flex-col min-w-0 focus:outline-none">
         <div className="flex-1 overflow-y-auto">

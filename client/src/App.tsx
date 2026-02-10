@@ -102,7 +102,10 @@ function HomePageContent() {
 
   const urlParts = location.replace(/^\//, '').split('/').filter(Boolean);
   const bookSlugFromUrl = urlParts[0] && urlParts[0] !== 'auth' ? urlParts[0] : null;
-  const verseNumberFromUrl = urlParts[1] ? parseInt(urlParts[1], 10) : null;
+  const isChapterUrl = urlParts[1] === 'chapter';
+  const chapterNumberFromUrl = isChapterUrl && urlParts[2] ? parseInt(urlParts[2], 10) : null;
+  const partNumberFromUrl = isChapterUrl && urlParts[3] ? parseInt(urlParts[3], 10) : null;
+  const verseNumberFromUrl = !isChapterUrl && urlParts[1] ? parseInt(urlParts[1], 10) : null;
 
   useEffect(() => {
     if (urlInitialized || !allBooks) return;
@@ -111,7 +114,12 @@ function HomePageContent() {
       const matchedBook = allBooks.find(b => b.slug === bookSlugFromUrl);
       if (matchedBook) {
         setSelectedBookId(matchedBook.id);
-        if (verseNumberFromUrl !== null && !isNaN(verseNumberFromUrl)) {
+        if (chapterNumberFromUrl !== null && !isNaN(chapterNumberFromUrl)) {
+          setChapterViewAdhyay(chapterNumberFromUrl);
+          if (partNumberFromUrl !== null && !isNaN(partNumberFromUrl)) {
+            setChapterViewKhanda(partNumberFromUrl);
+          }
+        } else if (verseNumberFromUrl !== null && !isNaN(verseNumberFromUrl)) {
           setNavigateToVerse(verseNumberFromUrl);
           setCurrentVerseNumber(verseNumberFromUrl);
         }
@@ -120,7 +128,7 @@ function HomePageContent() {
       }
     }
     setUrlInitialized(true);
-  }, [allBooks, bookSlugFromUrl, verseNumberFromUrl, urlInitialized, setLocation]);
+  }, [allBooks, bookSlugFromUrl, verseNumberFromUrl, chapterNumberFromUrl, partNumberFromUrl, urlInitialized, setLocation]);
 
   useEffect(() => {
     if (!urlInitialized || !allBooks) return;
@@ -141,11 +149,25 @@ function HomePageContent() {
       setSelectedBookId(matchedBook.id);
     }
 
-    if (verseNumberFromUrl !== null && !isNaN(verseNumberFromUrl) && verseNumberFromUrl !== currentVerseNumber) {
-      setNavigateToVerse(verseNumberFromUrl);
-      setCurrentVerseNumber(verseNumberFromUrl);
+    if (chapterNumberFromUrl !== null && !isNaN(chapterNumberFromUrl)) {
+      if (chapterNumberFromUrl !== chapterViewAdhyay) {
+        setChapterViewAdhyay(chapterNumberFromUrl);
+      }
+      const resolvedPart = partNumberFromUrl !== null && !isNaN(partNumberFromUrl) ? partNumberFromUrl : null;
+      if (resolvedPart !== chapterViewKhanda) {
+        setChapterViewKhanda(resolvedPart);
+      }
+    } else {
+      if (chapterViewAdhyay !== null) {
+        setChapterViewAdhyay(null);
+        setChapterViewKhanda(null);
+      }
+      if (verseNumberFromUrl !== null && !isNaN(verseNumberFromUrl) && verseNumberFromUrl !== currentVerseNumber) {
+        setNavigateToVerse(verseNumberFromUrl);
+        setCurrentVerseNumber(verseNumberFromUrl);
+      }
     }
-  }, [urlInitialized, allBooks, bookSlugFromUrl, verseNumberFromUrl]);
+  }, [urlInitialized, allBooks, bookSlugFromUrl, verseNumberFromUrl, chapterNumberFromUrl, partNumberFromUrl]);
 
   const getBookSlug = useCallback((bookId: string): string | null => {
     const book = allBooks?.find(b => b.id === bookId);
@@ -202,6 +224,28 @@ function HomePageContent() {
     setNavigateToVerse(verseNumber);
   };
 
+  const handleSelectChapter = useCallback((adhyayNumber: number) => {
+    setChapterViewAdhyay(adhyayNumber);
+    setChapterViewKhanda(null);
+    if (selectedBookId) {
+      const slug = getBookSlug(selectedBookId);
+      if (slug) {
+        setLocation(`/${slug}/chapter/${adhyayNumber}`);
+      }
+    }
+  }, [selectedBookId, getBookSlug, setLocation]);
+
+  const handleSelectPart = useCallback((adhyayNumber: number, khandaNumber: number) => {
+    setChapterViewAdhyay(adhyayNumber);
+    setChapterViewKhanda(khandaNumber);
+    if (selectedBookId) {
+      const slug = getBookSlug(selectedBookId);
+      if (slug) {
+        setLocation(`/${slug}/chapter/${adhyayNumber}/${khandaNumber}`);
+      }
+    }
+  }, [selectedBookId, getBookSlug, setLocation]);
+
   const handleVerseChange = useCallback((verseNumber: number) => {
     setCurrentVerseNumber(verseNumber);
     if (selectedBookId) {
@@ -221,8 +265,8 @@ function HomePageContent() {
           selectedBookId={selectedBookId}
           onSelectBook={handleBookSelect}
           onSelectVerse={handleSidebarVerseSelect}
-          onSelectChapter={(adhyayNumber) => { setChapterViewAdhyay(adhyayNumber); setChapterViewKhanda(null); }}
-          onSelectPart={(adhyayNumber, khandaNumber) => { setChapterViewAdhyay(adhyayNumber); setChapterViewKhanda(khandaNumber); }}
+          onSelectChapter={handleSelectChapter}
+          onSelectPart={handleSelectPart}
           onSelectCategory={(categoryId) => {
             setSelectedCategoryId(categoryId);
             setSelectedBookId(null);
@@ -380,9 +424,18 @@ function HomePageContent() {
                   onBreadcrumbChange={setVerseBreadcrumb}
                   chapterViewAdhyay={chapterViewAdhyay}
                   chapterViewKhanda={chapterViewKhanda}
-                  onExitChapterView={() => { setChapterViewAdhyay(null); setChapterViewKhanda(null); }}
-                  onSelectChapter={(adhyayNumber) => { setChapterViewAdhyay(adhyayNumber); setChapterViewKhanda(null); }}
-                  onSelectPart={(adhyayNumber, khandaNumber) => { setChapterViewAdhyay(adhyayNumber); setChapterViewKhanda(khandaNumber); }}
+                  onExitChapterView={() => {
+                    setChapterViewAdhyay(null);
+                    setChapterViewKhanda(null);
+                    if (selectedBookId) {
+                      const slug = getBookSlug(selectedBookId);
+                      if (slug) {
+                        setLocation(`/${slug}/${currentVerseNumber}`);
+                      }
+                    }
+                  }}
+                  onSelectChapter={handleSelectChapter}
+                  onSelectPart={handleSelectPart}
                   onAddNoteWithText={(text) => {
                     setPendingNoteText(text);
                     if (isMobile) {
@@ -460,6 +513,8 @@ function Router() {
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/:bookSlug" component={HomePage} />
+      <Route path="/:bookSlug/chapter/:chapterNumber" component={HomePage} />
+      <Route path="/:bookSlug/chapter/:chapterNumber/:partNumber" component={HomePage} />
       <Route path="/:bookSlug/:verseNumber" component={HomePage} />
       <Route component={NotFound} />
     </Switch>
