@@ -88,9 +88,17 @@ function HomePageContent() {
   });
 
   const headerLanguages = useMemo(() => {
-    if (!selectedBookId || !commentaryOptions?.languages?.length) return allLanguages || [];
-    const bookLangCodes = new Set(commentaryOptions.languages.map(l => l.code));
-    return (allLanguages || []).filter(l => bookLangCodes.has(l.code));
+    if (selectedBookId && commentaryOptions?.languages?.length) {
+      const allLangMap = new Map((allLanguages || []).map(l => [l.code, l]));
+      return commentaryOptions.languages.map(bl => {
+        const full = allLangMap.get(bl.code);
+        return {
+          code: bl.code,
+          name: full?.nativeName || full?.name || bl.name || bl.code,
+        };
+      });
+    }
+    return (allLanguages || []).map(l => ({ code: l.code, name: l.nativeName || l.name }));
   }, [selectedBookId, commentaryOptions, allLanguages]);
 
   const headerAuthors = useMemo(() => {
@@ -402,7 +410,7 @@ function HomePageContent() {
                   <SelectContent>
                     {headerLanguages.map((lang) => (
                       <SelectItem key={lang.code} value={lang.code} data-testid={`option-header-lang-${lang.code}`}>
-                        {lang.nativeName || lang.name}
+                        {lang.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
