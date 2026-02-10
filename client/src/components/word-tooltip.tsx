@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "@/lib/translations";
 
 interface WordTranslation {
   word: string;
@@ -79,6 +80,7 @@ export function WordTooltip({
   const [showAllMeanings, setShowAllMeanings] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [targetLanguage, setTargetLanguage] = useState("english");
+  const { t } = useTranslation(targetLanguage);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const clickedWordRef = useRef<DOMRect | null>(null);
 
@@ -258,7 +260,7 @@ export function WordTooltip({
       <div className="space-y-2">
         <div className="flex items-center gap-2 mb-2">
           <BookText className="h-4 w-4 text-primary" />
-          <span className="font-semibold text-primary text-sm">Word-by-Word Meanings</span>
+          <span className="font-semibold text-primary text-sm">{t("wordByWordMeanings")}</span>
         </div>
 
         {directMeaning && (
@@ -333,7 +335,7 @@ export function WordTooltip({
               {enableWordMeanings && showAllMeanings ? (
                 <>
                   <BookText className="h-4 w-4 text-primary" />
-                  <span className="font-semibold text-primary text-sm">Word-by-Word Meanings</span>
+                  <span className="font-semibold text-primary text-sm">{t("wordByWordMeanings")}</span>
                 </>
               ) : (
                 <>
@@ -382,7 +384,7 @@ export function WordTooltip({
               {isLoading && (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                  <span className="ml-2 text-sm text-muted-foreground">Analyzing...</span>
+                  <span className="ml-2 text-sm text-muted-foreground">{t("analyzing")}</span>
                 </div>
               )}
 
@@ -396,7 +398,7 @@ export function WordTooltip({
                 <div className="space-y-3">
                   <div className="bg-primary/10 rounded-md p-2">
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-xs">Word</Badge>
+                      <Badge variant="secondary" className="text-xs">{t("word")}</Badge>
                       <span className="font-bold text-base">{translation.word}</span>
                     </div>
                   </div>
@@ -404,7 +406,7 @@ export function WordTooltip({
                   <div>
                     <div className="flex items-center gap-1.5 mb-1">
                       <Languages className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Translation</span>
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t("translation")}</span>
                     </div>
                     <p className="text-sm font-medium">{translation.translation}</p>
                   </div>
@@ -415,7 +417,7 @@ export function WordTooltip({
                       <div>
                         <div className="flex items-center gap-1.5 mb-1">
                           <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Grammar</span>
+                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t("grammar")}</span>
                         </div>
                         {typeof translation.grammaticalInfo === 'string' ? (
                           <p className="text-xs text-muted-foreground leading-relaxed">{translation.grammaticalInfo}</p>
@@ -437,7 +439,7 @@ export function WordTooltip({
                     <>
                       <Separator />
                       <div>
-                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">Etymology</span>
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">{t("etymology")}</span>
                         <p className="text-xs text-muted-foreground leading-relaxed">{translation.etymology}</p>
                       </div>
                     </>
@@ -447,7 +449,7 @@ export function WordTooltip({
                     <>
                       <Separator />
                       <div>
-                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">Contextual Meaning</span>
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide block mb-1">{t("contextualMeaning")}</span>
                         <p className="text-xs text-muted-foreground leading-relaxed">{translation.contextualMeaning}</p>
                       </div>
                     </>
@@ -455,7 +457,7 @@ export function WordTooltip({
 
                   {translation.cached && (
                     <div className="text-[10px] text-muted-foreground/60 text-right">
-                      (from cache)
+                      {t("fromCache")}
                     </div>
                   )}
                 </div>
@@ -469,7 +471,7 @@ export function WordTooltip({
                     data-testid="button-ai-translate"
                   >
                     <Sparkles className="h-4 w-4 mr-2" />
-                    Analyze with AI
+                    {t("analyzeWithAI")}
                   </Button>
                 </div>
               )}

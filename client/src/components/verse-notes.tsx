@@ -7,15 +7,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
+import { useTranslation } from "@/lib/translations";
 import type { Note } from "@shared/schema";
 
 interface VerseNotesProps {
   verseId: string;
   pendingSelectedText?: string | null;
   onSelectedTextConsumed?: () => void;
+  languageCode?: string | null;
 }
 
-export function VerseNotes({ verseId, pendingSelectedText, onSelectedTextConsumed }: VerseNotesProps) {
+export function VerseNotes({ verseId, pendingSelectedText, onSelectedTextConsumed, languageCode }: VerseNotesProps) {
+  const { t } = useTranslation(languageCode ?? null);
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
   const [newNote, setNewNote] = useState("");
@@ -76,7 +79,7 @@ export function VerseNotes({ verseId, pendingSelectedText, onSelectedTextConsume
       <div className="space-y-3">
         <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
           <StickyNote className="h-3 w-3" />
-          My Notes
+          {t("myNotes")}
         </h3>
         <button
           onClick={() => { window.location.href = "/auth"; }}
@@ -84,7 +87,7 @@ export function VerseNotes({ verseId, pendingSelectedText, onSelectedTextConsume
           data-testid="button-login-for-notes"
         >
           <StickyNote className="h-4 w-4" />
-          <span>Log in to add notes</span>
+          <span>{t("loginToAddNotes")}</span>
         </button>
       </div>
     );
@@ -95,7 +98,7 @@ export function VerseNotes({ verseId, pendingSelectedText, onSelectedTextConsume
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
           <StickyNote className="h-3 w-3" />
-          My Notes
+          {t("myNotes")}
           {verseNotes.length > 0 && (
             <Badge variant="secondary" className="text-[10px] h-4 px-1.5">{verseNotes.length}</Badge>
           )}
@@ -109,7 +112,7 @@ export function VerseNotes({ verseId, pendingSelectedText, onSelectedTextConsume
             data-testid="button-add-note"
           >
             <Plus className="h-3 w-3" />
-            Add
+            {t("add")}
           </Button>
         )}
       </div>
@@ -125,7 +128,7 @@ export function VerseNotes({ verseId, pendingSelectedText, onSelectedTextConsume
           <Textarea
             value={newNote}
             onChange={(e) => setNewNote(e.target.value)}
-            placeholder="Write your note..."
+            placeholder={t("writeYourNote")}
             className="text-sm min-h-[70px] bg-background/80 border-primary/20 resize-none"
             data-testid="input-new-note"
             autoFocus
@@ -139,7 +142,7 @@ export function VerseNotes({ verseId, pendingSelectedText, onSelectedTextConsume
               data-testid="button-cancel-note"
             >
               <X className="h-3 w-3 mr-1" />
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               size="sm"
@@ -149,7 +152,7 @@ export function VerseNotes({ verseId, pendingSelectedText, onSelectedTextConsume
               data-testid="button-save-note"
             >
               <Check className="h-3 w-3 mr-1" />
-              Save
+              {t("save")}
             </Button>
           </div>
         </div>
@@ -182,7 +185,7 @@ export function VerseNotes({ verseId, pendingSelectedText, onSelectedTextConsume
                       data-testid="button-cancel-edit"
                     >
                       <X className="h-3 w-3 mr-1" />
-                      Cancel
+                      {t("cancel")}
                     </Button>
                     <Button
                       size="sm"
@@ -192,7 +195,7 @@ export function VerseNotes({ verseId, pendingSelectedText, onSelectedTextConsume
                       data-testid="button-save-edit"
                     >
                       <Check className="h-3 w-3 mr-1" />
-                      Save
+                      {t("save")}
                     </Button>
                   </div>
                 </div>
@@ -236,7 +239,7 @@ export function VerseNotes({ verseId, pendingSelectedText, onSelectedTextConsume
       )}
 
       {!isLoading && verseNotes.length === 0 && !addingNote && (
-        <p className="text-xs text-muted-foreground/60 italic">No notes yet for this verse</p>
+        <p className="text-xs text-muted-foreground/60 italic">{t("noNotesYet")}</p>
       )}
     </div>
   );

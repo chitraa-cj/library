@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { PreferencesDialog } from "@/components/preferences-dialog";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
+import { useTranslation } from "@/lib/translations";
 import type { Book, Language } from "@shared/schema";
 
 interface CommentaryOption {
@@ -73,6 +74,7 @@ function HomePageContent() {
   const isMobile = useIsMobile();
   const { user, isLoading: authLoading, isAuthenticated: isLoggedIn } = useAuth();
   const { setTheme } = useTheme();
+  const { t } = useTranslation(selectedCommentaryLanguage);
 
   const { data: allBooks } = useQuery<Book[]>({
     queryKey: ["/api/books"],
@@ -334,6 +336,7 @@ function HomePageContent() {
           onSelectVerse={handleSidebarVerseSelect}
           onSelectChapter={handleSelectChapter}
           onSelectPart={handleSelectPart}
+          languageCode={selectedCommentaryLanguage}
           onSelectCategory={(categoryId) => {
             setSelectedCategoryId(categoryId);
             setSelectedBookId(null);
@@ -427,11 +430,11 @@ function HomePageContent() {
                     <div className="flex items-center gap-1">
                       <span className="text-xs text-primary/50">ॐ</span>
                       <span className="font-serif text-sm font-bold text-primary">
-                        Advaita Vaaridhi
+                        {t("advaitaVaaridhi")}
                       </span>
                     </div>
                     <span className="text-[10px] text-muted-foreground tracking-wide">
-                      ENCYCLOPAEDIA OF ADVAITA VEDANTA
+                      {t("encyclopaediaOfAdvaitaVedanta")}
                     </span>
                   </div>
                 </div>
@@ -464,7 +467,7 @@ function HomePageContent() {
                     onValueChange={setSelectedAuthor}
                   >
                     <SelectTrigger className="h-8 w-auto min-w-[80px] max-w-[150px] text-xs border-none bg-transparent shadow-none focus:ring-0 px-1.5" data-testid="select-header-commentator">
-                      <SelectValue placeholder="Commentator" />
+                      <SelectValue placeholder={t("commentator")} />
                     </SelectTrigger>
                     <SelectContent>
                       {headerAuthors.map((author) => (
@@ -486,7 +489,7 @@ function HomePageContent() {
                     setLocation("/auth");
                   }
                 }}
-                title="Configure preferences"
+                title={t("configurePreferences")}
                 data-testid="button-configure"
               >
                 <Settings className="h-4 w-4" />
@@ -510,7 +513,7 @@ function HomePageContent() {
                       data-testid="button-logout"
                     >
                       <LogOut className="h-4 w-4" />
-                      <span className="hidden sm:inline">Log Out</span>
+                      <span className="hidden sm:inline">{t("logOut")}</span>
                     </Button>
                   </div>
                 ) : (
@@ -521,7 +524,7 @@ function HomePageContent() {
                     data-testid="button-login"
                   >
                     <LogIn className="h-4 w-4" />
-                    <span>Log In</span>
+                    <span>{t("logIn")}</span>
                   </Button>
                 )
               )}
@@ -608,6 +611,7 @@ function HomePageContent() {
             currentAuthor={selectedAuthor}
             onLanguageChange={handleGlobalLanguageChange}
             onAuthorChange={setSelectedAuthor}
+            languageCode={selectedCommentaryLanguage}
           />
         )}
       </div>

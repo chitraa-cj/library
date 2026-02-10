@@ -16,6 +16,7 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { VideoInline } from "@/components/video-popup";
 import { VerseNotes } from "@/components/verse-notes";
+import { useTranslation } from "@/lib/translations";
 import type { Explanation, VerseTranslation } from "@shared/schema";
 
 interface CommentaryOption {
@@ -54,6 +55,7 @@ function PanelContent({
   pendingNoteText,
   onPendingNoteTextConsumed,
 }: Omit<TranslationPanelProps, 'open' | 'onOpenChange' | 'collapsed' | 'onCollapsedChange'>) {
+  const { t } = useTranslation(selectedCommentaryLanguage);
   const [selectedExplanation, setSelectedExplanation] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
 
@@ -102,11 +104,11 @@ function PanelContent({
           <>
             <div className="space-y-3">
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Selected Verse
+                {t("selectedVerse")}
               </h3>
               <Card className="p-4">
                 <p className="font-serif text-sm leading-relaxed">
-                  {selectedContent || "No content available"}
+                  {selectedContent || t("noContentAvailable")}
                 </p>
               </Card>
             </div>
@@ -117,7 +119,7 @@ function PanelContent({
                 <div className="space-y-2">
                   <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                     <User className="h-3 w-3" />
-                    Commentator
+                    {t("commentator")}
                   </h3>
                   <Select
                     value={selectedAuthor || "__all__"}
@@ -127,14 +129,14 @@ function PanelContent({
                       className="w-full h-8 text-xs border-border/50"
                       data-testid="select-author"
                     >
-                      <SelectValue placeholder="Select Commentator" />
+                      <SelectValue placeholder={t("selectCommentator")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem
                         value="__all__"
                         data-testid="option-author-all"
                       >
-                        All Commentators
+                        {t("allCommentators")}
                       </SelectItem>
                       {availableAuthors.map((author) => (
                         <SelectItem
@@ -157,6 +159,7 @@ function PanelContent({
               verseId={selectedVerseId}
               pendingSelectedText={pendingNoteText}
               onSelectedTextConsumed={onPendingNoteTextConsumed}
+              languageCode={selectedCommentaryLanguage}
             />
 
             <Separator />
@@ -164,7 +167,7 @@ function PanelContent({
             <div className="space-y-3">
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-2" data-testid="heading-panel-explanatory-videos">
                 <Play className="h-3 w-3" />
-                Explanatory Videos
+                {t("explanatoryVideos")}
               </h3>
               <VideoInline
                 videoId="8ELHatzdtAk"

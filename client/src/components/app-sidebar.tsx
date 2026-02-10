@@ -12,6 +12,7 @@ import {
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useTranslation } from "@/lib/translations";
 import type { Book, Verse } from "@shared/schema";
 
 interface CatalogSubCategory {
@@ -119,6 +120,7 @@ interface AppSidebarProps {
   chapterViewKhanda?: number | null;
   onGoHome?: () => void;
   onGoBack?: () => void;
+  languageCode?: string | null;
 }
 
 interface AdhyayGroup {
@@ -197,7 +199,7 @@ function buildHierarchy(verses: Verse[]): AdhyayGroup[] {
 
 export { CATALOG_TREE, type CatalogCategory, type CatalogSubCategory };
 
-export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSelectChapter, onSelectPart, onSelectCategory, onShowCoverPage, selectedVerseNumber, chapterViewAdhyay, chapterViewKhanda, onGoHome, onGoBack }: AppSidebarProps) {
+export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSelectChapter, onSelectPart, onSelectCategory, onShowCoverPage, selectedVerseNumber, chapterViewAdhyay, chapterViewKhanda, onGoHome, onGoBack, languageCode }: AppSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [drillCategoryId, setDrillCategoryId] = useState<string | null>(null);
   const [drillSubCategoryId, setDrillSubCategoryId] = useState<string | null>(null);
@@ -205,6 +207,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
   const [expandedAdhyays, setExpandedAdhyays] = useState<Set<string>>(new Set());
   const [expandedKhandas, setExpandedKhandas] = useState<Set<string>>(new Set());
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const { t } = useTranslation(languageCode ?? null);
   const { isMobile, setOpenMobile, state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
 
@@ -1023,7 +1026,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                   <PanelLeftOpen className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="right">Expand sidebar</TooltipContent>
+              <TooltipContent side="right">{t("expandSidebar")}</TooltipContent>
             </Tooltip>
             {onGoHome && (
               <Tooltip>
@@ -1078,7 +1081,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                   variant="ghost"
                   size="icon"
                   onClick={toggleSidebar}
-                  title="Collapse sidebar"
+                  title={t("collapseSidebar")}
                   data-testid="button-collapse-sidebar"
                 >
                   <PanelLeftClose className="h-4 w-4" />
@@ -1091,12 +1094,12 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
               <Input
                 placeholder={
                   selectedBookId && selectedBookData?.verses
-                    ? "Search chapters..."
+                    ? t("searchChapters")
                     : drillSubCategoryId
-                      ? "Search books..."
+                      ? t("searchBooks")
                       : drillCategoryId
-                        ? "Search subcategories..."
-                        : "Search categories..."
+                        ? t("searchSubcategories")
+                        : t("searchCategories")
                 }
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "@/lib/translations";
 
 export default function AuthPage() {
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -17,6 +18,7 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [, setLocation] = useLocation();
   const { user, isLoading: authLoading, refetch } = useAuth();
+  const { t } = useTranslation(typeof window !== 'undefined' ? localStorage.getItem('preferredLanguage') : null);
 
   if (authLoading) {
     return (
@@ -54,14 +56,14 @@ export default function AuthPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.message || "Something went wrong");
+        setError(data.message || t("somethingWentWrong"));
         return;
       }
 
       await refetch();
       setLocation("/");
     } catch (err) {
-      setError("Network error. Please try again.");
+      setError(t("networkError"));
     } finally {
       setLoading(false);
     }
@@ -77,9 +79,9 @@ export default function AuthPage() {
               alt="Advaita Vaaridhi"
               className="h-10 w-10 object-contain"
             />
-            <h1 className="font-serif text-xl font-bold text-primary">Advaita Vaaridhi</h1>
+            <h1 className="font-serif text-xl font-bold text-primary">{t("advaitaVaaridhi")}</h1>
           </div>
-          <p className="text-xs text-muted-foreground tracking-wide">ENCYCLOPAEDIA OF ADVAITA VEDANTA</p>
+          <p className="text-xs text-muted-foreground tracking-wide">{t("encyclopaediaOfAdvaitaVedanta")}</p>
         </div>
 
         <Card>
@@ -91,7 +93,7 @@ export default function AuthPage() {
                 onClick={() => { setMode("login"); setError(""); }}
                 data-testid="tab-login"
               >
-                Log In
+                {t("logIn")}
               </Button>
               <Button
                 variant={mode === "register" ? "default" : "ghost"}
@@ -99,7 +101,7 @@ export default function AuthPage() {
                 onClick={() => { setMode("register"); setError(""); }}
                 data-testid="tab-register"
               >
-                Sign Up
+                {t("signUp")}
               </Button>
             </div>
           </CardHeader>
@@ -108,48 +110,48 @@ export default function AuthPage() {
               {mode === "register" && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="firstName">First Name</Label>
+                    <Label htmlFor="firstName">{t("firstName")}</Label>
                     <Input
                       id="firstName"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="First name"
+                      placeholder={t("firstNamePlaceholder")}
                       required
                       data-testid="input-first-name"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="lastName">Last Name</Label>
+                    <Label htmlFor="lastName">{t("lastName")}</Label>
                     <Input
                       id="lastName"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      placeholder="Last name (optional)"
+                      placeholder={t("lastNamePlaceholder")}
                       data-testid="input-last-name"
                     />
                   </div>
                 </div>
               )}
               <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("email")}</Label>
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
+                  placeholder={t("emailPlaceholder")}
                   required
                   data-testid="input-email"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("password")}</Label>
                 <Input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={mode === "register" ? "At least 6 characters" : "Your password"}
+                  placeholder={mode === "register" ? t("passwordPlaceholderRegister") : t("passwordPlaceholderLogin")}
                   required
                   minLength={mode === "register" ? 6 : undefined}
                   data-testid="input-password"
@@ -167,33 +169,33 @@ export default function AuthPage() {
                 data-testid="button-auth-submit"
               >
                 {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                {mode === "login" ? "Log In" : "Sign Up"}
+                {mode === "login" ? t("logIn") : t("signUp")}
               </Button>
             </form>
 
             <p className="text-xs text-muted-foreground text-center mt-4">
               {mode === "login" ? (
                 <>
-                  Don't have an account?{" "}
+                  {t("dontHaveAccount")}{" "}
                   <button
                     type="button"
                     className="text-primary underline"
                     onClick={() => { setMode("register"); setError(""); }}
                     data-testid="link-switch-to-register"
                   >
-                    Sign up
+                    {t("signUpLink")}
                   </button>
                 </>
               ) : (
                 <>
-                  Already have an account?{" "}
+                  {t("alreadyHaveAccount")}{" "}
                   <button
                     type="button"
                     className="text-primary underline"
                     onClick={() => { setMode("login"); setError(""); }}
                     data-testid="link-switch-to-login"
                   >
-                    Log in
+                    {t("logInLink")}
                   </button>
                 </>
               )}

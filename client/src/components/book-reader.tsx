@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareText, StickyNote, List } from "lucide-react";
 import { VideoPopup } from "@/components/video-popup";
 import { WordTooltip } from "@/components/word-tooltip";
+import { useTranslation } from "@/lib/translations";
 import type { BookWithVerseMeta, VerseMeta, VerseTranslation, Explanation, VerseWithTranslations } from "@shared/schema";
 import shankaracharyaImg from "@assets/image_1770455528511.png";
 
@@ -247,6 +248,7 @@ export function BookReader({
   onSelectPart,
   onShowCoverPage,
 }: BookReaderProps) {
+  const { t } = useTranslation(selectedCommentaryLanguage);
   const [currentPage, setCurrentPage] = useState(0);
   const [initialized, setInitialized] = useState(false);
   const [commentaryExpanded, setCommentaryExpanded] = useState(false);
@@ -407,7 +409,7 @@ export function BookReader({
         adhyayTitle: verse.adhyayTitle || null,
         khandaNumber: khandaNum ?? null,
         khandaTitle: verse.khandaTitle || null,
-        verseLabel: verse.sectionTitle || `Mantra ${verse.verseNumber}`,
+        verseLabel: verse.sectionTitle || `${t("mantra")} ${verse.verseNumber}`,
         numericLabel,
       });
     }
@@ -581,7 +583,7 @@ export function BookReader({
               )}
 
               <div className="flex items-center justify-center mb-4 sm:mb-5">
-                <span className="text-xs text-muted-foreground">{verses.length} verses</span>
+                <span className="text-xs text-muted-foreground">{verses.length} {t("verses")}</span>
               </div>
 
               <Button
@@ -597,7 +599,7 @@ export function BookReader({
                 data-testid="button-start-reading"
               >
                 <BookOpen className="h-4 w-4" />
-                Start Reading
+                {t("startReading")}
               </Button>
             </div>
 
@@ -605,7 +607,7 @@ export function BookReader({
               <div className="mt-6 sm:mt-8">
                 <div className="flex items-center gap-2 mb-4">
                   <List className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                  <h2 className="font-serif text-base sm:text-lg font-semibold" data-testid="text-toc-heading">Table of Contents</h2>
+                  <h2 className="font-serif text-base sm:text-lg font-semibold" data-testid="text-toc-heading">{t("tableOfContents")}</h2>
                 </div>
 
                 <div className="space-y-1" data-testid="toc-list">
@@ -629,7 +631,7 @@ export function BookReader({
                             data-testid={`toc-adhyay-${adhyay.adhyayNumber}`}
                           >
                             <Badge variant="outline" className="font-mono text-[10px] sm:text-[11px] px-1.5 h-5 shrink-0 border-primary/30 text-primary">
-                              Ch. {adhyay.adhyayNumber}
+                              {t("chapter")} {adhyay.adhyayNumber}
                             </Badge>
                             <span className="text-sm sm:text-base font-medium truncate">{adhyay.adhyayTitle}</span>
                           </button>
@@ -659,7 +661,7 @@ export function BookReader({
                                         data-testid={`toc-khanda-${adhyay.adhyayNumber}-${khanda.khandaNumber}`}
                                       >
                                         <Badge variant="outline" className="font-mono text-[10px] px-1.5 h-4.5 shrink-0 border-muted-foreground/30">
-                                          Part {adhyay.adhyayNumber}.{khanda.khandaNumber}
+                                          {t("part")} {adhyay.adhyayNumber}.{khanda.khandaNumber}
                                         </Badge>
                                         <span className="text-xs sm:text-sm text-muted-foreground truncate">{khanda.khandaTitle}</span>
                                       </button>
@@ -675,10 +677,10 @@ export function BookReader({
                                             data-testid={`toc-verse-${v.verseNumber}`}
                                           >
                                             <span className="font-mono text-[10px] text-muted-foreground shrink-0 w-14">
-                                              Sl. {adhyay.adhyayNumber}.{khanda.khandaNumber}.{idx + 1}
+                                              {t("sloka")} {adhyay.adhyayNumber}.{khanda.khandaNumber}.{idx + 1}
                                             </span>
                                             <span className="text-xs text-muted-foreground truncate">
-                                              {v.sectionTitle || `Mantra ${idx + 1}`}
+                                              {v.sectionTitle || `${t("mantra")} ${idx + 1}`}
                                             </span>
                                           </button>
                                         ))}
@@ -696,10 +698,10 @@ export function BookReader({
                                   data-testid={`toc-verse-${v.verseNumber}`}
                                 >
                                   <span className="font-mono text-[10px] text-muted-foreground shrink-0 w-10">
-                                    Sl. {adhyay.adhyayNumber}.{idx + 1}
+                                    {t("sloka")} {adhyay.adhyayNumber}.{idx + 1}
                                   </span>
                                   <span className="text-xs sm:text-sm text-muted-foreground truncate">
-                                    {v.sectionTitle || `Sloka ${idx + 1}`}
+                                    {v.sectionTitle || `${t("verse")} ${idx + 1}`}
                                   </span>
                                 </button>
                               ))
@@ -744,14 +746,14 @@ export function BookReader({
         "hindi": ["hi", "hindi"],
       };
       const matchCodes = langAliases[langCode] || [langCode];
-      const t = verse.translations?.find(tr => matchCodes.includes(tr.languageCode));
-      return t?.content || "";
+      const tr = verse.translations?.find(tr => matchCodes.includes(tr.languageCode));
+      return tr?.content || "";
     };
 
     const getChapterDevanagari = (verse: VerseWithTranslations): string => {
-      const devText = verse.translations?.find(t => t.languageCode === "devanagari")?.content;
+      const devText = verse.translations?.find(tr => tr.languageCode === "devanagari")?.content;
       if (devText) return devText;
-      return verse.translations?.find(t => t.languageCode === "sa")?.content || "";
+      return verse.translations?.find(tr => tr.languageCode === "sa")?.content || "";
     };
 
     const showTranslation = selectedCommentaryLanguage && selectedCommentaryLanguage !== "devanagari" && selectedCommentaryLanguage !== "sa";
@@ -769,8 +771,8 @@ export function BookReader({
       : null;
 
     const headerBadge = chapterViewKhanda != null
-      ? `Part ${chapterViewAdhyay}.${chapterViewKhanda}`
-      : `Ch. ${chapterViewAdhyay}`;
+      ? `${t("part")} ${chapterViewAdhyay}.${chapterViewKhanda}`
+      : `${t("chapter")} ${chapterViewAdhyay}`;
     const headerSubtitle = selectedKhandaInfo
       ? selectedKhandaInfo.khandaTitle
       : chapterTitle;
@@ -822,7 +824,7 @@ export function BookReader({
                   data-testid="button-exit-chapter-view"
                 >
                   <BookOpen className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Single Verse</span>
+                  <span className="hidden sm:inline">{t("singleVerse")}</span>
                 </Button>
               )}
             </div>
@@ -862,7 +864,7 @@ export function BookReader({
                           data-testid={`chapter-view-khanda-${khanda.khandaNumber}`}
                         >
                           <span className="text-xs sm:text-sm font-serif text-primary/60 tracking-wider uppercase group-hover:text-primary transition-colors">
-                            Part {chapterViewAdhyay}.{khanda.khandaNumber}
+                            {t("part")} {chapterViewAdhyay}.{khanda.khandaNumber}
                           </span>
                           <h3 className="font-serif text-sm sm:text-base text-foreground/80 mt-1 group-hover:text-primary transition-colors">
                             {khanda.khandaTitle}
@@ -1032,7 +1034,7 @@ export function BookReader({
             >
               <div className="text-center mb-4 sm:mb-5">
                 <span className="text-xs text-muted-foreground font-serif">
-                  {currentVerse.sectionTitle || `Verse ${currentVerse.verseNumber}`}
+                  {currentVerse.sectionTitle || `${t("verse")} ${currentVerse.verseNumber}`}
                   {currentNumericLabel && <span className="ml-2 font-mono text-[10px] text-muted-foreground/60">({currentNumericLabel})</span>}
                 </span>
               </div>
@@ -1079,7 +1081,7 @@ export function BookReader({
                         data-testid="button-toggle-commentary"
                       >
                         <MessageSquareText className="h-3.5 w-3.5" />
-                        <span>{commentaryExpanded ? "Hide Commentary" : "Commentary"}</span>
+                        <span>{commentaryExpanded ? `Hide ${t("commentary")}` : t("commentary")}</span>
                         <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${commentaryExpanded ? "rotate-180" : ""}`} />
                       </button>
                     </div>
