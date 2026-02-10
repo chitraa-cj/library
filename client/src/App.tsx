@@ -87,6 +87,12 @@ function HomePageContent() {
     enabled: !!selectedBookId,
   });
 
+  const headerLanguages = useMemo(() => {
+    if (!selectedBookId || !commentaryOptions?.languages?.length) return allLanguages || [];
+    const bookLangCodes = new Set(commentaryOptions.languages.map(l => l.code));
+    return (allLanguages || []).filter(l => bookLangCodes.has(l.code));
+  }, [selectedBookId, commentaryOptions, allLanguages]);
+
   const headerAuthors = useMemo(() => {
     if (!commentaryOptions) return [];
     if (!selectedCommentaryLanguage) return commentaryOptions.authors;
@@ -394,7 +400,7 @@ function HomePageContent() {
                     <SelectValue placeholder="Language" />
                   </SelectTrigger>
                   <SelectContent>
-                    {allLanguages?.map((lang) => (
+                    {headerLanguages.map((lang) => (
                       <SelectItem key={lang.code} value={lang.code} data-testid={`option-header-lang-${lang.code}`}>
                         {lang.nativeName || lang.name}
                       </SelectItem>
