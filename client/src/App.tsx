@@ -578,14 +578,16 @@ function HomePageContent() {
                   onBreadcrumbChange={setVerseBreadcrumb}
                   chapterViewAdhyay={chapterViewAdhyay}
                   chapterViewKhanda={chapterViewKhanda}
-                  onExitChapterView={() => {
+                  onExitChapterView={(verseNum) => {
+                    const targetVerse = verseNum ?? currentVerseNumber;
                     setChapterViewAdhyay(null);
                     setChapterViewKhanda(null);
-                    setNavigateToVerse(currentVerseNumber);
+                    setCurrentVerseNumber(targetVerse);
+                    setNavigateToVerse(targetVerse);
                     if (selectedBookId) {
                       const slug = getBookSlug(selectedBookId);
                       if (slug) {
-                        setLocation(`/${slug}/${currentVerseNumber}`);
+                        setLocation(`/${slug}/${targetVerse}`);
                       }
                     }
                   }}

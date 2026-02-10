@@ -111,7 +111,7 @@ interface BookReaderProps {
   onAddNoteWithText?: (text: string) => void;
   chapterViewAdhyay?: number | null;
   chapterViewKhanda?: number | null;
-  onExitChapterView?: () => void;
+  onExitChapterView?: (verseNumber?: number) => void;
   onSelectChapter?: (adhyayNumber: number) => void;
   onSelectPart?: (adhyayNumber: number, khandaNumber: number) => void;
   onShowCoverPage?: () => void;
@@ -886,7 +886,8 @@ export function BookReader({
                                   if (pageIdx >= 0) {
                                     setCurrentPage(pageIdx);
                                     setShowCoverPage(false);
-                                    onExitChapterView?.();
+                                    hasNavigatedRef.current = true;
+                                    onExitChapterView?.(verse.verseNumber);
                                   }
                                 }}
                                 data-testid={`chapter-verse-${verse.verseNumber}`}
@@ -937,7 +938,8 @@ export function BookReader({
                             if (pageIdx >= 0) {
                               setCurrentPage(pageIdx);
                               setShowCoverPage(false);
-                              onExitChapterView?.();
+                              hasNavigatedRef.current = true;
+                              onExitChapterView?.(verse.verseNumber);
                             }
                           }}
                           data-testid={`chapter-verse-${verse.verseNumber}`}
