@@ -574,9 +574,6 @@ export function BookReader({
                 <h1 className="font-serif text-xl sm:text-2xl font-bold text-foreground tracking-tight" data-testid="text-cover-title">
                   {tc(book.title, bookTitleTranslations)}
                 </h1>
-                {book.author && (
-                  <p className="text-xs sm:text-sm text-muted-foreground mt-1">{tc(book.author, bookAuthorTranslations)}</p>
-                )}
                 <Badge variant="secondary" className="mt-2 text-[10px] sm:text-xs">
                   {tc(book.category, bookCategoryTranslations)}
                 </Badge>
