@@ -114,6 +114,7 @@ interface AppSidebarProps {
   onSelectPart?: (adhyayNumber: number, khandaNumber: number) => void;
   onSelectCategory?: (categoryId: string) => void;
   selectedVerseNumber?: number;
+  chapterViewAdhyay?: number | null;
   onGoHome?: () => void;
   onGoBack?: () => void;
 }
@@ -194,7 +195,7 @@ function buildHierarchy(verses: Verse[]): AdhyayGroup[] {
 
 export { CATALOG_TREE, type CatalogCategory, type CatalogSubCategory };
 
-export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSelectChapter, onSelectPart, onSelectCategory, selectedVerseNumber, onGoHome, onGoBack }: AppSidebarProps) {
+export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSelectChapter, onSelectPart, onSelectCategory, selectedVerseNumber, chapterViewAdhyay, onGoHome, onGoBack }: AppSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [drillCategoryId, setDrillCategoryId] = useState<string | null>(null);
   const [drillSubCategoryId, setDrillSubCategoryId] = useState<string | null>(null);
@@ -286,6 +287,16 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
       }
     }
   }, [selectedVerseNumber, hierarchy, selectedBookId]);
+
+  useEffect(() => {
+    if (chapterViewAdhyay != null && hierarchy.length > 0 && selectedBookId) {
+      const adhyayKey = `${selectedBookId}-a${chapterViewAdhyay}`;
+      setExpandedAdhyays(prev => {
+        if (prev.has(adhyayKey)) return prev;
+        return new Set([...prev, adhyayKey]);
+      });
+    }
+  }, [chapterViewAdhyay, hierarchy, selectedBookId]);
 
   const drillCategory = useMemo(() => {
     if (!drillCategoryId) return null;
@@ -461,9 +472,10 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
           {displayHierarchy.map((adhyay) => {
             const adhyayKey = `${book.id}-a${adhyay.adhyayNumber}`;
             const isAdhyayOpen = expandedAdhyays.has(adhyayKey) || !!searchQuery.trim();
-            const isCurrentAdhyay = isTwoLevel
-              ? adhyay.verses.some(v => v.verseNumber === selectedVerseNumber)
-              : adhyay.khandas.some(k => k.verses.some(v => v.verseNumber === selectedVerseNumber));
+            const isCurrentAdhyay = (chapterViewAdhyay != null && adhyay.adhyayNumber === chapterViewAdhyay)
+              || (chapterViewAdhyay == null && (isTwoLevel
+                ? adhyay.verses.some(v => v.verseNumber === selectedVerseNumber)
+                : adhyay.khandas.some(k => k.verses.some(v => v.verseNumber === selectedVerseNumber))));
 
             return (
               <div key={adhyayKey}>

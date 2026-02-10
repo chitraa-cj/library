@@ -229,6 +229,7 @@ function HomePageContent() {
             if (sidebarState === "expanded") toggleSidebar();
           }}
           selectedVerseNumber={currentVerseNumber}
+          chapterViewAdhyay={chapterViewAdhyay}
           onGoHome={handleGoHome}
           onGoBack={selectedBookId ? handleGoHome : undefined}
         />
