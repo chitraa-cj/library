@@ -571,7 +571,15 @@ export function BookReader({
 
               <Button
                 className="w-full gap-2"
-                onClick={() => { setCurrentPage(0); setShowCoverPage(false); }}
+                onClick={() => {
+                  if (tocHierarchy.groups.length > 0) {
+                    onSelectChapter?.(tocHierarchy.groups[0].adhyayNumber);
+                    setShowCoverPage(false);
+                  } else {
+                    setCurrentPage(0);
+                    setShowCoverPage(false);
+                  }
+                }}
                 data-testid="button-start-reading"
               >
                 <BookOpen className="h-4 w-4" />
