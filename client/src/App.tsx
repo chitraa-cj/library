@@ -574,7 +574,6 @@ function HomePageContent() {
                   selectedCommentaryLanguage={selectedCommentaryLanguage}
                   onAuthorChange={setSelectedAuthor}
                   navigateToVerse={navigateToVerse}
-                  onNavigateComplete={() => setNavigateToVerse(null)}
                   onVerseChange={handleVerseChange}
                   onBreadcrumbChange={setVerseBreadcrumb}
                   chapterViewAdhyay={chapterViewAdhyay}

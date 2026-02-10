@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -106,7 +106,6 @@ interface BookReaderProps {
   selectedCommentaryLanguage: string | null;
   onAuthorChange: (author: string | null) => void;
   navigateToVerse?: number | null;
-  onNavigateComplete?: () => void;
   onVerseChange?: (verseNumber: number) => void;
   onBreadcrumbChange?: (breadcrumb: VerseBreadcrumb) => void;
   onAddNoteWithText?: (text: string) => void;
@@ -245,7 +244,7 @@ export function BookReader({
   selectedCommentaryLanguage,
   onAuthorChange,
   navigateToVerse,
-  onNavigateComplete,
+
   onVerseChange,
   onBreadcrumbChange,
   onAddNoteWithText,
@@ -261,6 +260,7 @@ export function BookReader({
   const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, lang);
   const [currentPage, setCurrentPage] = useState(0);
   const [initialized, setInitialized] = useState(false);
+  const hasNavigatedRef = useRef(false);
   const [commentaryExpanded, setCommentaryExpanded] = useState(true);
   const [selectionPopup, setSelectionPopup] = useState<{ text: string; x: number; y: number } | null>(null);
   const [showCoverPage, setShowCoverPage] = useState(true);
@@ -367,6 +367,7 @@ export function BookReader({
   useEffect(() => {
     setCurrentPage(0);
     setShowCoverPage(true);
+    hasNavigatedRef.current = false;
     setExpandedTOCAdhyays(new Set());
     setExpandedTOCKhandas(new Set());
   }, [bookId]);
@@ -377,9 +378,9 @@ export function BookReader({
       if (pageIndex >= 0) {
         setCurrentPage(pageIndex);
         setShowCoverPage(false);
+        hasNavigatedRef.current = true;
       }
-      onNavigateComplete?.();
-    } else if (chapterViewAdhyay == null && navigateToVerse == null && !showCoverPage) {
+    } else if (chapterViewAdhyay == null && navigateToVerse == null && !showCoverPage && !hasNavigatedRef.current) {
       setShowCoverPage(true);
     }
   }, [chapterViewAdhyay, navigateToVerse, verses]);
