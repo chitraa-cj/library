@@ -138,6 +138,15 @@ function HomePageContent() {
     return commentaryOptions.authors.filter(a => a.languageCodes.includes(selectedCommentaryLanguage));
   }, [commentaryOptions, selectedCommentaryLanguage]);
 
+  useEffect(() => {
+    if (headerAuthors.length > 0) {
+      const currentValid = selectedAuthor && headerAuthors.some(a => a.authorName === selectedAuthor);
+      if (!currentValid) {
+        setSelectedAuthor(headerAuthors[0].authorName);
+      }
+    }
+  }, [headerAuthors]);
+
   const [prefsApplied, setPrefsApplied] = useState(false);
   useEffect(() => {
     if (!user || prefsApplied) return;
