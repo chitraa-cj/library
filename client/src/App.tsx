@@ -98,7 +98,15 @@ function HomePageContent() {
         };
       });
     }
-    return (allLanguages || []).map(l => ({ code: l.code, name: l.nativeName || l.name }));
+    const seen = new Set<string>();
+    return (allLanguages || []).reduce<{code: string; name: string}[]>((acc, l) => {
+      const displayName = l.nativeName || l.name;
+      if (!seen.has(displayName)) {
+        seen.add(displayName);
+        acc.push({ code: l.code, name: displayName });
+      }
+      return acc;
+    }, []);
   }, [selectedBookId, commentaryOptions, allLanguages]);
 
   const headerAuthors = useMemo(() => {
