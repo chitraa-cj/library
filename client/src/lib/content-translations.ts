@@ -457,10 +457,15 @@ const langNameToCode: Record<string, string> = {
   english: "en",
   hindi: "hi",
   sanskrit: "sa",
-  devanagari: "sa",
+  devanagari: "hi",
   kannada: "kn",
   telugu: "te",
   tamil: "ta",
+};
+
+const langFallbacks: Record<string, string[]> = {
+  hi: ["sa"],
+  sa: ["hi"],
 };
 
 export function translateContent(
@@ -471,8 +476,14 @@ export function translateContent(
   if (!text) return "";
   const normalizedLang = langNameToCode[lang.toLowerCase()] || lang;
   const entry = map[text];
-  if (entry && entry[normalizedLang]) {
-    return entry[normalizedLang];
+  if (entry) {
+    if (entry[normalizedLang]) return entry[normalizedLang];
+    const fallbacks = langFallbacks[normalizedLang];
+    if (fallbacks) {
+      for (const fb of fallbacks) {
+        if (entry[fb]) return entry[fb];
+      }
+    }
   }
   return text;
 }
