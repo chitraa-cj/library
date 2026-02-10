@@ -23,10 +23,13 @@ interface TOCKhanda {
   verses: VerseMeta[];
 }
 
-function buildTOCHierarchy(verses: VerseMeta[]): { type: "three-level" | "two-level" | "flat"; groups: TOCAdhyay[] } {
+function buildTOCHierarchy(verses: VerseMeta[], t?: (key: string) => string): { type: "three-level" | "two-level" | "flat"; groups: TOCAdhyay[] } {
   const hasThreeLevel = verses.some(v => v.adhyayNumber != null && v.khandaNumber != null);
   const hasTwoLevel = verses.some(v => v.adhyayNumber != null);
   if (!hasThreeLevel && !hasTwoLevel) return { type: "flat", groups: [] };
+
+  const chapterLabel = t ? t("chapterFull") : "Chapter";
+  const sectionLabel = t ? t("section") : "Section";
 
   const type = hasThreeLevel ? "three-level" : "two-level";
   const hierarchyVerses = verses.filter(v => v.adhyayNumber != null);
@@ -37,7 +40,7 @@ function buildTOCHierarchy(verses: VerseMeta[]): { type: "three-level" | "two-le
     if (!adhyayMap.has(adhyayNum)) {
       adhyayMap.set(adhyayNum, {
         adhyayNumber: adhyayNum,
-        adhyayTitle: verse.adhyayTitle ?? `Chapter ${adhyayNum}`,
+        adhyayTitle: verse.adhyayTitle ?? `${chapterLabel} ${adhyayNum}`,
         verses: [],
         khandas: [],
       });
@@ -46,7 +49,7 @@ function buildTOCHierarchy(verses: VerseMeta[]): { type: "three-level" | "two-le
     if (type === "three-level" && verse.khandaNumber != null) {
       let khanda = adhyay.khandas.find(k => k.khandaNumber === verse.khandaNumber);
       if (!khanda) {
-        khanda = { khandaNumber: verse.khandaNumber, khandaTitle: verse.khandaTitle ?? `Section ${verse.khandaNumber}`, verses: [] };
+        khanda = { khandaNumber: verse.khandaNumber, khandaTitle: verse.khandaTitle ?? `${sectionLabel} ${verse.khandaNumber}`, verses: [] };
         adhyay.khandas.push(khanda);
       }
       khanda.verses.push(verse);
@@ -214,7 +217,7 @@ function VerseExplanation({
               data-testid="button-show-more-commentaries"
             >
               <MessageSquareText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span>{showMoreCommentaries ? "Hide Other Commentaries" : `Show More (${Object.keys(otherGrouped).length} more)`}</span>
+              <span>{showMoreCommentaries ? t("hideOtherCommentaries") : `${t("showMore")} (${Object.keys(otherGrouped).length} ${t("more")})`}</span>
               <ChevronDown className={`h-3.5 w-3.5 sm:h-4 sm:w-4 transition-transform duration-200 ${showMoreCommentaries ? "rotate-180" : ""}`} />
             </button>
           </div>
@@ -468,7 +471,7 @@ export function BookReader({
     }
   }, [currentVerse, currentVerseDetails, selectedCommentaryLanguage]);
 
-  const tocHierarchy = useMemo(() => buildTOCHierarchy(verses), [verses]);
+  const tocHierarchy = useMemo(() => buildTOCHierarchy(verses, t as any), [verses, t]);
 
   if (isLoading) {
     return (
@@ -722,7 +725,7 @@ export function BookReader({
             <div className="max-w-3xl xl:max-w-4xl mx-auto flex items-center justify-center">
               <VideoPopup
                 videoId={bookMediaConfig[book.slug].videoId!}
-                title={bookMediaConfig[book.slug].videoTitle || "Introduction Video"}
+                title={bookMediaConfig[book.slug].videoTitle || t("introductionVideo")}
               />
             </div>
           </div>
@@ -733,7 +736,7 @@ export function BookReader({
 
   if (chapterViewAdhyay != null && book) {
     const chapterInfo = tocHierarchy.groups.find(g => g.adhyayNumber === chapterViewAdhyay);
-    const chapterTitle = chapterInfo?.adhyayTitle || `Chapter ${chapterViewAdhyay}`;
+    const chapterTitle = chapterInfo?.adhyayTitle || `${t("chapterFull")} ${chapterViewAdhyay}`;
     const selectedKhandaInfo = chapterViewKhanda != null && chapterInfo
       ? chapterInfo.khandas.find(k => k.khandaNumber === chapterViewKhanda)
       : null;
@@ -971,7 +974,7 @@ export function BookReader({
             ) : (
               <div className="text-center py-12">
                 <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground">No verses found in this chapter</p>
+                <p className="text-muted-foreground">{t("noVersesInChapter")}</p>
               </div>
             )}
           </div>
@@ -985,7 +988,7 @@ export function BookReader({
       <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
         <div className="text-center space-y-4">
           <BookOpen className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mx-auto" />
-          <p className="text-muted-foreground">No verses available</p>
+          <p className="text-muted-foreground">{t("noVersesAvailable")}</p>
         </div>
       </div>
     );
@@ -1141,7 +1144,7 @@ export function BookReader({
             <div className="max-w-2xl xl:max-w-3xl mx-auto flex items-center justify-center">
               <VideoPopup 
                 videoId={bookMediaConfig[book.slug].videoId!}
-                title={bookMediaConfig[book.slug].videoTitle || "Introduction Video"}
+                title={bookMediaConfig[book.slug].videoTitle || t("introductionVideo")}
               />
             </div>
           </div>

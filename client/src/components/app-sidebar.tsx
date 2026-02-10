@@ -163,18 +163,21 @@ function detectHierarchyType(verses: Verse[]): HierarchyType {
   return "flat";
 }
 
-function buildHierarchy(verses: Verse[]): AdhyayGroup[] {
+function buildHierarchy(verses: Verse[], t?: (key: string) => string): AdhyayGroup[] {
   const type = detectHierarchyType(verses);
   if (type === "flat") return [];
 
   const hierarchyVerses = verses.filter((v) => v.adhyayNumber != null);
   if (hierarchyVerses.length === 0) return [];
 
+  const chapterLabel = t ? t("chapterFull") : "Chapter";
+  const khandaLabel = t ? t("khanda") : "Khanda";
+
   const adhyayMap = new Map<number, AdhyayGroup>();
 
   for (const verse of hierarchyVerses) {
     const adhyayNum = verse.adhyayNumber!;
-    const adhyayTitle = verse.adhyayTitle ?? `Chapter ${adhyayNum}`;
+    const adhyayTitle = verse.adhyayTitle ?? `${chapterLabel} ${adhyayNum}`;
 
     if (!adhyayMap.has(adhyayNum)) {
       adhyayMap.set(adhyayNum, {
@@ -189,7 +192,7 @@ function buildHierarchy(verses: Verse[]): AdhyayGroup[] {
 
     if (type === "three-level" && verse.khandaNumber != null) {
       const khandaNum = verse.khandaNumber;
-      const khandaTitle = verse.khandaTitle ?? `Khanda ${khandaNum}`;
+      const khandaTitle = verse.khandaTitle ?? `${khandaLabel} ${khandaNum}`;
       let khanda = adhyay.khandas.find((k) => k.khandaNumber === khandaNum);
       if (!khanda) {
         khanda = { khandaNumber: khandaNum, khandaTitle, verses: [] };
@@ -239,8 +242,8 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
 
   const hierarchy = useMemo(() => {
     if (!selectedBookData?.verses) return [];
-    return buildHierarchy(selectedBookData.verses);
-  }, [selectedBookData?.verses]);
+    return buildHierarchy(selectedBookData.verses, t as any);
+  }, [selectedBookData?.verses, t]);
 
   const hierarchyType = useMemo(() => detectHierarchyType(selectedBookData?.verses ?? []), [selectedBookData?.verses]);
   const hasHierarchy = hierarchy.length > 0 && hierarchyType !== "flat";
@@ -540,7 +543,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                     data-testid={`button-chapter-view-${adhyay.adhyayNumber}`}
                   >
                     <Badge variant="secondary" className="text-[10px] px-1.5 h-4 shrink-0 font-mono">
-                      Ch. {adhyay.adhyayNumber}
+                      {t("chapter")} {adhyay.adhyayNumber}
                     </Badge>
                     <span className="text-xs font-medium truncate">
                       {adhyay.adhyayTitle}
@@ -570,10 +573,10 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                           data-testid={`button-verse-nav-${verse.verseNumber}`}
                         >
                           <span className="font-mono text-[10px] text-primary/70 shrink-0 min-w-[2.5rem]">
-                            Sl. {verseLabel}
+                            {t("sloka")} {verseLabel}
                           </span>
                           <span className="whitespace-normal leading-snug text-wrap break-words">
-                            Sloka {verseInChapter}
+                            {t("verse")} {verseInChapter}
                           </span>
                         </button>
                       );
@@ -623,7 +626,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                               data-testid={`button-part-view-${adhyay.adhyayNumber}-${khanda.khandaNumber}`}
                             >
                               <Badge variant="outline" className="text-[10px] px-1 h-4 shrink-0 font-mono border-muted-foreground/30">
-                                Part {adhyay.adhyayNumber}.{khanda.khandaNumber}
+                                {t("part")} {adhyay.adhyayNumber}.{khanda.khandaNumber}
                               </Badge>
                               <span className="truncate">{khanda.khandaTitle}</span>
                             </button>
@@ -645,10 +648,10 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                                     data-testid={`button-verse-nav-${verse.verseNumber}`}
                                   >
                                     <span className="font-mono text-[10px] text-primary/70 shrink-0 min-w-[2.5rem]">
-                                      Sl. {verseLabel}
+                                      {t("sloka")} {verseLabel}
                                     </span>
                                     <span className="whitespace-normal leading-snug text-wrap break-words">
-                                      {verse.sectionTitle || `Mantra ${verse.verseNumber}`}
+                                      {verse.sectionTitle || `${t("mantra")} ${verse.verseNumber}`}
                                     </span>
                                   </button>
                                 );
@@ -681,7 +684,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
             data-testid={`button-verse-nav-${verse.verseNumber}`}
           >
             <span className="whitespace-normal leading-snug text-wrap break-words">
-              {verse.sectionTitle || `Verse ${verse.verseNumber}`}
+              {verse.sectionTitle || `${t("verse")} ${verse.verseNumber}`}
             </span>
           </button>
         ))}
