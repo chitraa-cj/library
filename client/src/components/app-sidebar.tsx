@@ -13,6 +13,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useTranslation } from "@/lib/translations";
+import { translateContent, bookTitleTranslations, bookAuthorTranslations, chapterTitleTranslations, sectionTitleTranslations, verseSectionTitleTranslations } from "@/lib/content-translations";
 import type { Book, Verse } from "@shared/schema";
 
 interface CatalogSubCategory {
@@ -111,17 +112,18 @@ function resolveLabel(item: { label: string; labelKey?: string }, t: (key: any) 
   return item.label;
 }
 
-export function getBookBreadcrumbPath(book: Book, t?: (key: any) => string): string[] {
+export function getBookBreadcrumbPath(book: Book, t?: (key: any) => string, lang?: string): string[] {
   const resolver = (item: { label: string; labelKey?: string }) => t ? resolveLabel(item, t) : item.label;
+  const translatedTitle = lang ? translateContent(book.title, bookTitleTranslations, lang) : book.title;
   const path = findBookPath(book);
-  if (!path) return [book.category, book.title];
+  if (!path) return [book.category, translatedTitle];
   const cat = CATALOG_TREE.find(c => c.id === path.categoryId);
-  if (!cat) return [book.title];
+  if (!cat) return [translatedTitle];
   if (path.subCategoryId && cat.children) {
     const sub = cat.children.find(s => s.id === path.subCategoryId);
-    return [resolver(cat), sub ? resolver(sub) : "", book.title];
+    return [resolver(cat), sub ? resolver(sub) : "", translatedTitle];
   }
-  return [resolver(cat), book.title];
+  return [resolver(cat), translatedTitle];
 }
 
 interface AppSidebarProps {
@@ -228,6 +230,8 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
   const [expandedKhandas, setExpandedKhandas] = useState<Set<string>>(new Set());
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const { t } = useTranslation(languageCode ?? null);
+  const sidebarLang = languageCode || "en";
+  const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, sidebarLang);
   const { isMobile, setOpenMobile, state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
 
@@ -546,7 +550,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                       {t("chapter")} {adhyay.adhyayNumber}
                     </Badge>
                     <span className="text-xs font-medium truncate">
-                      {adhyay.adhyayTitle}
+                      {tc(adhyay.adhyayTitle, chapterTitleTranslations)}
                     </span>
                   </button>
                   {isTwoLevel && (
@@ -628,7 +632,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                               <Badge variant="outline" className="text-[10px] px-1 h-4 shrink-0 font-mono border-muted-foreground/30">
                                 {t("part")} {adhyay.adhyayNumber}.{khanda.khandaNumber}
                               </Badge>
-                              <span className="truncate">{khanda.khandaTitle}</span>
+                              <span className="truncate">{tc(khanda.khandaTitle, sectionTitleTranslations)}</span>
                             </button>
                           </div>
 
@@ -651,7 +655,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                                       {t("sloka")} {verseLabel}
                                     </span>
                                     <span className="whitespace-normal leading-snug text-wrap break-words">
-                                      {verse.sectionTitle || `${t("mantra")} ${verse.verseNumber}`}
+                                      {tc(verse.sectionTitle, verseSectionTitleTranslations) || `${t("mantra")} ${verse.verseNumber}`}
                                     </span>
                                   </button>
                                 );
@@ -684,7 +688,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
             data-testid={`button-verse-nav-${verse.verseNumber}`}
           >
             <span className="whitespace-normal leading-snug text-wrap break-words">
-              {verse.sectionTitle || `${t("verse")} ${verse.verseNumber}`}
+              {tc(verse.sectionTitle, verseSectionTitleTranslations) || `${t("verse")} ${verse.verseNumber}`}
             </span>
           </button>
         ))}
@@ -738,7 +742,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
             {(!isSelected || verses.length === 0) && (
               <BookOpen className={`h-3.5 w-3.5 shrink-0 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
             )}
-            <span className="font-serif text-xs leading-snug flex-1 min-w-0">{book.title}</span>
+            <span className="font-serif text-xs leading-snug flex-1 min-w-0">{tc(book.title, bookTitleTranslations)}</span>
             {book.totalVerses && book.totalVerses > 0 && (
               <Badge variant={isSelected ? "default" : "secondary"} className="text-[9px] font-medium px-1 h-4 shrink-0">
                 {book.totalVerses}
@@ -882,7 +886,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                                 data-testid={`button-book-tree-${book.id}`}
                               >
                                 <BookOpen className="h-3 w-3 shrink-0" />
-                                <span className="font-serif text-[11px] leading-snug flex-1 min-w-0 truncate">{book.title}</span>
+                                <span className="font-serif text-[11px] leading-snug flex-1 min-w-0 truncate">{tc(book.title, bookTitleTranslations)}</span>
                               </button>
                             ))}
                           </div>
@@ -907,7 +911,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                       data-testid={`button-book-tree-${book.id}`}
                     >
                       <BookOpen className="h-3 w-3 shrink-0" />
-                      <span className="font-serif text-[11px] leading-snug flex-1 min-w-0 truncate">{book.title}</span>
+                      <span className="font-serif text-[11px] leading-snug flex-1 min-w-0 truncate">{tc(book.title, bookTitleTranslations)}</span>
                     </button>
                   ))}
                 </div>
@@ -1153,7 +1157,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                       <BookOpen className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="right">{book.title}</TooltipContent>
+                  <TooltipContent side="right">{tc(book.title, bookTitleTranslations)}</TooltipContent>
                 </Tooltip>
               ))}
             </div>

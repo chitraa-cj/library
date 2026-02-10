@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { VideoInline } from "@/components/video-popup";
 import { CATALOG_TREE, type CatalogCategory } from "@/components/app-sidebar";
 import { useTranslation } from "@/lib/translations";
+import { translateContent, bookTitleTranslations, bookAuthorTranslations, bookCategoryTranslations, bookDescriptionTranslations } from "@/lib/content-translations";
 
 const categoryIcons: Record<string, typeof ScrollText> = {
   "prasthana-shankaracharya": ScrollText,
@@ -61,6 +62,8 @@ function getBooksForCategory(books: Book[], cat: CatalogCategory): Book[] {
 
 export function WelcomeScreen({ books, onSelectBook, onSelectCategory, languageCode }: WelcomeScreenProps) {
   const { t } = useTranslation(languageCode ?? null);
+  const welcomeLang = languageCode || "en";
+  const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, welcomeLang);
   return (
     <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-gradient-to-b from-primary/10 via-background to-accent/10 relative overflow-y-auto">
       <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
@@ -164,7 +167,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectCategory, languageC
                         >
                           <BookOpen className="h-3 w-3 shrink-0 text-primary/50" />
                           <span className="text-xs font-serif text-foreground group-hover:text-primary transition-colors truncate">
-                            {book.title}
+                            {tc(book.title, bookTitleTranslations)}
                           </span>
                         </button>
                       ))
@@ -236,6 +239,8 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onGoBack, 
   const category = CATALOG_TREE.find(c => c.id === categoryId);
   if (!category) return null;
   const { t } = useTranslation(languageCode ?? null);
+  const catLang = languageCode || "en";
+  const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, catLang);
 
   const booksBySubCategory: Record<string, Book[]> = {};
   for (const book of books) {
@@ -264,7 +269,7 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onGoBack, 
         >
           <BookOpen className="h-3.5 w-3.5 shrink-0 text-primary/60" />
           <span className="text-sm font-serif font-medium text-foreground group-hover:text-primary transition-colors truncate">
-            {book.title}
+            {tc(book.title, bookTitleTranslations)}
           </span>
           <span className="text-[10px] text-muted-foreground ml-auto shrink-0">
             {book.totalVerses ?? 0} {t("verses")}
