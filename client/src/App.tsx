@@ -579,6 +579,7 @@ function HomePageContent() {
                   onExitChapterView={() => {
                     setChapterViewAdhyay(null);
                     setChapterViewKhanda(null);
+                    setNavigateToVerse(currentVerseNumber);
                     if (selectedBookId) {
                       const slug = getBookSlug(selectedBookId);
                       if (slug) {

@@ -372,7 +372,7 @@ export function BookReader({
   useEffect(() => {
     if (navigateToVerse !== null && navigateToVerse !== undefined && verses.length > 0) {
       const pageIndex = verses.findIndex(v => v.verseNumber === navigateToVerse);
-      if (pageIndex >= 0 && pageIndex !== currentPage) {
+      if (pageIndex >= 0) {
         setCurrentPage(pageIndex);
         setShowCoverPage(false);
       }
