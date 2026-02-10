@@ -370,20 +370,16 @@ export function BookReader({
   }, [bookId]);
 
   useEffect(() => {
-    if (chapterViewAdhyay == null && navigateToVerse == null && !showCoverPage) {
-      setShowCoverPage(true);
-    }
-  }, [chapterViewAdhyay, navigateToVerse]);
-
-  useEffect(() => {
     if (navigateToVerse !== null && navigateToVerse !== undefined && verses.length > 0) {
       const pageIndex = verses.findIndex(v => v.verseNumber === navigateToVerse);
       if (pageIndex >= 0 && pageIndex !== currentPage) {
         setCurrentPage(pageIndex);
         setShowCoverPage(false);
       }
+    } else if (chapterViewAdhyay == null && navigateToVerse == null && !showCoverPage) {
+      setShowCoverPage(true);
     }
-  }, [navigateToVerse, verses]);
+  }, [chapterViewAdhyay, navigateToVerse, verses]);
 
   useEffect(() => {
     if (onVerseChange && currentVerse && !showCoverPage) {

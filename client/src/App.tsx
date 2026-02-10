@@ -313,6 +313,13 @@ function HomePageContent() {
     setChapterViewAdhyay(null);
     setChapterViewKhanda(null);
     setNavigateToVerse(verseNumber);
+    setCurrentVerseNumber(verseNumber);
+    if (selectedBookId) {
+      const slug = getBookSlug(selectedBookId);
+      if (slug) {
+        setLocation(`/${slug}/${verseNumber}`);
+      }
+    }
   };
 
   const handleSelectChapter = useCallback((adhyayNumber: number) => {
