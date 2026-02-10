@@ -13,13 +13,14 @@ import { TranslationPanel } from "@/components/translation-panel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ChevronRight, LogIn, LogOut, Settings } from "lucide-react";
+import { ArrowLeft, ChevronRight, Globe, LogIn, LogOut, Settings } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import { PreferencesDialog } from "@/components/preferences-dialog";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
-import type { Book } from "@shared/schema";
+import type { Book, Language } from "@shared/schema";
 
 interface VerseBreadcrumb {
   bookTitle: string;
@@ -64,6 +65,10 @@ function HomePageContent() {
 
   const { data: allBooks } = useQuery<Book[]>({
     queryKey: ["/api/books"],
+  });
+
+  const { data: allLanguages } = useQuery<Language[]>({
+    queryKey: ["/api/languages"],
   });
 
   const [prefsApplied, setPrefsApplied] = useState(false);
@@ -357,6 +362,24 @@ function HomePageContent() {
               )}
             </div>
             <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1" data-testid="language-selector-header">
+                <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0 hidden sm:block" />
+                <Select
+                  value={selectedCommentaryLanguage || "english"}
+                  onValueChange={handleGlobalLanguageChange}
+                >
+                  <SelectTrigger className="h-8 w-auto min-w-[80px] max-w-[130px] text-xs border-none bg-transparent shadow-none focus:ring-0 px-1.5" data-testid="select-header-language">
+                    <SelectValue placeholder="Language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allLanguages?.map((lang) => (
+                      <SelectItem key={lang.code} value={lang.code} data-testid={`option-header-lang-${lang.code}`}>
+                        {lang.nativeName || lang.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <Button
                 variant="ghost"
                 size="icon"
