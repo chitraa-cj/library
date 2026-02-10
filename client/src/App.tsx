@@ -109,6 +109,14 @@ function HomePageContent() {
     }, []);
   }, [selectedBookId, commentaryOptions, allLanguages]);
 
+  useEffect(() => {
+    if (!commentaryOptions?.languages?.length || !selectedCommentaryLanguage) return;
+    const bookLangCodes = commentaryOptions.languages.map(l => l.code);
+    if (!bookLangCodes.includes(selectedCommentaryLanguage)) {
+      handleGlobalLanguageChange(bookLangCodes[0]);
+    }
+  }, [commentaryOptions]);
+
   const headerAuthors = useMemo(() => {
     if (!commentaryOptions) return [];
     if (!selectedCommentaryLanguage) return commentaryOptions.authors;
