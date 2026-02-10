@@ -568,25 +568,25 @@ export function BookReader({
     return (
       <div className="flex-1 flex flex-col min-w-0 focus:outline-none">
         <div className="flex-1 overflow-y-auto">
-          <div className="p-4 sm:p-8 max-w-2xl xl:max-w-3xl mx-auto">
-            <div className="py-6 sm:py-10">
-              <div className="flex flex-col items-center text-center mb-6 sm:mb-8">
-                <span className="text-3xl sm:text-4xl text-primary/20 font-serif mb-3 select-none pointer-events-none">ॐ</span>
+          <div className="p-4 sm:p-6 max-w-2xl xl:max-w-3xl mx-auto">
+            <div className="py-4 sm:py-6">
+              <div className="flex flex-col items-center text-center mb-4 sm:mb-5">
+                <span className="text-2xl sm:text-3xl text-primary/20 font-serif mb-2 select-none pointer-events-none">ॐ</span>
                 <h1 className="font-serif text-xl sm:text-2xl font-bold text-foreground tracking-tight" data-testid="text-cover-title">
                   {tc(book.title, bookTitleTranslations)}
                 </h1>
-                <Badge variant="secondary" className="mt-2 text-[10px] sm:text-xs">
+                <Badge variant="secondary" className="mt-1.5 text-[10px] sm:text-xs">
                   {tc(book.category, bookCategoryTranslations)}
                 </Badge>
               </div>
 
               {book.description && (
-                <p className="text-xs sm:text-sm text-muted-foreground/80 leading-relaxed text-center mb-5 sm:mb-6 max-w-lg mx-auto" data-testid="text-cover-description">
+                <p className="text-xs sm:text-sm text-muted-foreground/80 leading-relaxed text-center mb-3 sm:mb-4 max-w-lg mx-auto" data-testid="text-cover-description">
                   {tc(book.title, bookDescriptionTranslations) !== book.title ? tc(book.title, bookDescriptionTranslations) : book.description}
                 </p>
               )}
 
-              <div className="flex items-center justify-center mb-4 sm:mb-5">
+              <div className="flex items-center justify-center mb-3">
                 <span className="text-xs text-muted-foreground">{verses.length} {t("verses")}</span>
               </div>
 
@@ -608,8 +608,8 @@ export function BookReader({
             </div>
 
             {tocHierarchy.groups.length > 0 && (
-              <div className="mt-6 sm:mt-8">
-                <div className="flex items-center gap-2 mb-4">
+              <div className="mt-4 sm:mt-5">
+                <div className="flex items-center gap-2 mb-3">
                   <List className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                   <h2 className="font-serif text-base sm:text-lg font-semibold" data-testid="text-toc-heading">{t("tableOfContents")}</h2>
                 </div>
