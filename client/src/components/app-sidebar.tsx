@@ -481,7 +481,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
               <div key={adhyayKey}>
                 <div
                   className={`flex items-center gap-1.5 w-full text-left text-xs py-2 px-2 rounded-md transition-colors ${
-                    isCurrentAdhyay && !isAdhyayOpen
+                    isCurrentAdhyay
                       ? "bg-primary/10 text-primary font-medium"
                       : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
                   }`}
