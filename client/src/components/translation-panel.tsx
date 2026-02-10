@@ -74,7 +74,10 @@ function PanelContent({
 
   useEffect(() => {
     if (commentaryOptions && !initialized && !selectedAuthor) {
-      onAuthorChange("__all__");
+      const firstAuthor = commentaryOptions.authors.length > 0
+        ? commentaryOptions.authors[0].authorName
+        : "__all__";
+      onAuthorChange(firstAuthor);
       setInitialized(true);
     }
   }, [commentaryOptions, initialized, selectedAuthor, onAuthorChange]);

@@ -308,12 +308,14 @@ export function BookReader({
 
   useEffect(() => {
     setInitialized(false);
-    onAuthorChange("__all__");
-  }, [bookId, onAuthorChange]);
+  }, [bookId]);
 
   useEffect(() => {
     if (commentaryOptions && !initialized) {
-      onAuthorChange("__all__");
+      const firstAuthor = commentaryOptions.authors.length > 0
+        ? commentaryOptions.authors[0].authorName
+        : "__all__";
+      onAuthorChange(firstAuthor);
       setInitialized(true);
     }
   }, [commentaryOptions, initialized, onAuthorChange]);
