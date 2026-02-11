@@ -1165,7 +1165,6 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
             <div className="p-2 space-y-1">
               {selectedBookId ? (
                 <>
-                  {renderDrillBreadcrumb()}
                   {!drillCategoryId && renderCategoryList()}
                   {drillCategoryId && !drillSubCategoryId && renderSubCategoryList()}
                   {drillCategoryId && drillSubCategoryId && renderBookList()}
