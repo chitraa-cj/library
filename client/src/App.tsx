@@ -469,22 +469,6 @@ function HomePageContent() {
                   </Select>
                 </div>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  if (isLoggedIn && user) {
-                    setShowPreferences(true);
-                  } else {
-                    setLocation("/auth");
-                  }
-                }}
-                title={t("configurePreferences")}
-                data-testid="button-configure"
-              >
-                <Settings className="h-4 w-4" />
-                <span className="hidden sm:inline text-xs">{t("configurePreferences")}</span>
-              </Button>
               {!authLoading && (
                 isLoggedIn && user ? (
                   <div className="flex items-center gap-2">
