@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareText, StickyNote, List } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareText, StickyNote, List, Globe } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoPopup } from "@/components/video-popup";
 import { WordTooltip } from "@/components/word-tooltip";
 import { useTranslation } from "@/lib/translations";
@@ -259,6 +260,8 @@ export function BookReader({
 }: BookReaderProps) {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const [localLanguage, setLocalLanguage] = useState<string | null>(selectedCommentaryLanguage);
+  const effectiveLang = localLanguage || selectedCommentaryLanguage;
   const { t } = useTranslation(selectedCommentaryLanguage);
   const lang = selectedCommentaryLanguage || "en";
   const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, lang);
@@ -357,9 +360,9 @@ export function BookReader({
 
   const availableAuthors = useMemo(() => {
     if (!commentaryOptions) return [];
-    if (!selectedCommentaryLanguage) return commentaryOptions.authors;
-    return commentaryOptions.authors.filter(a => a.languageCodes.includes(selectedCommentaryLanguage));
-  }, [commentaryOptions, selectedCommentaryLanguage]);
+    if (!effectiveLang) return commentaryOptions.authors;
+    return commentaryOptions.authors.filter(a => a.languageCodes.includes(effectiveLang));
+  }, [commentaryOptions, effectiveLang]);
 
   const handleAuthorChange = (authorName: string) => {
     onAuthorChange(authorName);
@@ -380,11 +383,16 @@ export function BookReader({
   }, [currentVerse, verses]);
 
   useEffect(() => {
+    setLocalLanguage(selectedCommentaryLanguage);
+  }, [selectedCommentaryLanguage]);
+
+  useEffect(() => {
     setCurrentPage(0);
     setShowCoverPage(true);
     hasNavigatedRef.current = false;
     setExpandedTOCAdhyays(new Set());
     setExpandedTOCKhandas(new Set());
+    setLocalLanguage(selectedCommentaryLanguage);
   }, [bookId]);
 
   useEffect(() => {
@@ -437,7 +445,7 @@ export function BookReader({
 
   const availableTranslations = useMemo(() => {
     if (!currentVerseDetails?.translations) return [];
-    if (!selectedCommentaryLanguage || selectedCommentaryLanguage === "devanagari" || selectedCommentaryLanguage === "sa") {
+    if (!effectiveLang || effectiveLang === "devanagari" || effectiveLang === "sa") {
       return [];
     }
     const langAliases: Record<string, string[]> = {
@@ -446,24 +454,24 @@ export function BookReader({
       "hi": ["hi", "hindi"],
       "hindi": ["hi", "hindi"],
     };
-    const matchCodes = langAliases[selectedCommentaryLanguage] || [selectedCommentaryLanguage];
+    const matchCodes = langAliases[effectiveLang] || [effectiveLang];
     const filtered = currentVerseDetails.translations.filter((t: VerseTranslation) =>
       matchCodes.includes(t.languageCode)
     );
     return filtered;
-  }, [currentVerseDetails, selectedCommentaryLanguage]);
+  }, [currentVerseDetails, effectiveLang]);
 
   const commentaryContext = useMemo(() => {
-    if (!selectedAuthor || !selectedCommentaryLanguage || !currentVerseDetails) return "";
+    if (!selectedAuthor || !effectiveLang || !currentVerseDetails) return "";
     const explanation = currentVerseDetails.explanations?.find(
-      (e: Explanation) => e.authorName === selectedAuthor && e.languageCode === selectedCommentaryLanguage
+      (e: Explanation) => e.authorName === selectedAuthor && e.languageCode === effectiveLang
     );
     return explanation?.content || "";
-  }, [selectedAuthor, selectedCommentaryLanguage, currentVerseDetails]);
+  }, [selectedAuthor, effectiveLang, currentVerseDetails]);
 
   useEffect(() => {
     if (currentVerse && currentVerseDetails) {
-      const langCode = selectedCommentaryLanguage || "devanagari";
+      const langCode = effectiveLang || "devanagari";
       if (langCode === "devanagari" || langCode === "sa") {
         const content = getOriginalDevanagari(currentVerseDetails);
         onVerseSelect(currentVerse.id, content);
@@ -486,7 +494,7 @@ export function BookReader({
       }
       onVerseSelect(currentVerse.id, content);
     }
-  }, [currentVerse, currentVerseDetails, selectedCommentaryLanguage]);
+  }, [currentVerse, currentVerseDetails, effectiveLang]);
 
   const tocHierarchy = useMemo(() => buildTOCHierarchy(verses, t as any), [verses, t]);
 
@@ -801,7 +809,7 @@ export function BookReader({
       return verse.translations?.find(tr => tr.languageCode === "sa")?.content || "";
     };
 
-    const showTranslation = selectedCommentaryLanguage && selectedCommentaryLanguage !== "devanagari" && selectedCommentaryLanguage !== "sa";
+    const showTranslation = effectiveLang && effectiveLang !== "devanagari" && effectiveLang !== "sa";
 
     const filteredChapterVerses = chapterViewKhanda != null && selectedKhandaInfo
       ? chapterVerses?.filter(v => selectedKhandaInfo.verses.some(sv => sv.verseNumber === v.verseNumber))
@@ -917,7 +925,7 @@ export function BookReader({
                         </div>
                         {khandaVerses.map((verse, idx) => {
                           const devanagari = getChapterDevanagari(verse);
-                          const translation = showTranslation ? getChapterTranslation(verse, selectedCommentaryLanguage!) : "";
+                          const translation = showTranslation ? getChapterTranslation(verse, effectiveLang!) : "";
                           const verseLabel = `${chapterViewAdhyay}.${khanda.khandaNumber}.${idx + 1}`;
                           return (
                             <div key={verse.id}>
@@ -967,7 +975,7 @@ export function BookReader({
                 ) : (
                   filteredChapterVerses.map((verse, idx) => {
                     const devanagari = getChapterDevanagari(verse);
-                    const translation = showTranslation ? getChapterTranslation(verse, selectedCommentaryLanguage!) : "";
+                    const translation = showTranslation ? getChapterTranslation(verse, effectiveLang!) : "";
                     const verseLabel = chapterViewKhanda != null
                       ? `${chapterViewAdhyay}.${chapterViewKhanda}.${idx + 1}`
                       : `${chapterViewAdhyay}.${idx + 1}`;
@@ -1079,6 +1087,28 @@ export function BookReader({
               onMouseUp={handleTextSelect}
               onTouchEnd={handleTextSelect}
             >
+              {commentaryOptions && commentaryOptions.languages.length > 1 && (
+                <div className="flex items-center justify-end mb-2" data-testid="book-language-selector">
+                  <div className="flex items-center gap-1">
+                    <Globe className="h-3 w-3 text-muted-foreground shrink-0" />
+                    <Select
+                      value={effectiveLang || "english"}
+                      onValueChange={(val) => setLocalLanguage(val)}
+                    >
+                      <SelectTrigger className="h-7 w-auto min-w-[70px] max-w-[120px] text-[11px] border-none bg-transparent shadow-none focus:ring-0 px-1" data-testid="select-book-language">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {commentaryOptions.languages.map((lang) => (
+                          <SelectItem key={lang.code} value={lang.code} data-testid={`option-book-lang-${lang.code}`}>
+                            {lang.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
               <div className="text-center mb-4 sm:mb-5">
                 <span className="text-xs text-muted-foreground font-serif">
                   {tc(currentVerse.sectionTitle, verseSectionTitleTranslations) || `${t("verse")} ${currentVerse.verseNumber}`}
@@ -1133,11 +1163,11 @@ export function BookReader({
                       </button>
                     </div>
 
-                    {commentaryExpanded && selectedCommentaryLanguage && (
+                    {commentaryExpanded && effectiveLang && (
                       <div className="pt-3 border-t border-border/30 animate-in fade-in slide-in-from-top-2 duration-200">
                         <VerseExplanation 
                           verseId={currentVerse.id} 
-                          languageCode={selectedCommentaryLanguage}
+                          languageCode={effectiveLang}
                           authorName={isShowingAll ? null : selectedAuthor}
                           showAll={isShowingAll}
                         />
