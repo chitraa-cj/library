@@ -570,7 +570,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                           key={verse.id}
                           onClick={() => handleVerseSelect(book.id, verse.verseNumber)}
                           className={`flex items-center gap-2 w-full text-left text-xs py-2 px-2 rounded-md transition-colors ${
-                            selectedVerseNumber === verse.verseNumber
+                            chapterViewAdhyay == null && selectedVerseNumber === verse.verseNumber
                               ? "bg-primary/15 text-primary font-medium"
                               : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
                           }`}
@@ -645,7 +645,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                                     key={verse.id}
                                     onClick={() => handleVerseSelect(book.id, verse.verseNumber)}
                                     className={`flex items-center gap-2 w-full text-left text-xs py-2 px-2 rounded-md transition-colors ${
-                                      selectedVerseNumber === verse.verseNumber
+                                      chapterViewAdhyay == null && selectedVerseNumber === verse.verseNumber
                                         ? "bg-primary/15 text-primary font-medium"
                                         : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
                                     }`}
