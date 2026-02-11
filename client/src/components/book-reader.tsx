@@ -7,6 +7,8 @@ import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareTe
 import { VideoPopup } from "@/components/video-popup";
 import { WordTooltip } from "@/components/word-tooltip";
 import { useTranslation } from "@/lib/translations";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 import { translateContent, bookTitleTranslations, bookAuthorTranslations, bookCategoryTranslations, bookDescriptionTranslations, chapterTitleTranslations, sectionTitleTranslations, verseSectionTitleTranslations } from "@/lib/content-translations";
 import type { BookWithVerseMeta, VerseMeta, VerseTranslation, Explanation, VerseWithTranslations } from "@shared/schema";
 import shankaracharyaImg from "@assets/image_1770455528511.png";
@@ -255,6 +257,8 @@ export function BookReader({
   onSelectPart,
   onShowCoverPage,
 }: BookReaderProps) {
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
   const { t } = useTranslation(selectedCommentaryLanguage);
   const lang = selectedCommentaryLanguage || "en";
   const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, lang);
@@ -284,12 +288,23 @@ export function BookReader({
   }, []);
 
   const handleAddNoteFromSelection = useCallback(() => {
-    if (selectionPopup && onAddNoteWithText) {
+    if (!selectionPopup) return;
+    if (!isAuthenticated) {
+      window.getSelection()?.removeAllRanges();
+      setSelectionPopup(null);
+      toast({
+        title: t("loginRequired") || "Login required",
+        description: t("loginToAddNotes") || "Please log in to add notes",
+      });
+      window.location.href = "/auth";
+      return;
+    }
+    if (onAddNoteWithText) {
       onAddNoteWithText(selectionPopup.text);
       window.getSelection()?.removeAllRanges();
       setSelectionPopup(null);
     }
-  }, [selectionPopup, onAddNoteWithText]);
+  }, [selectionPopup, onAddNoteWithText, isAuthenticated, toast, t]);
 
   useEffect(() => {
     const dismiss = () => {
