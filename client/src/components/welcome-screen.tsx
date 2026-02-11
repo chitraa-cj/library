@@ -7,6 +7,22 @@ import { CATALOG_TREE, type CatalogCategory } from "@/components/app-sidebar";
 import { useTranslation } from "@/lib/translations";
 import { translateContent, bookTitleTranslations, bookAuthorTranslations, bookCategoryTranslations, bookDescriptionTranslations } from "@/lib/content-translations";
 
+import catImgPrasthana from "@assets/image_1770803826016.png";
+import catImgOtherShankara from "@assets/image_1770803832568.png";
+import catImgOtherAcharyas from "@assets/image_1770803844485.png";
+import catImgBhakthi from "@assets/image_1770803838315.png";
+import catImgPrakarana from "@assets/image_1770803849999.png";
+import catImgShlokas from "@assets/image_1770803820218.png";
+
+const categoryImages: Record<string, string> = {
+  "prasthana-shankaracharya": catImgPrasthana,
+  "other-shankara-works": catImgOtherShankara,
+  "prasthana-other-acharyas": catImgOtherAcharyas,
+  "bhakthi-stotras": catImgBhakthi,
+  "prakarana-granthas": catImgPrakarana,
+  "shlokas-stotras": catImgShlokas,
+};
+
 const categoryIcons: Record<string, typeof ScrollText> = {
   "prasthana-shankaracharya": ScrollText,
   "other-shankara-works": Feather,
@@ -107,6 +123,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectCategory, languageC
             {CATALOG_TREE.map(cat => {
               const catBooks = getBooksForCategory(books, cat);
               const hasContent = catBooks.length > 0 || (cat.children && cat.children.length > 0);
+              const catImage = categoryImages[cat.id];
               const IconComponent = categoryIcons[cat.id] || Library;
 
               return (
@@ -116,13 +133,19 @@ export function WelcomeScreen({ books, onSelectBook, onSelectCategory, languageC
                   data-testid={`card-category-${cat.id}`}
                 >
                   <div
-                    className="flex flex-col items-center justify-center py-5 sm:py-6 px-3 border-b border-border/30 bg-gradient-to-b from-primary/[0.06] to-transparent rounded-t-md cursor-pointer hover-elevate active-elevate-2 transition-all"
+                    className="flex flex-col items-center justify-center py-4 sm:py-5 px-3 border-b border-border/30 bg-gradient-to-b from-primary/[0.06] to-transparent rounded-t-md cursor-pointer hover-elevate active-elevate-2 transition-all"
                     onClick={() => onSelectCategory?.(cat.id)}
                     data-testid={`button-category-${cat.id}`}
                   >
-                    <div className="p-3 rounded-full bg-primary/10 mb-3">
-                      <IconComponent className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
-                    </div>
+                    {catImage ? (
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden mb-3 border-2 border-primary/20 shadow-sm">
+                        <img src={catImage} alt={getTranslatedLabel(cat, t)} className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="p-3 rounded-full bg-primary/10 mb-3">
+                        <IconComponent className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
+                      </div>
+                    )}
                     <h3 className="font-serif text-xs sm:text-sm font-semibold text-foreground text-center leading-tight px-1">
                       {getTranslatedLabel(cat, t)}
                     </h3>
