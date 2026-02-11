@@ -435,14 +435,6 @@ function HomePageContent() {
                     <span className="truncate text-foreground/80 font-medium max-w-[140px]" title={verseBreadcrumb.verseLabel} data-testid="breadcrumb-verse">
                       {verseBreadcrumb.verseLabel}
                     </span>
-                    {selectedAuthor && (
-                      <>
-                        <ChevronRight className="hidden md:block h-3 w-3 shrink-0 text-muted-foreground/50" />
-                        <span className="hidden md:inline truncate max-w-[130px] text-muted-foreground/70 shrink-0" title={selectedAuthor} data-testid="breadcrumb-commentary">
-                          {selectedAuthor}
-                        </span>
-                      </>
-                    )}
                   </div>
                   <Badge variant="secondary" className="font-mono text-[10px] sm:text-[11px] px-1.5 sm:px-2 h-5 shrink-0" data-testid="text-numeric-label" style={{ direction: "ltr" }}>
                     {verseBreadcrumb.numericLabel}
