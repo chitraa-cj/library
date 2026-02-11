@@ -486,6 +486,9 @@ export function WordTooltip({
     <span className={className}>
       {words.map((segment, index) => {
         if (/^\s+$/.test(segment)) {
+          if (segment.includes('\n')) {
+            return <br key={index} />;
+          }
           return <span key={index}>{segment}</span>;
         }
         

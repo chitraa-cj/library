@@ -893,7 +893,7 @@ export function BookReader({
                                 data-testid={`chapter-verse-${verse.verseNumber}`}
                               >
                                 {devanagari && (
-                                  <div className="font-serif text-base sm:text-xl leading-loose sm:leading-loose text-center px-2 sm:px-8 group-hover:text-primary transition-colors">
+                                  <div className="font-serif text-base sm:text-xl leading-loose sm:leading-loose text-center px-2 sm:px-8 group-hover:text-primary transition-colors whitespace-pre-line">
                                     {devanagari}
                                   </div>
                                 )}
@@ -945,7 +945,7 @@ export function BookReader({
                           data-testid={`chapter-verse-${verse.verseNumber}`}
                         >
                           {devanagari && (
-                            <div className="font-serif text-base sm:text-xl leading-loose sm:leading-loose text-center px-2 sm:px-8 group-hover:text-primary transition-colors">
+                            <div className="font-serif text-base sm:text-xl leading-loose sm:leading-loose text-center px-2 sm:px-8 group-hover:text-primary transition-colors whitespace-pre-line">
                               {devanagari}
                             </div>
                           )}

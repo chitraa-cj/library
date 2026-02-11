@@ -228,6 +228,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
   const [expandedBooks, setExpandedBooks] = useState<Set<string>>(new Set());
   const [expandedAdhyays, setExpandedAdhyays] = useState<Set<string>>(new Set());
   const [expandedKhandas, setExpandedKhandas] = useState<Set<string>>(new Set());
+  const [coverPageMode, setCoverPageMode] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const { t } = useTranslation(languageCode ?? null);
   const sidebarLang = languageCode || "en";
@@ -290,6 +291,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
   }, [selectedBookPath, selectedBookId]);
 
   useEffect(() => {
+    if (coverPageMode) return;
     if (selectedVerseNumber != null && hierarchy.length > 0 && selectedBookId) {
       for (const adhyay of hierarchy) {
         const adhyayKey = `${selectedBookId}-a${adhyay.adhyayNumber}`;
@@ -315,7 +317,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
         }
       }
     }
-  }, [selectedVerseNumber, hierarchy, selectedBookId]);
+  }, [selectedVerseNumber, hierarchy, selectedBookId, coverPageMode]);
 
   useEffect(() => {
     if (chapterViewAdhyay != null && hierarchy.length > 0 && selectedBookId) {
@@ -367,6 +369,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
   };
 
   const handleVerseSelect = (bookId: string, verseNumber: number) => {
+    setCoverPageMode(false);
     if (selectedBookId !== bookId) {
       onSelectBook(bookId);
     }
@@ -533,6 +536,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                   </button>
                   <button
                     onClick={() => {
+                      setCoverPageMode(false);
                       if (!isAdhyayOpen) {
                         toggleAdhyay(adhyayKey);
                       }
@@ -618,6 +622,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                             </button>
                             <button
                               onClick={() => {
+                                setCoverPageMode(false);
                                 if (!isKhandaOpen) {
                                   toggleKhanda(khandaKey);
                                 }
@@ -730,6 +735,9 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
             onClick={() => {
               if (isSelected) {
                 onShowCoverPage?.();
+                setCoverPageMode(true);
+                setExpandedAdhyays(new Set());
+                setExpandedKhandas(new Set());
                 if (isMobile) setOpenMobile(false);
               } else {
                 handleBookSelect(book.id);
