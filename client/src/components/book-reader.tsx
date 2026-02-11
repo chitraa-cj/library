@@ -490,6 +490,33 @@ export function BookReader({
 
   const tocHierarchy = useMemo(() => buildTOCHierarchy(verses, t as any), [verses, t]);
 
+  useEffect(() => {
+    if (onBreadcrumbChange && chapterViewAdhyay != null && book) {
+      const chapterInfo = tocHierarchy.groups.find(g => g.adhyayNumber === chapterViewAdhyay);
+      const chapterTitle = chapterInfo?.adhyayTitle || `${t("chapterFull")} ${chapterViewAdhyay}`;
+      const selectedKhanda = chapterViewKhanda != null && chapterInfo
+        ? chapterInfo.khandas.find(k => k.khandaNumber === chapterViewKhanda)
+        : null;
+
+      const numericLabel = chapterViewKhanda != null
+        ? `${chapterViewAdhyay}.${chapterViewKhanda}`
+        : `${chapterViewAdhyay}`;
+      const verseLabel = chapterViewKhanda != null
+        ? (tc(selectedKhanda?.khandaTitle ?? null, sectionTitleTranslations) || `${t("part")} ${chapterViewKhanda}`)
+        : (tc(chapterTitle, chapterTitleTranslations) || `${t("chapter")} ${chapterViewAdhyay}`);
+
+      onBreadcrumbChange({
+        bookTitle: tc(book.title, bookTitleTranslations),
+        adhyayNumber: chapterViewAdhyay,
+        adhyayTitle: tc(chapterTitle, chapterTitleTranslations) || null,
+        khandaNumber: chapterViewKhanda ?? null,
+        khandaTitle: selectedKhanda ? (tc(selectedKhanda.khandaTitle, sectionTitleTranslations) || null) : null,
+        verseLabel,
+        numericLabel,
+      });
+    }
+  }, [chapterViewAdhyay, chapterViewKhanda, book, onBreadcrumbChange, tocHierarchy]);
+
   if (isLoading) {
     return (
       <div className="flex-1 p-4 sm:p-8">

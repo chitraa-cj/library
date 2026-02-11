@@ -305,6 +305,7 @@ function HomePageContent() {
     setChapterViewAdhyay(null);
     setChapterViewKhanda(null);
     setNavigateToVerse(null);
+    setVerseBreadcrumb(null);
     const slug = selectedBookId ? getBookSlug(selectedBookId) : null;
     if (slug) {
       setLocation(`/${slug}`);
