@@ -395,7 +395,7 @@ export function BookReader({
         setShowCoverPage(false);
         hasNavigatedRef.current = true;
       }
-    } else if (chapterViewAdhyay == null && navigateToVerse == null && !showCoverPage && !hasNavigatedRef.current) {
+    } else if (chapterViewAdhyay == null && navigateToVerse == null) {
       setShowCoverPage(true);
     }
   }, [chapterViewAdhyay, navigateToVerse, verses]);
