@@ -1,15 +1,25 @@
 import { db } from "./db";
-import { explanations, verses } from "@shared/schema";
+import { explanations, verses, books } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import * as fs from "fs";
 
 async function exportTeekaData() {
-  const allVerses = await db.select().from(verses).orderBy(verses.verseNumber);
+  const ishaBook = await db.select().from(books).where(eq(books.slug, "isha-upanishad-bhashya")).limit(1);
+  if (ishaBook.length === 0) {
+    console.error("Isha Upanishad not found!");
+    process.exit(1);
+  }
+  const bookId = ishaBook[0].id;
+  console.log(`Found Isha Upanishad with ID: ${bookId}`);
+
+  const ishaVerses = await db.select().from(verses).where(eq(verses.bookId, bookId)).orderBy(verses.verseNumber);
+  console.log(`Found ${ishaVerses.length} Isha Upanishad verses`);
+
   const languages = ["devanagari", "kannada", "tamil", "telugu"];
   
   const result: Record<number, Record<string, { bhashyam: string; teeka: string }>> = {};
   
-  for (const verse of allVerses) {
+  for (const verse of ishaVerses) {
     result[verse.verseNumber] = {};
     for (const lang of languages) {
       const bhashyamEntries = await db.select().from(explanations).where(
@@ -42,7 +52,7 @@ async function exportTeekaData() {
   output += `};\n`;
   
   fs.writeFileSync("server/authoritative-commentary-data.ts", output);
-  console.log("Exported commentary data to server/authoritative-commentary-data.ts");
+  console.log(`Exported ${Object.keys(result).length} verses to server/authoritative-commentary-data.ts`);
   process.exit(0);
 }
 

@@ -2,6 +2,8 @@ import { db } from "./db";
 import { storage } from "./storage";
 import { books, verses, verseTranslations, explanations, languages } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
+import { COMPLETE_SHANKARA_BHASHYA } from "./complete-bhashya-data";
+import { authoritativeCommentaryData } from "./authoritative-commentary-data";
 
 /**
  * Additional Commentary Data
@@ -1030,9 +1032,6 @@ export async function seedAdditionalCommentaries() {
 export async function updateIncompleteShankaraExplanations() {
   console.log("Checking for incomplete Shankaracharya explanations...");
   
-  // Import complete bhashya data
-  const { COMPLETE_SHANKARA_BHASHYA } = await import("./complete-bhashya-data");
-  
   // Get the Isha Upanishad book
   const existingBooks = await db.select().from(books).where(eq(books.slug, "isha-upanishad-bhashya"));
   if (existingBooks.length === 0) {
@@ -1508,8 +1507,6 @@ export async function updateIshaUpanishadHierarchy() {
 
 export async function syncAuthoritativeCommentaryData() {
   console.log("Syncing authoritative commentary data (bhashyam + teeka)...");
-
-  const { authoritativeCommentaryData } = await import("./authoritative-commentary-data");
 
   const existingBooks = await db.select().from(books).where(eq(books.slug, "isha-upanishad-bhashya"));
   if (existingBooks.length === 0) {
