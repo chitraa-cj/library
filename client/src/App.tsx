@@ -398,11 +398,28 @@ function HomePageContent() {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               {selectedBookId && verseBreadcrumb ? (
-                <nav className="flex items-center gap-1.5 min-w-0" data-testid="breadcrumb-nav" aria-label="Current verse position">
-                  <Badge variant="secondary" className="font-mono text-[10px] sm:text-[11px] px-1.5 sm:px-2 h-5 shrink-0" data-testid="text-numeric-label">
-                    {verseBreadcrumb.numericLabel}
-                  </Badge>
-                  <span className="truncate text-foreground/80 font-medium text-xs sm:text-sm max-w-[200px]" title={verseBreadcrumb.verseLabel} data-testid="breadcrumb-verse">
+                <nav className="flex items-center gap-1 min-w-0 flex-wrap" data-testid="breadcrumb-nav" aria-label="Current verse position">
+                  <span className="truncate text-muted-foreground text-xs max-w-[120px] sm:max-w-[160px]" title={verseBreadcrumb.bookTitle} data-testid="breadcrumb-book">
+                    {verseBreadcrumb.bookTitle}
+                  </span>
+                  {verseBreadcrumb.adhyayTitle && (
+                    <>
+                      <ChevronRight className="h-3 w-3 text-muted-foreground/50 shrink-0" />
+                      <span className="truncate text-muted-foreground text-xs max-w-[120px] sm:max-w-[160px]" title={verseBreadcrumb.adhyayTitle} data-testid="breadcrumb-chapter">
+                        {verseBreadcrumb.adhyayTitle}
+                      </span>
+                    </>
+                  )}
+                  {verseBreadcrumb.khandaTitle && (
+                    <>
+                      <ChevronRight className="h-3 w-3 text-muted-foreground/50 shrink-0" />
+                      <span className="truncate text-muted-foreground text-xs max-w-[100px] sm:max-w-[140px]" title={verseBreadcrumb.khandaTitle} data-testid="breadcrumb-part">
+                        {verseBreadcrumb.khandaTitle}
+                      </span>
+                    </>
+                  )}
+                  <ChevronRight className="h-3 w-3 text-muted-foreground/50 shrink-0" />
+                  <span className="truncate text-foreground/80 font-medium text-xs max-w-[140px]" title={verseBreadcrumb.verseLabel} data-testid="breadcrumb-verse">
                     {verseBreadcrumb.verseLabel}
                   </span>
                 </nav>
