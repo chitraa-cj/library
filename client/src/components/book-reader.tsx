@@ -1109,13 +1109,6 @@ export function BookReader({
                   </div>
                 </div>
               )}
-              <div className="text-center mb-4 sm:mb-5">
-                <span className="text-xs text-muted-foreground font-serif">
-                  {tc(currentVerse.sectionTitle, verseSectionTitleTranslations) || `${t("verse")} ${currentVerse.verseNumber}`}
-                  {currentNumericLabel && <span className="ml-2 font-mono text-[10px] text-muted-foreground/60">({currentNumericLabel})</span>}
-                </span>
-              </div>
-
               <div className="space-y-4 sm:space-y-5">
                 <div 
                   className="font-serif text-lg sm:text-xl leading-relaxed sm:leading-loose text-center"
