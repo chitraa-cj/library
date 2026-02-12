@@ -143,6 +143,11 @@ async function scrapeLanguage(urlCode: string): Promise<VerseData[]> {
       continue;
     }
 
+    if (/_I\d+$/.test(sectionId)) {
+      console.log(`  Skipping I-section teeka: ${sectionId} (leading_bhashya commentary)`);
+      continue;
+    }
+
     const verseNumMatch = sectionId.match(/V(\d+)/);
     if (!verseNumMatch) continue;
     const verseNum = parseInt(verseNumMatch[1]);
