@@ -1074,36 +1074,6 @@ export function BookReader({
                   </div>
                 </div>
               )}
-              {(currentVerse.adhyayTitle || currentVerse.khandaTitle || currentVerse.sectionTitle) && (
-                <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground mb-2" data-testid="verse-breadcrumb">
-                  {currentVerse.adhyayTitle && (
-                    <span className="truncate max-w-[120px]" title={tc(currentVerse.adhyayTitle, chapterTitleTranslations) || currentVerse.adhyayTitle}>
-                      {tc(currentVerse.adhyayTitle, chapterTitleTranslations) || currentVerse.adhyayTitle}
-                    </span>
-                  )}
-                  {currentVerse.khandaTitle && (
-                    <>
-                      <ChevronRight className="h-2.5 w-2.5 shrink-0 text-muted-foreground/40" />
-                      <span className="truncate max-w-[120px]" title={tc(currentVerse.khandaTitle, sectionTitleTranslations) || currentVerse.khandaTitle}>
-                        {tc(currentVerse.khandaTitle, sectionTitleTranslations) || currentVerse.khandaTitle}
-                      </span>
-                    </>
-                  )}
-                  {currentVerse.sectionTitle && (
-                    <>
-                      <ChevronRight className="h-2.5 w-2.5 shrink-0 text-muted-foreground/40" />
-                      <span className="truncate max-w-[140px] text-foreground/70" title={tc(currentVerse.sectionTitle, verseSectionTitleTranslations) || currentVerse.sectionTitle}>
-                        {tc(currentVerse.sectionTitle, verseSectionTitleTranslations) || currentVerse.sectionTitle}
-                      </span>
-                    </>
-                  )}
-                  {currentNumericLabel && (
-                    <>
-                      <span className="ml-1 font-mono text-[10px] text-muted-foreground/50">({currentNumericLabel})</span>
-                    </>
-                  )}
-                </div>
-              )}
               <div className="space-y-4 sm:space-y-5">
                 <div 
                   className="font-serif text-lg sm:text-xl leading-relaxed sm:leading-loose text-center"
