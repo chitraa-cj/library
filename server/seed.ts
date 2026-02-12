@@ -1508,6 +1508,23 @@ export async function updateIshaUpanishadHierarchy() {
 export async function syncAuthoritativeCommentaryData() {
   console.log("Syncing authoritative commentary data (bhashyam + teeka)...");
 
+  const requiredLanguages = [
+    { code: "devanagari", name: "Sanskrit", nativeName: "संस्कृतम्", script: "Devanagari" },
+    { code: "kannada", name: "Kannada", nativeName: "ಕನ್ನಡ", script: "Kannada" },
+    { code: "tamil", name: "Tamil", nativeName: "தமிழ்", script: "Tamil" },
+    { code: "telugu", name: "Telugu", nativeName: "తెలుగు", script: "Telugu" },
+    { code: "sa", name: "Sanskrit", nativeName: "संस्कृतम्", script: "Devanagari" },
+    { code: "english", name: "English", nativeName: "English", script: "Latin" },
+    { code: "hi", name: "Hindi", nativeName: "हिन्दी", script: "Devanagari" },
+  ];
+  for (const lang of requiredLanguages) {
+    const existing = await db.select().from(languages).where(eq(languages.code, lang.code)).limit(1);
+    if (existing.length === 0) {
+      await db.insert(languages).values(lang);
+      console.log(`Added missing language: ${lang.code} (${lang.name})`);
+    }
+  }
+
   const existingBooks = await db.select().from(books).where(eq(books.slug, "isha-upanishad-bhashya"));
   if (existingBooks.length === 0) {
     console.log("Isha Upanishad book not found, skipping commentary sync");
