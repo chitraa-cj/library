@@ -120,9 +120,9 @@ function HomePageContent() {
     const bookLangCodes = commentaryOptions.languages.map(l => l.code);
     if (!bookLangCodes.includes(selectedCommentaryLanguage)) {
       const equivalents: Record<string, string[]> = {
+        sa: ["devanagari"],
+        devanagari: ["sa"],
         hi: ["devanagari", "sa"],
-        devanagari: ["hi", "sa"],
-        sa: ["devanagari", "hi"],
       };
       const alts = equivalents[selectedCommentaryLanguage] || [];
       const match = alts.find(alt => bookLangCodes.includes(alt));

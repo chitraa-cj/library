@@ -125,16 +125,27 @@ function isShankaracharya(name: string): boolean {
   return lower.includes("shankaracharya") || lower.includes("sankara") || lower.includes("śaṅkara");
 }
 
+function isTeekaAuthor(name: string): boolean {
+  const lower = name.toLowerCase();
+  return lower.includes("anandagiri") || lower.includes("ānandagiri");
+}
+
+function isBhashyaAuthor(name: string): boolean {
+  return isShankaracharya(name);
+}
+
 function VerseExplanation({ 
   verseId, 
   languageCode, 
   authorName,
-  showAll 
+  showAll,
+  filterFn
 }: { 
   verseId: string; 
   languageCode: string;
   authorName: string | null;
   showAll: boolean;
+  filterFn?: (authorName: string) => boolean;
 }) {
   const { t, locale } = useTranslation(languageCode);
   const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, locale);
@@ -147,7 +158,14 @@ function VerseExplanation({
     return <Skeleton className="h-20 w-full mt-3" />;
   }
 
-  const allForLanguage = explanations?.filter(e => e.languageCode === languageCode) || [];
+  let allForLanguage = explanations?.filter(e => e.languageCode === languageCode) || [];
+  if (filterFn) {
+    let filtered = allForLanguage.filter(e => filterFn(e.authorName));
+    if (filtered.length === 0 && languageCode !== "devanagari") {
+      filtered = (explanations?.filter(e => e.languageCode === "devanagari") || []).filter(e => filterFn(e.authorName));
+    }
+    allForLanguage = filtered;
+  }
 
   let effectiveAuthor = authorName;
   if (!showAll && authorName && !allForLanguage.some(e => e.authorName === authorName) && allForLanguage.length > 0) {
@@ -269,6 +287,7 @@ export function BookReader({
   const [initialized, setInitialized] = useState(false);
   const hasNavigatedRef = useRef(false);
   const [commentaryExpanded, setCommentaryExpanded] = useState(true);
+  const [commentaryMode, setCommentaryMode] = useState<"bhashyam" | "teeka">("bhashyam");
   const [selectionPopup, setSelectionPopup] = useState<{ text: string; x: number; y: number } | null>(null);
   const [showCoverPage, setShowCoverPage] = useState(true);
   const [expandedTOCAdhyays, setExpandedTOCAdhyays] = useState<Set<number>>(new Set());
@@ -1109,26 +1128,54 @@ export function BookReader({
 
                 {hasCommentaryOptions && (
                   <div className="space-y-3">
-                    <div className="flex items-center justify-center gap-3">
-                      <button
+                    <div className="flex items-center justify-center gap-2" data-testid="commentary-mode-toggle">
+                      <Button
+                        variant={commentaryMode === "bhashyam" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => { setCommentaryMode("bhashyam"); setCommentaryExpanded(true); }}
+                        className="text-xs rounded-full toggle-elevate"
+                        data-testid="button-mode-bhashyam"
+                      >
+                        {t("bhashyam")}
+                      </Button>
+                      <Button
+                        variant={commentaryMode === "teeka" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => { setCommentaryMode("teeka"); setCommentaryExpanded(true); }}
+                        className="text-xs rounded-full toggle-elevate"
+                        data-testid="button-mode-teeka"
+                      >
+                        {t("teeka")}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => setCommentaryExpanded(!commentaryExpanded)}
-                        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
                         data-testid="button-toggle-commentary"
                       >
-                        <MessageSquareText className="h-3.5 w-3.5" />
-                        <span>{commentaryExpanded ? `Hide ${t("commentary")}` : t("commentary")}</span>
                         <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${commentaryExpanded ? "rotate-180" : ""}`} />
-                      </button>
+                      </Button>
                     </div>
 
                     {commentaryExpanded && effectiveLang && (
                       <div className="pt-3 border-t border-border/30 animate-in fade-in slide-in-from-top-2 duration-200">
-                        <VerseExplanation 
-                          verseId={currentVerse.id} 
-                          languageCode={effectiveLang}
-                          authorName={isShowingAll ? null : selectedAuthor}
-                          showAll={isShowingAll}
-                        />
+                        {commentaryMode === "bhashyam" ? (
+                          <VerseExplanation 
+                            verseId={currentVerse.id} 
+                            languageCode={effectiveLang}
+                            authorName={isShowingAll ? null : selectedAuthor}
+                            showAll={isShowingAll}
+                            filterFn={isBhashyaAuthor}
+                          />
+                        ) : (
+                          <VerseExplanation 
+                            verseId={currentVerse.id} 
+                            languageCode={effectiveLang}
+                            authorName={null}
+                            showAll={true}
+                            filterFn={isTeekaAuthor}
+                          />
+                        )}
                       </div>
                     )}
                   </div>
