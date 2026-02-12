@@ -401,16 +401,10 @@ function HomePageContent() {
               )}
               {selectedBookId && verseBreadcrumb ? (
                 <nav className="flex items-center gap-1 min-w-0 flex-wrap" data-testid="breadcrumb-nav" aria-label="Current verse position">
-                  <span className="truncate text-muted-foreground text-xs max-w-[120px] sm:max-w-[160px]" title={verseBreadcrumb.bookTitle} data-testid="breadcrumb-book">
-                    {verseBreadcrumb.bookTitle}
-                  </span>
                   {verseBreadcrumb.adhyayTitle && (
-                    <>
-                      <ChevronRight className="h-3 w-3 text-muted-foreground/50 shrink-0" />
-                      <span className="truncate text-muted-foreground text-xs max-w-[120px] sm:max-w-[160px]" title={verseBreadcrumb.adhyayTitle} data-testid="breadcrumb-chapter">
-                        {verseBreadcrumb.adhyayTitle}
-                      </span>
-                    </>
+                    <span className="truncate text-muted-foreground text-xs max-w-[120px] sm:max-w-[160px]" title={verseBreadcrumb.adhyayTitle} data-testid="breadcrumb-chapter">
+                      {verseBreadcrumb.adhyayTitle}
+                    </span>
                   )}
                   {verseBreadcrumb.khandaTitle && (
                     <>
@@ -420,7 +414,9 @@ function HomePageContent() {
                       </span>
                     </>
                   )}
-                  <ChevronRight className="h-3 w-3 text-muted-foreground/50 shrink-0" />
+                  {(verseBreadcrumb.adhyayTitle || verseBreadcrumb.khandaTitle) && (
+                    <ChevronRight className="h-3 w-3 text-muted-foreground/50 shrink-0" />
+                  )}
                   <span className="truncate text-foreground/80 font-medium text-xs max-w-[140px]" title={verseBreadcrumb.verseLabel} data-testid="breadcrumb-verse">
                     {verseBreadcrumb.verseLabel}
                   </span>
