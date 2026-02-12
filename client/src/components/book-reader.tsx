@@ -139,13 +139,15 @@ function VerseExplanation({
   languageCode, 
   authorName,
   showAll,
-  filterFn
+  filterFn,
+  mode
 }: { 
   verseId: string; 
   languageCode: string;
   authorName: string | null;
   showAll: boolean;
   filterFn?: (authorName: string) => boolean;
+  mode?: "bhashyam" | "teeka";
 }) {
   const { t, locale } = useTranslation(languageCode);
   const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, locale);
@@ -160,10 +162,7 @@ function VerseExplanation({
 
   let allForLanguage = explanations?.filter(e => e.languageCode === languageCode) || [];
   if (filterFn) {
-    let filtered = allForLanguage.filter(e => filterFn(e.authorName));
-    if (filtered.length === 0 && languageCode !== "devanagari") {
-      filtered = (explanations?.filter(e => e.languageCode === "devanagari") || []).filter(e => filterFn(e.authorName));
-    }
+    const filtered = allForLanguage.filter(e => filterFn(e.authorName));
     allForLanguage = filtered;
   }
 
@@ -181,7 +180,12 @@ function VerseExplanation({
     : [];
 
   if (primaryExplanations.length === 0 && otherExplanations.length === 0) {
-    return null;
+    const notAvailableMsg = mode === "teeka" ? t("teekaNotAvailable") : t("bhashyamNotAvailable");
+    return (
+      <div className="mt-6 text-sm text-muted-foreground italic text-center py-4" data-testid="commentary-not-available">
+        {notAvailableMsg}
+      </div>
+    );
   }
 
   const groupExplanations = (items: Explanation[]) =>
@@ -1166,6 +1170,7 @@ export function BookReader({
                             authorName={isShowingAll ? null : selectedAuthor}
                             showAll={isShowingAll}
                             filterFn={isBhashyaAuthor}
+                            mode="bhashyam"
                           />
                         ) : (
                           <VerseExplanation 
@@ -1174,6 +1179,7 @@ export function BookReader({
                             authorName={null}
                             showAll={true}
                             filterFn={isTeekaAuthor}
+                            mode="teeka"
                           />
                         )}
                       </div>
