@@ -832,57 +832,22 @@ export function BookReader({
 
     return (
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="border-b border-border/50 px-4 sm:px-8 py-2 sm:py-3 shrink-0">
-          <div className="max-w-2xl xl:max-w-3xl mx-auto">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 flex-1 min-w-0 text-xs sm:text-sm">
-                <span
-                  className="font-serif text-muted-foreground/70 truncate max-w-[120px] cursor-pointer hover:text-primary transition-colors shrink-0 hidden sm:inline"
-                  onClick={onShowCoverPage}
-                  data-testid="chapter-nav-book"
-                >
-                  {tc(book.title, bookTitleTranslations)}
-                </span>
-                {chapterViewKhanda != null ? (
-                  <>
-                    <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/40 hidden sm:block" />
-                    <span
-                      className="font-serif text-muted-foreground/70 truncate max-w-[100px] cursor-pointer hover:text-primary transition-colors shrink-0"
-                      onClick={() => onSelectChapter?.(chapterViewAdhyay!)}
-                      data-testid="chapter-nav-adhyay"
-                    >
-                      {chapterTitle}
-                    </span>
-                    <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/40" />
-                    <span className="font-serif text-foreground/80 font-medium truncate">
-                      {headerSubtitle}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/40 hidden sm:block" />
-                    <span className="font-serif text-foreground/80 font-medium truncate">
-                      {headerSubtitle}
-                    </span>
-                  </>
-                )}
-                <Badge variant="secondary" className="font-mono text-[10px] px-1.5 h-4.5 shrink-0">{headerBadge}</Badge>
-              </div>
-              {onExitChapterView && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onExitChapterView}
-                  className="gap-1.5 text-xs"
-                  data-testid="button-exit-chapter-view"
-                >
-                  <BookOpen className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">{t("singleVerse")}</span>
-                </Button>
-              )}
+        {onExitChapterView && (
+          <div className="border-b border-border/50 px-4 sm:px-8 py-1.5 shrink-0">
+            <div className="max-w-2xl xl:max-w-3xl mx-auto flex justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onExitChapterView}
+                className="gap-1.5 text-xs"
+                data-testid="button-exit-chapter-view"
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{t("singleVerse")}</span>
+              </Button>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-2xl xl:max-w-3xl mx-auto px-4 sm:px-8 py-4 sm:py-6">
