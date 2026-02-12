@@ -280,7 +280,7 @@ export function BookReader({
   const { toast } = useToast();
   const [localLanguage, setLocalLanguage] = useState<string | null>(selectedCommentaryLanguage);
   const effectiveLang = localLanguage || selectedCommentaryLanguage;
-  const { t } = useTranslation(selectedCommentaryLanguage);
+  const { t } = useTranslation(effectiveLang);
   const lang = selectedCommentaryLanguage || "en";
   const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, lang);
   const [currentPage, setCurrentPage] = useState(0);
