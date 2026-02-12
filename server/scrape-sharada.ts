@@ -105,12 +105,6 @@ async function scrapeLanguage(urlCode: string): Promise<VerseData[]> {
 
     const bhashyaParts: string[] = [];
 
-    const leadingBhashya = ch(verseEl).find(".leading_bhashya");
-    if (leadingBhashya.length) {
-      const text = cleanText(leadingBhashya.text());
-      if (text) bhashyaParts.push(text);
-    }
-
     ch(verseEl).find(".bhashya").each((_, bhEl) => {
       const text = cleanText(ch(bhEl).text());
       if (text) bhashyaParts.push(text);
