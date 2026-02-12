@@ -1505,3 +1505,106 @@ export async function updateIshaUpanishadHierarchy() {
 
   console.log(`Updated hierarchy for ${updated} Isha Upanishad verses`);
 }
+
+export async function syncAuthoritativeCommentaryData() {
+  console.log("Syncing authoritative commentary data (bhashyam + teeka)...");
+
+  const { authoritativeCommentaryData } = await import("./authoritative-commentary-data");
+
+  const existingBooks = await db.select().from(books).where(eq(books.slug, "isha-upanishad-bhashya"));
+  if (existingBooks.length === 0) {
+    console.log("Isha Upanishad book not found, skipping commentary sync");
+    return;
+  }
+
+  const book = existingBooks[0];
+  const bookVerses = await db.select().from(verses).where(eq(verses.bookId, book.id));
+
+  if (bookVerses.length === 0) {
+    console.log("No verses found, skipping commentary sync");
+    return;
+  }
+
+  const verseNumberToId = new Map(bookVerses.map(v => [v.verseNumber, v.id]));
+
+  const allExplanations = await db
+    .select({
+      id: explanations.id,
+      verseId: explanations.verseId,
+      languageCode: explanations.languageCode,
+      authorName: explanations.authorName,
+      content: explanations.content,
+    })
+    .from(explanations)
+    .innerJoin(verses, eq(explanations.verseId, verses.id))
+    .where(eq(verses.bookId, book.id));
+
+  const explanationMap = new Map<string, typeof allExplanations[0]>();
+  for (const exp of allExplanations) {
+    const verseNum = bookVerses.find(v => v.id === exp.verseId)?.verseNumber;
+    if (verseNum !== undefined) {
+      explanationMap.set(`${verseNum}-${exp.languageCode}-${exp.authorName}`, exp);
+    }
+  }
+
+  let updatedCount = 0;
+  let insertedCount = 0;
+
+  for (const [verseNumStr, langData] of Object.entries(authoritativeCommentaryData)) {
+    const verseNum = parseInt(verseNumStr);
+    const verseId = verseNumberToId.get(verseNum);
+    if (!verseId) continue;
+
+    for (const [langCode, commentaryData] of Object.entries(langData)) {
+      if (commentaryData.bhashyam) {
+        const key = `${verseNum}-${langCode}-Adi Shankaracharya`;
+        const existing = explanationMap.get(key);
+
+        if (existing) {
+          if (existing.content !== commentaryData.bhashyam) {
+            await db.update(explanations)
+              .set({ content: commentaryData.bhashyam })
+              .where(eq(explanations.id, existing.id));
+            updatedCount++;
+          }
+        } else {
+          await db.insert(explanations).values({
+            verseId,
+            languageCode: langCode,
+            authorName: "Adi Shankaracharya",
+            content: commentaryData.bhashyam,
+          });
+          insertedCount++;
+        }
+      }
+
+      if (commentaryData.teeka) {
+        const key = `${verseNum}-${langCode}-Anandagiri`;
+        const existing = explanationMap.get(key);
+
+        if (existing) {
+          if (existing.content !== commentaryData.teeka) {
+            await db.update(explanations)
+              .set({ content: commentaryData.teeka })
+              .where(eq(explanations.id, existing.id));
+            updatedCount++;
+          }
+        } else {
+          await db.insert(explanations).values({
+            verseId,
+            languageCode: langCode,
+            authorName: "Anandagiri",
+            content: commentaryData.teeka,
+          });
+          insertedCount++;
+        }
+      }
+    }
+  }
+
+  if (updatedCount > 0 || insertedCount > 0) {
+    console.log(`Commentary sync: updated ${updatedCount}, inserted ${insertedCount} entries`);
+  } else {
+    console.log("All commentary data is already up to date");
+  }
+}
