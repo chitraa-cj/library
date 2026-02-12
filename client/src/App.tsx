@@ -373,7 +373,6 @@ function HomePageContent() {
           onSelectCategory={(categoryId) => {
             setSelectedCategoryId(categoryId);
             setSelectedBookId(null);
-            if (sidebarState === "expanded") toggleSidebar();
           }}
           onShowCoverPage={handleShowCoverPage}
           selectedVerseNumber={currentVerseNumber}
@@ -590,7 +589,6 @@ function HomePageContent() {
                 onSelectBook={handleBookSelect}
                 onSelectCategory={(categoryId) => {
                   setSelectedCategoryId(categoryId);
-                  if (sidebarState === "expanded") toggleSidebar();
                 }}
                 languageCode={selectedCommentaryLanguage}
               />
