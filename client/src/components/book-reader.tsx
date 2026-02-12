@@ -1088,10 +1088,9 @@ export function BookReader({
                 </div>
 
                 {availableTranslations.length > 0 && (
-                  <div className="border-t border-border/30 pt-3 sm:pt-4 space-y-5">
+                  <div className="border-t border-border/30 pt-3 sm:pt-4">
                     {availableTranslations.map((translation: VerseTranslation, idx: number) => (
-                      <div key={translation.id}>
-                        {idx > 0 && <div className="border-t border-border/20 mb-4" />}
+                      <div key={translation.id} className={idx > 0 ? "mt-6 pt-5 border-t border-border/30" : ""}>
                         <div 
                           className="text-sm sm:text-base leading-relaxed text-center text-muted-foreground"
                           data-testid={`text-translation-${translation.languageCode}-${currentVerse.verseNumber}`}
