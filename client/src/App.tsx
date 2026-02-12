@@ -400,25 +400,24 @@ function HomePageContent() {
               )}
               {selectedBookId && verseBreadcrumb ? (
                 <nav className="flex items-center gap-1 min-w-0 flex-wrap" data-testid="breadcrumb-nav" aria-label="Current verse position">
-                  {verseBreadcrumb.adhyayTitle && (
-                    <span className="truncate text-muted-foreground text-xs max-w-[120px] sm:max-w-[160px]" title={verseBreadcrumb.adhyayTitle} data-testid="breadcrumb-chapter">
-                      {verseBreadcrumb.adhyayTitle}
-                    </span>
-                  )}
-                  {verseBreadcrumb.khandaTitle && (
-                    <>
-                      <ChevronRight className="h-3 w-3 text-muted-foreground/50 shrink-0" />
-                      <span className="truncate text-muted-foreground text-xs max-w-[100px] sm:max-w-[140px]" title={verseBreadcrumb.khandaTitle} data-testid="breadcrumb-part">
-                        {verseBreadcrumb.khandaTitle}
+                  {(() => {
+                    const parts: string[] = [];
+                    if (verseBreadcrumb.adhyayTitle) parts.push(verseBreadcrumb.adhyayTitle);
+                    if (verseBreadcrumb.khandaTitle && verseBreadcrumb.khandaTitle !== verseBreadcrumb.adhyayTitle) parts.push(verseBreadcrumb.khandaTitle);
+                    if (verseBreadcrumb.verseLabel && !parts.includes(verseBreadcrumb.verseLabel)) parts.push(verseBreadcrumb.verseLabel);
+                    return parts.map((part, idx) => (
+                      <span key={idx} className="flex items-center gap-1">
+                        {idx > 0 && <ChevronRight className="h-3 w-3 text-muted-foreground/50 shrink-0" />}
+                        <span
+                          className={`truncate text-xs max-w-[120px] sm:max-w-[160px] ${idx === parts.length - 1 ? 'text-foreground/80 font-medium' : 'text-muted-foreground'}`}
+                          title={part}
+                          data-testid={`breadcrumb-part-${idx}`}
+                        >
+                          {part}
+                        </span>
                       </span>
-                    </>
-                  )}
-                  {(verseBreadcrumb.adhyayTitle || verseBreadcrumb.khandaTitle) && (
-                    <ChevronRight className="h-3 w-3 text-muted-foreground/50 shrink-0" />
-                  )}
-                  <span className="truncate text-foreground/80 font-medium text-xs max-w-[140px]" title={verseBreadcrumb.verseLabel} data-testid="breadcrumb-verse">
-                    {verseBreadcrumb.verseLabel}
-                  </span>
+                    ));
+                  })()}
                 </nav>
               ) : (
                 <div className="hidden sm:flex items-center gap-2 cursor-pointer" onClick={handleGoHome}>
