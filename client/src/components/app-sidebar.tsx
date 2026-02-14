@@ -229,6 +229,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
   const [expandedAdhyays, setExpandedAdhyays] = useState<Set<string>>(new Set());
   const [expandedKhandas, setExpandedKhandas] = useState<Set<string>>(new Set());
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [expandedSubCategories, setExpandedSubCategories] = useState<Set<string>>(new Set());
   const { t } = useTranslation(languageCode ?? null);
   const sidebarLang = languageCode || "en";
   const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, sidebarLang);
@@ -839,14 +840,20 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                   {cat.children!.map(sub => {
                     const subBooks = booksBySubCategory[sub.id] ?? [];
                     const hasBooks = subBooks.length > 0;
+                    const isSubExpanded = expandedSubCategories.has(sub.id);
                     return (
                       <div key={sub.id}>
                         <button
                           onClick={() => {
-                            if (hasBooks && subBooks.length === 1) {
-                              handleBookSelect(subBooks[0].id);
-                            } else if (hasBooks) {
-                              onSelectCategory?.(cat.id);
+                            if (hasBooks) {
+                              if (subBooks.length === 1) {
+                                handleBookSelect(subBooks[0].id);
+                              } else {
+                                const next = new Set(expandedSubCategories);
+                                if (next.has(sub.id)) next.delete(sub.id);
+                                else next.add(sub.id);
+                                setExpandedSubCategories(next);
+                              }
                             }
                           }}
                           className={`flex items-center gap-2 w-full text-left text-xs py-2 px-2 rounded-md transition-colors ${
@@ -858,7 +865,15 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                           disabled={!hasBooks}
                         >
                           {hasBooks ? (
-                            <FolderOpen className="h-3.5 w-3.5 shrink-0 text-primary/60" />
+                            subBooks.length > 1 ? (
+                              isSubExpanded ? (
+                                <ChevronDown className="h-3 w-3 shrink-0 text-primary" />
+                              ) : (
+                                <ChevronRight className="h-3 w-3 shrink-0 text-primary/60" />
+                              )
+                            ) : (
+                              <FolderOpen className="h-3.5 w-3.5 shrink-0 text-primary/60" />
+                            )
                           ) : (
                             <Folder className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />
                           )}
@@ -872,7 +887,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                             <Lock className="h-3 w-3 shrink-0 text-muted-foreground/30" />
                           )}
                         </button>
-                        {hasBooks && subBooks.length > 1 && (
+                        {hasBooks && subBooks.length > 1 && isSubExpanded && (
                           <div className="ml-3 pl-2 border-l border-border/30 mt-0.5 space-y-0.5">
                             {subBooks.map(book => (
                               <button
