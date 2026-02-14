@@ -123,26 +123,6 @@ export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, languageCo
           </Button>
         </div>
 
-        {books.some(b => bookVideoConfig[b.slug]) && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-center gap-2">
-              <div className="h-px w-8 bg-primary/30"></div>
-              <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider" data-testid="heading-explanatory-videos">
-                {t("watchIntroduction")}
-              </h2>
-              <div className="h-px w-8 bg-primary/30"></div>
-            </div>
-            {books.filter(b => bookVideoConfig[b.slug]).map(b => (
-              <VideoInline
-                key={b.slug}
-                videoId={bookVideoConfig[b.slug].videoId}
-                title={bookVideoConfig[b.slug].videoTitle}
-                className="max-w-xl mx-auto rounded-xl overflow-hidden border border-primary/20"
-              />
-            ))}
-          </div>
-        )}
-
         <div className="space-y-6 sm:space-y-8">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
@@ -201,6 +181,26 @@ export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, languageCo
             Managed by the Acharya Shankar Sanskritik Ekta Nyas, Madhya Pradesh.
           </p>
         </div>
+
+        {books.some(b => bookVideoConfig[b.slug]) && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-center gap-2">
+              <div className="h-px w-8 bg-primary/30"></div>
+              <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider" data-testid="heading-explanatory-videos">
+                {t("watchIntroduction")}
+              </h2>
+              <div className="h-px w-8 bg-primary/30"></div>
+            </div>
+            {books.filter(b => bookVideoConfig[b.slug]).map(b => (
+              <VideoInline
+                key={b.slug}
+                videoId={bookVideoConfig[b.slug].videoId}
+                title={bookVideoConfig[b.slug].videoTitle}
+                className="max-w-xl mx-auto rounded-xl overflow-hidden border border-primary/20"
+              />
+            ))}
+          </div>
+        )}
 
         <div className="text-center pb-4">
           <div className="text-primary/25 text-xs tracking-widest font-serif">
