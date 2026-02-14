@@ -284,9 +284,6 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
       if (selectedBookPath.subCategoryId) {
         setDrillSubCategoryId(selectedBookPath.subCategoryId);
       }
-      if (selectedBookId) {
-        setExpandedBooks(new Set([selectedBookId]));
-      }
     }
   }, [selectedBookPath, selectedBookId]);
 
@@ -361,7 +358,6 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
 
   const handleBookSelect = (bookId: string) => {
     onSelectBook(bookId);
-    setExpandedBooks(new Set([bookId]));
     if (isMobile) {
       setOpenMobile(false);
     }
@@ -699,7 +695,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
 
   const renderBookItem = (book: Book) => {
     const isSelected = selectedBookId === book.id;
-    const isExpanded = expandedBooks.has(book.id) || isSelected;
+    const isExpanded = expandedBooks.has(book.id);
     const verses = isSelected && selectedBookData?.verses ? selectedBookData.verses : [];
 
     return (
@@ -711,7 +707,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                 ? "text-primary font-semibold"
                 : "text-foreground/80 hover:text-foreground hover:bg-sidebar-accent/30"
           }`}>
-          {isSelected && verses.length > 0 && (
+          {isSelected && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
