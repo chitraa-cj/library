@@ -7,7 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { ThemeProvider, useTheme } from "@/components/theme-provider";
 import { AppSidebar } from "@/components/app-sidebar";
-import { WelcomeScreen, CategoryDetailView } from "@/components/welcome-screen";
+import { WelcomeScreen, LibraryCatalogView, CategoryDetailView } from "@/components/welcome-screen";
 import { BookReader } from "@/components/book-reader";
 import { TranslationPanel } from "@/components/translation-panel";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -66,6 +66,7 @@ function HomePageContent() {
   const [chapterViewAdhyay, setChapterViewAdhyay] = useState<number | null>(null);
   const [chapterViewKhanda, setChapterViewKhanda] = useState<number | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [showLibraryCatalog, setShowLibraryCatalog] = useState(false);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(() => {
     return typeof window !== 'undefined' && window.innerWidth < 1024;
   });
@@ -290,6 +291,7 @@ function HomePageContent() {
     setNavigateToVerse(null);
     setCurrentVerseNumber(1);
     setVerseBreadcrumb(null);
+    setShowLibraryCatalog(false);
     setSelectedCategoryId(null);
     setLocation("/");
   };
@@ -373,6 +375,7 @@ function HomePageContent() {
           onSelectCategory={(categoryId) => {
             setSelectedCategoryId(categoryId);
             setSelectedBookId(null);
+            setShowLibraryCatalog(false);
           }}
           onShowCoverPage={handleShowCoverPage}
           selectedVerseNumber={currentVerseNumber}
@@ -579,16 +582,27 @@ function HomePageContent() {
                 categoryId={selectedCategoryId}
                 books={allBooks || []}
                 onSelectBook={handleBookSelect}
-                onGoBack={handleGoHome}
+                onGoBack={() => {
+                  setSelectedCategoryId(null);
+                  setShowLibraryCatalog(true);
+                }}
+                languageCode={selectedCommentaryLanguage}
+              />
+            ) : showLibraryCatalog ? (
+              <LibraryCatalogView
+                books={allBooks || []}
+                onSelectBook={handleBookSelect}
+                onSelectCategory={(categoryId) => {
+                  setSelectedCategoryId(categoryId);
+                }}
+                onGoBack={() => setShowLibraryCatalog(false)}
                 languageCode={selectedCommentaryLanguage}
               />
             ) : (
               <WelcomeScreen
                 books={allBooks || []}
                 onSelectBook={handleBookSelect}
-                onSelectCategory={(categoryId) => {
-                  setSelectedCategoryId(categoryId);
-                }}
+                onBrowseLibrary={() => setShowLibraryCatalog(true)}
                 languageCode={selectedCommentaryLanguage}
               />
             )}
