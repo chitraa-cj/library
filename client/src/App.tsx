@@ -465,26 +465,6 @@ function HomePageContent() {
                   </SelectContent>
                 </Select>
               </div>
-              {selectedBookId && headerAuthors.length > 0 && (
-                <div className="flex items-center gap-1" data-testid="commentator-selector-header">
-                  <User className="h-3.5 w-3.5 text-muted-foreground shrink-0 hidden sm:block" />
-                  <Select
-                    value={selectedAuthor || headerAuthors[0]?.authorName || ""}
-                    onValueChange={setSelectedAuthor}
-                  >
-                    <SelectTrigger className="h-8 w-auto min-w-[80px] max-w-[150px] text-xs border-none bg-transparent shadow-none focus:ring-0 px-1.5" data-testid="select-header-commentator">
-                      <SelectValue placeholder={t("commentator")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {headerAuthors.map((author) => (
-                        <SelectItem key={author.authorName} value={author.authorName} data-testid={`option-header-author-${author.authorName}`}>
-                          {tc(author.authorName, bookAuthorTranslations)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
               {!authLoading && (
                 isLoggedIn && user ? (
                   <div className="flex items-center gap-2">

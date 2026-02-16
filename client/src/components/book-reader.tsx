@@ -1075,26 +1075,48 @@ export function BookReader({
               onMouseUp={handleTextSelect}
               onTouchEnd={handleTextSelect}
             >
-              {commentaryOptions && commentaryOptions.languages.length > 1 && (
-                <div className="flex items-center justify-end mb-2" data-testid="book-language-selector">
-                  <div className="flex items-center gap-1">
-                    <Globe className="h-3 w-3 text-muted-foreground shrink-0" />
-                    <Select
-                      value={effectiveLang || "english"}
-                      onValueChange={(val) => setLocalLanguage(val)}
-                    >
-                      <SelectTrigger className="h-7 w-auto min-w-[70px] max-w-[120px] text-[11px] border-none bg-transparent shadow-none focus:ring-0 px-1" data-testid="select-book-language">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {commentaryOptions.languages.map((lang) => (
-                          <SelectItem key={lang.code} value={lang.code} data-testid={`option-book-lang-${lang.code}`}>
-                            {lang.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+              {commentaryOptions && (commentaryOptions.languages.length > 1 || availableAuthors.length > 0) && (
+                <div className="flex items-center justify-end gap-2 mb-2" data-testid="book-language-selector">
+                  {availableAuthors.length > 0 && (
+                    <div className="flex items-center gap-1">
+                      <User className="h-3 w-3 text-muted-foreground shrink-0" />
+                      <Select
+                        value={selectedAuthor || availableAuthors[0]?.authorName || ""}
+                        onValueChange={handleAuthorChange}
+                      >
+                        <SelectTrigger className="h-7 w-auto min-w-[70px] max-w-[140px] text-[11px] border-none bg-transparent shadow-none focus:ring-0 px-1" data-testid="select-book-author">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableAuthors.map((author) => (
+                            <SelectItem key={author.authorName} value={author.authorName} data-testid={`option-book-author-${author.authorName}`}>
+                              {tc(author.authorName, bookAuthorTranslations)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  {commentaryOptions.languages.length > 1 && (
+                    <div className="flex items-center gap-1">
+                      <Globe className="h-3 w-3 text-muted-foreground shrink-0" />
+                      <Select
+                        value={effectiveLang || "english"}
+                        onValueChange={(val) => setLocalLanguage(val)}
+                      >
+                        <SelectTrigger className="h-7 w-auto min-w-[70px] max-w-[120px] text-[11px] border-none bg-transparent shadow-none focus:ring-0 px-1" data-testid="select-book-language">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {commentaryOptions.languages.map((lang) => (
+                            <SelectItem key={lang.code} value={lang.code} data-testid={`option-book-lang-${lang.code}`}>
+                              {lang.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
               )}
               <div className="space-y-2 sm:space-y-3">
