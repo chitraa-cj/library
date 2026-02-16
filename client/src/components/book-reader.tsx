@@ -182,7 +182,7 @@ function VerseExplanation({
   if (primaryExplanations.length === 0 && otherExplanations.length === 0) {
     const notAvailableMsg = mode === "teeka" ? t("teekaNotAvailable") : t("bhashyamNotAvailable");
     return (
-      <div className="mt-6 text-sm text-muted-foreground italic text-center py-4" data-testid="commentary-not-available">
+      <div className="mt-3 text-sm text-muted-foreground italic text-center py-2" data-testid="commentary-not-available">
         {notAvailableMsg}
       </div>
     );
@@ -202,10 +202,10 @@ function VerseExplanation({
   const renderGroup = (group: { authorName: string; authorTitle: string | null; items: Explanation[] }, gIdx: number) => (
     <div 
       key={group.authorName} 
-      className={`${gIdx > 0 ? "pt-5 border-t border-border/40" : ""}`}
+      className={`${gIdx > 0 ? "pt-3 border-t border-border/40" : ""}`}
       data-testid={`commentary-group-${group.authorName.toLowerCase().replace(/\s+/g, '-')}`}
     >
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center gap-2 mb-2">
         {isShankaracharya(group.authorName) ? (
           <img src={shankaracharyaImg} alt="Adi Shankaracharya" className="h-8 w-8 object-contain shrink-0" />
         ) : (
@@ -233,7 +233,7 @@ function VerseExplanation({
   );
 
   return (
-    <div className="mt-6 space-y-6" data-testid={`explanation-${verseId}`}>
+    <div className="mt-3 space-y-4" data-testid={`explanation-${verseId}`}>
       {Object.values(primaryGrouped).map((group, gIdx) => renderGroup(group, gIdx))}
 
       {otherExplanations.length > 0 && (
@@ -1097,7 +1097,7 @@ export function BookReader({
                   </div>
                 </div>
               )}
-              <div className="space-y-4 sm:space-y-5">
+              <div className="space-y-2 sm:space-y-3">
                 <div 
                   className="font-serif text-lg sm:text-xl leading-relaxed sm:leading-loose text-center"
                   data-testid={`text-original-${currentVerse.verseNumber}`}
@@ -1111,9 +1111,9 @@ export function BookReader({
                 </div>
 
                 {availableTranslations.length > 0 && (
-                  <div className="border-t border-border/30 pt-3 sm:pt-4">
+                  <div className="pt-2 sm:pt-2">
                     {availableTranslations.map((translation: VerseTranslation, idx: number) => (
-                      <div key={translation.id} className={idx > 0 ? "mt-6 pt-5 border-t border-border/30" : ""}>
+                      <div key={translation.id} className={idx > 0 ? "mt-3 pt-3 border-t border-border/30" : ""}>
                         <div 
                           className="text-sm sm:text-base leading-relaxed text-center text-muted-foreground"
                           data-testid={`text-translation-${translation.languageCode}-${currentVerse.verseNumber}`}
@@ -1131,7 +1131,7 @@ export function BookReader({
                 )}
 
                 {hasCommentaryOptions && (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <div className="flex items-center justify-center gap-2" data-testid="commentary-mode-toggle">
                       <Button
                         variant={commentaryMode === "bhashyam" ? "default" : "outline"}
@@ -1162,7 +1162,7 @@ export function BookReader({
                     </div>
 
                     {commentaryExpanded && effectiveLang && (
-                      <div className="pt-3 border-t border-border/30 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="pt-2 border-t border-border/30 animate-in fade-in slide-in-from-top-2 duration-200">
                         {commentaryMode === "bhashyam" ? (
                           <VerseExplanation 
                             verseId={currentVerse.id} 
