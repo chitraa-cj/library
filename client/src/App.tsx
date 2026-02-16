@@ -95,45 +95,15 @@ function HomePageContent() {
   });
 
   const headerLanguages = useMemo(() => {
-    if (selectedBookId && commentaryOptions?.languages?.length) {
-      const allLangMap = new Map((allLanguages || []).map(l => [l.code, l]));
-      return commentaryOptions.languages.map(bl => {
-        const full = allLangMap.get(bl.code);
-        return {
-          code: bl.code,
-          name: full?.nativeName || full?.name || bl.name || bl.code,
-        };
-      });
-    }
-    const seen = new Set<string>();
-    return (allLanguages || []).reduce<{code: string; name: string}[]>((acc, l) => {
-      const displayName = l.nativeName || l.name;
-      if (!seen.has(displayName)) {
-        seen.add(displayName);
-        acc.push({ code: l.code, name: displayName });
-      }
-      return acc;
-    }, []);
-  }, [selectedBookId, commentaryOptions, allLanguages]);
-
-  useEffect(() => {
-    if (!commentaryOptions?.languages?.length || !selectedCommentaryLanguage) return;
-    const bookLangCodes = commentaryOptions.languages.map(l => l.code);
-    if (!bookLangCodes.includes(selectedCommentaryLanguage)) {
-      const equivalents: Record<string, string[]> = {
-        sa: ["devanagari"],
-        devanagari: ["sa"],
-        hi: ["devanagari", "sa"],
-      };
-      const alts = equivalents[selectedCommentaryLanguage] || [];
-      const match = alts.find(alt => bookLangCodes.includes(alt));
-      if (match) {
-        setSelectedCommentaryLanguage(match);
-      } else {
-        handleGlobalLanguageChange(bookLangCodes[0]);
-      }
-    }
-  }, [commentaryOptions]);
+    return [
+      { code: "english", name: "English" },
+      { code: "devanagari", name: "संस्कृतम्" },
+      { code: "hindi", name: "हिन्दी" },
+      { code: "kannada", name: "ಕನ್ನಡ" },
+      { code: "telugu", name: "తెలుగు" },
+      { code: "tamil", name: "தமிழ்" },
+    ];
+  }, []);
 
   const headerAuthors = useMemo(() => {
     if (!commentaryOptions) return [];
