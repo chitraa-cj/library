@@ -777,8 +777,8 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
             <span key={idx} className="flex items-center gap-1">
               {idx > 0 && <ChevronRight className="h-2.5 w-2.5 shrink-0 text-muted-foreground/40" />}
               <span
-                className={`${isLast ? 'text-primary font-medium' : 'hover:text-foreground cursor-pointer underline-offset-2 hover:underline'} truncate max-w-[140px]`}
-                onClick={() => { if (!isLast) crumb.onClick(); }}
+                className={`${isLast ? 'text-primary font-medium cursor-pointer' : 'hover:text-foreground cursor-pointer underline-offset-2 hover:underline'} truncate max-w-[140px]`}
+                onClick={() => crumb.onClick()}
                 title={crumb.label}
               >
                 {crumb.label}
