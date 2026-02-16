@@ -56,8 +56,21 @@ function HomePageContent() {
   const [showTranslationPanel, setShowTranslationPanel] = useState(false);
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const [selectedCommentaryLanguage, setSelectedCommentaryLanguage] = useState<string | null>(() => {
+    const validCodes = ["english", "devanagari", "hindi", "kannada", "telugu", "tamil"];
+    const normalize = (code: string | null): string => {
+      if (!code) return "english";
+      const c = code.toLowerCase().trim();
+      if (validCodes.includes(c)) return c;
+      if (c === "en") return "english";
+      if (c === "sa" || c === "sanskrit") return "devanagari";
+      if (c === "hi") return "hindi";
+      if (c === "kn") return "kannada";
+      if (c === "te") return "telugu";
+      if (c === "ta") return "tamil";
+      return "english";
+    };
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('preferredLanguage') || 'english';
+      return normalize(localStorage.getItem('preferredLanguage'));
     }
     return 'english';
   });
