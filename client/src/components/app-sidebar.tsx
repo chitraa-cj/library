@@ -353,8 +353,14 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
         onClick: () => {},
       });
     }
+    if (selectedBookObj && drillSubCategory) {
+      crumbs.push({
+        label: tc(selectedBookObj.title, bookTitleTranslations),
+        onClick: () => {},
+      });
+    }
     return crumbs;
-  }, [drillCategory, drillSubCategory, t]);
+  }, [drillCategory, drillSubCategory, selectedBookObj, t, sidebarLang]);
 
   const handleBookSelect = (bookId: string) => {
     onSelectBook(bookId);
