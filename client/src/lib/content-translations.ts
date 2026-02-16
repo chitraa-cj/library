@@ -657,7 +657,7 @@ const langNameToCode: Record<string, string> = {
   english: "en",
   hindi: "hi",
   sanskrit: "sa",
-  devanagari: "hi",
+  devanagari: "sa",
   kannada: "kn",
   telugu: "te",
   tamil: "ta",
