@@ -350,13 +350,22 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
     if (drillSubCategory) {
       crumbs.push({
         label: resolveLabel(drillSubCategory, t),
-        onClick: () => {},
+        onClick: () => {
+          setExpandedBooks(new Set());
+        },
       });
     }
     if (selectedBookObj && drillSubCategory) {
       crumbs.push({
         label: tc(selectedBookObj.title, bookTitleTranslations),
-        onClick: () => {},
+        onClick: () => {
+          setExpandedBooks(prev => {
+            const next = new Set(prev);
+            if (next.has(selectedBookObj.id)) next.delete(selectedBookObj.id);
+            else next.add(selectedBookObj.id);
+            return next;
+          });
+        },
       });
     }
     return crumbs;
