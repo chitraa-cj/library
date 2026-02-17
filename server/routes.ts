@@ -7,6 +7,8 @@ import { translateWordRequestSchema } from "@shared/schema";
 import { isAuthenticated } from "./replit_integrations/auth";
 import { authStorage } from "./replit_integrations/auth/storage";
 import { z } from "zod";
+import multer from "multer";
+import { translateText, translateImage } from "./gemini";
 
 function getUserId(req: any): string {
   if (req.session?.emailUserId) {
@@ -298,6 +300,52 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error deleting note:", error);
       res.status(500).json({ error: "Failed to delete note" });
+    }
+  });
+
+  const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 },
+  });
+
+  const validLanguages = ["english", "hindi", "sanskrit", "kannada", "telugu", "tamil", "devanagari"];
+
+  app.post("/api/gemini/translate-text", async (req, res) => {
+    try {
+      const { content, targetLanguage } = req.body;
+      if (!content || typeof content !== "string" || !targetLanguage || typeof targetLanguage !== "string") {
+        return res.status(400).json({ error: "content and targetLanguage are required" });
+      }
+      if (content.length > 50000) {
+        return res.status(400).json({ error: "Content too long. Maximum 50,000 characters." });
+      }
+      if (!validLanguages.includes(targetLanguage.toLowerCase())) {
+        return res.status(400).json({ error: "Unsupported target language." });
+      }
+      const translated = await translateText(content, targetLanguage);
+      res.json({ translated });
+    } catch (error: any) {
+      console.error("Gemini text translation error:", error);
+      res.status(500).json({ error: error.message || "Translation failed" });
+    }
+  });
+
+  app.post("/api/gemini/translate-image", upload.single("file"), async (req, res) => {
+    try {
+      const file = req.file;
+      const targetLanguage = req.body.targetLanguage;
+      if (!file || !targetLanguage) {
+        return res.status(400).json({ error: "file and targetLanguage are required" });
+      }
+      const allowedTypes = ["image/png", "image/jpeg", "image/webp", "image/gif", "application/pdf"];
+      if (!allowedTypes.includes(file.mimetype)) {
+        return res.status(400).json({ error: "Unsupported file type. Use PNG, JPEG, WebP, GIF, or PDF." });
+      }
+      const result = await translateImage(file.buffer, file.mimetype, targetLanguage);
+      res.json({ result });
+    } catch (error: any) {
+      console.error("Gemini image translation error:", error);
+      res.status(500).json({ error: error.message || "Image translation failed" });
     }
   });
 

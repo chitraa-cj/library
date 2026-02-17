@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { PreferencesDialog } from "@/components/preferences-dialog";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
+import TranslatePage from "@/pages/translate-page";
 import { useTranslation } from "@/lib/translations";
 import { translateContent, bookAuthorTranslations } from "@/lib/content-translations";
 import type { Book, Language } from "@shared/schema";
@@ -605,6 +606,7 @@ function Router() {
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/translate" component={TranslatePage} />
       <Route path="/:bookSlug" component={HomePage} />
       <Route path="/:bookSlug/chapter/:chapterNumber" component={HomePage} />
       <Route path="/:bookSlug/chapter/:chapterNumber/:partNumber" component={HomePage} />
