@@ -1,38 +1,210 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Upload, FileText, Image, Languages, ArrowLeft } from "lucide-react";
+import { Loader2, Upload, FileText, Image, Languages, ArrowLeft, X, Copy, Check } from "lucide-react";
 import { Link } from "wouter";
 
 const LANGUAGES = [
   { code: "english", label: "English" },
-  { code: "hindi", label: "Hindi (हिन्दी)" },
-  { code: "sanskrit", label: "Sanskrit (संस्कृतम्)" },
-  { code: "kannada", label: "Kannada (ಕನ್ನಡ)" },
-  { code: "telugu", label: "Telugu (తెలుగు)" },
-  { code: "tamil", label: "Tamil (தமிழ்)" },
-  { code: "bengali", label: "Bengali (বাংলা)" },
-  { code: "marathi", label: "Marathi (मराठी)" },
-  { code: "gujarati", label: "Gujarati (ગુજરાતી)" },
-  { code: "malayalam", label: "Malayalam (മലയാളം)" },
+  { code: "hindi", label: "Hindi" },
+  { code: "sanskrit", label: "Sanskrit" },
+  { code: "kannada", label: "Kannada" },
+  { code: "telugu", label: "Telugu" },
+  { code: "tamil", label: "Tamil" },
+  { code: "bengali", label: "Bengali" },
+  { code: "marathi", label: "Marathi" },
+  { code: "gujarati", label: "Gujarati" },
+  { code: "malayalam", label: "Malayalam" },
   { code: "french", label: "French" },
   { code: "german", label: "German" },
   { code: "spanish", label: "Spanish" },
 ];
 
-type TabMode = "text" | "image";
+type InputMode = "text" | "image";
+type ResultTab = "original" | "translation";
+
+interface PdfPageResult {
+  page: number;
+  originalText: string;
+  translatedText: string;
+}
+
+interface ImageFileResult {
+  type: "image";
+  originalText: string;
+  translatedText: string;
+}
+
+interface PdfFileResult {
+  type: "pdf";
+  pages: PdfPageResult[];
+}
+
+type FileResult = ImageFileResult | PdfFileResult;
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <Button variant="ghost" size="icon" onClick={handleCopy} data-testid="button-copy">
+      {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+    </Button>
+  );
+}
+
+function TabBar({ active, onTabChange, labels }: { active: string; onTabChange: (t: string) => void; labels: { key: string; label: string }[] }) {
+  return (
+    <div className="flex border-b border-border/60 mb-0">
+      {labels.map(({ key, label }) => (
+        <button
+          key={key}
+          onClick={() => onTabChange(key)}
+          className={`px-4 py-2 text-sm font-medium transition-colors relative ${
+            active === key
+              ? "text-foreground border-b-2 border-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          data-testid={`tab-${key}`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function TextResultView({ original, translated }: { original: string; translated: string }) {
+  const [tab, setTab] = useState<ResultTab>("translation");
+  const content = tab === "original" ? original : translated;
+
+  return (
+    <Card className="overflow-hidden" data-testid="card-text-result">
+      <div className="flex items-center justify-between border-b border-border/40 pr-1">
+        <TabBar
+          active={tab}
+          onTabChange={(t) => setTab(t as ResultTab)}
+          labels={[
+            { key: "original", label: "Original" },
+            { key: "translation", label: "Translation" },
+          ]}
+        />
+        <CopyButton text={content} />
+      </div>
+      <div className="p-4 max-h-[60vh] overflow-y-auto">
+        <div className="text-sm leading-relaxed whitespace-pre-wrap" data-testid="text-result-content">
+          {content}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function FileResultView({ result, imagePreviewUrl }: { result: FileResult; imagePreviewUrl: string | null }) {
+  const [tab, setTab] = useState<ResultTab>("translation");
+  const [activePage, setActivePage] = useState(1);
+
+  if (result.type === "image") {
+    const content = tab === "original" ? result.originalText : result.translatedText;
+    return (
+      <div className="space-y-4">
+        {imagePreviewUrl && (
+          <Card className="p-3 flex items-center justify-center">
+            <img
+              src={imagePreviewUrl}
+              alt="Uploaded"
+              className="max-h-[200px] rounded-md object-contain"
+              data-testid="img-preview"
+            />
+          </Card>
+        )}
+        <Card className="overflow-hidden" data-testid="card-image-result">
+          <div className="flex items-center justify-between border-b border-border/40 pr-1">
+            <TabBar
+              active={tab}
+              onTabChange={(t) => setTab(t as ResultTab)}
+              labels={[
+                { key: "original", label: "Extracted Text" },
+                { key: "translation", label: "Translation" },
+              ]}
+            />
+            <CopyButton text={content} />
+          </div>
+          <div className="p-4 max-h-[60vh] overflow-y-auto">
+            <div className="text-sm leading-relaxed whitespace-pre-wrap" data-testid="text-image-result">
+              {content}
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  const pages = result.pages;
+  const currentPage = pages.find((p) => p.page === activePage) || pages[0];
+  const content = tab === "original" ? currentPage?.originalText : currentPage?.translatedText;
+
+  return (
+    <div className="space-y-3">
+      {pages.length > 1 && (
+        <div className="flex items-center gap-1.5 flex-wrap" data-testid="pdf-page-tabs">
+          {pages.map((p) => (
+            <Button
+              key={p.page}
+              variant={activePage === p.page ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActivePage(p.page)}
+              data-testid={`button-page-${p.page}`}
+            >
+              Page {p.page}
+            </Button>
+          ))}
+        </div>
+      )}
+      <Card className="overflow-hidden" data-testid="card-pdf-result">
+        <div className="flex items-center justify-between border-b border-border/40 pr-1">
+          <TabBar
+            active={tab}
+            onTabChange={(t) => setTab(t as ResultTab)}
+            labels={[
+              { key: "original", label: "Original Text" },
+              { key: "translation", label: "Translation" },
+            ]}
+          />
+          <CopyButton text={content || ""} />
+        </div>
+        {pages.length > 1 && (
+          <div className="px-4 pt-3 pb-0">
+            <span className="text-xs font-medium text-muted-foreground">
+              Page {activePage} of {pages.length}
+            </span>
+          </div>
+        )}
+        <div className="p-4 max-h-[60vh] overflow-y-auto">
+          <div className="text-sm leading-relaxed whitespace-pre-wrap" data-testid="text-pdf-result">
+            {content || "No text found on this page."}
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
 
 export default function TranslatePage() {
-  const [mode, setMode] = useState<TabMode>("text");
+  const [mode, setMode] = useState<InputMode>("text");
   const [targetLanguage, setTargetLanguage] = useState("english");
   const [textContent, setTextContent] = useState("");
   const [textResult, setTextResult] = useState("");
-  const [imageResult, setImageResult] = useState("");
+  const [fileResult, setFileResult] = useState<FileResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleTextTranslate = async () => {
@@ -46,8 +218,11 @@ export default function TranslatePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: textContent, targetLanguage }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || `Request failed (${res.status})`);
+      }
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
       setTextResult(data.translated);
     } catch (err: any) {
       setError(err.message || "Translation failed");
@@ -56,11 +231,11 @@ export default function TranslatePage() {
     }
   };
 
-  const handleImageTranslate = async () => {
+  const handleFileTranslate = async () => {
     if (!selectedFile) return;
     setIsLoading(true);
     setError("");
-    setImageResult("");
+    setFileResult(null);
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
@@ -69,23 +244,55 @@ export default function TranslatePage() {
         method: "POST",
         body: formData,
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || `Request failed (${res.status})`);
+      }
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setImageResult(data.result);
+      if (data.type === "pdf") {
+        setFileResult({ type: "pdf", pages: data.pages });
+      } else {
+        setFileResult({
+          type: "image",
+          originalText: data.originalText || "",
+          translatedText: data.translatedText || "",
+        });
+      }
     } catch (err: any) {
-      setError(err.message || "Image translation failed");
+      setError(err.message || "File translation failed");
     } finally {
       setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    };
+  }, [imagePreviewUrl]);
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFile(file);
-      setImageResult("");
+      setFileResult(null);
       setError("");
+      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+      if (file.type.startsWith("image/")) {
+        const url = URL.createObjectURL(file);
+        setImagePreviewUrl(url);
+      } else {
+        setImagePreviewUrl(null);
+      }
     }
+  };
+
+  const clearFile = () => {
+    setSelectedFile(null);
+    setFileResult(null);
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    setImagePreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   return (
@@ -104,8 +311,8 @@ export default function TranslatePage() {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 py-6">
-        <div className="flex items-center gap-2 mb-4">
+      <main className="max-w-3xl mx-auto px-4 py-6 space-y-5">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
             variant={mode === "text" ? "default" : "outline"}
             size="sm"
@@ -128,13 +335,13 @@ export default function TranslatePage() {
           </Button>
 
           <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Translate to:</span>
+            <span className="text-xs text-muted-foreground hidden sm:inline">Translate to:</span>
             <Select value={targetLanguage} onValueChange={setTargetLanguage}>
-              <SelectTrigger className="w-[160px] text-xs" data-testid="select-target-language">
+              <SelectTrigger className="w-[150px] text-xs" data-testid="select-target-language">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {LANGUAGES.map(l => (
+                {LANGUAGES.map((l) => (
                   <SelectItem key={l.code} value={l.code} data-testid={`option-lang-${l.code}`}>
                     {l.label}
                   </SelectItem>
@@ -145,7 +352,7 @@ export default function TranslatePage() {
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-md bg-destructive/10 text-destructive text-sm" data-testid="text-error">
+          <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm" data-testid="text-error">
             {error}
           </div>
         )}
@@ -154,7 +361,7 @@ export default function TranslatePage() {
           <div className="space-y-4">
             <Card className="p-4">
               <Textarea
-                placeholder="Enter text to translate..."
+                placeholder="Paste or type text to translate..."
                 value={textContent}
                 onChange={(e) => setTextContent(e.target.value)}
                 className="min-h-[150px] resize-y border-0 focus-visible:ring-0 text-sm"
@@ -173,12 +380,7 @@ export default function TranslatePage() {
               </Button>
             </div>
             {textResult && (
-              <Card className="p-4" data-testid="card-text-result">
-                <p className="text-xs text-muted-foreground mb-2 font-medium">Translation:</p>
-                <div className="text-sm leading-relaxed whitespace-pre-wrap" data-testid="text-translation-result">
-                  {textResult}
-                </div>
-              </Card>
+              <TextResultView original={textContent} translated={textResult} />
             )}
           </div>
         )}
@@ -186,7 +388,7 @@ export default function TranslatePage() {
         {mode === "image" && (
           <div className="space-y-4">
             <Card
-              className="p-6 border-dashed cursor-pointer flex flex-col items-center justify-center gap-3 min-h-[150px]"
+              className="p-5 border-dashed cursor-pointer flex flex-col items-center justify-center gap-3 min-h-[140px]"
               onClick={() => fileInputRef.current?.click()}
               data-testid="card-file-upload"
             >
@@ -199,10 +401,33 @@ export default function TranslatePage() {
                 data-testid="input-file"
               />
               {selectedFile ? (
-                <div className="flex items-center gap-2 text-sm">
-                  <Upload className="h-4 w-4 text-primary" />
-                  <span className="font-medium">{selectedFile.name}</span>
-                  <span className="text-muted-foreground">({(selectedFile.size / 1024).toFixed(1)} KB)</span>
+                <div className="flex flex-col items-center gap-2">
+                  {imagePreviewUrl && (
+                    <img
+                      src={imagePreviewUrl}
+                      alt="Preview"
+                      className="max-h-[120px] rounded-md object-contain"
+                      data-testid="img-upload-preview"
+                    />
+                  )}
+                  <div className="flex items-center gap-2 text-sm">
+                    {selectedFile.type === "application/pdf" ? (
+                      <FileText className="h-4 w-4 text-primary" />
+                    ) : (
+                      <Image className="h-4 w-4 text-primary" />
+                    )}
+                    <span className="font-medium">{selectedFile.name}</span>
+                    <span className="text-muted-foreground">({(selectedFile.size / 1024).toFixed(1)} KB)</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={(e) => { e.stopPropagation(); clearFile(); }}
+                      data-testid="button-clear-file"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <>
@@ -214,22 +439,17 @@ export default function TranslatePage() {
             </Card>
             <div className="flex justify-end">
               <Button
-                onClick={handleImageTranslate}
+                onClick={handleFileTranslate}
                 disabled={isLoading || !selectedFile}
                 className="gap-1.5"
-                data-testid="button-translate-image"
+                data-testid="button-translate-file"
               >
                 {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 Translate
               </Button>
             </div>
-            {imageResult && (
-              <Card className="p-4" data-testid="card-image-result">
-                <p className="text-xs text-muted-foreground mb-2 font-medium">Result:</p>
-                <div className="text-sm leading-relaxed whitespace-pre-wrap" data-testid="text-image-result">
-                  {imageResult}
-                </div>
-              </Card>
+            {fileResult && (
+              <FileResultView result={fileResult} imagePreviewUrl={imagePreviewUrl} />
             )}
           </div>
         )}

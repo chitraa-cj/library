@@ -8,7 +8,7 @@ import { isAuthenticated } from "./replit_integrations/auth";
 import { authStorage } from "./replit_integrations/auth/storage";
 import { z } from "zod";
 import multer from "multer";
-import { translateText, translateImage } from "./gemini";
+import { translateTextChunked, translateImage, translatePdf } from "./gemini";
 
 function getUserId(req: any): string {
   if (req.session?.emailUserId) {
@@ -308,7 +308,11 @@ export async function registerRoutes(
     limits: { fileSize: 10 * 1024 * 1024 },
   });
 
-  const validLanguages = ["english", "hindi", "sanskrit", "kannada", "telugu", "tamil", "devanagari"];
+  const validLanguages = [
+    "english", "hindi", "sanskrit", "kannada", "telugu", "tamil",
+    "devanagari", "bengali", "marathi", "gujarati", "malayalam",
+    "french", "german", "spanish"
+  ];
 
   app.post("/api/gemini/translate-text", async (req, res) => {
     try {
@@ -322,7 +326,7 @@ export async function registerRoutes(
       if (!validLanguages.includes(targetLanguage.toLowerCase())) {
         return res.status(400).json({ error: "Unsupported target language." });
       }
-      const translated = await translateText(content, targetLanguage);
+      const translated = await translateTextChunked(content, targetLanguage);
       res.json({ translated });
     } catch (error: any) {
       console.error("Gemini text translation error:", error);
@@ -341,8 +345,14 @@ export async function registerRoutes(
       if (!allowedTypes.includes(file.mimetype)) {
         return res.status(400).json({ error: "Unsupported file type. Use PNG, JPEG, WebP, GIF, or PDF." });
       }
-      const result = await translateImage(file.buffer, file.mimetype, targetLanguage);
-      res.json({ result });
+
+      if (file.mimetype === "application/pdf") {
+        const pages = await translatePdf(file.buffer, targetLanguage);
+        res.json({ type: "pdf", pages });
+      } else {
+        const result = await translateImage(file.buffer, file.mimetype, targetLanguage);
+        res.json({ type: "image", ...result });
+      }
     } catch (error: any) {
       console.error("Gemini image translation error:", error);
       res.status(500).json({ error: error.message || "Image translation failed" });
