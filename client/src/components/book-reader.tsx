@@ -152,10 +152,10 @@ function EnglishTranslationToggle({ content, sourceLanguage }: { content: string
     setIsLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/gemini/translate-text", {
+      const res = await fetch("/api/gemini/translate-bhashyam", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content, sourceLanguage, targetLanguage: "english" }),
+        body: JSON.stringify({ content, sourceLanguage }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => null);

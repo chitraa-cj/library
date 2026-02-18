@@ -32,6 +32,33 @@ export async function translateText(content: string, targetLanguage: string, sou
   return response.text();
 }
 
+export async function translateBhashyam(content: string, sourceLanguage: string): Promise<string> {
+  const model = getGenAI().getGenerativeModel({
+    model: "gemini-2.0-flash",
+    generationConfig: {
+      maxOutputTokens: 16384,
+    },
+  });
+
+  const prompt = `You are translating a Sanskrit philosophical commentary (bhashyam/teeka) from ${sourceLanguage} to English.
+
+CRITICAL INSTRUCTIONS:
+- Translate the ENTIRE bhashyam/commentary EXACTLY and FAITHFULLY sentence by sentence into English.
+- Preserve the complete structure, meaning, and flow of the original commentary.
+- Keep all Sanskrit technical terms (like Brahman, Atman, Maya, etc.) transliterated in the English translation and include brief clarifications in parentheses where needed.
+- Do NOT summarize, paraphrase, skip, or shorten ANY part. Every single sentence must be translated.
+- Do NOT add your own explanations or interpretations. Only translate what is written.
+- Maintain paragraph breaks as they appear in the original.
+- Return ONLY the English translation, nothing else — no preamble, no notes, no headings.
+
+Bhashyam text to translate:
+${content}`;
+
+  const result = await model.generateContent(prompt);
+  const response = result.response;
+  return response.text();
+}
+
 export async function translateTextChunked(content: string, targetLanguage: string, sourceLanguage?: string): Promise<string> {
   const CHUNK_SIZE = 3000;
   if (content.length <= CHUNK_SIZE) {

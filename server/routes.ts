@@ -8,7 +8,7 @@ import { isAuthenticated } from "./replit_integrations/auth";
 import { authStorage } from "./replit_integrations/auth/storage";
 import { z } from "zod";
 import multer from "multer";
-import { translateTextChunked, translateImage, translatePdf, transliterateTextChunked } from "./gemini";
+import { translateTextChunked, translateImage, translatePdf, transliterateTextChunked, translateBhashyam } from "./gemini";
 
 function getUserId(req: any): string {
   if (req.session?.emailUserId) {
@@ -326,6 +326,26 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("Gemini text translation error:", error);
       res.status(500).json({ error: error.message || "Translation failed" });
+    }
+  });
+
+  app.post("/api/gemini/translate-bhashyam", async (req, res) => {
+    try {
+      const { content, sourceLanguage } = req.body;
+      if (!content || typeof content !== "string") {
+        return res.status(400).json({ error: "content is required" });
+      }
+      if (!sourceLanguage || typeof sourceLanguage !== "string") {
+        return res.status(400).json({ error: "sourceLanguage is required" });
+      }
+      if (content.length > 50000) {
+        return res.status(400).json({ error: "Content too long. Maximum 50,000 characters." });
+      }
+      const translated = await translateBhashyam(content, sourceLanguage);
+      res.json({ translated });
+    } catch (error: any) {
+      console.error("Gemini bhashyam translation error:", error);
+      res.status(500).json({ error: error.message || "Bhashyam translation failed" });
     }
   });
 
