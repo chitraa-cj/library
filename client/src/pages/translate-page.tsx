@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Upload, FileText, Image, Languages, ArrowLeft, X, Copy, Check } from "lucide-react";
+import { Loader2, Upload, FileText, Image, Languages, ArrowLeft, X, Copy, Check, ArrowRightLeft, Type } from "lucide-react";
 import { Link } from "wouter";
 
 const LANGUAGES = [
@@ -20,9 +20,36 @@ const LANGUAGES = [
   { code: "french", label: "French" },
   { code: "german", label: "German" },
   { code: "spanish", label: "Spanish" },
+  { code: "arabic", label: "Arabic" },
+  { code: "chinese", label: "Chinese" },
+  { code: "japanese", label: "Japanese" },
+  { code: "korean", label: "Korean" },
+  { code: "russian", label: "Russian" },
+  { code: "portuguese", label: "Portuguese" },
+  { code: "italian", label: "Italian" },
+  { code: "thai", label: "Thai" },
+  { code: "urdu", label: "Urdu" },
+  { code: "persian", label: "Persian" },
+  { code: "turkish", label: "Turkish" },
+  { code: "vietnamese", label: "Vietnamese" },
+  { code: "dutch", label: "Dutch" },
+  { code: "polish", label: "Polish" },
+  { code: "ukrainian", label: "Ukrainian" },
+  { code: "greek", label: "Greek" },
+  { code: "hebrew", label: "Hebrew" },
+  { code: "swahili", label: "Swahili" },
+  { code: "indonesian", label: "Indonesian" },
+  { code: "malay", label: "Malay" },
+  { code: "burmese", label: "Burmese" },
+  { code: "tibetan", label: "Tibetan" },
+  { code: "nepali", label: "Nepali" },
+  { code: "sinhala", label: "Sinhala" },
+  { code: "punjabi", label: "Punjabi" },
+  { code: "odia", label: "Odia" },
+  { code: "assamese", label: "Assamese" },
 ];
 
-type InputMode = "text" | "image";
+type InputMode = "text" | "image" | "transliterate";
 type ResultTab = "original" | "translation";
 
 interface PdfPageResult {
@@ -79,7 +106,7 @@ function TabBar({ active, onTabChange, labels }: { active: string; onTabChange: 
   );
 }
 
-function TextResultView({ original, translated }: { original: string; translated: string }) {
+function TextResultView({ original, translated, resultLabel }: { original: string; translated: string; resultLabel?: string }) {
   const [tab, setTab] = useState<ResultTab>("translation");
   const content = tab === "original" ? original : translated;
 
@@ -91,7 +118,7 @@ function TextResultView({ original, translated }: { original: string; translated
           onTabChange={(t) => setTab(t as ResultTab)}
           labels={[
             { key: "original", label: "Original" },
-            { key: "translation", label: "Translation" },
+            { key: "translation", label: resultLabel || "Translation" },
           ]}
         />
         <CopyButton text={content} />
@@ -195,11 +222,72 @@ function FileResultView({ result, imagePreviewUrl }: { result: FileResult; image
   );
 }
 
+function LanguageSelector({
+  sourceLanguage,
+  targetLanguage,
+  onSourceChange,
+  onTargetChange,
+  onSwap,
+}: {
+  sourceLanguage: string;
+  targetLanguage: string;
+  onSourceChange: (v: string) => void;
+  onTargetChange: (v: string) => void;
+  onSwap: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs text-muted-foreground whitespace-nowrap">From:</span>
+        <Select value={sourceLanguage} onValueChange={onSourceChange}>
+          <SelectTrigger className="w-[130px] text-xs" data-testid="select-source-language">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="auto" data-testid="option-lang-auto">Auto-detect</SelectItem>
+            {LANGUAGES.map((l) => (
+              <SelectItem key={l.code} value={l.code} data-testid={`option-src-lang-${l.code}`}>
+                {l.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onSwap}
+        title="Swap languages"
+        data-testid="button-swap-languages"
+      >
+        <ArrowRightLeft className="h-3.5 w-3.5" />
+      </Button>
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs text-muted-foreground whitespace-nowrap">To:</span>
+        <Select value={targetLanguage} onValueChange={onTargetChange}>
+          <SelectTrigger className="w-[130px] text-xs" data-testid="select-target-language">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {LANGUAGES.map((l) => (
+              <SelectItem key={l.code} value={l.code} data-testid={`option-tgt-lang-${l.code}`}>
+                {l.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+}
+
 export default function TranslatePage() {
   const [mode, setMode] = useState<InputMode>("text");
+  const [sourceLanguage, setSourceLanguage] = useState("auto");
   const [targetLanguage, setTargetLanguage] = useState("english");
   const [textContent, setTextContent] = useState("");
   const [textResult, setTextResult] = useState("");
+  const [transliterateResult, setTransliterateResult] = useState("");
   const [fileResult, setFileResult] = useState<FileResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -207,16 +295,25 @@ export default function TranslatePage() {
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const swapLanguages = () => {
+    if (sourceLanguage === "auto") return;
+    const temp = sourceLanguage;
+    setSourceLanguage(targetLanguage);
+    setTargetLanguage(temp);
+  };
+
   const handleTextTranslate = async () => {
     if (!textContent.trim()) return;
     setIsLoading(true);
     setError("");
     setTextResult("");
     try {
+      const body: any = { content: textContent, targetLanguage };
+      if (sourceLanguage !== "auto") body.sourceLanguage = sourceLanguage;
       const res = await fetch("/api/gemini/translate-text", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: textContent, targetLanguage }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
@@ -226,6 +323,32 @@ export default function TranslatePage() {
       setTextResult(data.translated);
     } catch (err: any) {
       setError(err.message || "Translation failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTransliterate = async () => {
+    if (!textContent.trim()) return;
+    setIsLoading(true);
+    setError("");
+    setTransliterateResult("");
+    try {
+      const body: any = { content: textContent, targetLanguage };
+      if (sourceLanguage !== "auto") body.sourceLanguage = sourceLanguage;
+      const res = await fetch("/api/gemini/transliterate-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || `Request failed (${res.status})`);
+      }
+      const data = await res.json();
+      setTransliterateResult(data.transliterated);
+    } catch (err: any) {
+      setError(err.message || "Transliteration failed");
     } finally {
       setIsLoading(false);
     }
@@ -321,7 +444,17 @@ export default function TranslatePage() {
             data-testid="button-mode-text"
           >
             <FileText className="h-3.5 w-3.5" />
-            Text
+            Translate
+          </Button>
+          <Button
+            variant={mode === "transliterate" ? "default" : "outline"}
+            size="sm"
+            onClick={() => { setMode("transliterate"); setError(""); }}
+            className="gap-1.5"
+            data-testid="button-mode-transliterate"
+          >
+            <Type className="h-3.5 w-3.5" />
+            Transliterate
           </Button>
           <Button
             variant={mode === "image" ? "default" : "outline"}
@@ -333,23 +466,15 @@ export default function TranslatePage() {
             <Image className="h-3.5 w-3.5" />
             Image / PDF
           </Button>
-
-          <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs text-muted-foreground hidden sm:inline">Translate to:</span>
-            <Select value={targetLanguage} onValueChange={setTargetLanguage}>
-              <SelectTrigger className="w-[150px] text-xs" data-testid="select-target-language">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {LANGUAGES.map((l) => (
-                  <SelectItem key={l.code} value={l.code} data-testid={`option-lang-${l.code}`}>
-                    {l.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         </div>
+
+        <LanguageSelector
+          sourceLanguage={sourceLanguage}
+          targetLanguage={targetLanguage}
+          onSourceChange={setSourceLanguage}
+          onTargetChange={setTargetLanguage}
+          onSwap={swapLanguages}
+        />
 
         {error && (
           <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm" data-testid="text-error">
@@ -381,6 +506,34 @@ export default function TranslatePage() {
             </div>
             {textResult && (
               <TextResultView original={textContent} translated={textResult} />
+            )}
+          </div>
+        )}
+
+        {mode === "transliterate" && (
+          <div className="space-y-4">
+            <Card className="p-4">
+              <Textarea
+                placeholder="Paste or type text to transliterate..."
+                value={textContent}
+                onChange={(e) => setTextContent(e.target.value)}
+                className="min-h-[150px] resize-y border-0 focus-visible:ring-0 text-sm"
+                data-testid="textarea-transliterate-source"
+              />
+            </Card>
+            <div className="flex justify-end">
+              <Button
+                onClick={handleTransliterate}
+                disabled={isLoading || !textContent.trim()}
+                className="gap-1.5"
+                data-testid="button-transliterate-text"
+              >
+                {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Transliterate
+              </Button>
+            </div>
+            {transliterateResult && (
+              <TextResultView original={textContent} translated={transliterateResult} resultLabel="Transliteration" />
             )}
           </div>
         )}
