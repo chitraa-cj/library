@@ -71,7 +71,47 @@ POST https://dev.ekatmdhamlibrary.xoidlabs.com/api/gemini/translate-text
 
 ---
 
-### 1.2 Translate Image
+### 1.2 Transliterate Text
+
+Transliterates text into any target language's script. Unlike translation (which changes the meaning to the target language), transliteration converts the text to be written in the script and phonetics of the target language while preserving the original meaning. Supports any language worldwide.
+
+**Endpoint:** `POST /api/gemini/transliterate-text`
+
+**Headers:**
+```
+Content-Type: application/json
+```
+
+**Request Body:**
+| Field          | Type   | Required | Description                                         |
+|----------------|--------|----------|-----------------------------------------------------|
+| content        | string | Yes      | Text to transliterate (max 50,000 characters)       |
+| targetLanguage | string | Yes      | Target language (any language, e.g. "hindi", "japanese", "arabic", "korean", etc.) |
+
+**Example Request:**
+```json
+POST https://dev.ekatmdhamlibrary.xoidlabs.com/api/gemini/transliterate-text
+
+{
+  "content": "Om Namah Shivaya",
+  "targetLanguage": "hindi"
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "transliterated": "ॐ नमः शिवाय"
+}
+```
+
+**Error Responses:**
+- `400` - Missing or invalid fields, or content too long
+- `500` - Transliteration service error
+
+---
+
+### 1.3 Translate Image
 
 Extracts text from an image and translates it to the target language.
 
@@ -118,7 +158,7 @@ const data = await response.json();
 
 ---
 
-### 1.3 Translate PDF
+### 1.4 Translate PDF
 
 Extracts text from a PDF document page-by-page and translates each page.
 
@@ -175,7 +215,7 @@ const data = await response.json();
 
 ---
 
-### 1.4 Example: Handling Both Image and PDF Responses
+### 1.5 Example: Handling Both Image and PDF Responses
 
 ```javascript
 async function translateFile(file, targetLanguage) {

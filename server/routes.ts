@@ -8,7 +8,7 @@ import { isAuthenticated } from "./replit_integrations/auth";
 import { authStorage } from "./replit_integrations/auth/storage";
 import { z } from "zod";
 import multer from "multer";
-import { translateTextChunked, translateImage, translatePdf } from "./gemini";
+import { translateTextChunked, translateImage, translatePdf, transliterateTextChunked } from "./gemini";
 
 function getUserId(req: any): string {
   if (req.session?.emailUserId) {
@@ -331,6 +331,23 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("Gemini text translation error:", error);
       res.status(500).json({ error: error.message || "Translation failed" });
+    }
+  });
+
+  app.post("/api/gemini/transliterate-text", async (req, res) => {
+    try {
+      const { content, targetLanguage } = req.body;
+      if (!content || typeof content !== "string" || !targetLanguage || typeof targetLanguage !== "string") {
+        return res.status(400).json({ error: "content and targetLanguage are required" });
+      }
+      if (content.length > 50000) {
+        return res.status(400).json({ error: "Content too long. Maximum 50,000 characters." });
+      }
+      const transliterated = await transliterateTextChunked(content, targetLanguage);
+      res.json({ transliterated });
+    } catch (error: any) {
+      console.error("Gemini transliteration error:", error);
+      res.status(500).json({ error: error.message || "Transliteration failed" });
     }
   });
 

@@ -105,6 +105,47 @@ You MUST return a valid JSON object in this exact format (no markdown, no code b
   }
 }
 
+export async function transliterateText(content: string, targetLanguage: string): Promise<string> {
+  const model = getModel();
+
+  const prompt = `Transliterate the following text into ${targetLanguage} script/language. Transliteration means converting the text so it is written in the script and phonetics of ${targetLanguage}, while preserving the original meaning. If the text is already in ${targetLanguage}, return it as-is. Return ONLY the transliterated text, nothing else.\n\nText:\n${content}`;
+
+  const result = await model.generateContent(prompt);
+  const response = result.response;
+  return response.text();
+}
+
+export async function transliterateTextChunked(content: string, targetLanguage: string): Promise<string> {
+  const CHUNK_SIZE = 3000;
+  if (content.length <= CHUNK_SIZE) {
+    return transliterateText(content, targetLanguage);
+  }
+
+  const paragraphs = content.split(/\n\n+/);
+  const chunks: string[] = [];
+  let current = "";
+
+  for (const para of paragraphs) {
+    if (current.length + para.length + 2 > CHUNK_SIZE && current.length > 0) {
+      chunks.push(current.trim());
+      current = para;
+    } else {
+      current += (current ? "\n\n" : "") + para;
+    }
+  }
+  if (current.trim()) {
+    chunks.push(current.trim());
+  }
+
+  const results: string[] = [];
+  for (const chunk of chunks) {
+    const transliterated = await transliterateText(chunk, targetLanguage);
+    results.push(transliterated);
+  }
+
+  return results.join("\n\n");
+}
+
 export interface PdfPageResult {
   page: number;
   originalText: string;
