@@ -39,10 +39,8 @@ Content-Type: application/json
 | Field          | Type   | Required | Description                              |
 |----------------|--------|----------|------------------------------------------|
 | content        | string | Yes      | Text to translate (max 50,000 characters)|
-| targetLanguage | string | Yes      | Target language code (see supported list) |
-
-**Supported Languages:**
-`english`, `hindi`, `sanskrit`, `kannada`, `telugu`, `tamil`, `bengali`, `marathi`, `gujarati`, `malayalam`, `french`, `german`, `spanish`
+| sourceLanguage | string | No       | Source language (e.g. "sanskrit", "hindi", "japanese"). Auto-detected if omitted. |
+| targetLanguage | string | Yes      | Target language (any language worldwide, e.g. "english", "korean", "arabic", etc.) |
 
 **Example Request:**
 ```json
@@ -50,6 +48,7 @@ POST https://dev.ekatmdhamlibrary.xoidlabs.com/api/gemini/translate-text
 
 {
   "content": "धर्मक्षेत्रे कुरुक्षेत्रे समवेता युयुत्सवः",
+  "sourceLanguage": "sanskrit",
   "targetLanguage": "english"
 }
 ```
@@ -86,6 +85,7 @@ Content-Type: application/json
 | Field          | Type   | Required | Description                                         |
 |----------------|--------|----------|-----------------------------------------------------|
 | content        | string | Yes      | Text to transliterate (max 50,000 characters)       |
+| sourceLanguage | string | No       | Source language (e.g. "english", "sanskrit"). Auto-detected if omitted. |
 | targetLanguage | string | Yes      | Target language (any language, e.g. "hindi", "japanese", "arabic", "korean", etc.) |
 
 **Example Request:**
@@ -94,6 +94,7 @@ POST https://dev.ekatmdhamlibrary.xoidlabs.com/api/gemini/transliterate-text
 
 {
   "content": "Om Namah Shivaya",
+  "sourceLanguage": "english",
   "targetLanguage": "hindi"
 }
 ```

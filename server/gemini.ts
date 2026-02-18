@@ -21,20 +21,21 @@ function getModel() {
   });
 }
 
-export async function translateText(content: string, targetLanguage: string): Promise<string> {
+export async function translateText(content: string, targetLanguage: string, sourceLanguage?: string): Promise<string> {
   const model = getModel();
 
-  const prompt = `Translate the following text completely to ${targetLanguage}. You MUST translate the ENTIRE text without skipping, truncating, or summarizing any part. Return ONLY the translated text, nothing else.\n\nText:\n${content}`;
+  const sourceClause = sourceLanguage ? `from ${sourceLanguage} ` : "";
+  const prompt = `Translate the following text ${sourceClause}completely to ${targetLanguage}. You MUST translate the ENTIRE text without skipping, truncating, or summarizing any part. Return ONLY the translated text, nothing else.\n\nText:\n${content}`;
 
   const result = await model.generateContent(prompt);
   const response = result.response;
   return response.text();
 }
 
-export async function translateTextChunked(content: string, targetLanguage: string): Promise<string> {
+export async function translateTextChunked(content: string, targetLanguage: string, sourceLanguage?: string): Promise<string> {
   const CHUNK_SIZE = 3000;
   if (content.length <= CHUNK_SIZE) {
-    return translateText(content, targetLanguage);
+    return translateText(content, targetLanguage, sourceLanguage);
   }
 
   const paragraphs = content.split(/\n\n+/);
@@ -55,7 +56,7 @@ export async function translateTextChunked(content: string, targetLanguage: stri
 
   const results: string[] = [];
   for (const chunk of chunks) {
-    const translated = await translateText(chunk, targetLanguage);
+    const translated = await translateText(chunk, targetLanguage, sourceLanguage);
     results.push(translated);
   }
 
@@ -105,20 +106,21 @@ You MUST return a valid JSON object in this exact format (no markdown, no code b
   }
 }
 
-export async function transliterateText(content: string, targetLanguage: string): Promise<string> {
+export async function transliterateText(content: string, targetLanguage: string, sourceLanguage?: string): Promise<string> {
   const model = getModel();
 
-  const prompt = `Transliterate the following text into ${targetLanguage} script/language. Transliteration means converting the text so it is written in the script and phonetics of ${targetLanguage}, while preserving the original meaning. If the text is already in ${targetLanguage}, return it as-is. Return ONLY the transliterated text, nothing else.\n\nText:\n${content}`;
+  const sourceClause = sourceLanguage ? `The source text is in ${sourceLanguage}. ` : "";
+  const prompt = `${sourceClause}Transliterate the following text into ${targetLanguage} script/language. Transliteration means converting the text so it is written in the script and phonetics of ${targetLanguage}, while preserving the original meaning. If the text is already in ${targetLanguage}, return it as-is. Return ONLY the transliterated text, nothing else.\n\nText:\n${content}`;
 
   const result = await model.generateContent(prompt);
   const response = result.response;
   return response.text();
 }
 
-export async function transliterateTextChunked(content: string, targetLanguage: string): Promise<string> {
+export async function transliterateTextChunked(content: string, targetLanguage: string, sourceLanguage?: string): Promise<string> {
   const CHUNK_SIZE = 3000;
   if (content.length <= CHUNK_SIZE) {
-    return transliterateText(content, targetLanguage);
+    return transliterateText(content, targetLanguage, sourceLanguage);
   }
 
   const paragraphs = content.split(/\n\n+/);
@@ -139,7 +141,7 @@ export async function transliterateTextChunked(content: string, targetLanguage: 
 
   const results: string[] = [];
   for (const chunk of chunks) {
-    const transliterated = await transliterateText(chunk, targetLanguage);
+    const transliterated = await transliterateText(chunk, targetLanguage, sourceLanguage);
     results.push(transliterated);
   }
 

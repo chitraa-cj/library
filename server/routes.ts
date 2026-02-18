@@ -308,25 +308,20 @@ export async function registerRoutes(
     limits: { fileSize: 10 * 1024 * 1024 },
   });
 
-  const validLanguages = [
-    "english", "hindi", "sanskrit", "kannada", "telugu", "tamil",
-    "devanagari", "bengali", "marathi", "gujarati", "malayalam",
-    "french", "german", "spanish"
-  ];
 
   app.post("/api/gemini/translate-text", async (req, res) => {
     try {
-      const { content, targetLanguage } = req.body;
+      const { content, sourceLanguage, targetLanguage } = req.body;
       if (!content || typeof content !== "string" || !targetLanguage || typeof targetLanguage !== "string") {
         return res.status(400).json({ error: "content and targetLanguage are required" });
+      }
+      if (sourceLanguage && typeof sourceLanguage !== "string") {
+        return res.status(400).json({ error: "sourceLanguage must be a string" });
       }
       if (content.length > 50000) {
         return res.status(400).json({ error: "Content too long. Maximum 50,000 characters." });
       }
-      if (!validLanguages.includes(targetLanguage.toLowerCase())) {
-        return res.status(400).json({ error: "Unsupported target language." });
-      }
-      const translated = await translateTextChunked(content, targetLanguage);
+      const translated = await translateTextChunked(content, targetLanguage, sourceLanguage || undefined);
       res.json({ translated });
     } catch (error: any) {
       console.error("Gemini text translation error:", error);
@@ -336,14 +331,17 @@ export async function registerRoutes(
 
   app.post("/api/gemini/transliterate-text", async (req, res) => {
     try {
-      const { content, targetLanguage } = req.body;
+      const { content, sourceLanguage, targetLanguage } = req.body;
       if (!content || typeof content !== "string" || !targetLanguage || typeof targetLanguage !== "string") {
         return res.status(400).json({ error: "content and targetLanguage are required" });
+      }
+      if (sourceLanguage && typeof sourceLanguage !== "string") {
+        return res.status(400).json({ error: "sourceLanguage must be a string" });
       }
       if (content.length > 50000) {
         return res.status(400).json({ error: "Content too long. Maximum 50,000 characters." });
       }
-      const transliterated = await transliterateTextChunked(content, targetLanguage);
+      const transliterated = await transliterateTextChunked(content, targetLanguage, sourceLanguage || undefined);
       res.json({ transliterated });
     } catch (error: any) {
       console.error("Gemini transliteration error:", error);
