@@ -61,11 +61,44 @@ POST https://dev.ekatmdhamlibrary.xoidlabs.com/api/gemini/translate-text
 ```
 
 **Error Responses:**
-- `400` - Missing or invalid fields, content too long, or unsupported language
+- `400` - Missing or invalid fields, or content too long
 - `500` - Translation service error
 
 ```json
 { "error": "Content too long. Maximum 50,000 characters." }
+```
+
+**JavaScript Integration Example:**
+```javascript
+async function translateText(content, targetLanguage, sourceLanguage = null) {
+  const body = { content, targetLanguage };
+  if (sourceLanguage) body.sourceLanguage = sourceLanguage;
+
+  const response = await fetch(
+    "https://sacred-script-hub.replit.app/api/gemini/translate-text",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error);
+  }
+
+  const data = await response.json();
+  return data.translated;
+}
+
+// Usage:
+const result = await translateText("Hello World", "hindi", "english");
+console.log(result); // "नमस्ते दुनिया"
+
+// Without specifying source language (auto-detect):
+const result2 = await translateText("こんにちは世界", "english");
+console.log(result2); // "Hello World"
 ```
 
 ---
@@ -109,6 +142,43 @@ POST https://dev.ekatmdhamlibrary.xoidlabs.com/api/gemini/transliterate-text
 **Error Responses:**
 - `400` - Missing or invalid fields, or content too long
 - `500` - Transliteration service error
+
+**JavaScript Integration Example:**
+```javascript
+async function transliterateText(content, targetLanguage, sourceLanguage = null) {
+  const body = { content, targetLanguage };
+  if (sourceLanguage) body.sourceLanguage = sourceLanguage;
+
+  const response = await fetch(
+    "https://sacred-script-hub.replit.app/api/gemini/transliterate-text",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error);
+  }
+
+  const data = await response.json();
+  return data.transliterated;
+}
+
+// Usage:
+const result = await transliterateText("Om Namah Shivaya", "hindi", "english");
+console.log(result); // "ॐ नमः शिवाय"
+
+// Transliterate Sanskrit to Japanese:
+const result2 = await transliterateText("Om Namah Shivaya", "japanese", "english");
+console.log(result2); // "オーム ナマハ シヴァーヤ"
+
+// Without specifying source language (auto-detect):
+const result3 = await transliterateText("Namaste", "arabic");
+console.log(result3); // "ناماستي"
+```
 
 ---
 
@@ -827,11 +897,43 @@ If calling these APIs from a different domain, ensure your server or proxy handl
 ## Rate Limits
 
 - **Text Translation:** Max content size: 50,000 characters per request
+- **Text Transliteration:** Max content size: 50,000 characters per request
 - **File Upload:** Max file size: 10MB
 - **Gemini API:** Subject to Google Gemini rate limits (429 errors may occur during high usage)
 
 ---
 
-*Document Version: 1.0*
+## Supported Languages (Translation & Transliteration)
+
+Both `/api/gemini/translate-text` and `/api/gemini/transliterate-text` support any language worldwide. Here are commonly used language codes:
+
+| Code         | Language    | Code         | Language    |
+|--------------|-------------|--------------|-------------|
+| english      | English     | arabic       | Arabic      |
+| hindi        | Hindi       | chinese      | Chinese     |
+| sanskrit     | Sanskrit    | japanese     | Japanese    |
+| kannada      | Kannada     | korean       | Korean      |
+| telugu       | Telugu      | russian      | Russian     |
+| tamil        | Tamil       | portuguese   | Portuguese  |
+| bengali      | Bengali     | italian      | Italian     |
+| marathi      | Marathi     | thai         | Thai        |
+| gujarati     | Gujarati    | urdu         | Urdu        |
+| malayalam    | Malayalam   | persian      | Persian     |
+| french       | French      | turkish      | Turkish     |
+| german       | German      | vietnamese   | Vietnamese  |
+| spanish      | Spanish     | greek        | Greek       |
+| dutch        | Dutch       | hebrew       | Hebrew      |
+| polish       | Polish      | swahili      | Swahili     |
+| ukrainian    | Ukrainian   | indonesian   | Indonesian  |
+| nepali       | Nepali      | tibetan      | Tibetan     |
+| sinhala      | Sinhala     | punjabi      | Punjabi     |
+| odia         | Odia        | assamese     | Assamese    |
+| burmese      | Burmese     | malay        | Malay       |
+
+You can also use any other language name not listed here (e.g., "tagalog", "amharic", "yoruba", etc.) — the AI will handle it.
+
+---
+
+*Document Version: 1.1*
 *Last Updated: February 2026*
-*Base URL: https://dev.ekatmdhamlibrary.xoidlabs.com*
+*Base URL: https://sacred-script-hub.replit.app*
