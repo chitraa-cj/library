@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareText, StickyNote, List, Globe, Languages, Loader2 } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareText, StickyNote, List, Globe, Languages } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoPopup } from "@/components/video-popup";
 import { WordTooltip } from "@/components/word-tooltip";
@@ -134,65 +134,23 @@ function isBhashyaAuthor(name: string): boolean {
   return isShankaracharya(name);
 }
 
-function EnglishTranslationToggle({ content, sourceLanguage }: { content: string; sourceLanguage: string }) {
+function EnglishTranslationToggle({ englishContent }: { englishContent: string }) {
   const [showTranslation, setShowTranslation] = useState(false);
-  const [translation, setTranslation] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleToggle = async () => {
-    if (showTranslation) {
-      setShowTranslation(false);
-      return;
-    }
-    if (translation) {
-      setShowTranslation(true);
-      return;
-    }
-    setIsLoading(true);
-    setError("");
-    try {
-      const res = await fetch("/api/gemini/translate-bhashyam", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content, sourceLanguage }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.error || "Translation failed");
-      }
-      const data = await res.json();
-      setTranslation(data.translated);
-      setShowTranslation(true);
-    } catch (err: any) {
-      setError(err.message || "Translation failed");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <div className="pl-6 mt-2">
       <button
-        onClick={handleToggle}
-        disabled={isLoading}
+        onClick={() => setShowTranslation(!showTranslation)}
         className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
         data-testid="button-see-english-translation"
       >
-        {isLoading ? (
-          <Loader2 className="h-3 w-3 animate-spin" />
-        ) : (
-          <Languages className="h-3 w-3" />
-        )}
+        <Languages className="h-3 w-3" />
         <span>{showTranslation ? "Hide English translation" : "See English translation"}</span>
       </button>
-      {error && (
-        <p className="text-xs text-destructive mt-1">{error}</p>
-      )}
-      {showTranslation && translation && (
+      {showTranslation && (
         <div className="mt-2 p-3 rounded-md bg-muted/50 border border-border/30">
-          <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/80" data-testid="text-english-translation">
-            {translation}
+          <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/80 font-serif" data-testid="text-english-translation">
+            {englishContent}
           </p>
         </div>
       )}
@@ -282,25 +240,27 @@ function VerseExplanation({
           <span className="text-xs text-muted-foreground">- {group.authorTitle}</span>
         )}
       </div>
-      {group.items.map((explanation, idx) => (
-        <div key={idx} className={idx > 0 ? "mt-3 pt-3 border-t border-border/20" : ""}>
-          <div className="font-serif text-base leading-relaxed whitespace-pre-wrap break-words text-foreground/90 pl-6" data-testid={`commentary-text-${idx}`}>
-            <WordTooltip
-              content={explanation.content}
-              sourceLanguage={languageCode}
-              verseId={verseId}
-              className="inline"
-              useWordMeanings={false}
-            />
+      {group.items.map((explanation, idx) => {
+        const englishVersion = languageCode !== "english"
+          ? explanations?.find(e => e.languageCode === "english" && e.authorName === explanation.authorName)
+          : null;
+        return (
+          <div key={idx} className={idx > 0 ? "mt-3 pt-3 border-t border-border/20" : ""}>
+            <div className="font-serif text-base leading-relaxed whitespace-pre-wrap break-words text-foreground/90 pl-6" data-testid={`commentary-text-${idx}`}>
+              <WordTooltip
+                content={explanation.content}
+                sourceLanguage={languageCode}
+                verseId={verseId}
+                className="inline"
+                useWordMeanings={false}
+              />
+            </div>
+            {englishVersion && (
+              <EnglishTranslationToggle englishContent={englishVersion.content} />
+            )}
           </div>
-          {languageCode !== "english" && (
-            <EnglishTranslationToggle
-              content={explanation.content}
-              sourceLanguage={languageCode}
-            />
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 
