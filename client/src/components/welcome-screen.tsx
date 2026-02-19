@@ -99,15 +99,15 @@ export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, languageCo
           <div className="flex items-center justify-center gap-2 sm:gap-3">
             <span className="text-xl sm:text-2xl text-primary/50 font-serif">ॐ</span>
             <h1 className="font-serif text-xl sm:text-3xl font-semibold tracking-tight text-primary">
-              Advaita Vedanta Digital Library
+              {t("advaitaVedantaDigitalLibrary")}
             </h1>
             <span className="text-xl sm:text-2xl text-primary/50 font-serif">ॐ</span>
           </div>
           <p className="text-[10px] sm:text-xs uppercase tracking-[0.25em] text-muted-foreground">
-            The Eternal Echo of Non-Duality
+            {t("eternalEchoOfNonDuality")}
           </p>
           <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl mx-auto leading-relaxed mt-2">
-            A sacred digital portal by the Acharya Shankar Sanskritik Ekta Nyas, dedicated to the preservation, digitalization, and global dissemination of Advaita Vedanta. Inspired by the legacy of Adi Shankaracharya, exploring the profound truth of Jiva-Brahma-Aikya: the essential oneness of the individual soul and the Supreme Reality.
+            {t("welcomeDescription")}
           </p>
         </div>
 
@@ -119,7 +119,7 @@ export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, languageCo
             data-testid="button-browse-library"
           >
             <Library className="h-4 w-4" />
-            Browse the Library
+            {t("browseTheLibrary")}
           </Button>
         </div>
 
@@ -127,16 +127,16 @@ export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, languageCo
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <BookMarked className="h-5 w-5 text-primary shrink-0" />
-              <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground">The Treasury of Wisdom</h2>
+              <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground">{t("treasuryOfWisdom")}</h2>
               <div className="h-px flex-1 bg-primary/15"></div>
             </div>
             <div className="text-xs sm:text-sm text-muted-foreground leading-relaxed space-y-2 pl-8">
-              <p>The Nyas has meticulously curated a vast collection of texts, spanning from the foundational "Triple Canon" (Prasthanatrayi) to the sophisticated dialectical works of the later Advaita masters. Our archives include:</p>
+              <p>{t("treasuryIntro")}</p>
               <ul className="list-disc pl-4 space-y-1">
-                <li><span className="text-foreground font-medium">Prasthanatrayi Bhashyas:</span> The foundational commentaries on the Upanishads, Bhagavad Gita, and Brahma Sutras.</li>
-                <li><span className="text-foreground font-medium">Prakarana Granthas:</span> Essential introductory monographs such as Vivekachudamani, Upadesha Sahasri, and Atma Bodha.</li>
-                <li><span className="text-foreground font-medium">The Scholastic Tradition:</span> Deep dives into the Bhamati and Vivarana schools, including the works of masters like Padmapada, Vachaspati Misra, and Vidyaranya Swami.</li>
-                <li><span className="text-foreground font-medium">Regional Luminaries:</span> Rare and significant works from across India, such as the masterpieces of Sri Bellamkonda Rama Raya and Shrimad Bodhendra Saraswati.</li>
+                <li><span className="text-foreground font-medium">{t("prasthanatriyaBhashyasLabel")}</span> {t("prasthanatriyaBhashyasDesc")}</li>
+                <li><span className="text-foreground font-medium">{t("prakaranaGranthasLabel")}</span> {t("prakaranaGranthasDesc")}</li>
+                <li><span className="text-foreground font-medium">{t("scholasticTraditionLabel")}</span> {t("scholasticTraditionDesc")}</li>
+                <li><span className="text-foreground font-medium">{t("regionalLuminariesLabel")}</span> {t("regionalLuminariesDesc")}</li>
               </ul>
             </div>
           </div>
@@ -144,41 +144,41 @@ export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, languageCo
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <Heart className="h-5 w-5 text-primary shrink-0" />
-              <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground">Our Vision: Sanskritik Ekta</h2>
+              <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground">{t("ourVisionSanskritikEkta")}</h2>
               <div className="h-px flex-1 bg-primary/15"></div>
             </div>
             <div className="text-xs sm:text-sm text-muted-foreground leading-relaxed pl-8">
-              <p>In alignment with the mission of Acharya Shankar Sanskritik Ekta Nyas, this library is more than a repository of books; it is a tool for universal harmony. By making the Advaita philosophy accessible to all, we aim to dissolve the boundaries of "otherness" and reveal the underlying unity of all existence.</p>
+              <p>{t("visionDescription")}</p>
             </div>
             <blockquote className="text-center font-serif text-sm sm:text-base text-primary/70 italic py-2">
-              "Brahman is the Only Truth, the World is an appearance, and the Individual Self is none other than Brahman."
+              {t("brahmanQuote")}
             </blockquote>
           </div>
 
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <Library className="h-5 w-5 text-primary shrink-0" />
-              <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground">Features of the Digital Library</h2>
+              <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground">{t("featuresOfDigitalLibrary")}</h2>
               <div className="h-px flex-1 bg-primary/15"></div>
             </div>
             <div className="text-xs sm:text-sm text-muted-foreground leading-relaxed space-y-1 pl-8">
               <ul className="list-disc pl-4 space-y-1">
-                <li><span className="text-foreground font-medium">Authentic Transcriptions:</span> Accurately digitized Sanskrit texts with corrected formatting for modern readers.</li>
-                <li><span className="text-foreground font-medium">Manuscript Preservation:</span> High-resolution scans of rare editions to ensure the longevity of our heritage.</li>
-                <li><span className="text-foreground font-medium">Scholarly Search:</span> Navigate by author, period, or specific philosophical sub-topic.</li>
+                <li><span className="text-foreground font-medium">{t("authenticTranscriptionsLabel")}</span> {t("authenticTranscriptionsDesc")}</li>
+                <li><span className="text-foreground font-medium">{t("manuscriptPreservationLabel")}</span> {t("manuscriptPreservationDesc")}</li>
+                <li><span className="text-foreground font-medium">{t("scholarlySearchLabel")}</span> {t("scholarlySearchDesc")}</li>
               </ul>
             </div>
           </div>
 
           <blockquote className="text-center font-serif text-xs sm:text-sm text-primary/60 italic py-2">
-            "Knowledge is that which liberates." — Sa Vidya Ya Vimuktaye
+            {t("saVidyaQuote")}
           </blockquote>
 
           <p className="text-xs text-center text-muted-foreground/70">
-            We invite you to explore this ocean of knowledge. May the grace of Acharya Shankar guide your inquiry from the transient to the Eternal.
+            {t("invitationText")}
           </p>
           <p className="text-[10px] text-center text-muted-foreground/50 italic">
-            Managed by the Acharya Shankar Sanskritik Ekta Nyas, Madhya Pradesh.
+            {t("managedByNyas")}
           </p>
         </div>
 
@@ -257,7 +257,7 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onGo
             data-testid="button-library-back"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Back to Home
+            {t("backToHomeWelcome")}
           </Button>
           <div className="flex items-center gap-3">
             <Library className="h-6 w-6 text-primary shrink-0" />
