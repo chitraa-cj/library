@@ -228,6 +228,8 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
   const [expandedBooks, setExpandedBooks] = useState<Set<string>>(new Set());
   const [expandedAdhyays, setExpandedAdhyays] = useState<Set<string>>(new Set());
   const [expandedKhandas, setExpandedKhandas] = useState<Set<string>>(new Set());
+  const [manuallyCollapsedAdhyays, setManuallyCollapsedAdhyays] = useState<Set<string>>(new Set());
+  const [manuallyCollapsedKhandas, setManuallyCollapsedKhandas] = useState<Set<string>>(new Set());
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [expandedSubCategories, setExpandedSubCategories] = useState<Set<string>>(new Set());
   const { t } = useTranslation(languageCode ?? null);
@@ -294,18 +296,22 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
         const inDirectVerses = adhyay.verses.some(v => v.verseNumber === selectedVerseNumber);
         const inKhandaVerses = adhyay.khandas.some(k => k.verses.some(v => v.verseNumber === selectedVerseNumber));
         if (inDirectVerses || inKhandaVerses) {
-          setExpandedAdhyays(prev => {
-            if (prev.has(adhyayKey)) return prev;
-            return new Set([...prev, adhyayKey]);
-          });
+          if (!manuallyCollapsedAdhyays.has(adhyayKey)) {
+            setExpandedAdhyays(prev => {
+              if (prev.has(adhyayKey)) return prev;
+              return new Set([...Array.from(prev), adhyayKey]);
+            });
+          }
           if (inKhandaVerses) {
             for (const khanda of adhyay.khandas) {
               if (khanda.verses.some(v => v.verseNumber === selectedVerseNumber)) {
                 const khandaKey = `${adhyayKey}-k${khanda.khandaNumber}`;
-                setExpandedKhandas(prev => {
-                  if (prev.has(khandaKey)) return prev;
-                  return new Set([...prev, khandaKey]);
-                });
+                if (!manuallyCollapsedKhandas.has(khandaKey)) {
+                  setExpandedKhandas(prev => {
+                    if (prev.has(khandaKey)) return prev;
+                    return new Set([...Array.from(prev), khandaKey]);
+                  });
+                }
               }
             }
           }
@@ -318,10 +324,12 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
   useEffect(() => {
     if (chapterViewAdhyay != null && hierarchy.length > 0 && selectedBookId) {
       const adhyayKey = `${selectedBookId}-a${chapterViewAdhyay}`;
-      setExpandedAdhyays(prev => {
-        if (prev.has(adhyayKey)) return prev;
-        return new Set([...prev, adhyayKey]);
-      });
+      if (!manuallyCollapsedAdhyays.has(adhyayKey)) {
+        setExpandedAdhyays(prev => {
+          if (prev.has(adhyayKey)) return prev;
+          return new Set([...Array.from(prev), adhyayKey]);
+        });
+      }
     }
   }, [chapterViewAdhyay, hierarchy, selectedBookId]);
 
@@ -412,6 +420,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
     const next = new Set(expandedAdhyays);
     if (next.has(key)) {
       next.delete(key);
+      setManuallyCollapsedAdhyays(prev => new Set([...prev, key]));
       const khandaKeysToRemove = Array.from(expandedKhandas).filter(k => k.startsWith(key + "-k"));
       if (khandaKeysToRemove.length > 0) {
         const nextK = new Set(expandedKhandas);
@@ -420,10 +429,23 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
       }
     } else {
       next.add(key);
+      setManuallyCollapsedAdhyays(prev => {
+        const n = new Set(prev);
+        n.delete(key);
+        return n;
+      });
       const adhyay = hierarchy.find(a => key.endsWith(`-a${a.adhyayNumber}`));
       if (adhyay && adhyay.khandas.length > 0) {
         const nextK = new Set(expandedKhandas);
-        adhyay.khandas.forEach(k => nextK.add(`${key}-k${k.khandaNumber}`));
+        adhyay.khandas.forEach(k => {
+          const kKey = `${key}-k${k.khandaNumber}`;
+          nextK.add(kKey);
+          setManuallyCollapsedKhandas(prev => {
+            const n = new Set(prev);
+            n.delete(kKey);
+            return n;
+          });
+        });
         setExpandedKhandas(nextK);
       }
     }
@@ -432,8 +454,17 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
 
   const toggleKhanda = (key: string) => {
     const next = new Set(expandedKhandas);
-    if (next.has(key)) next.delete(key);
-    else next.add(key);
+    if (next.has(key)) {
+      next.delete(key);
+      setManuallyCollapsedKhandas(prev => new Set([...prev, key]));
+    } else {
+      next.add(key);
+      setManuallyCollapsedKhandas(prev => {
+        const n = new Set(prev);
+        n.delete(key);
+        return n;
+      });
+    }
     setExpandedKhandas(next);
   };
 
