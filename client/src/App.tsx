@@ -394,6 +394,11 @@ function HomePageContent() {
                     onClick={handleShowCoverPage}
                     data-testid="breadcrumb-logo"
                   />
+                {verseBreadcrumb.numericLabel && (
+                  <span className="shrink-0 text-[10px] font-mono text-primary/70 bg-primary/10 px-1.5 py-0.5 rounded" data-testid="breadcrumb-numeric-label">
+                    {verseBreadcrumb.numericLabel}
+                  </span>
+                )}
                 <nav className="flex items-center gap-1 min-w-0 flex-wrap" data-testid="breadcrumb-nav" aria-label="Current verse position">
                   {(() => {
                     const items: { label: string; onClick?: () => void }[] = [];
@@ -437,11 +442,6 @@ function HomePageContent() {
                     ));
                   })()}
                 </nav>
-                {verseBreadcrumb.numericLabel && (
-                  <span className="shrink-0 text-[10px] font-mono text-primary/70 bg-primary/10 px-1.5 py-0.5 rounded" data-testid="breadcrumb-numeric-label">
-                    {verseBreadcrumb.numericLabel}
-                  </span>
-                )}
                 </div>
               ) : (
                 <div className="hidden sm:flex items-center gap-2 cursor-pointer" onClick={handleGoHome}>
