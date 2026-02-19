@@ -545,9 +545,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                   </button>
                   <button
                     onClick={() => {
-                      if (!isAdhyayOpen) {
-                        toggleAdhyay(adhyayKey);
-                      }
+                      toggleAdhyay(adhyayKey);
                       if (onSelectChapter) {
                         onSelectChapter(adhyay.adhyayNumber);
                       }
@@ -630,9 +628,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                             </button>
                             <button
                               onClick={() => {
-                                if (!isKhandaOpen) {
-                                  toggleKhanda(khandaKey);
-                                }
+                                toggleKhanda(khandaKey);
                                 onSelectPart?.(adhyay.adhyayNumber, khanda.khandaNumber);
                                 if (isMobile) {
                                   setOpenMobile(false);
