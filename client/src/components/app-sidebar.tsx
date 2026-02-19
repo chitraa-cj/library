@@ -545,12 +545,16 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                   </button>
                   <button
                     onClick={() => {
-                      toggleAdhyay(adhyayKey);
-                      if (onSelectChapter) {
-                        onSelectChapter(adhyay.adhyayNumber);
-                      }
-                      if (isMobile) {
-                        setOpenMobile(false);
+                      if (isAdhyayOpen) {
+                        toggleAdhyay(adhyayKey);
+                      } else {
+                        toggleAdhyay(adhyayKey);
+                        if (onSelectChapter) {
+                          onSelectChapter(adhyay.adhyayNumber);
+                        }
+                        if (isMobile) {
+                          setOpenMobile(false);
+                        }
                       }
                     }}
                     className="flex items-center gap-1.5 flex-1 min-w-0 text-left"
@@ -628,10 +632,14 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                             </button>
                             <button
                               onClick={() => {
-                                toggleKhanda(khandaKey);
-                                onSelectPart?.(adhyay.adhyayNumber, khanda.khandaNumber);
-                                if (isMobile) {
-                                  setOpenMobile(false);
+                                if (isKhandaOpen) {
+                                  toggleKhanda(khandaKey);
+                                } else {
+                                  toggleKhanda(khandaKey);
+                                  onSelectPart?.(adhyay.adhyayNumber, khanda.khandaNumber);
+                                  if (isMobile) {
+                                    setOpenMobile(false);
+                                  }
                                 }
                               }}
                               className="flex items-center gap-1.5 flex-1 min-w-0 text-left py-2 pr-2"
