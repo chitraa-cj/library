@@ -415,9 +415,17 @@ export function BookReader({
 
   const availableAuthors = useMemo(() => {
     if (!commentaryOptions) return [];
-    if (!effectiveLang) return commentaryOptions.authors;
-    return commentaryOptions.authors.filter(a => a.languageCodes.includes(effectiveLang));
-  }, [commentaryOptions, effectiveLang]);
+    let authors = commentaryOptions.authors;
+    if (effectiveLang) {
+      authors = authors.filter(a => a.languageCodes.includes(effectiveLang));
+    }
+    if (commentaryMode === "bhashyam") {
+      authors = authors.filter(a => isBhashyaAuthor(a.authorName));
+    } else if (commentaryMode === "teeka") {
+      authors = authors.filter(a => isTeekaAuthor(a.authorName));
+    }
+    return authors;
+  }, [commentaryOptions, effectiveLang, commentaryMode]);
 
   const handleAuthorChange = (authorName: string) => {
     onAuthorChange(authorName);
