@@ -386,6 +386,14 @@ function HomePageContent() {
                 </Button>
               )}
               {selectedBookId && verseBreadcrumb ? (
+                <div className="flex items-center gap-2 min-w-0">
+                  <img
+                    src="https://oneness.org.in/assets/img/favicon.png"
+                    alt="Advaita Vaaridhi"
+                    className="h-6 w-6 object-contain shrink-0 cursor-pointer"
+                    onClick={handleShowCoverPage}
+                    data-testid="breadcrumb-logo"
+                  />
                 <nav className="flex items-center gap-1 min-w-0 flex-wrap" data-testid="breadcrumb-nav" aria-label="Current verse position">
                   {(() => {
                     const items: { label: string; onClick?: () => void }[] = [];
@@ -429,6 +437,7 @@ function HomePageContent() {
                     ));
                   })()}
                 </nav>
+                </div>
               ) : (
                 <div className="hidden sm:flex items-center gap-2 cursor-pointer" onClick={handleGoHome}>
                   <div className="relative">
