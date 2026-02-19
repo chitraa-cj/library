@@ -13,9 +13,11 @@ import { TranslationPanel } from "@/components/translation-panel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ChevronRight, Globe, LogIn, LogOut, Settings, User } from "lucide-react";
+import { ArrowLeft, ChevronRight, Globe, LogIn, LogOut, Settings, User, Search, Check, ChevronsUpDown } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { PreferencesDialog } from "@/components/preferences-dialog";
 import NotFound from "@/pages/not-found";
@@ -56,6 +58,8 @@ function HomePageContent() {
   const [selectedContent, setSelectedContent] = useState("");
   const [showTranslationPanel, setShowTranslationPanel] = useState(false);
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
+  const [langSearchOpen, setLangSearchOpen] = useState(false);
+  const [langSearchQuery, setLangSearchQuery] = useState("");
   const [selectedCommentaryLanguage, setSelectedCommentaryLanguage] = useState<string | null>(() => {
     const validCodes = ["english", "devanagari", "hindi", "kannada", "telugu", "tamil"];
     const normalize = (code: string | null): string => {
@@ -110,14 +114,29 @@ function HomePageContent() {
 
   const headerLanguages = useMemo(() => {
     return [
-      { code: "english", name: "English" },
-      { code: "devanagari", name: "संस्कृतम्" },
-      { code: "hindi", name: "हिन्दी" },
-      { code: "kannada", name: "ಕನ್ನಡ" },
-      { code: "telugu", name: "తెలుగు" },
-      { code: "tamil", name: "தமிழ்" },
+      { code: "english", name: "English", searchTerms: "english" },
+      { code: "devanagari", name: "संस्कृतम्", searchTerms: "sanskrit devanagari samskritam" },
+      { code: "hindi", name: "हिन्दी", searchTerms: "hindi" },
+      { code: "kannada", name: "ಕನ್ನಡ", searchTerms: "kannada" },
+      { code: "telugu", name: "తెలుగు", searchTerms: "telugu" },
+      { code: "tamil", name: "தமிழ்", searchTerms: "tamil" },
     ];
   }, []);
+
+  const filteredHeaderLanguages = useMemo(() => {
+    if (!langSearchQuery.trim()) return headerLanguages;
+    const q = langSearchQuery.toLowerCase().trim();
+    return headerLanguages.filter(lang =>
+      lang.name.toLowerCase().includes(q) ||
+      lang.searchTerms.toLowerCase().includes(q) ||
+      lang.code.toLowerCase().includes(q)
+    );
+  }, [headerLanguages, langSearchQuery]);
+
+  const currentLangLabel = useMemo(() => {
+    const lang = headerLanguages.find(l => l.code === (selectedCommentaryLanguage || "english"));
+    return lang?.name || "English";
+  }, [headerLanguages, selectedCommentaryLanguage]);
 
   const headerAuthors = useMemo(() => {
     if (!commentaryOptions) return [];
@@ -469,22 +488,54 @@ function HomePageContent() {
             </div>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1" data-testid="language-selector-header">
-                <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0 hidden sm:block" />
-                <Select
-                  value={selectedCommentaryLanguage || "english"}
-                  onValueChange={handleGlobalLanguageChange}
-                >
-                  <SelectTrigger className="h-8 w-auto min-w-[80px] max-w-[130px] text-xs border-none bg-transparent shadow-none focus:ring-0 px-1.5" data-testid="select-header-language">
-                    <SelectValue placeholder="Language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {headerLanguages.map((lang) => (
-                      <SelectItem key={lang.code} value={lang.code} data-testid={`option-header-lang-${lang.code}`}>
-                        {lang.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={langSearchOpen} onOpenChange={(open) => { setLangSearchOpen(open); if (!open) setLangSearchQuery(""); }}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 gap-1.5 px-2 text-xs font-normal"
+                      data-testid="select-header-language"
+                    >
+                      <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span className="max-w-[80px] truncate">{currentLangLabel}</span>
+                      <ChevronsUpDown className="h-3 w-3 text-muted-foreground shrink-0" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48 p-0" align="end">
+                    <div className="flex items-center gap-2 px-3 py-2 border-b">
+                      <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <input
+                        className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                        placeholder="Search..."
+                        value={langSearchQuery}
+                        onChange={(e) => setLangSearchQuery(e.target.value)}
+                        autoFocus
+                        data-testid="input-language-search"
+                      />
+                    </div>
+                    <div className="py-1 max-h-[200px] overflow-y-auto">
+                      {filteredHeaderLanguages.length === 0 ? (
+                        <div className="px-3 py-2 text-xs text-muted-foreground">No results</div>
+                      ) : (
+                        filteredHeaderLanguages.map((lang) => (
+                          <button
+                            key={lang.code}
+                            className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover-elevate cursor-pointer"
+                            onClick={() => {
+                              handleGlobalLanguageChange(lang.code);
+                              setLangSearchOpen(false);
+                              setLangSearchQuery("");
+                            }}
+                            data-testid={`option-header-lang-${lang.code}`}
+                          >
+                            <Check className={`h-3.5 w-3.5 shrink-0 ${(selectedCommentaryLanguage || "english") === lang.code ? "opacity-100" : "opacity-0"}`} />
+                            <span>{lang.name}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
               {!authLoading && (
                 isLoggedIn && user ? (
