@@ -388,20 +388,43 @@ function HomePageContent() {
               {selectedBookId && verseBreadcrumb ? (
                 <nav className="flex items-center gap-1 min-w-0 flex-wrap" data-testid="breadcrumb-nav" aria-label="Current verse position">
                   {(() => {
-                    const parts: string[] = [];
-                    if (verseBreadcrumb.adhyayTitle) parts.push(verseBreadcrumb.adhyayTitle);
-                    if (verseBreadcrumb.khandaTitle && verseBreadcrumb.khandaTitle !== verseBreadcrumb.adhyayTitle) parts.push(verseBreadcrumb.khandaTitle);
-                    if (verseBreadcrumb.verseLabel && !parts.includes(verseBreadcrumb.verseLabel)) parts.push(verseBreadcrumb.verseLabel);
-                    return parts.map((part, idx) => (
+                    const items: { label: string; onClick?: () => void }[] = [];
+                    if (verseBreadcrumb.adhyayTitle && verseBreadcrumb.adhyayNumber != null) {
+                      items.push({
+                        label: verseBreadcrumb.adhyayTitle,
+                        onClick: () => handleSelectChapter(verseBreadcrumb.adhyayNumber!),
+                      });
+                    }
+                    if (verseBreadcrumb.khandaTitle && verseBreadcrumb.khandaTitle !== verseBreadcrumb.adhyayTitle && verseBreadcrumb.adhyayNumber != null && verseBreadcrumb.khandaNumber != null) {
+                      items.push({
+                        label: verseBreadcrumb.khandaTitle,
+                        onClick: () => handleSelectPart(verseBreadcrumb.adhyayNumber!, verseBreadcrumb.khandaNumber!),
+                      });
+                    }
+                    if (verseBreadcrumb.verseLabel && !items.some(i => i.label === verseBreadcrumb.verseLabel)) {
+                      items.push({ label: verseBreadcrumb.verseLabel });
+                    }
+                    return items.map((item, idx) => (
                       <span key={idx} className="flex items-center gap-1">
                         {idx > 0 && <ChevronRight className="h-3 w-3 text-muted-foreground/50 shrink-0" />}
-                        <span
-                          className={`truncate text-xs max-w-[120px] sm:max-w-[160px] ${idx === parts.length - 1 ? 'text-foreground/80 font-medium' : 'text-muted-foreground'}`}
-                          title={part}
-                          data-testid={`breadcrumb-part-${idx}`}
-                        >
-                          {part}
-                        </span>
+                        {item.onClick ? (
+                          <button
+                            onClick={item.onClick}
+                            className="truncate text-xs max-w-[120px] sm:max-w-[160px] text-muted-foreground hover:text-primary cursor-pointer transition-colors bg-transparent border-none p-0"
+                            title={item.label}
+                            data-testid={`breadcrumb-part-${idx}`}
+                          >
+                            {item.label}
+                          </button>
+                        ) : (
+                          <span
+                            className="truncate text-xs max-w-[120px] sm:max-w-[160px] text-foreground/80 font-medium"
+                            title={item.label}
+                            data-testid={`breadcrumb-part-${idx}`}
+                          >
+                            {item.label}
+                          </span>
+                        )}
                       </span>
                     ));
                   })()}
