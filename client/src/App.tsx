@@ -437,6 +437,11 @@ function HomePageContent() {
                     ));
                   })()}
                 </nav>
+                {verseBreadcrumb.numericLabel && (
+                  <span className="shrink-0 text-[10px] font-mono text-primary/70 bg-primary/10 px-1.5 py-0.5 rounded" data-testid="breadcrumb-numeric-label">
+                    {verseBreadcrumb.numericLabel}
+                  </span>
+                )}
                 </div>
               ) : (
                 <div className="hidden sm:flex items-center gap-2 cursor-pointer" onClick={handleGoHome}>
