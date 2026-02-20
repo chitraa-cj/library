@@ -550,6 +550,21 @@ export function BookReader({
     return filtered;
   }, [currentVerseDetails, effectiveLang]);
 
+  const iastTransliteration = useMemo(() => {
+    if (!currentVerseDetails?.translations) return null;
+    const nonIndicLangs = ["english", "en", "devanagari", "sa", "kannada", "kn", "telugu", "te", "tamil", "ta"];
+    if (!effectiveLang || nonIndicLangs.includes(effectiveLang)) return null;
+    const enTr = currentVerseDetails.translations.find(
+      (t: VerseTranslation) => t.languageCode === "english" || t.languageCode === "en"
+    );
+    if (!enTr) return null;
+    const content = enTr.content.trim();
+    if (!content.includes("||")) return null;
+    const parts = content.split(/\n\n/);
+    const iastParts = parts.filter(p => /\|\|/.test(p));
+    return iastParts.length > 0 ? iastParts.join("\n") : null;
+  }, [currentVerseDetails, effectiveLang]);
+
   const commentaryContext = useMemo(() => {
     if (!selectedAuthor || !effectiveLang || !currentVerseDetails) return "";
     const explanation = currentVerseDetails.explanations?.find(
@@ -886,6 +901,19 @@ export function BookReader({
       return verse.translations?.find(tr => tr.languageCode === "sa")?.content || "";
     };
 
+    const nonIndicLangs = ["english", "en", "devanagari", "sa", "kannada", "kn", "telugu", "te", "tamil", "ta"];
+    const showIast = effectiveLang && !nonIndicLangs.includes(effectiveLang);
+
+    const getChapterIast = (verse: VerseWithTranslations): string | null => {
+      const enTr = verse.translations?.find(tr => tr.languageCode === "english" || tr.languageCode === "en");
+      if (!enTr) return null;
+      const content = enTr.content.trim();
+      if (!content.includes("||")) return null;
+      const parts = content.split(/\n\n/);
+      const iastParts = parts.filter(p => /\|\|/.test(p));
+      return iastParts.length > 0 ? iastParts.join("\n") : null;
+    };
+
     const showTranslation = effectiveLang && effectiveLang !== "devanagari" && effectiveLang !== "sa";
 
     const filteredChapterVerses = chapterViewKhanda != null && selectedKhandaInfo
@@ -968,6 +996,7 @@ export function BookReader({
                         {khandaVerses.map((verse, idx) => {
                           const devanagari = getChapterDevanagari(verse);
                           const translation = showTranslation ? getChapterTranslation(verse, effectiveLang!) : "";
+                          const iast = showIast ? getChapterIast(verse) : null;
                           const verseLabel = `${chapterViewAdhyay}.${khanda.khandaNumber}.${idx + 1}`;
                           return (
                             <div key={verse.id}>
@@ -997,6 +1026,11 @@ export function BookReader({
                                     {tc(verse.sectionTitle, verseSectionTitleTranslations)}
                                   </div>
                                 )}
+                                {iast && (
+                                  <div className="mt-2 sm:mt-3 font-serif text-xs sm:text-sm leading-relaxed text-center px-4 sm:px-12 text-primary/70 italic whitespace-pre-line">
+                                    {iast}
+                                  </div>
+                                )}
                                 {translation && (
                                   <div className="mt-3 sm:mt-4 text-xs sm:text-sm leading-relaxed text-center px-4 sm:px-12 text-muted-foreground">
                                     {translation}
@@ -1018,6 +1052,7 @@ export function BookReader({
                   filteredChapterVerses.map((verse, idx) => {
                     const devanagari = getChapterDevanagari(verse);
                     const translation = showTranslation ? getChapterTranslation(verse, effectiveLang!) : "";
+                    const iast = showIast ? getChapterIast(verse) : null;
                     const verseLabel = chapterViewKhanda != null
                       ? `${chapterViewAdhyay}.${chapterViewKhanda}.${idx + 1}`
                       : `${chapterViewAdhyay}.${idx + 1}`;
@@ -1047,6 +1082,11 @@ export function BookReader({
                           {verse.sectionTitle && (
                             <div className="text-[11px] sm:text-xs text-muted-foreground/60 font-serif mt-1 italic">
                               {tc(verse.sectionTitle, verseSectionTitleTranslations)}
+                            </div>
+                          )}
+                          {iast && (
+                            <div className="mt-2 sm:mt-3 font-serif text-xs sm:text-sm leading-relaxed text-center px-4 sm:px-12 text-primary/70 italic whitespace-pre-line">
+                              {iast}
                             </div>
                           )}
                           {translation && (
@@ -1188,6 +1228,15 @@ export function BookReader({
                     verseId={currentVerse.id}
                   />
                 </div>
+
+                {iastTransliteration && (
+                  <div
+                    className="font-serif text-sm sm:text-base leading-relaxed sm:leading-loose text-center text-primary/70 italic whitespace-pre-line"
+                    data-testid={`text-iast-${currentVerse.verseNumber}`}
+                  >
+                    {iastTransliteration}
+                  </div>
+                )}
 
                 {availableTranslations.length > 0 && (
                   <div className="pt-2 sm:pt-2">
