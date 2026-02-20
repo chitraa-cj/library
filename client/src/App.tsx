@@ -61,7 +61,7 @@ function HomePageContent() {
   const [langSearchOpen, setLangSearchOpen] = useState(false);
   const [langSearchQuery, setLangSearchQuery] = useState("");
   const [selectedCommentaryLanguage, setSelectedCommentaryLanguage] = useState<string | null>(() => {
-    const validCodes = ["english", "devanagari", "hindi", "kannada", "telugu", "tamil", "german", "french", "spanish"];
+    const validCodes = ["english", "devanagari", "hindi", "kannada", "telugu", "tamil", "german", "french", "spanish", "mandarin", "arabic"];
     const normalize = (code: string | null): string => {
       if (!code) return "english";
       const c = code.toLowerCase().trim();
@@ -75,6 +75,8 @@ function HomePageContent() {
       if (c === "de") return "german";
       if (c === "fr") return "french";
       if (c === "es") return "spanish";
+      if (c === "zh" || c === "chinese") return "mandarin";
+      if (c === "ar") return "arabic";
       return "english";
     };
     if (typeof window !== 'undefined') {
@@ -126,6 +128,8 @@ function HomePageContent() {
       { code: "german", name: "Deutsch", searchTerms: "german deutsch" },
       { code: "french", name: "Français", searchTerms: "french francais français" },
       { code: "spanish", name: "Español", searchTerms: "spanish espanol español" },
+      { code: "mandarin", name: "中文", searchTerms: "mandarin chinese zhongwen 中文" },
+      { code: "arabic", name: "العربية", searchTerms: "arabic arabi العربية" },
     ];
   }, []);
 

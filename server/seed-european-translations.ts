@@ -14,6 +14,8 @@ const EUROPEAN_LANGS = [
   { code: "german", dbCode: "de", name: "German", nativeName: "Deutsch", script: "Latin" },
   { code: "french", dbCode: "fr", name: "French", nativeName: "Français", script: "Latin" },
   { code: "spanish", dbCode: "es", name: "Spanish", nativeName: "Español", script: "Latin" },
+  { code: "mandarin", dbCode: "zh", name: "Mandarin Chinese", nativeName: "中文", script: "Simplified Chinese" },
+  { code: "arabic", dbCode: "ar", name: "Arabic", nativeName: "العربية", script: "Arabic" },
 ];
 
 async function getOpenAI(): Promise<OpenAI | null> {

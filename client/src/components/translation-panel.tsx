@@ -25,6 +25,11 @@ const LANG_ALIASES: Record<string, string[]> = {
   "french": ["fr", "french"],
   "es": ["es", "spanish"],
   "spanish": ["es", "spanish"],
+  "zh": ["zh", "mandarin", "chinese"],
+  "mandarin": ["zh", "mandarin", "chinese"],
+  "chinese": ["zh", "mandarin", "chinese"],
+  "ar": ["ar", "arabic"],
+  "arabic": ["ar", "arabic"],
 };
 
 function langMatches(langCode: string, target: string): boolean {

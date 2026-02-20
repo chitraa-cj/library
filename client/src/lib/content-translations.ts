@@ -11,6 +11,8 @@ export const bookTitleTranslations: ContentMap = {
     de: "Īśāvāsyopaniṣad",
     fr: "Īśāvāsyopaniṣad",
     es: "Īśāvāsyopaniṣad",
+    zh: "Īśāvāsyopaniṣad",
+    ar: "Īśāvāsyopaniṣad",
   },
   "श्रीमद्भगवद्गीता": {
     en: "Śrīmad Bhagavad Gītā",
@@ -22,6 +24,8 @@ export const bookTitleTranslations: ContentMap = {
     de: "Śrīmad Bhagavad Gītā",
     fr: "Śrīmad Bhagavad Gītā",
     es: "Śrīmad Bhagavad Gītā",
+    zh: "薄伽梵歌",
+    ar: "بهاغافاد غيتا",
   },
 };
 
@@ -36,6 +40,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Sri Shankaracharya",
     fr: "Sri Shankaracharya",
     es: "Sri Shankaracharya",
+    zh: "Sri Shankaracharya",
+    ar: "سري شانكاراتشاريا",
   },
   "Veda Vyasa": {
     en: "Veda Vyasa",
@@ -47,6 +53,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Veda Vyāsa",
     fr: "Veda Vyāsa",
     es: "Veda Vyāsa",
+    zh: "毗耶娑",
+    ar: "فيدا فياسا",
   },
   "Adi Shankaracharya": {
     en: "Adi Shankaracharya",
@@ -58,6 +66,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Ādi Śaṅkarācārya",
     fr: "Ādi Śaṅkarācārya",
     es: "Ādi Śaṅkarācārya",
+    zh: "Ādi Śaṅkarācārya",
+    ar: "آدي شانكاراتشاريا",
   },
   "Sri Ramanuja": {
     en: "Sri Ramanuja",
@@ -69,6 +79,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Sri Rāmānuja",
     fr: "Sri Rāmānuja",
     es: "Sri Rāmānuja",
+    zh: "罗摩奴阇",
+    ar: "سري رامانوجا",
   },
   "Sri Madhavacharya": {
     en: "Sri Madhavacharya",
@@ -80,6 +92,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Sri Mādhavācārya",
     fr: "Sri Mādhavācārya",
     es: "Sri Mādhavācārya",
+    zh: "Sri Mādhavācārya",
+    ar: "سري مادهافاتشاريا",
   },
   "Sri Sridhara Swami": {
     en: "Sri Sridhara Swami",
@@ -91,6 +105,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Sri Śrīdhara Svāmī",
     fr: "Sri Śrīdhara Svāmī",
     es: "Sri Śrīdhara Svāmī",
+    zh: "Sri Śrīdhara Svāmī",
+    ar: "سري سريدهارا سوامي",
   },
   "Sri Madhusudan Saraswati": {
     en: "Sri Madhusudan Saraswati",
@@ -102,6 +118,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Sri Madhusūdana Sarasvatī",
     fr: "Sri Madhusūdana Sarasvatī",
     es: "Sri Madhusūdana Sarasvatī",
+    zh: "Sri Madhusūdana Sarasvatī",
+    ar: "سري مادهوسودان ساراسواتي",
   },
   "Sri Vallabhacharya": {
     en: "Sri Vallabhacharya",
@@ -113,6 +131,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Sri Vallabhācārya",
     fr: "Sri Vallabhācārya",
     es: "Sri Vallabhācārya",
+    zh: "Sri Vallabhācārya",
+    ar: "سري فالابهاتشاريا",
   },
   "Anandagiri": {
     en: "Anandagiri",
@@ -124,6 +144,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Ānandagiri",
     fr: "Ānandagiri",
     es: "Ānandagiri",
+    zh: "Ānandagiri",
+    ar: "أناندغيري",
   },
   "Sri Anandgiri": {
     en: "Sri Anandgiri",
@@ -135,6 +157,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Sri Ānandagiri",
     fr: "Sri Ānandagiri",
     es: "Sri Ānandagiri",
+    zh: "Sri Ānandagiri",
+    ar: "سري أناندغيري",
   },
   "Sri Neelkanth": {
     en: "Sri Neelkanth",
@@ -146,6 +170,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Sri Nīlakaṇṭha",
     fr: "Sri Nīlakaṇṭha",
     es: "Sri Nīlakaṇṭha",
+    zh: "Sri Nīlakaṇṭha",
+    ar: "سري نيلاكانث",
   },
   "Sri Dhanpati": {
     en: "Sri Dhanpati",
@@ -157,6 +183,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Sri Dhanapati",
     fr: "Sri Dhanapati",
     es: "Sri Dhanapati",
+    zh: "Sri Dhanapati",
+    ar: "سري دهانباتي",
   },
   "Sri Purushottamji": {
     en: "Sri Purushottamji",
@@ -168,6 +196,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Sri Puruṣottamji",
     fr: "Sri Puruṣottamji",
     es: "Sri Puruṣottamji",
+    zh: "Sri Puruṣottamji",
+    ar: "سري بوروشوتامجي",
   },
   "Sri Jayatritha": {
     en: "Sri Jayatritha",
@@ -179,6 +209,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Sri Jayatīrtha",
     fr: "Sri Jayatīrtha",
     es: "Sri Jayatīrtha",
+    zh: "Sri Jayatīrtha",
+    ar: "سري جاياتيرثا",
   },
   "Sri Abhinav Gupta": {
     en: "Sri Abhinav Gupta",
@@ -190,6 +222,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Sri Abhinavagupta",
     fr: "Sri Abhinavagupta",
     es: "Sri Abhinavagupta",
+    zh: "Sri Abhinavagupta",
+    ar: "سري أبهينافاغوبتا",
   },
   "Swami Gambirananda": {
     en: "Swami Gambirananda",
@@ -201,6 +235,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Swami Gambhīrānanda",
     fr: "Swami Gambhīrānanda",
     es: "Swami Gambhīrānanda",
+    zh: "Swami Gambhīrānanda",
+    ar: "سوامي غامبيراناندا",
   },
   "Swami Sivananda": {
     en: "Swami Sivananda",
@@ -212,6 +248,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Swami Śivānanda",
     fr: "Swami Śivānanda",
     es: "Swami Śivānanda",
+    zh: "Swami Śivānanda",
+    ar: "سوامي شيفاناندا",
   },
   "Swami Chinmayananda": {
     en: "Swami Chinmayananda",
@@ -223,6 +261,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Swami Chinmayānanda",
     fr: "Swami Chinmayānanda",
     es: "Swami Chinmayānanda",
+    zh: "Swami Chinmayānanda",
+    ar: "سوامي تشينمايانندا",
   },
   "Swami Adidevananda": {
     en: "Swami Adidevananda",
@@ -234,6 +274,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Swami Ādidēvānanda",
     fr: "Swami Ādidēvānanda",
     es: "Swami Ādidēvānanda",
+    zh: "Swami Ādidēvānanda",
+    ar: "سوامي أديديفاناندا",
   },
   "Swami Ramsukhdas": {
     en: "Swami Ramsukhdas",
@@ -245,6 +287,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Swami Rāmsukhdās",
     fr: "Swami Rāmsukhdās",
     es: "Swami Rāmsukhdās",
+    zh: "Swami Rāmsukhdās",
+    ar: "سوامي رامسوخداس",
   },
   "Swami Tejomayananda": {
     en: "Swami Tejomayananda",
@@ -256,6 +300,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Swami Tējōmayānanda",
     fr: "Swami Tējōmayānanda",
     es: "Swami Tējōmayānanda",
+    zh: "Swami Tējōmayānanda",
+    ar: "سوامي تيجومايانندا",
   },
   "Shri Purohit Swami": {
     en: "Shri Purohit Swami",
@@ -267,6 +313,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Shri Purohit Swami",
     fr: "Shri Purohit Swami",
     es: "Shri Purohit Swami",
+    zh: "Shri Purohit Swami",
+    ar: "شري بوروهيت سوامي",
   },
   "A.C. Bhaktivedanta Swami Prabhupada": {
     en: "A.C. Bhaktivedanta Swami Prabhupada",
@@ -278,6 +326,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "A.C. Bhaktivedanta Swami Prabhupāda",
     fr: "A.C. Bhaktivedanta Swami Prabhupāda",
     es: "A.C. Bhaktivedanta Swami Prabhupāda",
+    zh: "A.C. Bhaktivedanta Swami Prabhupāda",
+    ar: "أ. تش. بهاكتيفيدانتا سوامي برابهوبادا",
   },
   "Dr.S.Sankaranarayan": {
     en: "Dr. S. Sankaranarayan",
@@ -289,6 +339,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Dr. S. Śaṅkaranārāyaṇa",
     fr: "Dr. S. Śaṅkaranārāyaṇa",
     es: "Dr. S. Śaṅkaranārāyaṇa",
+    zh: "S. Śaṅkaranārāyaṇa 博士",
+    ar: "د. س. شانكاراناراياناً",
   },
   "M. Hiriyanna": {
     en: "M. Hiriyanna",
@@ -300,6 +352,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "M. Hiriyanna",
     fr: "M. Hiriyanna",
     es: "M. Hiriyanna",
+    zh: "M. Hiriyanna",
+    ar: "م. هيرييانا",
   },
   "Sri Sudarsana Ramasubramanya Raja": {
     en: "Sri Sudarsana Ramasubramanya Raja",
@@ -311,6 +365,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Sri Sudarśana Rāmasubrahmaṇya Rāja",
     fr: "Sri Sudarśana Rāmasubrahmaṇya Rāja",
     es: "Sri Sudarśana Rāmasubrahmaṇya Rāja",
+    zh: "Sri Sudarśana Rāmasubrahmaṇya Rāja",
+    ar: "سري سودارشانا راماسوبرامانيا راجا",
   },
   "Vedantadeshikacharya Venkatanatha": {
     en: "Vedantadeshikacharya Venkatanatha",
@@ -322,6 +378,8 @@ export const bookAuthorTranslations: ContentMap = {
     de: "Vedāntadeśikācārya Veṅkaṭanātha",
     fr: "Vedāntadeśikācārya Veṅkaṭanātha",
     es: "Vedāntadeśikācārya Veṅkaṭanātha",
+    zh: "Vedāntadeśikācārya Veṅkaṭanātha",
+    ar: "فيدانتاديشيكاتشاريا فينكاتاناثا",
   },
 };
 
@@ -336,6 +394,8 @@ export const bookCategoryTranslations: ContentMap = {
     de: "Upanischad",
     fr: "Upanishad",
     es: "Upanishad",
+    zh: "奥义书",
+    ar: "أوبانيشاد",
   },
   "Gita": {
     en: "Gita",
@@ -347,6 +407,8 @@ export const bookCategoryTranslations: ContentMap = {
     de: "Gītā",
     fr: "Gītā",
     es: "Gītā",
+    zh: "薄伽梵歌",
+    ar: "غيتا",
   },
 };
 
@@ -361,6 +423,8 @@ export const bookDescriptionTranslations: ContentMap = {
     de: "Die Īśāvāsyopaniṣad (ईशावास्योपनिषद्) ist eine der kürzesten und berühmtesten Upanischaden. Dieser Text präsentiert Śaṅkarācāryas Bhāṣya (Kommentar) zu den 18 Mantras und bietet tiefe philosophische Einsichten in den Advaita Vedānta.",
     fr: "L'Īśāvāsyopaniṣad (ईशावास्योपनिषद्) est l'une des plus courtes et des plus célèbres Upanishads. Ce texte présente le Bhāṣya (commentaire) de Śaṅkarācārya sur les 18 mantras, offrant de profondes perspectives philosophiques sur l'Advaita Vedānta.",
     es: "La Īśāvāsyopaniṣad (ईशावास्योपनिषद्) es una de las Upanishads más breves y celebradas. Este texto presenta el Bhāṣya (comentario) de Śaṅkarācārya sobre los 18 mantras, ofreciendo profundas perspectivas filosóficas sobre el Advaita Vedānta.",
+    zh: "Īśāvāsyopaniṣad（ईशावास्योपनिषद्）是最短且最著名的奥义书之一。本书呈现了Shankaracharya对18首曼陀罗的注释（Bhashya），提供了不二论吠檀多的深刻哲学见解。",
+    ar: "Īśāvāsyopaniṣad (ईशावास्योपनिषद्) هي واحدة من أقصر الأوبانيشاد وأكثرها شهرة. يقدم هذا النص تعليق (بهاشيا) Shankaracharya على المانترات الثماني عشرة، مقدماً رؤى فلسفية عميقة في أدفايتا فيدانتا.",
   },
   "श्रीमद्भगवद्गीता": {
     en: "The Bhagavad Gita (भगवद्गीता), often referred to as the Gita, is a 700-verse Hindu scripture that is part of the epic Mahabharata. It contains a conversation between Pandava prince Arjuna and his guide Lord Krishna on a variety of theological and philosophical issues. Facing a fratricidal war, a despondent Arjuna turns to his charioteer Krishna for counsel on the battlefield. Krishna, through the course of the Gita, imparts to Arjuna wisdom, the path of devotion, and the doctrine of selfless action.",
@@ -372,6 +436,8 @@ export const bookDescriptionTranslations: ContentMap = {
     de: "Die Bhagavad Gītā (भगवद्गीता), oft einfach Gītā genannt, ist eine hinduistische Schrift mit 700 Versen, die Teil des Epos Mahābhārata ist. Sie enthält ein Gespräch zwischen dem Pāṇḍava-Prinzen Arjuna und seinem Wagenlenker Bhagavān Śrī Kṛṣṇa über verschiedene theologische und philosophische Fragen. Angesichts eines Bruderkrieges wendet sich der verzweifelte Arjuna auf dem Schlachtfeld an Kṛṣṇa um Rat. Kṛṣṇa vermittelt Arjuna im Verlauf der Gītā Weisheit, den Weg der Hingabe und die Lehre des selbstlosen Handelns.",
     fr: "La Bhagavad Gītā (भगवद्गीता), souvent simplement appelée Gītā, est une écriture hindoue de 700 versets faisant partie de l'épopée du Mahābhārata. Elle contient un dialogue entre le prince Pāṇḍava Arjuna et son guide, le Seigneur Kṛṣṇa, sur diverses questions théologiques et philosophiques. Face à une guerre fratricide, un Arjuna désespéré se tourne vers son cocher Kṛṣṇa pour obtenir conseil sur le champ de bataille. Kṛṣṇa transmet à Arjuna la sagesse, la voie de la dévotion et la doctrine de l'action désintéressée.",
     es: "La Bhagavad Gītā (भगवद्गीता), a menudo referida simplemente como Gītā, es una escritura hindú de 700 versos que forma parte de la epopeya del Mahābhārata. Contiene un diálogo entre el príncipe Pāṇḍava Arjuna y su guía, el Señor Kṛṣṇa, sobre diversas cuestiones teológicas y filosóficas. Ante una guerra fratricida, un Arjuna desconsolado recurre a su auriga Kṛṣṇa en busca de consejo en el campo de batalla. Kṛṣṇa transmite a Arjuna sabiduría, el camino de la devoción y la doctrina de la acción desinteresada.",
+    zh: "薄伽梵歌（भगवद्गीता），通常简称为歌（Gītā），是一部由700节诗组成的印度教经典，属于史诗《摩诃婆罗多》的一部分。它包含了般度族王子阿周那与其引导者奎师那之间关于各种神学和哲学问题的对话。面对一场手足相残的战争，沮丧的阿周那在战场上向他的御者奎师那寻求指引。奎师那在歌中向阿周那传授智慧、虔诚之道和无私行动的教义。",
+    ar: "بهاغافاد غيتا (भगवद्गीता)، التي يُشار إليها غالباً باسم الغيتا، هي نص هندوسي مقدس مؤلف من 700 بيت شعري وهو جزء من ملحمة ماهابهاراتا. يتضمن حواراً بين الأمير باندافا أرجونا ومرشده الرب كريشنا حول مسائل لاهوتية وفلسفية متنوعة. في مواجهة حرب أخوية، يلجأ أرجونا اليائس إلى سائق عربته كريشنا طلباً للمشورة في ساحة المعركة. ينقل كريشنا لأرجونا الحكمة وطريق الإخلاص وعقيدة العمل المتجرد من الأنانية.",
   },
 };
 
@@ -386,6 +452,8 @@ export const chapterTitleTranslations: ContentMap = {
     de: "Jñāna-Karma Kāṇḍa (Abschnitt über Wissen und Handlung)",
     fr: "Jñāna-Karma Kāṇḍa (Section sur la connaissance et l'action)",
     es: "Jñāna-Karma Kāṇḍa (Sección sobre conocimiento y acción)",
+    zh: "Jñāna-Karma Kāṇḍa（知识与行动篇）",
+    ar: "Jñāna-Karma Kāṇḍa (باب المعرفة والعمل)",
   },
   "Vidyā-Avidyā Vicāra": {
     en: "Vidyā-Avidyā Vicāra",
@@ -397,6 +465,8 @@ export const chapterTitleTranslations: ContentMap = {
     de: "Vidyā-Avidyā Vicāra (Untersuchung von Wissen und Unwissenheit)",
     fr: "Vidyā-Avidyā Vicāra (Examen du savoir et de l'ignorance)",
     es: "Vidyā-Avidyā Vicāra (Indagación sobre conocimiento e ignorancia)",
+    zh: "Vidyā-Avidyā Vicāra（明与无明的探究）",
+    ar: "Vidyā-Avidyā Vicāra (بحث في العلم والجهل)",
   },
   "Prārthanā Kāṇḍa": {
     en: "Prārthanā Kāṇḍa",
@@ -408,6 +478,8 @@ export const chapterTitleTranslations: ContentMap = {
     de: "Prārthanā Kāṇḍa (Abschnitt der Gebete)",
     fr: "Prārthanā Kāṇḍa (Section des prières)",
     es: "Prārthanā Kāṇḍa (Sección de oraciones)",
+    zh: "Prārthanā Kāṇḍa（祈祷篇）",
+    ar: "Prārthanā Kāṇḍa (باب الصلوات)",
   },
   "अर्जुनविषादयोग - Arjun Viṣhād Yog": {
     en: "Arjuna Viṣhāda Yoga",
@@ -419,6 +491,8 @@ export const chapterTitleTranslations: ContentMap = {
     de: "Arjuna Viṣhāda Yoga (Der Yoga von Arjunas Verzweiflung)",
     fr: "Arjuna Viṣhāda Yoga (Le Yoga du désarroi d'Arjuna)",
     es: "Arjuna Viṣhāda Yoga (El Yoga de la aflicción de Arjuna)",
+    zh: "Arjuna Viṣhāda Yoga（阿周那的悲伤瑜伽）",
+    ar: "Arjuna Viṣhāda Yoga (يوغا حزن أرجونا)",
   },
   "सांख्ययोग - Sānkhya Yog": {
     en: "Sānkhya Yoga",
@@ -430,6 +504,8 @@ export const chapterTitleTranslations: ContentMap = {
     de: "Sāṅkhya Yoga (Der Yoga der Erkenntnis)",
     fr: "Sāṅkhya Yoga (Le Yoga du discernement)",
     es: "Sāṅkhya Yoga (El Yoga del discernimiento)",
+    zh: "Sāṅkhya Yoga（数论瑜伽）",
+    ar: "Sāṅkhya Yoga (يوغا التمييز)",
   },
   "कर्मयोग - Karm Yog": {
     en: "Karma Yoga",
@@ -441,6 +517,8 @@ export const chapterTitleTranslations: ContentMap = {
     de: "Karma Yoga (Der Yoga des Handelns)",
     fr: "Karma Yoga (Le Yoga de l'action)",
     es: "Karma Yoga (El Yoga de la acción)",
+    zh: "Karma Yoga（行动瑜伽）",
+    ar: "Karma Yoga (يوغا العمل)",
   },
   "ज्ञानकर्मसंन्यासयोग - Jñāna Karm Sanyās Yog": {
     en: "Jñāna Karma Sannyāsa Yoga",
@@ -452,6 +530,8 @@ export const chapterTitleTranslations: ContentMap = {
     de: "Jñāna Karma Sannyāsa Yoga (Der Yoga der Entsagung durch Wissen und Handlung)",
     fr: "Jñāna Karma Sannyāsa Yoga (Le Yoga du renoncement par la connaissance et l'action)",
     es: "Jñāna Karma Sannyāsa Yoga (El Yoga de la renuncia por conocimiento y acción)",
+    zh: "Jñāna Karma Sannyāsa Yoga（以智慧舍离行动瑜伽）",
+    ar: "Jñāna Karma Sannyāsa Yoga (يوغا التخلي بالمعرفة والعمل)",
   },
   "कर्मसंन्यासयोग - Karm Sanyās Yog": {
     en: "Karma Sannyāsa Yoga",
@@ -463,6 +543,8 @@ export const chapterTitleTranslations: ContentMap = {
     de: "Karma Sannyāsa Yoga (Der Yoga der Entsagung des Handelns)",
     fr: "Karma Sannyāsa Yoga (Le Yoga du renoncement à l'action)",
     es: "Karma Sannyāsa Yoga (El Yoga de la renuncia a la acción)",
+    zh: "Karma Sannyāsa Yoga（舍离行动瑜伽）",
+    ar: "Karma Sannyāsa Yoga (يوغا التخلي عن العمل)",
   },
   "ध्यानयोग - Dhyān Yog": {
     en: "Dhyāna Yoga",
@@ -474,6 +556,8 @@ export const chapterTitleTranslations: ContentMap = {
     de: "Dhyāna Yoga (Der Yoga der Meditation)",
     fr: "Dhyāna Yoga (Le Yoga de la méditation)",
     es: "Dhyāna Yoga (El Yoga de la meditación)",
+    zh: "Dhyāna Yoga（禅定瑜伽）",
+    ar: "Dhyāna Yoga (يوغا التأمل)",
   },
   "ज्ञानविज्ञानयोग - Jñāna Vijñāna Yog": {
     en: "Jñāna Vijñāna Yoga",
@@ -485,6 +569,8 @@ export const chapterTitleTranslations: ContentMap = {
     de: "Jñāna Vijñāna Yoga (Der Yoga des Wissens und der Verwirklichung)",
     fr: "Jñāna Vijñāna Yoga (Le Yoga de la connaissance et de la réalisation)",
     es: "Jñāna Vijñāna Yoga (El Yoga del conocimiento y la realización)",
+    zh: "Jñāna Vijñāna Yoga（智慧与实证瑜伽）",
+    ar: "Jñāna Vijñāna Yoga (يوغا المعرفة والإدراك)",
   },
   "अक्षरब्रह्मयोग - Akṣhar Brahma Yog": {
     en: "Akṣhara Brahma Yoga",
@@ -496,6 +582,8 @@ export const chapterTitleTranslations: ContentMap = {
     de: "Akṣhara Brahma Yoga (Der Yoga des unvergänglichen Brahman)",
     fr: "Akṣhara Brahma Yoga (Le Yoga du Brahman impérissable)",
     es: "Akṣhara Brahma Yoga (El Yoga del Brahman imperecedero)",
+    zh: "Akṣhara Brahma Yoga（不灭梵瑜伽）",
+    ar: "Akṣhara Brahma Yoga (يوغا البراهمان الأبدي)",
   },
   "राजविद्याराजगुह्ययोग - Rāja Vidyā Yog": {
     en: "Rāja Vidyā Rāja Guhya Yoga",
@@ -507,6 +595,8 @@ export const chapterTitleTranslations: ContentMap = {
     de: "Rāja Vidyā Rāja Guhya Yoga (Der Yoga des königlichen Wissens und Geheimnisses)",
     fr: "Rāja Vidyā Rāja Guhya Yoga (Le Yoga de la science royale et du secret royal)",
     es: "Rāja Vidyā Rāja Guhya Yoga (El Yoga de la ciencia regia y el secreto regio)",
+    zh: "Rāja Vidyā Rāja Guhya Yoga（王者智慧与王者秘密瑜伽）",
+    ar: "Rāja Vidyā Rāja Guhya Yoga (يوغا العلم الملكي والسر الملكي)",
   },
   "विभूतियोग - Vibhūti Yog": {
     en: "Vibhūti Yoga",
@@ -518,6 +608,8 @@ export const chapterTitleTranslations: ContentMap = {
     de: "Vibhūti Yoga (Der Yoga der göttlichen Herrlichkeiten)",
     fr: "Vibhūti Yoga (Le Yoga des gloires divines)",
     es: "Vibhūti Yoga (El Yoga de las glorias divinas)",
+    zh: "Vibhūti Yoga（神圣荣耀瑜伽）",
+    ar: "Vibhūti Yoga (يوغا التجليات الإلهية)",
   },
   "विश्वरूपदर्शनयोग - Viśhwarūp Darśhan Yog": {
     en: "Viśhwarūpa Darśhana Yoga",
@@ -529,6 +621,8 @@ export const chapterTitleTranslations: ContentMap = {
     de: "Viśhwarūpa Darśhana Yoga (Der Yoga der Schau der kosmischen Gestalt)",
     fr: "Viśhwarūpa Darśhana Yoga (Le Yoga de la vision de la forme universelle)",
     es: "Viśhwarūpa Darśhana Yoga (El Yoga de la visión de la forma cósmica)",
+    zh: "Viśhwarūpa Darśhana Yoga（宇宙形象显现瑜伽）",
+    ar: "Viśhwarūpa Darśhana Yoga (يوغا رؤية الصورة الكونية)",
   },
   "भक्तियोग - Bhakti Yog": {
     en: "Bhakti Yoga",
@@ -540,6 +634,8 @@ export const chapterTitleTranslations: ContentMap = {
     de: "Bhakti Yoga (Der Yoga der Hingabe)",
     fr: "Bhakti Yoga (Le Yoga de la dévotion)",
     es: "Bhakti Yoga (El Yoga de la devoción)",
+    zh: "Bhakti Yoga（虔诚瑜伽）",
+    ar: "Bhakti Yoga (يوغا الإخلاص)",
   },
   "क्षेत्र-क्षेत्रज्ञविभागयोग - Kṣhetra Kṣhetrajña Vibhāg Yog": {
     en: "Kṣhetra Kṣhetrajña Vibhāga Yoga",
@@ -551,6 +647,8 @@ export const chapterTitleTranslations: ContentMap = {
     de: "Kṣhetra Kṣhetrajña Vibhāga Yoga (Der Yoga der Unterscheidung von Feld und Feldkenner)",
     fr: "Kṣhetra Kṣhetrajña Vibhāga Yoga (Le Yoga de la distinction entre le champ et le connaisseur du champ)",
     es: "Kṣhetra Kṣhetrajña Vibhāga Yoga (El Yoga de la distinción entre el campo y el conocedor del campo)",
+    zh: "Kṣhetra Kṣhetrajña Vibhāga Yoga（场与知场者分别瑜伽）",
+    ar: "Kṣhetra Kṣhetrajña Vibhāga Yoga (يوغا التمييز بين الحقل وعارف الحقل)",
   },
   "गुणत्रयविभागयोग - Guṇa Traya Vibhāg Yog": {
     en: "Guṇa Traya Vibhāga Yoga",
@@ -562,6 +660,8 @@ export const chapterTitleTranslations: ContentMap = {
     de: "Guṇa Traya Vibhāga Yoga (Der Yoga der Unterscheidung der drei Guṇas)",
     fr: "Guṇa Traya Vibhāga Yoga (Le Yoga de la distinction des trois Guṇas)",
     es: "Guṇa Traya Vibhāga Yoga (El Yoga de la distinción de los tres Guṇas)",
+    zh: "Guṇa Traya Vibhāga Yoga（三德分别瑜伽）",
+    ar: "Guṇa Traya Vibhāga Yoga (يوغا التمييز بين الصفات الثلاث)",
   },
   "पुरुषोत्तमयोग - Puruṣhottam Yog": {
     en: "Puruṣhottama Yoga",
@@ -573,6 +673,8 @@ export const chapterTitleTranslations: ContentMap = {
     de: "Puruṣhottama Yoga (Der Yoga des Höchsten Geistes)",
     fr: "Puruṣhottama Yoga (Le Yoga de l'Esprit Suprême)",
     es: "Puruṣhottama Yoga (El Yoga del Espíritu Supremo)",
+    zh: "Puruṣhottama Yoga（至上灵魂瑜伽）",
+    ar: "Puruṣhottama Yoga (يوغا الروح العليا)",
   },
   "दैवासुरसम्पद्विभागयोग - Daivāsura Sampad Vibhāg Yog": {
     en: "Daivāsura Sampad Vibhāga Yoga",
@@ -584,6 +686,8 @@ export const chapterTitleTranslations: ContentMap = {
     de: "Daivāsura Sampad Vibhāga Yoga (Der Yoga der Unterscheidung göttlicher und dämonischer Eigenschaften)",
     fr: "Daivāsura Sampad Vibhāga Yoga (Le Yoga de la distinction entre qualités divines et démoniaques)",
     es: "Daivāsura Sampad Vibhāga Yoga (El Yoga de la distinción entre cualidades divinas y demoníacas)",
+    zh: "Daivāsura Sampad Vibhāga Yoga（神性与魔性分别瑜伽）",
+    ar: "Daivāsura Sampad Vibhāga Yoga (يوغا التمييز بين الصفات الإلهية والشيطانية)",
   },
   "श्रद्धात्रयविभागयोग - Śhraddhā Traya Vibhāg Yog": {
     en: "Śhraddhā Traya Vibhāga Yoga",
@@ -595,6 +699,8 @@ export const chapterTitleTranslations: ContentMap = {
     de: "Śhraddhā Traya Vibhāga Yoga (Der Yoga der Unterscheidung der dreifachen Śhraddhā)",
     fr: "Śhraddhā Traya Vibhāga Yoga (Le Yoga de la distinction de la triple Śhraddhā)",
     es: "Śhraddhā Traya Vibhāga Yoga (El Yoga de la distinción de la triple Śhraddhā)",
+    zh: "Śhraddhā Traya Vibhāga Yoga（三种信仰分别瑜伽）",
+    ar: "Śhraddhā Traya Vibhāga Yoga (يوغا التمييز بين أنواع الإيمان الثلاثة)",
   },
   "मोक्षसंन्यासयोग - Mokṣha Sanyās Yog": {
     en: "Mokṣha Sannyāsa Yoga",
@@ -606,6 +712,8 @@ export const chapterTitleTranslations: ContentMap = {
     de: "Mokṣha Sannyāsa Yoga (Der Yoga der Befreiung durch Entsagung)",
     fr: "Mokṣha Sannyāsa Yoga (Le Yoga de la libération par le renoncement)",
     es: "Mokṣha Sannyāsa Yoga (El Yoga de la liberación por la renuncia)",
+    zh: "Mokṣha Sannyāsa Yoga（解脱与舍离瑜伽）",
+    ar: "Mokṣha Sannyāsa Yoga (يوغا التحرر بالتخلي)",
   },
 };
 
@@ -620,6 +728,8 @@ export const sectionTitleTranslations: ContentMap = {
     de: "Einführung & Entsagung",
     fr: "Introduction & Renoncement",
     es: "Introducción & Renuncia",
+    zh: "引言与舍离",
+    ar: "مقدمة وتخلٍّ",
   },
   "Nature of the Self": {
     en: "Nature of the Self",
@@ -631,6 +741,8 @@ export const sectionTitleTranslations: ContentMap = {
     de: "Die Natur des Selbst",
     fr: "La nature du Soi",
     es: "La naturaleza del Ser",
+    zh: "自我的本质",
+    ar: "طبيعة الذات",
   },
   "Vidyā & Avidyā": {
     en: "Vidyā & Avidyā",
@@ -642,6 +754,8 @@ export const sectionTitleTranslations: ContentMap = {
     de: "Vidyā & Avidyā (Wissen & Unwissenheit)",
     fr: "Vidyā & Avidyā (Savoir & Ignorance)",
     es: "Vidyā & Avidyā (Conocimiento & Ignorancia)",
+    zh: "Vidyā 与 Avidyā（明与无明）",
+    ar: "Vidyā و Avidyā (العلم والجهل)",
   },
   "Sambhūti & Asambhūti": {
     en: "Sambhūti & Asambhūti",
@@ -653,6 +767,8 @@ export const sectionTitleTranslations: ContentMap = {
     de: "Sambhūti & Asambhūti (Manifestation & Nicht-Manifestation)",
     fr: "Sambhūti & Asambhūti (Manifestation & Non-manifestation)",
     es: "Sambhūti & Asambhūti (Manifestación & No-manifestación)",
+    zh: "Sambhūti 与 Asambhūti（显现与非显现）",
+    ar: "Sambhūti و Asambhūti (التجلي وعدم التجلي)",
   },
   "Prayers to the Sun": {
     en: "Prayers to the Sun",
@@ -664,6 +780,8 @@ export const sectionTitleTranslations: ContentMap = {
     de: "Gebete an die Sonne",
     fr: "Prières au Soleil",
     es: "Oraciones al Sol",
+    zh: "太阳祈祷文",
+    ar: "صلوات إلى الشمس",
   },
   "Final Prayers": {
     en: "Final Prayers",
@@ -675,6 +793,8 @@ export const sectionTitleTranslations: ContentMap = {
     de: "Abschlussgebete",
     fr: "Prières finales",
     es: "Oraciones finales",
+    zh: "最终祈祷文",
+    ar: "الصلوات الختامية",
   },
 };
 
@@ -689,6 +809,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     de: "Einleitende Bemerkungen von Śaṅkara",
     fr: "Remarques introductives de Śaṅkara",
     es: "Observaciones introductorias de Śaṅkara",
+    zh: "Śaṅkara 的引言",
+    ar: "ملاحظات تمهيدية من Śaṅkara",
   },
   "Devotion to Jñāna (Knowledge)": {
     en: "Devotion to Jñāna (Knowledge)",
@@ -700,6 +822,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     de: "Hingabe an Jñāna (Wissen)",
     fr: "Dévotion au Jñāna (Connaissance)",
     es: "Devoción al Jñāna (Conocimiento)",
+    zh: "对 Jñāna（知识）的虔诚",
+    ar: "الإخلاص لـ Jñāna (المعرفة)",
   },
   "Devotion to Karma (Action)": {
     en: "Devotion to Karma (Action)",
@@ -711,6 +835,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     de: "Hingabe an Karma (Handlung)",
     fr: "Dévotion au Karma (Action)",
     es: "Devoción al Karma (Acción)",
+    zh: "对 Karma（行动）的虔诚",
+    ar: "الإخلاص لـ Karma (العمل)",
   },
   "The Fate of the Self-Slayers": {
     en: "The Fate of the Self-Slayers",
@@ -722,6 +848,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     de: "Das Schicksal der Selbstmörder",
     fr: "Le destin des meurtriers du Soi",
     es: "El destino de los destructores del Ser",
+    zh: "自戕者的命运",
+    ar: "مصير قاتلي الذات",
   },
   "Nature of the Supreme Self": {
     en: "Nature of the Supreme Self",
@@ -733,6 +861,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     de: "Die Natur des Höchsten Selbst",
     fr: "La nature du Soi Suprême",
     es: "La naturaleza del Ser Supremo",
+    zh: "至上自我的本质",
+    ar: "طبيعة الذات العليا",
   },
   "Vision of Unity in All Beings": {
     en: "Vision of Unity in All Beings",
@@ -744,6 +874,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     de: "Vision der Einheit in allen Wesen",
     fr: "Vision de l'unité dans tous les êtres",
     es: "Visión de la unidad en todos los seres",
+    zh: "万物一体的觉悟",
+    ar: "رؤية الوحدة في جميع الكائنات",
   },
   "Freedom from Delusion and Sorrow": {
     en: "Freedom from Delusion and Sorrow",
@@ -755,6 +887,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     de: "Freiheit von Täuschung und Kummer",
     fr: "Liberté de l'illusion et du chagrin",
     es: "Libertad de la ilusión y el pesar",
+    zh: "超越迷惑与悲伤",
+    ar: "التحرر من الوهم والحزن",
   },
   "Nature of the Self - Unmoving Yet Swift": {
     en: "Nature of the Self - Unmoving Yet Swift",
@@ -766,6 +900,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     de: "Die Natur des Selbst - Unbewegt und doch schnell",
     fr: "La nature du Soi - Immobile et pourtant rapide",
     es: "La naturaleza del Ser - Inmóvil y sin embargo veloz",
+    zh: "自我的本质——不动而迅疾",
+    ar: "طبيعة الذات - ساكنة لكنها سريعة",
   },
   "The Self - Far and Near": {
     en: "The Self - Far and Near",
@@ -777,6 +913,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     de: "Das Selbst - Fern und nah",
     fr: "Le Soi - Lointain et proche",
     es: "El Ser - Lejano y cercano",
+    zh: "自我——既远且近",
+    ar: "الذات - بعيدة وقريبة",
   },
   "Avidyā and Vidyā - A Warning": {
     en: "Avidyā and Vidyā - A Warning",
@@ -788,6 +926,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     de: "Avidyā und Vidyā - Eine Warnung",
     fr: "Avidyā et Vidyā - Un avertissement",
     es: "Avidyā y Vidyā - Una advertencia",
+    zh: "Avidyā 与 Vidyā——一则警示",
+    ar: "Avidyā و Vidyā - تحذير",
   },
   "The Fruits of Knowledge and Ignorance": {
     en: "The Fruits of Knowledge and Ignorance",
@@ -799,6 +939,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     de: "Die Früchte von Wissen und Unwissenheit",
     fr: "Les fruits de la connaissance et de l'ignorance",
     es: "Los frutos del conocimiento y la ignorancia",
+    zh: "知识与无知的果报",
+    ar: "ثمار المعرفة والجهل",
   },
   "Combining Vidyā and Avidyā": {
     en: "Combining Vidyā and Avidyā",
@@ -810,6 +952,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     de: "Die Vereinigung von Vidyā und Avidyā",
     fr: "L'union de Vidyā et Avidyā",
     es: "La unión de Vidyā y Avidyā",
+    zh: "Vidyā 与 Avidyā 的融合",
+    ar: "الجمع بين Vidyā و Avidyā",
   },
   "Worship of the Unmanifest": {
     en: "Worship of the Unmanifest",
@@ -821,6 +965,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     de: "Verehrung des Unmanifestierten",
     fr: "Adoration du Non-manifesté",
     es: "Adoración de lo No-manifestado",
+    zh: "对未显现者的崇拜",
+    ar: "عبادة غير المتجلي",
   },
   "Sambhūti and Asambhūti": {
     en: "Sambhūti and Asambhūti",
@@ -832,6 +978,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     de: "Sambhūti und Asambhūti",
     fr: "Sambhūti et Asambhūti",
     es: "Sambhūti y Asambhūti",
+    zh: "Sambhūti 与 Asambhūti",
+    ar: "Sambhūti و Asambhūti",
   },
   "Combining Sambhūti and Vināśa": {
     en: "Combining Sambhūti and Vināśa",
@@ -843,6 +991,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     de: "Die Vereinigung von Sambhūti und Vināśa",
     fr: "L'union de Sambhūti et Vināśa",
     es: "La unión de Sambhūti y Vināśa",
+    zh: "Sambhūti 与 Vināśa 的融合",
+    ar: "الجمع بين Sambhūti و Vināśa",
   },
   "Prayer to the Sun - The Golden Disc": {
     en: "Prayer to the Sun - The Golden Disc",
@@ -854,6 +1004,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     de: "Gebet an die Sonne - Die goldene Scheibe",
     fr: "Prière au Soleil - Le disque d'or",
     es: "Oración al Sol - El disco dorado",
+    zh: "太阳祈祷——金色圆盘",
+    ar: "صلاة إلى الشمس - القرص الذهبي",
   },
   "Prayer to the Sun - O Pūṣan": {
     en: "Prayer to the Sun - O Pūṣan",
@@ -865,6 +1017,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     de: "Gebet an die Sonne - O Pūṣan",
     fr: "Prière au Soleil - Ô Pūṣan",
     es: "Oración al Sol - Oh Pūṣan",
+    zh: "太阳祈祷——Pūṣan 颂",
+    ar: "صلاة إلى الشمس - يا Pūṣan",
   },
   "Prayer to Agni - Lead Us": {
     en: "Prayer to Agni - Lead Us",
@@ -876,6 +1030,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     de: "Gebet an Agni - Führe uns",
     fr: "Prière à Agni - Guide-nous",
     es: "Oración a Agni - Guíanos",
+    zh: "火神祈祷——引领我们",
+    ar: "صلاة إلى أغني - اهدنا",
   },
   "The Final Prayer - Om Krato": {
     en: "The Final Prayer - Om Krato",
@@ -887,6 +1043,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     de: "Das Abschlussgebet - Om Krato",
     fr: "La prière finale - Om Krato",
     es: "La oración final - Om Krato",
+    zh: "最终祈祷——Om Krato",
+    ar: "الصلاة الأخيرة - Om Krato",
   },
 };
 
@@ -901,6 +1059,8 @@ const langNameToCode: Record<string, string> = {
   german: "de",
   french: "fr",
   spanish: "es",
+  chinese: "zh",
+  arabic: "ar",
 };
 
 const langFallbacks: Record<string, string[]> = {
@@ -909,6 +1069,8 @@ const langFallbacks: Record<string, string[]> = {
   de: ["en"],
   fr: ["en"],
   es: ["en"],
+  zh: ["en"],
+  ar: ["en"],
 };
 
 export function translateContent(
