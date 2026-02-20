@@ -8,6 +8,9 @@ export const bookTitleTranslations: ContentMap = {
     kn: "ಈಶಾವಾಸ್ಯೋಪನಿಷತ್",
     te: "ఈశావాస్యోపనిషత్",
     ta: "ஈசாவாஸ்யோபநிஷத்",
+    de: "Īśāvāsyopaniṣad",
+    fr: "Īśāvāsyopaniṣad",
+    es: "Īśāvāsyopaniṣad",
   },
   "श्रीमद्भगवद्गीता": {
     en: "Śrīmad Bhagavad Gītā",
@@ -16,6 +19,9 @@ export const bookTitleTranslations: ContentMap = {
     kn: "ಶ್ರೀಮದ್ಭಗವದ್ಗೀತಾ",
     te: "శ్రీమద్భగవద్గీతా",
     ta: "ஸ்ரீமத் பகவத் கீதா",
+    de: "Śrīmad Bhagavad Gītā",
+    fr: "Śrīmad Bhagavad Gītā",
+    es: "Śrīmad Bhagavad Gītā",
   },
 };
 
@@ -27,6 +33,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಶ್ರೀ ಶಂಕರಾಚಾರ್ಯ",
     te: "శ్రీ శంకరాచార్య",
     ta: "ஸ்ரீ சங்கராச்சார்யர்",
+    de: "Sri Shankaracharya",
+    fr: "Sri Shankaracharya",
+    es: "Sri Shankaracharya",
   },
   "Veda Vyasa": {
     en: "Veda Vyasa",
@@ -35,6 +44,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ವೇದ ವ್ಯಾಸ",
     te: "వేద వ్యాస",
     ta: "வேத வியாசர்",
+    de: "Veda Vyāsa",
+    fr: "Veda Vyāsa",
+    es: "Veda Vyāsa",
   },
   "Adi Shankaracharya": {
     en: "Adi Shankaracharya",
@@ -43,6 +55,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಆದಿ ಶಂಕರಾಚಾರ್ಯ",
     te: "ఆది శంకరాచార్య",
     ta: "ஆதி சங்கராச்சார்யர்",
+    de: "Ādi Śaṅkarācārya",
+    fr: "Ādi Śaṅkarācārya",
+    es: "Ādi Śaṅkarācārya",
   },
   "Sri Ramanuja": {
     en: "Sri Ramanuja",
@@ -51,6 +66,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಶ್ರೀ ರಾಮಾನುಜ",
     te: "శ్రీ రామానుజ",
     ta: "ஸ்ரீ ராமானுஜர்",
+    de: "Sri Rāmānuja",
+    fr: "Sri Rāmānuja",
+    es: "Sri Rāmānuja",
   },
   "Sri Madhavacharya": {
     en: "Sri Madhavacharya",
@@ -59,6 +77,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಶ್ರೀ ಮಾಧವಾಚಾರ್ಯ",
     te: "శ్రీ మాధవాచార్య",
     ta: "ஸ்ரீ மாதவாச்சார்யர்",
+    de: "Sri Mādhavācārya",
+    fr: "Sri Mādhavācārya",
+    es: "Sri Mādhavācārya",
   },
   "Sri Sridhara Swami": {
     en: "Sri Sridhara Swami",
@@ -67,6 +88,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಶ್ರೀ ಶ್ರೀಧರ ಸ್ವಾಮಿ",
     te: "శ్రీ శ్రీధర స్వామి",
     ta: "ஸ்ரீ ஸ்ரீதர சுவாமி",
+    de: "Sri Śrīdhara Svāmī",
+    fr: "Sri Śrīdhara Svāmī",
+    es: "Sri Śrīdhara Svāmī",
   },
   "Sri Madhusudan Saraswati": {
     en: "Sri Madhusudan Saraswati",
@@ -75,6 +99,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಶ್ರೀ ಮಧುಸೂದನ ಸರಸ್ವತಿ",
     te: "శ్రీ మధుసూదన సరస్వతి",
     ta: "ஸ்ரீ மதுசூதன சரஸ்வதி",
+    de: "Sri Madhusūdana Sarasvatī",
+    fr: "Sri Madhusūdana Sarasvatī",
+    es: "Sri Madhusūdana Sarasvatī",
   },
   "Sri Vallabhacharya": {
     en: "Sri Vallabhacharya",
@@ -83,6 +110,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಶ್ರೀ ವಲ್ಲಭಾಚಾರ್ಯ",
     te: "శ్రీ వల్లభాచార్య",
     ta: "ஸ்ரீ வல்லபாச்சார்யர்",
+    de: "Sri Vallabhācārya",
+    fr: "Sri Vallabhācārya",
+    es: "Sri Vallabhācārya",
   },
   "Anandagiri": {
     en: "Anandagiri",
@@ -91,6 +121,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಆನಂದಗಿರಿ",
     te: "ఆనందగిరి",
     ta: "ஆனந்தகிரி",
+    de: "Ānandagiri",
+    fr: "Ānandagiri",
+    es: "Ānandagiri",
   },
   "Sri Anandgiri": {
     en: "Sri Anandgiri",
@@ -99,6 +132,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಶ್ರೀ ಆನಂದಗಿರಿ",
     te: "శ్రీ ఆనందగిరి",
     ta: "ஸ்ரீ ஆனந்தகிரி",
+    de: "Sri Ānandagiri",
+    fr: "Sri Ānandagiri",
+    es: "Sri Ānandagiri",
   },
   "Sri Neelkanth": {
     en: "Sri Neelkanth",
@@ -107,6 +143,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಶ್ರೀ ನೀಲಕಂಠ",
     te: "శ్రీ నీలకంఠ",
     ta: "ஸ்ரீ நீலகண்டர்",
+    de: "Sri Nīlakaṇṭha",
+    fr: "Sri Nīlakaṇṭha",
+    es: "Sri Nīlakaṇṭha",
   },
   "Sri Dhanpati": {
     en: "Sri Dhanpati",
@@ -115,6 +154,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಶ್ರೀ ಧನಪತಿ",
     te: "శ్రీ ధనపతి",
     ta: "ஸ்ரீ தனபதி",
+    de: "Sri Dhanapati",
+    fr: "Sri Dhanapati",
+    es: "Sri Dhanapati",
   },
   "Sri Purushottamji": {
     en: "Sri Purushottamji",
@@ -123,6 +165,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಶ್ರೀ ಪುರುಷೋತ್ತಮಜಿ",
     te: "శ్రీ పురుషోత్తమజీ",
     ta: "ஸ்ரீ புருஷோத்தமஜி",
+    de: "Sri Puruṣottamji",
+    fr: "Sri Puruṣottamji",
+    es: "Sri Puruṣottamji",
   },
   "Sri Jayatritha": {
     en: "Sri Jayatritha",
@@ -131,6 +176,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಶ್ರೀ ಜಯತೀರ್ಥ",
     te: "శ్రీ జయతీర్థ",
     ta: "ஸ்ரீ ஜயதீர்த்தர்",
+    de: "Sri Jayatīrtha",
+    fr: "Sri Jayatīrtha",
+    es: "Sri Jayatīrtha",
   },
   "Sri Abhinav Gupta": {
     en: "Sri Abhinav Gupta",
@@ -139,6 +187,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಶ್ರೀ ಅಭಿನವ ಗುಪ್ತ",
     te: "శ్రీ అభినవ గుప్త",
     ta: "ஸ்ரீ அபிநவ குப்தர்",
+    de: "Sri Abhinavagupta",
+    fr: "Sri Abhinavagupta",
+    es: "Sri Abhinavagupta",
   },
   "Swami Gambirananda": {
     en: "Swami Gambirananda",
@@ -147,6 +198,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಸ್ವಾಮಿ ಗಂಭೀರಾನಂದ",
     te: "స్వామి గంభీరానంద",
     ta: "சுவாமி கம்பீரானந்தர்",
+    de: "Swami Gambhīrānanda",
+    fr: "Swami Gambhīrānanda",
+    es: "Swami Gambhīrānanda",
   },
   "Swami Sivananda": {
     en: "Swami Sivananda",
@@ -155,6 +209,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಸ್ವಾಮಿ ಶಿವಾನಂದ",
     te: "స్వామి శివానంద",
     ta: "சுவாமி சிவானந்தர்",
+    de: "Swami Śivānanda",
+    fr: "Swami Śivānanda",
+    es: "Swami Śivānanda",
   },
   "Swami Chinmayananda": {
     en: "Swami Chinmayananda",
@@ -163,6 +220,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಸ್ವಾಮಿ ಚಿನ್ಮಯಾನಂದ",
     te: "స్వామి చిన్మయానంద",
     ta: "சுவாமி சின்மயானந்தர்",
+    de: "Swami Chinmayānanda",
+    fr: "Swami Chinmayānanda",
+    es: "Swami Chinmayānanda",
   },
   "Swami Adidevananda": {
     en: "Swami Adidevananda",
@@ -171,6 +231,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಸ್ವಾಮಿ ಆದಿದೇವಾನಂದ",
     te: "స్వామి ఆదిదేవానంద",
     ta: "சுவாமி ஆதிதேவானந்தர்",
+    de: "Swami Ādidēvānanda",
+    fr: "Swami Ādidēvānanda",
+    es: "Swami Ādidēvānanda",
   },
   "Swami Ramsukhdas": {
     en: "Swami Ramsukhdas",
@@ -179,6 +242,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಸ್ವಾಮಿ ರಾಮಸುಖದಾಸ",
     te: "స్వామి రామసుఖదాస్",
     ta: "சுவாமி ராமசுகதாஸ்",
+    de: "Swami Rāmsukhdās",
+    fr: "Swami Rāmsukhdās",
+    es: "Swami Rāmsukhdās",
   },
   "Swami Tejomayananda": {
     en: "Swami Tejomayananda",
@@ -187,6 +253,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಸ್ವಾಮಿ ತೇಜೋಮಯಾನಂದ",
     te: "స్వామి తేజోమయానంద",
     ta: "சுவாமி தேஜோமயானந்தர்",
+    de: "Swami Tējōmayānanda",
+    fr: "Swami Tējōmayānanda",
+    es: "Swami Tējōmayānanda",
   },
   "Shri Purohit Swami": {
     en: "Shri Purohit Swami",
@@ -195,6 +264,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಶ್ರೀ ಪುರೋಹಿತ ಸ್ವಾಮಿ",
     te: "శ్రీ పురోహిత్ స్వామి",
     ta: "ஸ்ரீ புரோஹித் சுவாமி",
+    de: "Shri Purohit Swami",
+    fr: "Shri Purohit Swami",
+    es: "Shri Purohit Swami",
   },
   "A.C. Bhaktivedanta Swami Prabhupada": {
     en: "A.C. Bhaktivedanta Swami Prabhupada",
@@ -203,6 +275,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಎ.ಸಿ. ಭಕ್ತಿವೇದಾಂತ ಸ್ವಾಮಿ ಪ್ರಭುಪಾದ",
     te: "ఎ.సి. భక్తివేదాంత స్వామి ప్రభుపాద",
     ta: "ஏ.சி. பக்திவேதாந்த சுவாமி பிரபுபாதர்",
+    de: "A.C. Bhaktivedanta Swami Prabhupāda",
+    fr: "A.C. Bhaktivedanta Swami Prabhupāda",
+    es: "A.C. Bhaktivedanta Swami Prabhupāda",
   },
   "Dr.S.Sankaranarayan": {
     en: "Dr. S. Sankaranarayan",
@@ -211,6 +286,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಡಾ. ಎಸ್. ಶಂಕರನಾರಾಯಣ",
     te: "డా. ఎస్. శంకరనారాయణ",
     ta: "டாக்டர் எஸ். சங்கரநாராயணன்",
+    de: "Dr. S. Śaṅkaranārāyaṇa",
+    fr: "Dr. S. Śaṅkaranārāyaṇa",
+    es: "Dr. S. Śaṅkaranārāyaṇa",
   },
   "M. Hiriyanna": {
     en: "M. Hiriyanna",
@@ -219,6 +297,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಎಂ. ಹಿರಿಯಣ್ಣ",
     te: "ఎం. హిరియణ్ణ",
     ta: "எம். ஹிரியண்ணா",
+    de: "M. Hiriyanna",
+    fr: "M. Hiriyanna",
+    es: "M. Hiriyanna",
   },
   "Sri Sudarsana Ramasubramanya Raja": {
     en: "Sri Sudarsana Ramasubramanya Raja",
@@ -227,6 +308,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ಶ್ರೀ ಸುದರ್ಶನ ರಾಮಸುಬ್ರಮಣ್ಯ ರಾಜ",
     te: "శ్రీ సుదర్శన రామసుబ్రమణ్య రాజ",
     ta: "ஸ்ரீ சுதர்சன ராமசுப்ரமண்ய ராஜா",
+    de: "Sri Sudarśana Rāmasubrahmaṇya Rāja",
+    fr: "Sri Sudarśana Rāmasubrahmaṇya Rāja",
+    es: "Sri Sudarśana Rāmasubrahmaṇya Rāja",
   },
   "Vedantadeshikacharya Venkatanatha": {
     en: "Vedantadeshikacharya Venkatanatha",
@@ -235,6 +319,9 @@ export const bookAuthorTranslations: ContentMap = {
     kn: "ವೇದಾಂತದೇಶಿಕಾಚಾರ್ಯ ವೆಂಕಟನಾಥ",
     te: "వేదాంతదేశికాచార్య వెంకటనాథ",
     ta: "வேதாந்ததேசிகாச்சார்ய வெங்கடநாதர்",
+    de: "Vedāntadeśikācārya Veṅkaṭanātha",
+    fr: "Vedāntadeśikācārya Veṅkaṭanātha",
+    es: "Vedāntadeśikācārya Veṅkaṭanātha",
   },
 };
 
@@ -246,6 +333,9 @@ export const bookCategoryTranslations: ContentMap = {
     kn: "ಉಪನಿಷತ್",
     te: "ఉపనిషత్తు",
     ta: "உபநிஷத்",
+    de: "Upanischad",
+    fr: "Upanishad",
+    es: "Upanishad",
   },
   "Gita": {
     en: "Gita",
@@ -254,6 +344,9 @@ export const bookCategoryTranslations: ContentMap = {
     kn: "ಗೀತಾ",
     te: "గీత",
     ta: "கீதா",
+    de: "Gītā",
+    fr: "Gītā",
+    es: "Gītā",
   },
 };
 
@@ -265,6 +358,9 @@ export const bookDescriptionTranslations: ContentMap = {
     kn: "ಈಶಾವಾಸ್ಯೋಪನಿಷತ್ (Īśāvāsyopaniṣad) ಅತ್ಯಂತ ಚಿಕ್ಕ ಮತ್ತು ಅತ್ಯಂತ ಪ್ರಸಿದ್ಧ ಉಪನಿಷತ್ತುಗಳಲ್ಲಿ ಒಂದಾಗಿದೆ. ಈ ಗ್ರಂಥವು 18 ಮಂತ್ರಗಳ ಮೇಲೆ ಶಂಕರಾಚಾರ್ಯರ ಭಾಷ್ಯವನ್ನು (ವ್ಯಾಖ್ಯಾನ) ಪ್ರಸ್ತುತಪಡಿಸುತ್ತದೆ, ಅದ್ವೈತ ವೇದಾಂತದ ಆಳವಾದ ತಾತ್ವಿಕ ಒಳನೋಟಗಳನ್ನು ನೀಡುತ್ತದೆ.",
     te: "ఈశావాస్యోపనిషత్ (Īśāvāsyopaniṣad) అత్యంత చిన్న మరియు అత్యంత ప్రసిద్ధ ఉపనిషత్తులలో ఒకటి. ఈ గ్రంథం 18 మంత్రాలపై శంకరాచార్యుల భాష్యాన్ని (వ్యాఖ్యానం) ప్రస్తుతిస్తుంది, అద్వైత వేదాంతంలో లోతైన తాత్విక అంతర్దృష్టులను అందిస్తుంది.",
     ta: "ஈசாவாஸ்யோபநிஷத் (Īśāvāsyopaniṣad) மிகச்சிறிய மற்றும் மிகவும் புகழ்பெற்ற உபநிஷத்துகளில் ஒன்றாகும். இந்த நூல் 18 மந்திரங்களுக்கான சங்கராச்சார்யரின் பாஷ்யத்தை (உரை) வழங்குகிறது, அத்வைத வேதாந்தத்தின் ஆழமான தத்துவ நுண்ணறிவுகளை அளிக்கிறது.",
+    de: "Die Īśāvāsyopaniṣad (ईशावास्योपनिषद्) ist eine der kürzesten und berühmtesten Upanischaden. Dieser Text präsentiert Śaṅkarācāryas Bhāṣya (Kommentar) zu den 18 Mantras und bietet tiefe philosophische Einsichten in den Advaita Vedānta.",
+    fr: "L'Īśāvāsyopaniṣad (ईशावास्योपनिषद्) est l'une des plus courtes et des plus célèbres Upanishads. Ce texte présente le Bhāṣya (commentaire) de Śaṅkarācārya sur les 18 mantras, offrant de profondes perspectives philosophiques sur l'Advaita Vedānta.",
+    es: "La Īśāvāsyopaniṣad (ईशावास्योपनिषद्) es una de las Upanishads más breves y celebradas. Este texto presenta el Bhāṣya (comentario) de Śaṅkarācārya sobre los 18 mantras, ofreciendo profundas perspectivas filosóficas sobre el Advaita Vedānta.",
   },
   "श्रीमद्भगवद्गीता": {
     en: "The Bhagavad Gita (भगवद्गीता), often referred to as the Gita, is a 700-verse Hindu scripture that is part of the epic Mahabharata. It contains a conversation between Pandava prince Arjuna and his guide Lord Krishna on a variety of theological and philosophical issues. Facing a fratricidal war, a despondent Arjuna turns to his charioteer Krishna for counsel on the battlefield. Krishna, through the course of the Gita, imparts to Arjuna wisdom, the path of devotion, and the doctrine of selfless action.",
@@ -273,6 +369,9 @@ export const bookDescriptionTranslations: ContentMap = {
     kn: "ಭಗವದ್ಗೀತೆ (Bhagavad Gītā), ಸಾಮಾನ್ಯವಾಗಿ ಗೀತೆ ಎಂದು ಕರೆಯಲ್ಪಡುವ, 700 ಶ್ಲೋಕಗಳ ಹಿಂದೂ ಧರ್ಮಗ್ರಂಥವಾಗಿದ್ದು, ಮಹಾಭಾರತ ಮಹಾಕಾವ್ಯದ ಭಾಗವಾಗಿದೆ. ಇದರಲ್ಲಿ ಪಾಂಡವ ರಾಜಕುಮಾರ ಅರ್ಜುನ ಮತ್ತು ಅವನ ಸಾರಥಿ ಭಗವಾನ್ ಶ್ರೀಕೃಷ್ಣರ ನಡುವೆ ವಿವಿಧ ಧಾರ್ಮಿಕ ಮತ್ತು ತಾತ್ವಿಕ ವಿಷಯಗಳ ಕುರಿತು ಸಂವಾದವಿದೆ.",
     te: "భగవద్గీత (Bhagavad Gītā), సాధారణంగా గీత అని పిలువబడేది, మహాభారత మహాకావ్యంలో భాగమైన 700 శ్లోకాల హిందూ గ్రంథం. ఇందులో పాండవ రాజకుమారుడు అర్జునుడు మరియు అతని సారథి భగవాన్ శ్రీకృష్ణుల మధ్య వివిధ ధార్మిక మరియు తాత్విక విషయాలపై సంవాదం ఉంది.",
     ta: "பகவத்கீதை (Bhagavad Gītā), பொதுவாக கீதை என அழைக்கப்படுவது, மகாபாரத இதிகாசத்தின் ஒரு பகுதியான 700 ஸ்லோகங்கள் கொண்ட இந்து வேதநூலாகும். இதில் பாண்டவ இளவரசர் அர்ஜுனன் மற்றும் அவரது சாரதி பகவான் ஸ்ரீகிருஷ்ணர் இடையே பல்வேறு இறையியல் மற்றும் தத்துவ விஷயங்களில் உரையாடல் உள்ளது.",
+    de: "Die Bhagavad Gītā (भगवद्गीता), oft einfach Gītā genannt, ist eine hinduistische Schrift mit 700 Versen, die Teil des Epos Mahābhārata ist. Sie enthält ein Gespräch zwischen dem Pāṇḍava-Prinzen Arjuna und seinem Wagenlenker Bhagavān Śrī Kṛṣṇa über verschiedene theologische und philosophische Fragen. Angesichts eines Bruderkrieges wendet sich der verzweifelte Arjuna auf dem Schlachtfeld an Kṛṣṇa um Rat. Kṛṣṇa vermittelt Arjuna im Verlauf der Gītā Weisheit, den Weg der Hingabe und die Lehre des selbstlosen Handelns.",
+    fr: "La Bhagavad Gītā (भगवद्गीता), souvent simplement appelée Gītā, est une écriture hindoue de 700 versets faisant partie de l'épopée du Mahābhārata. Elle contient un dialogue entre le prince Pāṇḍava Arjuna et son guide, le Seigneur Kṛṣṇa, sur diverses questions théologiques et philosophiques. Face à une guerre fratricide, un Arjuna désespéré se tourne vers son cocher Kṛṣṇa pour obtenir conseil sur le champ de bataille. Kṛṣṇa transmet à Arjuna la sagesse, la voie de la dévotion et la doctrine de l'action désintéressée.",
+    es: "La Bhagavad Gītā (भगवद्गीता), a menudo referida simplemente como Gītā, es una escritura hindú de 700 versos que forma parte de la epopeya del Mahābhārata. Contiene un diálogo entre el príncipe Pāṇḍava Arjuna y su guía, el Señor Kṛṣṇa, sobre diversas cuestiones teológicas y filosóficas. Ante una guerra fratricida, un Arjuna desconsolado recurre a su auriga Kṛṣṇa en busca de consejo en el campo de batalla. Kṛṣṇa transmite a Arjuna sabiduría, el camino de la devoción y la doctrina de la acción desinteresada.",
   },
 };
 
@@ -284,6 +383,9 @@ export const chapterTitleTranslations: ContentMap = {
     kn: "ಜ್ಞಾನ-ಕರ್ಮ ಕಾಂಡ",
     te: "జ్ఞాన-కర్మ కాండ",
     ta: "ஞான-கர்ம காண்டம்",
+    de: "Jñāna-Karma Kāṇḍa (Abschnitt über Wissen und Handlung)",
+    fr: "Jñāna-Karma Kāṇḍa (Section sur la connaissance et l'action)",
+    es: "Jñāna-Karma Kāṇḍa (Sección sobre conocimiento y acción)",
   },
   "Vidyā-Avidyā Vicāra": {
     en: "Vidyā-Avidyā Vicāra",
@@ -292,6 +394,9 @@ export const chapterTitleTranslations: ContentMap = {
     kn: "ವಿದ್ಯಾ-ಅವಿದ್ಯಾ ವಿಚಾರ",
     te: "విద్యా-అవిద్యా విచార",
     ta: "வித்யா-அவித்யா விசாரம்",
+    de: "Vidyā-Avidyā Vicāra (Untersuchung von Wissen und Unwissenheit)",
+    fr: "Vidyā-Avidyā Vicāra (Examen du savoir et de l'ignorance)",
+    es: "Vidyā-Avidyā Vicāra (Indagación sobre conocimiento e ignorancia)",
   },
   "Prārthanā Kāṇḍa": {
     en: "Prārthanā Kāṇḍa",
@@ -300,6 +405,9 @@ export const chapterTitleTranslations: ContentMap = {
     kn: "ಪ್ರಾರ್ಥನಾ ಕಾಂಡ",
     te: "ప్రార్థనా కాండ",
     ta: "பிரார்த்தனா காண்டம்",
+    de: "Prārthanā Kāṇḍa (Abschnitt der Gebete)",
+    fr: "Prārthanā Kāṇḍa (Section des prières)",
+    es: "Prārthanā Kāṇḍa (Sección de oraciones)",
   },
   "अर्जुनविषादयोग - Arjun Viṣhād Yog": {
     en: "Arjuna Viṣhāda Yoga",
@@ -308,6 +416,9 @@ export const chapterTitleTranslations: ContentMap = {
     kn: "ಅರ್ಜುನ ವಿಷಾದ ಯೋಗ",
     te: "అర్జున విషాద యోగము",
     ta: "அர்ஜுன விஷாத யோகம்",
+    de: "Arjuna Viṣhāda Yoga (Der Yoga von Arjunas Verzweiflung)",
+    fr: "Arjuna Viṣhāda Yoga (Le Yoga du désarroi d'Arjuna)",
+    es: "Arjuna Viṣhāda Yoga (El Yoga de la aflicción de Arjuna)",
   },
   "सांख्ययोग - Sānkhya Yog": {
     en: "Sānkhya Yoga",
@@ -316,6 +427,9 @@ export const chapterTitleTranslations: ContentMap = {
     kn: "ಸಾಂಖ್ಯ ಯೋಗ",
     te: "సాంఖ్య యోగము",
     ta: "சாங்க்ய யோகம்",
+    de: "Sāṅkhya Yoga (Der Yoga der Erkenntnis)",
+    fr: "Sāṅkhya Yoga (Le Yoga du discernement)",
+    es: "Sāṅkhya Yoga (El Yoga del discernimiento)",
   },
   "कर्मयोग - Karm Yog": {
     en: "Karma Yoga",
@@ -324,6 +438,9 @@ export const chapterTitleTranslations: ContentMap = {
     kn: "ಕರ್ಮ ಯೋಗ",
     te: "కర్మ యోగము",
     ta: "கர்ம யோகம்",
+    de: "Karma Yoga (Der Yoga des Handelns)",
+    fr: "Karma Yoga (Le Yoga de l'action)",
+    es: "Karma Yoga (El Yoga de la acción)",
   },
   "ज्ञानकर्मसंन्यासयोग - Jñāna Karm Sanyās Yog": {
     en: "Jñāna Karma Sannyāsa Yoga",
@@ -332,6 +449,9 @@ export const chapterTitleTranslations: ContentMap = {
     kn: "ಜ್ಞಾನ ಕರ್ಮ ಸಂನ್ಯಾಸ ಯೋಗ",
     te: "జ్ఞాన కర్మ సన్న్యాస యోగము",
     ta: "ஞான கர்ம சந்நியாச யோகம்",
+    de: "Jñāna Karma Sannyāsa Yoga (Der Yoga der Entsagung durch Wissen und Handlung)",
+    fr: "Jñāna Karma Sannyāsa Yoga (Le Yoga du renoncement par la connaissance et l'action)",
+    es: "Jñāna Karma Sannyāsa Yoga (El Yoga de la renuncia por conocimiento y acción)",
   },
   "कर्मसंन्यासयोग - Karm Sanyās Yog": {
     en: "Karma Sannyāsa Yoga",
@@ -340,6 +460,9 @@ export const chapterTitleTranslations: ContentMap = {
     kn: "ಕರ್ಮ ಸಂನ್ಯಾಸ ಯೋಗ",
     te: "కర్మ సన్న్యాస యోగము",
     ta: "கர்ம சந்நியாச யோகம்",
+    de: "Karma Sannyāsa Yoga (Der Yoga der Entsagung des Handelns)",
+    fr: "Karma Sannyāsa Yoga (Le Yoga du renoncement à l'action)",
+    es: "Karma Sannyāsa Yoga (El Yoga de la renuncia a la acción)",
   },
   "ध्यानयोग - Dhyān Yog": {
     en: "Dhyāna Yoga",
@@ -348,6 +471,9 @@ export const chapterTitleTranslations: ContentMap = {
     kn: "ಧ್ಯಾನ ಯೋಗ",
     te: "ధ్యాన యోగము",
     ta: "த்யான யோகம்",
+    de: "Dhyāna Yoga (Der Yoga der Meditation)",
+    fr: "Dhyāna Yoga (Le Yoga de la méditation)",
+    es: "Dhyāna Yoga (El Yoga de la meditación)",
   },
   "ज्ञानविज्ञानयोग - Jñāna Vijñāna Yog": {
     en: "Jñāna Vijñāna Yoga",
@@ -356,6 +482,9 @@ export const chapterTitleTranslations: ContentMap = {
     kn: "ಜ್ಞಾನ ವಿಜ್ಞಾನ ಯೋಗ",
     te: "జ్ఞాన విజ్ఞాన యోగము",
     ta: "ஞான விஞ்ஞான யோகம்",
+    de: "Jñāna Vijñāna Yoga (Der Yoga des Wissens und der Verwirklichung)",
+    fr: "Jñāna Vijñāna Yoga (Le Yoga de la connaissance et de la réalisation)",
+    es: "Jñāna Vijñāna Yoga (El Yoga del conocimiento y la realización)",
   },
   "अक्षरब्रह्मयोग - Akṣhar Brahma Yog": {
     en: "Akṣhara Brahma Yoga",
@@ -364,6 +493,9 @@ export const chapterTitleTranslations: ContentMap = {
     kn: "ಅಕ್ಷರ ಬ್ರಹ್ಮ ಯೋಗ",
     te: "అక్షర బ్రహ్మ యోగము",
     ta: "அக்ஷர ப்ரஹ்ம யோகம்",
+    de: "Akṣhara Brahma Yoga (Der Yoga des unvergänglichen Brahman)",
+    fr: "Akṣhara Brahma Yoga (Le Yoga du Brahman impérissable)",
+    es: "Akṣhara Brahma Yoga (El Yoga del Brahman imperecedero)",
   },
   "राजविद्याराजगुह्ययोग - Rāja Vidyā Yog": {
     en: "Rāja Vidyā Rāja Guhya Yoga",
@@ -372,6 +504,9 @@ export const chapterTitleTranslations: ContentMap = {
     kn: "ರಾಜ ವಿದ್ಯಾ ರಾಜ ಗುಹ್ಯ ಯೋಗ",
     te: "రాజ విద్యా రాజ గుహ్య యోగము",
     ta: "ராஜ வித்யா ராஜ குஹ்ய யோகம்",
+    de: "Rāja Vidyā Rāja Guhya Yoga (Der Yoga des königlichen Wissens und Geheimnisses)",
+    fr: "Rāja Vidyā Rāja Guhya Yoga (Le Yoga de la science royale et du secret royal)",
+    es: "Rāja Vidyā Rāja Guhya Yoga (El Yoga de la ciencia regia y el secreto regio)",
   },
   "विभूतियोग - Vibhūti Yog": {
     en: "Vibhūti Yoga",
@@ -380,6 +515,9 @@ export const chapterTitleTranslations: ContentMap = {
     kn: "ವಿಭೂತಿ ಯೋಗ",
     te: "విభూతి యోగము",
     ta: "விபூதி யோகம்",
+    de: "Vibhūti Yoga (Der Yoga der göttlichen Herrlichkeiten)",
+    fr: "Vibhūti Yoga (Le Yoga des gloires divines)",
+    es: "Vibhūti Yoga (El Yoga de las glorias divinas)",
   },
   "विश्वरूपदर्शनयोग - Viśhwarūp Darśhan Yog": {
     en: "Viśhwarūpa Darśhana Yoga",
@@ -388,6 +526,9 @@ export const chapterTitleTranslations: ContentMap = {
     kn: "ವಿಶ್ವರೂಪ ದರ್ಶನ ಯೋಗ",
     te: "విశ్వరూప దర్శన యోగము",
     ta: "விஸ்வரூப தர்சன யோகம்",
+    de: "Viśhwarūpa Darśhana Yoga (Der Yoga der Schau der kosmischen Gestalt)",
+    fr: "Viśhwarūpa Darśhana Yoga (Le Yoga de la vision de la forme universelle)",
+    es: "Viśhwarūpa Darśhana Yoga (El Yoga de la visión de la forma cósmica)",
   },
   "भक्तियोग - Bhakti Yog": {
     en: "Bhakti Yoga",
@@ -396,6 +537,9 @@ export const chapterTitleTranslations: ContentMap = {
     kn: "ಭಕ್ತಿ ಯೋಗ",
     te: "భక్తి యోగము",
     ta: "பக்தி யோகம்",
+    de: "Bhakti Yoga (Der Yoga der Hingabe)",
+    fr: "Bhakti Yoga (Le Yoga de la dévotion)",
+    es: "Bhakti Yoga (El Yoga de la devoción)",
   },
   "क्षेत्र-क्षेत्रज्ञविभागयोग - Kṣhetra Kṣhetrajña Vibhāg Yog": {
     en: "Kṣhetra Kṣhetrajña Vibhāga Yoga",
@@ -404,6 +548,9 @@ export const chapterTitleTranslations: ContentMap = {
     kn: "ಕ್ಷೇತ್ರ ಕ್ಷೇತ್ರಜ್ಞ ವಿಭಾಗ ಯೋಗ",
     te: "క్షేత్ర క్షేత్రజ్ఞ విభాగ యోగము",
     ta: "க்ஷேத்ர க்ஷேத்ரஞ்ஞ விபாக யோகம்",
+    de: "Kṣhetra Kṣhetrajña Vibhāga Yoga (Der Yoga der Unterscheidung von Feld und Feldkenner)",
+    fr: "Kṣhetra Kṣhetrajña Vibhāga Yoga (Le Yoga de la distinction entre le champ et le connaisseur du champ)",
+    es: "Kṣhetra Kṣhetrajña Vibhāga Yoga (El Yoga de la distinción entre el campo y el conocedor del campo)",
   },
   "गुणत्रयविभागयोग - Guṇa Traya Vibhāg Yog": {
     en: "Guṇa Traya Vibhāga Yoga",
@@ -412,6 +559,9 @@ export const chapterTitleTranslations: ContentMap = {
     kn: "ಗುಣ ತ್ರಯ ವಿಭಾಗ ಯೋಗ",
     te: "గుణ త్రయ విభాగ యోగము",
     ta: "குண த்ரய விபாக யோகம்",
+    de: "Guṇa Traya Vibhāga Yoga (Der Yoga der Unterscheidung der drei Guṇas)",
+    fr: "Guṇa Traya Vibhāga Yoga (Le Yoga de la distinction des trois Guṇas)",
+    es: "Guṇa Traya Vibhāga Yoga (El Yoga de la distinción de los tres Guṇas)",
   },
   "पुरुषोत्तमयोग - Puruṣhottam Yog": {
     en: "Puruṣhottama Yoga",
@@ -420,6 +570,9 @@ export const chapterTitleTranslations: ContentMap = {
     kn: "ಪುರುಷೋತ್ತಮ ಯೋಗ",
     te: "పురుషోత్తమ యోగము",
     ta: "புருஷோத்தம யோகம்",
+    de: "Puruṣhottama Yoga (Der Yoga des Höchsten Geistes)",
+    fr: "Puruṣhottama Yoga (Le Yoga de l'Esprit Suprême)",
+    es: "Puruṣhottama Yoga (El Yoga del Espíritu Supremo)",
   },
   "दैवासुरसम्पद्विभागयोग - Daivāsura Sampad Vibhāg Yog": {
     en: "Daivāsura Sampad Vibhāga Yoga",
@@ -428,6 +581,9 @@ export const chapterTitleTranslations: ContentMap = {
     kn: "ದೈವಾಸುರ ಸಂಪದ್ ವಿಭಾಗ ಯೋಗ",
     te: "దైవాసుర సంపద్ విభాగ యోగము",
     ta: "தைவாசுர சம்பத் விபாக யோகம்",
+    de: "Daivāsura Sampad Vibhāga Yoga (Der Yoga der Unterscheidung göttlicher und dämonischer Eigenschaften)",
+    fr: "Daivāsura Sampad Vibhāga Yoga (Le Yoga de la distinction entre qualités divines et démoniaques)",
+    es: "Daivāsura Sampad Vibhāga Yoga (El Yoga de la distinción entre cualidades divinas y demoníacas)",
   },
   "श्रद्धात्रयविभागयोग - Śhraddhā Traya Vibhāg Yog": {
     en: "Śhraddhā Traya Vibhāga Yoga",
@@ -436,6 +592,9 @@ export const chapterTitleTranslations: ContentMap = {
     kn: "ಶ್ರದ್ಧಾ ತ್ರಯ ವಿಭಾಗ ಯೋಗ",
     te: "శ్రద్ధా త్రయ విభాగ యోగము",
     ta: "ஸ்ரத்தா த்ரய விபாக யோகம்",
+    de: "Śhraddhā Traya Vibhāga Yoga (Der Yoga der Unterscheidung der dreifachen Śhraddhā)",
+    fr: "Śhraddhā Traya Vibhāga Yoga (Le Yoga de la distinction de la triple Śhraddhā)",
+    es: "Śhraddhā Traya Vibhāga Yoga (El Yoga de la distinción de la triple Śhraddhā)",
   },
   "मोक्षसंन्यासयोग - Mokṣha Sanyās Yog": {
     en: "Mokṣha Sannyāsa Yoga",
@@ -444,6 +603,9 @@ export const chapterTitleTranslations: ContentMap = {
     kn: "ಮೋಕ್ಷ ಸಂನ್ಯಾಸ ಯೋಗ",
     te: "మోక్ష సన్న్యాస యోగము",
     ta: "மோக்ஷ சந்நியாச யோகம்",
+    de: "Mokṣha Sannyāsa Yoga (Der Yoga der Befreiung durch Entsagung)",
+    fr: "Mokṣha Sannyāsa Yoga (Le Yoga de la libération par le renoncement)",
+    es: "Mokṣha Sannyāsa Yoga (El Yoga de la liberación por la renuncia)",
   },
 };
 
@@ -455,6 +617,9 @@ export const sectionTitleTranslations: ContentMap = {
     kn: "ಪರಿಚಯ ಮತ್ತು ತ್ಯಾಗ",
     te: "పరిచయం & త్యాగం",
     ta: "அறிமுகம் & துறவு",
+    de: "Einführung & Entsagung",
+    fr: "Introduction & Renoncement",
+    es: "Introducción & Renuncia",
   },
   "Nature of the Self": {
     en: "Nature of the Self",
@@ -463,6 +628,9 @@ export const sectionTitleTranslations: ContentMap = {
     kn: "ಆತ್ಮನ ಸ್ವರೂಪ",
     te: "ఆత్మ స్వరూపం",
     ta: "ஆத்மாவின் இயல்பு",
+    de: "Die Natur des Selbst",
+    fr: "La nature du Soi",
+    es: "La naturaleza del Ser",
   },
   "Vidyā & Avidyā": {
     en: "Vidyā & Avidyā",
@@ -471,6 +639,9 @@ export const sectionTitleTranslations: ContentMap = {
     kn: "ವಿದ್ಯಾ ಮತ್ತು ಅವಿದ್ಯಾ",
     te: "విద్య & అవిద్య",
     ta: "வித்யா & அவித்யா",
+    de: "Vidyā & Avidyā (Wissen & Unwissenheit)",
+    fr: "Vidyā & Avidyā (Savoir & Ignorance)",
+    es: "Vidyā & Avidyā (Conocimiento & Ignorancia)",
   },
   "Sambhūti & Asambhūti": {
     en: "Sambhūti & Asambhūti",
@@ -479,6 +650,9 @@ export const sectionTitleTranslations: ContentMap = {
     kn: "ಸಂಭೂತಿ ಮತ್ತು ಅಸಂಭೂತಿ",
     te: "సంభూతి & అసంభూతి",
     ta: "சம்பூதி & அசம்பூதி",
+    de: "Sambhūti & Asambhūti (Manifestation & Nicht-Manifestation)",
+    fr: "Sambhūti & Asambhūti (Manifestation & Non-manifestation)",
+    es: "Sambhūti & Asambhūti (Manifestación & No-manifestación)",
   },
   "Prayers to the Sun": {
     en: "Prayers to the Sun",
@@ -487,6 +661,9 @@ export const sectionTitleTranslations: ContentMap = {
     kn: "ಸೂರ್ಯ ಪ್ರಾರ್ಥನೆ",
     te: "సూర్య ప్రార్థనలు",
     ta: "சூரிய பிரார்த்தனைகள்",
+    de: "Gebete an die Sonne",
+    fr: "Prières au Soleil",
+    es: "Oraciones al Sol",
   },
   "Final Prayers": {
     en: "Final Prayers",
@@ -495,6 +672,9 @@ export const sectionTitleTranslations: ContentMap = {
     kn: "ಅಂತಿಮ ಪ್ರಾರ್ಥನೆ",
     te: "అంతిమ ప్రార్థనలు",
     ta: "இறுதி பிரார்த்தனைகள்",
+    de: "Abschlussgebete",
+    fr: "Prières finales",
+    es: "Oraciones finales",
   },
 };
 
@@ -506,6 +686,9 @@ export const verseSectionTitleTranslations: ContentMap = {
     kn: "ಶಂಕರರ ಪ್ರಾಸ್ತಾವಿಕ ಟಿಪ್ಪಣಿ",
     te: "శంకరుల ప్రస్తావన",
     ta: "சங்கரரின் அறிமுக குறிப்புகள்",
+    de: "Einleitende Bemerkungen von Śaṅkara",
+    fr: "Remarques introductives de Śaṅkara",
+    es: "Observaciones introductorias de Śaṅkara",
   },
   "Devotion to Jñāna (Knowledge)": {
     en: "Devotion to Jñāna (Knowledge)",
@@ -514,6 +697,9 @@ export const verseSectionTitleTranslations: ContentMap = {
     kn: "ಜ್ಞಾನಕ್ಕೆ ನಿಷ್ಠೆ",
     te: "జ్ఞానం పట్ల భక్తి",
     ta: "ஞானத்தில் பக்தி",
+    de: "Hingabe an Jñāna (Wissen)",
+    fr: "Dévotion au Jñāna (Connaissance)",
+    es: "Devoción al Jñāna (Conocimiento)",
   },
   "Devotion to Karma (Action)": {
     en: "Devotion to Karma (Action)",
@@ -522,6 +708,9 @@ export const verseSectionTitleTranslations: ContentMap = {
     kn: "ಕರ್ಮಕ್ಕೆ ನಿಷ್ಠೆ",
     te: "కర్మ పట్ల భక్తి",
     ta: "கர்மத்தில் பக்தி",
+    de: "Hingabe an Karma (Handlung)",
+    fr: "Dévotion au Karma (Action)",
+    es: "Devoción al Karma (Acción)",
   },
   "The Fate of the Self-Slayers": {
     en: "The Fate of the Self-Slayers",
@@ -530,6 +719,9 @@ export const verseSectionTitleTranslations: ContentMap = {
     kn: "ಆತ್ಮಘಾತಿಗಳ ಗತಿ",
     te: "ఆత్మహంతల గతి",
     ta: "ஆத்ம ஹந்தாக்களின் கதி",
+    de: "Das Schicksal der Selbstmörder",
+    fr: "Le destin des meurtriers du Soi",
+    es: "El destino de los destructores del Ser",
   },
   "Nature of the Supreme Self": {
     en: "Nature of the Supreme Self",
@@ -538,6 +730,9 @@ export const verseSectionTitleTranslations: ContentMap = {
     kn: "ಪರಮಾತ್ಮನ ಸ್ವರೂಪ",
     te: "పరమాత్మ స్వరూపం",
     ta: "பரமாத்மாவின் இயல்பு",
+    de: "Die Natur des Höchsten Selbst",
+    fr: "La nature du Soi Suprême",
+    es: "La naturaleza del Ser Supremo",
   },
   "Vision of Unity in All Beings": {
     en: "Vision of Unity in All Beings",
@@ -546,6 +741,9 @@ export const verseSectionTitleTranslations: ContentMap = {
     kn: "ಎಲ್ಲ ಜೀವಿಗಳಲ್ಲಿ ಏಕತ್ವ ದರ್ಶನ",
     te: "సర్వ ప్రాణులలో ఏకత్వ దర్శనం",
     ta: "எல்லா உயிர்களிலும் ஐக்கிய தரிசனம்",
+    de: "Vision der Einheit in allen Wesen",
+    fr: "Vision de l'unité dans tous les êtres",
+    es: "Visión de la unidad en todos los seres",
   },
   "Freedom from Delusion and Sorrow": {
     en: "Freedom from Delusion and Sorrow",
@@ -554,6 +752,9 @@ export const verseSectionTitleTranslations: ContentMap = {
     kn: "ಮೋಹ ಮತ್ತು ಶೋಕದಿಂದ ಮುಕ್ತಿ",
     te: "మోహం మరియు శోకం నుండి విముక్తి",
     ta: "மோகம் மற்றும் சோகத்திலிருந்து விடுதலை",
+    de: "Freiheit von Täuschung und Kummer",
+    fr: "Liberté de l'illusion et du chagrin",
+    es: "Libertad de la ilusión y el pesar",
   },
   "Nature of the Self - Unmoving Yet Swift": {
     en: "Nature of the Self - Unmoving Yet Swift",
@@ -562,6 +763,9 @@ export const verseSectionTitleTranslations: ContentMap = {
     kn: "ಆತ್ಮನ ಸ್ವರೂಪ - ಅಚಲ ಆದರೂ ವೇಗ",
     te: "ఆత్మ స్వరూపం - చలనరహితమైనా వేగవంతం",
     ta: "ஆத்மாவின் இயல்பு - அசையாதது ஆனால் வேகமானது",
+    de: "Die Natur des Selbst - Unbewegt und doch schnell",
+    fr: "La nature du Soi - Immobile et pourtant rapide",
+    es: "La naturaleza del Ser - Inmóvil y sin embargo veloz",
   },
   "The Self - Far and Near": {
     en: "The Self - Far and Near",
@@ -570,6 +774,9 @@ export const verseSectionTitleTranslations: ContentMap = {
     kn: "ಆತ್ಮ - ದೂರ ಮತ್ತು ಹತ್ತಿರ",
     te: "ఆత్మ - దూరం మరియు దగ్గర",
     ta: "ஆத்மா - தூரமும் அருகிலும்",
+    de: "Das Selbst - Fern und nah",
+    fr: "Le Soi - Lointain et proche",
+    es: "El Ser - Lejano y cercano",
   },
   "Avidyā and Vidyā - A Warning": {
     en: "Avidyā and Vidyā - A Warning",
@@ -578,6 +785,9 @@ export const verseSectionTitleTranslations: ContentMap = {
     kn: "ಅವಿದ್ಯಾ ಮತ್ತು ವಿದ್ಯಾ - ಎಚ್ಚರಿಕೆ",
     te: "అవిద్య మరియు విద్య - హెచ్చరిక",
     ta: "அவித்யா மற்றும் வித்யா - எச்சரிக்கை",
+    de: "Avidyā und Vidyā - Eine Warnung",
+    fr: "Avidyā et Vidyā - Un avertissement",
+    es: "Avidyā y Vidyā - Una advertencia",
   },
   "The Fruits of Knowledge and Ignorance": {
     en: "The Fruits of Knowledge and Ignorance",
@@ -586,6 +796,9 @@ export const verseSectionTitleTranslations: ContentMap = {
     kn: "ಜ್ಞಾನ ಮತ್ತು ಅಜ್ಞಾನದ ಫಲ",
     te: "జ్ఞానం మరియు అజ్ఞానం యొక్క ఫలాలు",
     ta: "ஞானம் மற்றும் அஞ்ஞானத்தின் பலன்கள்",
+    de: "Die Früchte von Wissen und Unwissenheit",
+    fr: "Les fruits de la connaissance et de l'ignorance",
+    es: "Los frutos del conocimiento y la ignorancia",
   },
   "Combining Vidyā and Avidyā": {
     en: "Combining Vidyā and Avidyā",
@@ -594,6 +807,9 @@ export const verseSectionTitleTranslations: ContentMap = {
     kn: "ವಿದ್ಯಾ ಮತ್ತು ಅವಿದ್ಯಾ ಸಮನ್ವಯ",
     te: "విద్య మరియు అవిద్య సమన్వయం",
     ta: "வித்யா மற்றும் அவித்யா இணைப்பு",
+    de: "Die Vereinigung von Vidyā und Avidyā",
+    fr: "L'union de Vidyā et Avidyā",
+    es: "La unión de Vidyā y Avidyā",
   },
   "Worship of the Unmanifest": {
     en: "Worship of the Unmanifest",
@@ -602,6 +818,9 @@ export const verseSectionTitleTranslations: ContentMap = {
     kn: "ಅವ್ಯಕ್ತದ ಉಪಾಸನೆ",
     te: "అవ్యక్త ఉపాసన",
     ta: "அவ்யக்தத்தின் வழிபாடு",
+    de: "Verehrung des Unmanifestierten",
+    fr: "Adoration du Non-manifesté",
+    es: "Adoración de lo No-manifestado",
   },
   "Sambhūti and Asambhūti": {
     en: "Sambhūti and Asambhūti",
@@ -610,6 +829,9 @@ export const verseSectionTitleTranslations: ContentMap = {
     kn: "ಸಂಭೂತಿ ಮತ್ತು ಅಸಂಭೂತಿ",
     te: "సంభూతి మరియు అసంభూతి",
     ta: "சம்பூதி மற்றும் அசம்பூதி",
+    de: "Sambhūti und Asambhūti",
+    fr: "Sambhūti et Asambhūti",
+    es: "Sambhūti y Asambhūti",
   },
   "Combining Sambhūti and Vināśa": {
     en: "Combining Sambhūti and Vināśa",
@@ -618,6 +840,9 @@ export const verseSectionTitleTranslations: ContentMap = {
     kn: "ಸಂಭೂತಿ ಮತ್ತು ವಿನಾಶ ಸಮನ್ವಯ",
     te: "సంభూతి మరియు వినాశ సమన్వయం",
     ta: "சம்பூதி மற்றும் வினாச இணைப்பு",
+    de: "Die Vereinigung von Sambhūti und Vināśa",
+    fr: "L'union de Sambhūti et Vināśa",
+    es: "La unión de Sambhūti y Vināśa",
   },
   "Prayer to the Sun - The Golden Disc": {
     en: "Prayer to the Sun - The Golden Disc",
@@ -626,6 +851,9 @@ export const verseSectionTitleTranslations: ContentMap = {
     kn: "ಸೂರ್ಯ ಪ್ರಾರ್ಥನೆ - ಚಿನ್ನದ ಬಿಂಬ",
     te: "సూర్య ప్రార్థన - సువర్ణ బింబం",
     ta: "சூரிய பிரார்த்தனை - தங்க வட்டு",
+    de: "Gebet an die Sonne - Die goldene Scheibe",
+    fr: "Prière au Soleil - Le disque d'or",
+    es: "Oración al Sol - El disco dorado",
   },
   "Prayer to the Sun - O Pūṣan": {
     en: "Prayer to the Sun - O Pūṣan",
@@ -634,6 +862,9 @@ export const verseSectionTitleTranslations: ContentMap = {
     kn: "ಸೂರ್ಯ ಪ್ರಾರ್ಥನೆ - ಓ ಪೂಷನ್",
     te: "సూర్య ప్రార్థన - ఓ పూషన్",
     ta: "சூரிய பிரார்த்தனை - ஓ பூஷன்",
+    de: "Gebet an die Sonne - O Pūṣan",
+    fr: "Prière au Soleil - Ô Pūṣan",
+    es: "Oración al Sol - Oh Pūṣan",
   },
   "Prayer to Agni - Lead Us": {
     en: "Prayer to Agni - Lead Us",
@@ -642,6 +873,9 @@ export const verseSectionTitleTranslations: ContentMap = {
     kn: "ಅಗ್ನಿ ಪ್ರಾರ್ಥನೆ - ನಮ್ಮನ್ನು ನಡೆಸು",
     te: "అగ్ని ప్రార్థన - మమ్మల్ని నడిపించు",
     ta: "அக்னி பிரார்த்தனை - எங்களை நடத்து",
+    de: "Gebet an Agni - Führe uns",
+    fr: "Prière à Agni - Guide-nous",
+    es: "Oración a Agni - Guíanos",
   },
   "The Final Prayer - Om Krato": {
     en: "The Final Prayer - Om Krato",
@@ -650,6 +884,9 @@ export const verseSectionTitleTranslations: ContentMap = {
     kn: "ಅಂತಿಮ ಪ್ರಾರ್ಥನೆ - ಓಂ ಕ್ರತೋ",
     te: "అంతిమ ప్రార్థన - ఓం క్రతో",
     ta: "இறுதி பிரார்த்தனை - ஓம் க்ரதோ",
+    de: "Das Abschlussgebet - Om Krato",
+    fr: "La prière finale - Om Krato",
+    es: "La oración final - Om Krato",
   },
 };
 
@@ -661,11 +898,17 @@ const langNameToCode: Record<string, string> = {
   kannada: "kn",
   telugu: "te",
   tamil: "ta",
+  german: "de",
+  french: "fr",
+  spanish: "es",
 };
 
 const langFallbacks: Record<string, string[]> = {
   hi: ["sa"],
   sa: ["hi"],
+  de: ["en"],
+  fr: ["en"],
+  es: ["en"],
 };
 
 export function translateContent(
