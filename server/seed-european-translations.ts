@@ -18,6 +18,12 @@ const EUROPEAN_LANGS = [
   { code: "arabic", dbCode: "ar", name: "Arabic", nativeName: "العربية", script: "Arabic" },
 ];
 
+const SOUTH_INDIAN_LANGS = [
+  { code: "kannada", dbCode: "kn", name: "Kannada", nativeName: "ಕನ್ನಡ", script: "Kannada" },
+  { code: "telugu", dbCode: "te", name: "Telugu", nativeName: "తెలుగు", script: "Telugu" },
+  { code: "tamil", dbCode: "ta", name: "Tamil", nativeName: "தமிழ்", script: "Tamil" },
+];
+
 async function getOpenAI(): Promise<OpenAI | null> {
   if (!process.env.OPENAI_API_KEY) {
     console.log("[European translations] No OPENAI_API_KEY set, skipping");
@@ -109,10 +115,12 @@ async function seedGitaEuropeanTranslations(openai: OpenAI, bookId: string): Pro
     .where(eq(verses.bookId, bookId));
   const expKeys = new Set(existingExp.map(e => `${e.verseId}-${e.languageCode}-${e.authorName}`));
 
+  const gitaAllLangs = [...EUROPEAN_LANGS, ...SOUTH_INDIAN_LANGS];
+
   let vtNeeded = 0;
   let expNeeded = 0;
   for (const verse of allVerses) {
-    for (const lang of EUROPEAN_LANGS) {
+    for (const lang of gitaAllLangs) {
       if (!vtKeys.has(`${verse.id}-${lang.code}`)) vtNeeded++;
       if (!expKeys.has(`${verse.id}-${lang.code}-Sri Shankaracharya`)) expNeeded++;
     }
@@ -132,7 +140,7 @@ async function seedGitaEuropeanTranslations(openai: OpenAI, bookId: string): Pro
     const promises: Promise<void>[] = [];
 
     for (const verse of batch) {
-      for (const lang of EUROPEAN_LANGS) {
+      for (const lang of gitaAllLangs) {
         const vtKey = `${verse.id}-${lang.code}`;
         if (!vtKeys.has(vtKey)) {
           const p = (async () => {
@@ -142,7 +150,9 @@ async function seedGitaEuropeanTranslations(openai: OpenAI, bookId: string): Pro
               );
               if (engTrans.length === 0) return;
 
-              const prompt = `You are an expert Sanskrit scholar. Translate this Bhagavad Gita verse translation from English to ${lang.name}. Keep Sanskrit terms in IAST transliteration. Maintain scholarly register.\n\nSOURCE:\n${engTrans[0].content}\n\nProvide ONLY the ${lang.name} translation.`;
+              const isSouthIndian = SOUTH_INDIAN_LANGS.some(si => si.code === lang.code);
+              const scriptNote = isSouthIndian ? `Write in ${lang.script} script. Keep Sanskrit terms in ${lang.script} script.` : "Keep Sanskrit terms in IAST transliteration.";
+              const prompt = `You are an expert Sanskrit scholar. Translate this Bhagavad Gita verse translation from English to ${lang.name}. ${scriptNote} Maintain scholarly register.\n\nSOURCE:\n${engTrans[0].content}\n\nProvide ONLY the ${lang.name} meaning translation (not transliteration).`;
               const translated = await translateText(openai, prompt, 2048);
               await db.insert(verseTranslations).values({
                 verseId: verse.id,
@@ -182,10 +192,15 @@ async function seedGitaEuropeanTranslations(openai: OpenAI, bookId: string): Pro
                   "German": `${verseRef} Sri Sankaracharya hat diesen Shloka nicht kommentiert. Der Kommentar beginnt ab 2.10.`,
                   "French": `${verseRef} Sri Sankaracharya n'a pas commenté ce shloka. Le commentaire commence à partir de 2.10.`,
                   "Spanish": `${verseRef} Sri Sankaracharya no comentó este shloka. El comentario comienza desde 2.10.`,
+                  "Kannada": `${verseRef} ಶ್ರೀ ಶಂಕರಾಚಾರ್ಯರು ಈ ಶ್ಲೋಕಕ್ಕೆ ಭಾಷ್ಯ ಬರೆದಿಲ್ಲ. ಭಾಷ್ಯವು 2.10 ರಿಂದ ಪ್ರಾರಂಭವಾಗುತ್ತದೆ.`,
+                  "Telugu": `${verseRef} శ్రీ శంకరాచార్యులు ఈ శ్లోకానికి భాష్యం రాయలేదు. భాష్యం 2.10 నుండి ప్రారంభమవుతుంది.`,
+                  "Tamil": `${verseRef} ஸ்ரீ சங்கராச்சாரியார் இந்த ஸ்லோகத்திற்கு பாஷ்யம் எழுதவில்லை. பாஷ்யம் 2.10 முதல் தொடங்குகிறது.`,
                 };
                 translated = notes[lang.name] || src;
               } else {
-                const prompt = `You are an expert Sanskrit scholar specializing in Advaita Vedanta. Translate this Sri Shankaracharya commentary on Bhagavad Gita from English to ${lang.name}. Keep Sanskrit terms in IAST transliteration. Maintain philosophical precision.\n\nSOURCE:\n${src}\n\nProvide ONLY the ${lang.name} translation.`;
+                const isSouthIndian = SOUTH_INDIAN_LANGS.some(si => si.code === lang.code);
+                const scriptNote = isSouthIndian ? `Write in ${lang.script} script. Keep Sanskrit terms in ${lang.script} script.` : "Keep Sanskrit terms in IAST transliteration.";
+                const prompt = `You are an expert Sanskrit scholar specializing in Advaita Vedanta. Translate this Sri Shankaracharya commentary on Bhagavad Gita from English to ${lang.name}. ${scriptNote} Maintain philosophical precision.\n\nSOURCE:\n${src}\n\nProvide ONLY the ${lang.name} translation.`;
                 translated = await translateText(openai, prompt);
               }
 
@@ -239,13 +254,16 @@ async function seedIshaEuropeanTranslations(openai: OpenAI, bookId: string): Pro
   const existingVT = await db.select({
     verseId: verseTranslations.verseId,
     languageCode: verseTranslations.languageCode,
+    isAiTranslated: verseTranslations.isAiTranslated,
   }).from(verseTranslations)
     .innerJoin(verses, eq(verseTranslations.verseId, verses.id))
     .where(eq(verses.bookId, bookId));
   const vtKeys = new Set(existingVT.map(e => `${e.verseId}-${e.languageCode}`));
+  const vtAiKeys = new Set(existingVT.filter(e => e.isAiTranslated).map(e => `${e.verseId}-${e.languageCode}`));
 
   const allLangs = [
     ...EUROPEAN_LANGS,
+    ...SOUTH_INDIAN_LANGS,
     { code: "hi", dbCode: "hi", name: "Hindi", nativeName: "हिन्दी", script: "Devanagari" },
   ];
 
@@ -254,7 +272,7 @@ async function seedIshaEuropeanTranslations(openai: OpenAI, bookId: string): Pro
     for (const lang of allLangs) {
       if (!expKeys.has(`${verse.id}-${lang.code}-Adi Shankaracharya`)) needed++;
       if (!expKeys.has(`${verse.id}-${lang.code}-Anandagiri`)) needed++;
-      if (!vtKeys.has(`${verse.id}-${lang.code}`)) needed++;
+      if (!vtAiKeys.has(`${verse.id}-${lang.code}`)) needed++;
     }
   }
 
@@ -280,7 +298,9 @@ async function seedIshaEuropeanTranslations(openai: OpenAI, bookId: string): Pro
         const bhashyamKey = `${verse.id}-${lang.code}-Adi Shankaracharya`;
         if (!expKeys.has(bhashyamKey)) {
           try {
-            const prompt = `You are an expert Sanskrit scholar specializing in Advaita Vedanta. Translate this Shankaracharya's Bhashya on Isha Upanishad from English to ${targetLangName}. ${isHindi ? "Keep Sanskrit terms in Devanagari." : "Use IAST for Sanskrit terms."} Maintain scholarly register.\n\nSOURCE:\n${engBhashyam.content}\n\nProvide ONLY the ${targetLangName} translation.`;
+            const isSouthIndian = SOUTH_INDIAN_LANGS.some(si => si.code === lang.code);
+            const scriptNote = isHindi ? "Keep Sanskrit terms in Devanagari." : isSouthIndian ? `Write in ${lang.script} script. Keep Sanskrit terms in ${lang.script} script.` : "Use IAST for Sanskrit terms.";
+            const prompt = `You are an expert Sanskrit scholar specializing in Advaita Vedanta. Translate this Shankaracharya's Bhashya on Isha Upanishad from English to ${targetLangName}. ${scriptNote} Maintain scholarly register.\n\nSOURCE:\n${engBhashyam.content}\n\nProvide ONLY the ${targetLangName} translation.`;
             const translated = await translateText(openai, prompt);
             await db.insert(explanations).values({
               verseId: verse.id,
@@ -303,7 +323,9 @@ async function seedIshaEuropeanTranslations(openai: OpenAI, bookId: string): Pro
         if (!expKeys.has(teekaKey)) {
           try {
             const context = engBhashyam?.content?.substring(0, 300) || "";
-            const prompt = `You are an expert Sanskrit scholar. Translate this Anandagiri's Tika (sub-commentary) on Isha Upanishad from Sanskrit to ${targetLangName}. ${isHindi ? "Keep Sanskrit terms in Devanagari." : "Use IAST for Sanskrit terms."} Maintain scholarly register.\n\n${context ? `Context: ${context}\n\n` : ""}SOURCE:\n${devTeeka.content}\n\nProvide ONLY the ${targetLangName} translation.`;
+            const isSouthIndian2 = SOUTH_INDIAN_LANGS.some(si => si.code === lang.code);
+            const scriptNote2 = isHindi ? "Keep Sanskrit terms in Devanagari." : isSouthIndian2 ? `Write in ${lang.script} script. Keep Sanskrit terms in ${lang.script} script.` : "Use IAST for Sanskrit terms.";
+            const prompt = `You are an expert Sanskrit scholar. Translate this Anandagiri's Tika (sub-commentary) on Isha Upanishad from Sanskrit to ${targetLangName}. ${scriptNote2} Maintain scholarly register.\n\n${context ? `Context: ${context}\n\n` : ""}SOURCE:\n${devTeeka.content}\n\nProvide ONLY the ${targetLangName} translation.`;
             const translated = await translateText(openai, prompt);
             await db.insert(explanations).values({
               verseId: verse.id,
@@ -322,13 +344,15 @@ async function seedIshaEuropeanTranslations(openai: OpenAI, bookId: string): Pro
       }
 
       const vtKey = `${verse.id}-${lang.code}`;
-      if (!vtKeys.has(vtKey)) {
+      if (!vtAiKeys.has(vtKey)) {
         try {
           const engTrans = await db.select().from(verseTranslations).where(
             and(eq(verseTranslations.verseId, verse.id), eq(verseTranslations.languageCode, "english"))
           );
           if (engTrans.length > 0) {
-            const prompt = `You are an expert Sanskrit scholar. Translate this Isha Upanishad verse from English to ${targetLangName}. ${isHindi ? "Keep Sanskrit terms in Devanagari." : "Use IAST for Sanskrit terms."} Maintain scholarly register.\n\nSOURCE:\n${engTrans[0].content}\n\nProvide ONLY the ${targetLangName} translation.`;
+            const isSouthIndian = SOUTH_INDIAN_LANGS.some(si => si.code === lang.code);
+            const scriptNote = isHindi ? "Keep Sanskrit terms in Devanagari." : isSouthIndian ? `Write in ${lang.script} script. Keep Sanskrit terms in ${lang.script} script.` : "Use IAST for Sanskrit terms.";
+            const prompt = `You are an expert Sanskrit scholar. Translate this Isha Upanishad verse from English to ${targetLangName}. ${scriptNote} Maintain scholarly register.\n\nSOURCE:\n${engTrans[0].content}\n\nProvide ONLY the ${targetLangName} meaning translation (not transliteration).`;
             const translated = await translateText(openai, prompt, 2048);
             await db.insert(verseTranslations).values({
               verseId: verse.id,
@@ -336,7 +360,7 @@ async function seedIshaEuropeanTranslations(openai: OpenAI, bookId: string): Pro
               content: translated,
               isAiTranslated: true,
             });
-            vtKeys.add(vtKey);
+            vtAiKeys.add(vtKey);
             totalCreated++;
           }
         } catch (error: any) {
