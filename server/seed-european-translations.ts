@@ -65,16 +65,16 @@ export async function seedEuropeanTranslations() {
 
   let totalCreated = 0;
 
-  if (gitaBooks.length > 0) {
-    const gitaId = gitaBooks[0].id;
-    const gitaCreated = await seedGitaEuropeanTranslations(openai, gitaId);
-    totalCreated += gitaCreated;
-  }
-
   if (ishaBooks.length > 0) {
     const ishaId = ishaBooks[0].id;
     const ishaCreated = await seedIshaEuropeanTranslations(openai, ishaId);
     totalCreated += ishaCreated;
+  }
+
+  if (gitaBooks.length > 0) {
+    const gitaId = gitaBooks[0].id;
+    const gitaCreated = await seedGitaEuropeanTranslations(openai, gitaId);
+    totalCreated += gitaCreated;
   }
 
   if (totalCreated > 0) {

@@ -531,20 +531,14 @@ export function BookReader({
         numericLabel,
       });
     }
-  }, [currentPage, book, onBreadcrumbChange, showCoverPage]);
+  }, [currentPage, book, onBreadcrumbChange, showCoverPage, lang]);
 
   const availableTranslations = useMemo(() => {
     if (!currentVerseDetails?.translations) return [];
     if (!effectiveLang || effectiveLang === "devanagari" || effectiveLang === "sa") {
       return [];
     }
-    const langAliases: Record<string, string[]> = {
-      "english": ["english", "en"],
-      "en": ["english", "en"],
-      "hi": ["hi", "hindi"],
-      "hindi": ["hi", "hindi"],
-    };
-    const matchCodes = langAliases[effectiveLang] || [effectiveLang];
+    const matchCodes = LANG_ALIASES[effectiveLang] || [effectiveLang];
     const filtered = currentVerseDetails.translations.filter((t: VerseTranslation) =>
       matchCodes.includes(t.languageCode)
     );
@@ -567,13 +561,7 @@ export function BookReader({
         onVerseSelect(currentVerse.id, content);
         return;
       }
-      const langAliases: Record<string, string[]> = {
-        "english": ["english", "en"],
-        "en": ["english", "en"],
-        "hi": ["hi", "hindi"],
-        "hindi": ["hi", "hindi"],
-      };
-      const matchCodes = langAliases[langCode] || [langCode];
+      const matchCodes = LANG_ALIASES[langCode] || [langCode];
       let content = "";
       const matched = currentVerseDetails.translations?.find(
         (t: VerseTranslation) => matchCodes.includes(t.languageCode)
@@ -613,7 +601,7 @@ export function BookReader({
         numericLabel,
       });
     }
-  }, [chapterViewAdhyay, chapterViewKhanda, book, onBreadcrumbChange, tocHierarchy]);
+  }, [chapterViewAdhyay, chapterViewKhanda, book, onBreadcrumbChange, tocHierarchy, lang]);
 
   if (isLoading) {
     return (
@@ -882,13 +870,7 @@ export function BookReader({
       : null;
 
     const getChapterTranslation = (verse: VerseWithTranslations, langCode: string): string => {
-      const langAliases: Record<string, string[]> = {
-        "english": ["english", "en"],
-        "en": ["english", "en"],
-        "hi": ["hi", "hindi"],
-        "hindi": ["hi", "hindi"],
-      };
-      const matchCodes = langAliases[langCode] || [langCode];
+      const matchCodes = LANG_ALIASES[langCode] || [langCode];
       const tr = verse.translations?.find(tr => matchCodes.includes(tr.languageCode));
       return tr?.content || "";
     };
