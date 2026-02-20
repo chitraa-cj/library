@@ -19,6 +19,12 @@ const LANG_ALIASES: Record<string, string[]> = {
   "en": ["english", "en"],
   "hi": ["hi", "hindi"],
   "hindi": ["hi", "hindi"],
+  "de": ["de", "german"],
+  "german": ["de", "german"],
+  "fr": ["fr", "french"],
+  "french": ["fr", "french"],
+  "es": ["es", "spanish"],
+  "spanish": ["es", "spanish"],
 };
 
 function langMatches(langCode: string, target: string): boolean {
