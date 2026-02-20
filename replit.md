@@ -133,10 +133,13 @@ The commentary data (Shankaracharya bhashya, Anandagiri teeka, etc.) uses a mult
 - AI-translated entries (isAiTranslated=true) are never overwritten by seed/sync functions
 
 ### AI Translation Coverage
-- **Shankaracharya Bhashyam**: Available in devanagari, english, tamil (original) + telugu, kannada, german, french, spanish, hindi (AI-translated)
-- **Anandagiri Teeka**: Available in devanagari, kannada, tamil, telugu (original) + spanish, french, german, hindi (AI-translated)
-- **Language code aliasing**: Hindi uses "hi" in database but "hindi" in UI; client-side LANG_ALIASES handles normalization in book-reader.tsx and translation-panel.tsx
-- **Translation scripts**: `server/translate-teeka-and-hindi.ts` for teeka + Hindi translations
+- **Isha Upanishad - Shankaracharya Bhashyam**: Available in devanagari, english, tamil (original) + telugu, kannada, german, french, spanish, hindi (AI-translated)
+- **Isha Upanishad - Anandagiri Teeka**: Available in devanagari, kannada, tamil, telugu (original) + spanish, french, german, hindi (AI-translated)
+- **Bhagavad Gita - Verse Translations**: Available in english, sanskrit (original) + german, french, spanish (AI-translated, 701 verses each)
+- **Bhagavad Gita - Sri Shankaracharya Commentary**: Available in english, hindi (original) + german, french, spanish (AI-translated, 701 verses each)
+- **Language code aliasing**: Hindi uses "hi"/"hindi", German uses "de"/"german", French uses "fr"/"french", Spanish uses "es"/"spanish" in DB vs UI; client-side LANG_ALIASES handles normalization in book-reader.tsx and translation-panel.tsx
+- **Global Interface**: UI strings available in 9 languages: en, hi, sa, kn, te, ta, de, fr, es (client/src/lib/translations.ts)
+- **Translation scripts**: `server/translate-teeka-and-hindi.ts` for Isha teeka + Hindi, `server/translate-gita-european.ts` for Gita German/French/Spanish
 
 ## Notes
 - **SendGrid Integration**: User dismissed the Replit SendGrid connector and chose to leave email OTP authentication out for now. Can revisit later if needed.
