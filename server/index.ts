@@ -105,6 +105,7 @@ app.use((req, res, next) => {
 })();
 
 async function runSeedOperations() {
+  const isProd = process.env.NODE_ENV === "production";
   try {
     await seedDatabase().catch(console.error);
     await seedAdditionalCommentaries().catch(console.error);
@@ -118,7 +119,11 @@ async function runSeedOperations() {
     await repairGitaSectionTitles().catch(console.error);
     await seedWordMeaningsFromFile().catch(console.error);
     log("All seed operations completed");
-    seedEuropeanTranslations().catch(err => console.error("European translations error:", err));
+    if (isProd) {
+      log("Production mode: skipping AI translation seeding to avoid API costs on restart");
+    } else {
+      seedEuropeanTranslations().catch(err => console.error("European translations error:", err));
+    }
   } catch (err) {
     console.error("Seed operations failed:", err);
   }
