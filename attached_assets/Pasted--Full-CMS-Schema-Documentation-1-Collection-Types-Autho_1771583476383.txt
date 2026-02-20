@@ -1,0 +1,201 @@
+📘 Full CMS Schema Documentation
+1️⃣ Collection Types
+Author
+Field	Type	Notes
+name	Text	Author name
+slug	UID	Unique slug
+bio	Rich Text (Blocks)	Biography
+Book
+Field	Type	Relation
+title	Text	—
+category	manyToOne → Category	Book belongs to one category
+chapters	oneToMany → Chapter	Book has many chapters
+book_titles	oneToMany → BookTitle	Multilingual titles
+slug	UID	—
+description	Rich Text	—
+author	Text	(plain text author name)
+coverImage	Media (multiple)	—
+totalVerses	Number	—
+BookTitle
+Field	Type	Relation
+title	Text	—
+book	manyToOne → Book	Parent book
+language	oneWay → Language	Language of title
+Category
+Field	Type	Relation
+name	Text	—
+books	oneToMany → Book	Books inside category
+Chapter
+Field	Type	Relation
+chapter_number	Number	—
+title	Text	—
+book	manyToOne → Book	Parent book
+shlokas	oneToMany → Shloka	Verses
+sections	oneToMany → Section	Sections
+Language
+Field	Type
+code	Text
+name	Text
+nativeName	Text
+script	Text
+Section
+Field	Type	Relation
+section_number	Number	—
+title	Text	—
+chapter	manyToOne → Chapter	Parent chapter
+shlokas	oneToMany → Shloka	Verses
+Shloka
+
+(Main core content type)
+
+Field	Type	Relation
+verse_number	Number	—
+text	Rich Text	Original verse
+translation	Rich Text	Primary translation
+transliteration	Text	—
+chapter	manyToOne → Chapter	Parent chapter
+commentary	Repeatable Component → Bhashya	Commentaries
+tika	Repeatable Component → Tika	Sub-commentaries
+isAiTranslated	Boolean	Flag
+language	oneWay → Language	Verse language
+extra_variables	Dynamic Zone	Numeric/Text vars
+section	manyToOne → Section	Optional section
+verse_translations	oneToMany → VerseTranslation	Multi translations
+word_meanings	oneToMany → WordMeaning	Word meanings
+VerseTranslation
+Field	Type	Relation
+content	Rich Text	Translation
+isAiTranslated	Boolean	—
+shloka	manyToOne → Shloka	Parent verse
+language	oneWay → Language	Translation language
+WordMeaning
+Field	Type	Relation
+word	Text	Sanskrit word
+meaning	Text	Meaning
+position	Number	Word order
+shloka	manyToOne → Shloka	Parent verse
+User (Auth system)
+
+Standard Strapi users-permissions model:
+
+username
+
+email
+
+provider
+
+password
+
+resetPasswordToken
+
+confirmationToken
+
+confirmed
+
+blocked
+
+role → Role
+
+2️⃣ Components
+📚 Commentary → Bhashya
+
+Repeatable component used inside Shloka.
+
+Field	Type
+content	Rich Text
+translation	Rich Text
+transliteration	Text
+author	oneWay → Author
+tika	Repeatable Component → Tika
+isAiTranslated	Boolean
+language	oneWay → Language
+📝 Commentary → Tika
+
+Nested inside Bhashya or Shloka.
+
+Field	Type
+content	Rich Text
+translation	Rich Text
+transliteration	Text
+author	oneWay → Author
+isAiTranslated	Boolean
+language	oneWay → Language
+🔢 Variables → Numeric_Variable
+Field	Type
+label	Text
+value	Number
+🔤 Variables → Text_Variable
+Field	Type
+label	Text
+value	Text
+
+Dynamic Zone in Shloka:
+
+extra_variables = [
+  Numeric_Variable | Text_Variable
+]
+3️⃣ Relationship Diagram (Logical)
+Category
+  └── Books
+          └── Chapters
+                    ├── Sections
+                    │      └── Shlokas
+                    └── Shlokas
+                             ├── WordMeanings
+                             ├── VerseTranslations
+                             ├── Bhashyas
+                             │        └── Tikas
+                             └── Tikas
+4️⃣ Architectural Observations (Important)
+
+✔ Your schema is well normalized
+✔ Supports:
+
+multilingual titles
+
+multilingual translations
+
+commentary hierarchy
+
+AI/manual translation flags
+
+structured word meanings
+
+dynamic metadata variables
+
+This is production-grade schema design.
+
+⚠️ Suggested Improvements (Recommended)
+
+Book.author should be relation → Author
+not text (currently inconsistent)
+
+Add ordering fields:
+
+Bhashya.position
+
+Tika.position
+
+Add slug to:
+
+Chapter
+
+Section
+
+Shloka
+
+(for SEO URLs)
+
+Add index fields for performance:
+
+chapter_number
+
+verse_number
+
+position
+
+5️⃣ Suggested API Query Example
+
+Example:
+
+GET /api/books?populate=chapters.shlokas.commentary.author
