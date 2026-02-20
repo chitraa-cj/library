@@ -13,6 +13,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+const LANG_ALIASES: Record<string, string[]> = {
+  "english": ["english", "en"],
+  "en": ["english", "en"],
+  "hi": ["hi", "hindi"],
+  "hindi": ["hi", "hindi"],
+};
+
+function langMatches(langCode: string, target: string): boolean {
+  const codes = LANG_ALIASES[target] || [target];
+  return codes.includes(langCode);
+}
 import { useIsMobile } from "@/hooks/use-mobile";
 import { VideoInline } from "@/components/video-popup";
 import { VerseNotes } from "@/components/verse-notes";
@@ -85,15 +97,16 @@ function PanelContent({
   }, [commentaryOptions, initialized, selectedAuthor, onAuthorChange]);
 
   const filteredExplanations = explanations.filter(
-    (e) => e.languageCode === selectedCommentaryLanguage && (isShowingAll || e.authorName === selectedAuthor)
+    (e) => langMatches(e.languageCode, selectedCommentaryLanguage || "") && (isShowingAll || e.authorName === selectedAuthor)
   );
 
   const hasCommentaryOptions = commentaryOptions && 
     (commentaryOptions.authors.length > 0 || commentaryOptions.languages.length > 0);
 
+  const matchCodesForAuthors = selectedCommentaryLanguage ? (LANG_ALIASES[selectedCommentaryLanguage] || [selectedCommentaryLanguage]) : [];
   const availableAuthors = commentaryOptions
     ? (selectedCommentaryLanguage
-        ? commentaryOptions.authors.filter(a => a.languageCodes.includes(selectedCommentaryLanguage))
+        ? commentaryOptions.authors.filter(a => a.languageCodes.some(c => matchCodesForAuthors.includes(c)))
         : commentaryOptions.authors)
     : [];
 

@@ -14,6 +14,18 @@ import { translateContent, bookTitleTranslations, bookAuthorTranslations, bookCa
 import type { BookWithVerseMeta, VerseMeta, VerseTranslation, Explanation, VerseWithTranslations } from "@shared/schema";
 import shankaracharyaImg from "@assets/image_1770455528511.png";
 
+const LANG_ALIASES: Record<string, string[]> = {
+  "english": ["english", "en"],
+  "en": ["english", "en"],
+  "hi": ["hi", "hindi"],
+  "hindi": ["hi", "hindi"],
+};
+
+function langMatches(langCode: string, target: string): boolean {
+  const codes = LANG_ALIASES[target] || [target];
+  return codes.includes(langCode);
+}
+
 interface TOCAdhyay {
   adhyayNumber: number;
   adhyayTitle: string;
@@ -184,7 +196,7 @@ function VerseExplanation({
     return <Skeleton className="h-20 w-full mt-3" />;
   }
 
-  let allForLanguage = explanations?.filter(e => e.languageCode === languageCode) || [];
+  let allForLanguage = explanations?.filter(e => langMatches(e.languageCode, languageCode)) || [];
   if (filterFn) {
     const filtered = allForLanguage.filter(e => filterFn(e.authorName));
     allForLanguage = filtered;
@@ -425,7 +437,8 @@ export function BookReader({
     if (!commentaryOptions) return [];
     let authors = commentaryOptions.authors;
     if (effectiveLang) {
-      authors = authors.filter(a => a.languageCodes.includes(effectiveLang));
+      const matchCodes = LANG_ALIASES[effectiveLang] || [effectiveLang];
+      authors = authors.filter(a => a.languageCodes.some(c => matchCodes.includes(c)));
     }
     if (commentaryMode === "bhashyam") {
       authors = authors.filter(a => isBhashyaAuthor(a.authorName));
@@ -535,7 +548,7 @@ export function BookReader({
   const commentaryContext = useMemo(() => {
     if (!selectedAuthor || !effectiveLang || !currentVerseDetails) return "";
     const explanation = currentVerseDetails.explanations?.find(
-      (e: Explanation) => e.authorName === selectedAuthor && e.languageCode === effectiveLang
+      (e: Explanation) => e.authorName === selectedAuthor && langMatches(e.languageCode, effectiveLang)
     );
     return explanation?.content || "";
   }, [selectedAuthor, effectiveLang, currentVerseDetails]);
@@ -1156,11 +1169,14 @@ export function BookReader({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {commentaryOptions.languages.map((lang) => (
-                            <SelectItem key={lang.code} value={lang.code} data-testid={`option-book-lang-${lang.code}`}>
-                              {lang.name}
-                            </SelectItem>
-                          ))}
+                          {commentaryOptions.languages.map((lang) => {
+                            const normCode = lang.code === "hi" ? "hindi" : lang.code === "en" ? "english" : lang.code;
+                            return (
+                              <SelectItem key={normCode} value={normCode} data-testid={`option-book-lang-${normCode}`}>
+                                {lang.name}
+                              </SelectItem>
+                            );
+                          })}
                         </SelectContent>
                       </Select>
                     </div>
