@@ -1054,6 +1054,7 @@ export async function updateIncompleteShankaraExplanations() {
       verseId: explanations.verseId,
       languageCode: explanations.languageCode,
       content: explanations.content,
+      isAiTranslated: explanations.isAiTranslated,
     })
     .from(explanations)
     .innerJoin(verses, eq(explanations.verseId, verses.id))
@@ -1068,6 +1069,7 @@ export async function updateIncompleteShankaraExplanations() {
   let updatedCount = 0;
   
   for (const explanation of shankaraExplanations) {
+    if (explanation.isAiTranslated) continue;
     const verseNumber = verseIdToNumber.get(explanation.verseId);
     if (verseNumber === undefined || verseNumber === null) continue;
     
@@ -1548,6 +1550,7 @@ export async function syncAuthoritativeCommentaryData() {
       languageCode: explanations.languageCode,
       authorName: explanations.authorName,
       content: explanations.content,
+      isAiTranslated: explanations.isAiTranslated,
     })
     .from(explanations)
     .innerJoin(verses, eq(explanations.verseId, verses.id))
@@ -1575,7 +1578,9 @@ export async function syncAuthoritativeCommentaryData() {
         const existing = explanationMap.get(key);
 
         if (existing) {
-          if (existing.content !== commentaryData.bhashyam) {
+          if (existing.isAiTranslated) {
+            // Skip AI-translated entries - don't overwrite with authoritative transliteration
+          } else if (existing.content !== commentaryData.bhashyam) {
             await db.update(explanations)
               .set({ content: commentaryData.bhashyam })
               .where(eq(explanations.id, existing.id));
@@ -1597,7 +1602,9 @@ export async function syncAuthoritativeCommentaryData() {
         const existing = explanationMap.get(key);
 
         if (existing) {
-          if (existing.content !== commentaryData.teeka) {
+          if (existing.isAiTranslated) {
+            // Skip AI-translated entries
+          } else if (existing.content !== commentaryData.teeka) {
             await db.update(explanations)
               .set({ content: commentaryData.teeka })
               .where(eq(explanations.id, existing.id));

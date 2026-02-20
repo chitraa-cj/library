@@ -61,7 +61,7 @@ function HomePageContent() {
   const [langSearchOpen, setLangSearchOpen] = useState(false);
   const [langSearchQuery, setLangSearchQuery] = useState("");
   const [selectedCommentaryLanguage, setSelectedCommentaryLanguage] = useState<string | null>(() => {
-    const validCodes = ["english", "devanagari", "hindi", "kannada", "telugu", "tamil"];
+    const validCodes = ["english", "devanagari", "hindi", "kannada", "telugu", "tamil", "german", "french", "spanish"];
     const normalize = (code: string | null): string => {
       if (!code) return "english";
       const c = code.toLowerCase().trim();
@@ -72,6 +72,9 @@ function HomePageContent() {
       if (c === "kn") return "kannada";
       if (c === "te") return "telugu";
       if (c === "ta") return "tamil";
+      if (c === "de") return "german";
+      if (c === "fr") return "french";
+      if (c === "es") return "spanish";
       return "english";
     };
     if (typeof window !== 'undefined') {
@@ -120,6 +123,9 @@ function HomePageContent() {
       { code: "kannada", name: "ಕನ್ನಡ", searchTerms: "kannada" },
       { code: "telugu", name: "తెలుగు", searchTerms: "telugu" },
       { code: "tamil", name: "தமிழ்", searchTerms: "tamil" },
+      { code: "german", name: "Deutsch", searchTerms: "german deutsch" },
+      { code: "french", name: "Français", searchTerms: "french francais français" },
+      { code: "spanish", name: "Español", searchTerms: "spanish espanol español" },
     ];
   }, []);
 

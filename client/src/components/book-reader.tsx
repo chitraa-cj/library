@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareText, StickyNote, List, Globe, Languages } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareText, StickyNote, List, Globe, Languages, Sparkles } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoPopup } from "@/components/video-popup";
 import { WordTooltip } from "@/components/word-tooltip";
@@ -246,6 +246,14 @@ function VerseExplanation({
           : null;
         return (
           <div key={idx} className={idx > 0 ? "mt-3 pt-3 border-t border-border/20" : ""}>
+            {explanation.isAiTranslated && (
+              <div className="pl-6 mb-1">
+                <Badge variant="outline" className="text-xs gap-1 no-default-hover-elevate no-default-active-elevate" data-testid="badge-ai-translated">
+                  <Sparkles className="h-3 w-3" />
+                  AI Translation
+                </Badge>
+              </div>
+            )}
             <div className="font-serif text-base leading-relaxed whitespace-pre-wrap break-words text-foreground/90 pl-6" data-testid={`commentary-text-${idx}`}>
               <WordTooltip
                 content={explanation.content}

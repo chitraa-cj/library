@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, jsonb, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, jsonb, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -38,6 +38,7 @@ export const verseTranslations = pgTable("verse_translations", {
   verseId: varchar("verse_id").notNull().references(() => verses.id),
   languageCode: varchar("language_code", { length: 20 }).notNull(),
   content: text("content").notNull(),
+  isAiTranslated: boolean("is_ai_translated").default(false),
 });
 
 export const explanations = pgTable("explanations", {
@@ -47,6 +48,7 @@ export const explanations = pgTable("explanations", {
   authorTitle: text("author_title"),
   languageCode: varchar("language_code", { length: 20 }).notNull(),
   content: text("content").notNull(),
+  isAiTranslated: boolean("is_ai_translated").default(false),
 });
 
 export const bookTitles = pgTable("book_titles", {
