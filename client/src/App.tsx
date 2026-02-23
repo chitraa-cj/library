@@ -61,23 +61,17 @@ function HomePageContent() {
   const [langSearchOpen, setLangSearchOpen] = useState(false);
   const [langSearchQuery, setLangSearchQuery] = useState("");
   const [selectedCommentaryLanguage, setSelectedCommentaryLanguage] = useState<string | null>(() => {
-    const validCodes = ["english", "devanagari", "hindi", "kannada", "telugu", "tamil", "german", "french", "spanish", "mandarin", "arabic"];
+    const legacyAliases: Record<string, string> = {
+      en: "english", sa: "devanagari", sanskrit: "devanagari",
+      hi: "hindi", kn: "kannada", te: "telugu", ta: "tamil",
+      de: "german", fr: "french", es: "spanish",
+      zh: "mandarin", chinese: "mandarin", ar: "arabic",
+    };
     const normalize = (code: string | null): string => {
       if (!code) return "english";
       const c = code.toLowerCase().trim();
-      if (validCodes.includes(c)) return c;
-      if (c === "en") return "english";
-      if (c === "sa" || c === "sanskrit") return "devanagari";
-      if (c === "hi") return "hindi";
-      if (c === "kn") return "kannada";
-      if (c === "te") return "telugu";
-      if (c === "ta") return "tamil";
-      if (c === "de") return "german";
-      if (c === "fr") return "french";
-      if (c === "es") return "spanish";
-      if (c === "zh" || c === "chinese") return "mandarin";
-      if (c === "ar") return "arabic";
-      return "english";
+      if (legacyAliases[c]) return legacyAliases[c];
+      return c || "english";
     };
     if (typeof window !== 'undefined') {
       return normalize(localStorage.getItem('preferredLanguage'));
@@ -130,6 +124,41 @@ function HomePageContent() {
       { code: "spanish", name: "Español", searchTerms: "spanish espanol español" },
       { code: "mandarin", name: "中文", searchTerms: "mandarin chinese zhongwen 中文" },
       { code: "arabic", name: "العربية", searchTerms: "arabic arabi العربية" },
+      { code: "pt", name: "Português", searchTerms: "portuguese portugues português" },
+      { code: "ru", name: "Русский", searchTerms: "russian russkiy русский" },
+      { code: "id", name: "Bahasa Indonesia", searchTerms: "indonesian bahasa indonesia" },
+      { code: "ja", name: "日本語", searchTerms: "japanese nihongo 日本語" },
+      { code: "pcm", name: "Naijá", searchTerms: "nigerian pidgin naija" },
+      { code: "arz", name: "مصري", searchTerms: "egyptian arabic masri مصري" },
+      { code: "vi", name: "Tiếng Việt", searchTerms: "vietnamese tieng viet" },
+      { code: "ha", name: "Hausa", searchTerms: "hausa" },
+      { code: "tr", name: "Türkçe", searchTerms: "turkish turkce türkçe" },
+      { code: "ko", name: "한국어", searchTerms: "korean hangugeo 한국어" },
+      { code: "th", name: "ไทย", searchTerms: "thai ไทย" },
+      { code: "it", name: "Italiano", searchTerms: "italian italiano" },
+      { code: "si", name: "සිංහල", searchTerms: "sinhalese sinhala සිංහල" },
+      { code: "uk", name: "Українська", searchTerms: "ukrainian ukrainska українська" },
+      { code: "fa", name: "فارسی", searchTerms: "persian farsi فارسی" },
+      { code: "ku", name: "Kurdî", searchTerms: "kurdish kurdi kurdî" },
+      { code: "az", name: "Azərbaycan", searchTerms: "azeri azerbaijani azərbaycan" },
+      { code: "mn", name: "Монгол", searchTerms: "mongolian mongol монгол" },
+      { code: "bo", name: "བོད་སྐད", searchTerms: "tibetan bodskad བོད་སྐད" },
+      { code: "my", name: "မြန်မာ", searchTerms: "burmese myanmar မြန်မာ" },
+      { code: "ms", name: "Bahasa Melayu", searchTerms: "malay melayu bahasa" },
+      { code: "gu", name: "ગુજરાતી", searchTerms: "gujarati ગુજરાતી" },
+      { code: "bho", name: "भोजपुरी", searchTerms: "bhojpuri भोजपुरी" },
+      { code: "as", name: "অসমীয়া", searchTerms: "assamese অসমীয়া" },
+      { code: "ks", name: "कॉशुर", searchTerms: "kashmiri कॉशुर" },
+      { code: "mr", name: "मराठी", searchTerms: "marathi मराठी" },
+      { code: "kok", name: "कोंकणी", searchTerms: "konkani कोंकणी" },
+      { code: "ml", name: "മലയാളം", searchTerms: "malayalam മലയാളം" },
+      { code: "pa", name: "ਪੰਜਾਬੀ", searchTerms: "punjabi ਪੰਜਾਬੀ" },
+      { code: "bn", name: "বাংলা", searchTerms: "bengali bangla বাংলা" },
+      { code: "mni", name: "মণিপুরী", searchTerms: "manipuri মণিপুরী" },
+      { code: "ne", name: "नेपाली", searchTerms: "nepali नेपाली" },
+      { code: "ur", name: "اردو", searchTerms: "urdu اردو" },
+      { code: "or", name: "ଓଡ଼ିଆ", searchTerms: "odia oriya ଓଡ଼ିଆ" },
+      { code: "sd", name: "سنڌي", searchTerms: "sindhi سنڌي" },
     ];
   }, []);
 

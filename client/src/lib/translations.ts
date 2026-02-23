@@ -1567,21 +1567,24 @@ const translations = {
 
 type Locale = keyof typeof translations;
 
+const localeMap: Record<string, Locale> = {
+  english: "en", en: "en",
+  hi: "hi", hindi: "hi",
+  sa: "sa", sanskrit: "sa", devanagari: "sa",
+  kn: "kn", kannada: "kn",
+  te: "te", telugu: "te",
+  ta: "ta", tamil: "ta",
+  de: "de", german: "de",
+  fr: "fr", french: "fr",
+  es: "es", spanish: "es",
+  zh: "zh", mandarin: "zh", chinese: "zh",
+  ar: "ar", arabic: "ar",
+};
+
 function normalizeLocale(langCode: string | null): Locale {
   if (!langCode) return "en";
   const code = langCode.toLowerCase().trim();
-  if (code === "english" || code === "en") return "en";
-  if (code === "hi" || code === "hindi") return "hi";
-  if (code === "sa" || code === "sanskrit" || code === "devanagari") return "sa";
-  if (code === "kn" || code === "kannada") return "kn";
-  if (code === "te" || code === "telugu") return "te";
-  if (code === "ta" || code === "tamil") return "ta";
-  if (code === "de" || code === "german") return "de";
-  if (code === "fr" || code === "french") return "fr";
-  if (code === "es" || code === "spanish") return "es";
-  if (code === "zh" || code === "mandarin" || code === "chinese") return "zh";
-  if (code === "ar" || code === "arabic") return "ar";
-  return "en";
+  return localeMap[code] || "en";
 }
 
 export function useTranslation(languageCode: string | null) {
