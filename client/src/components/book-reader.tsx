@@ -30,6 +30,12 @@ const LANG_ALIASES: Record<string, string[]> = {
   "chinese": ["zh", "mandarin", "chinese"],
   "ar": ["ar", "arabic"],
   "arabic": ["ar", "arabic"],
+  "kn": ["kn", "kannada"],
+  "kannada": ["kn", "kannada"],
+  "te": ["te", "telugu"],
+  "telugu": ["te", "telugu"],
+  "ta": ["ta", "tamil"],
+  "tamil": ["ta", "tamil"],
 };
 
 function langMatches(langCode: string, target: string): boolean {

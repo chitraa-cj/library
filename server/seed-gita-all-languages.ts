@@ -12,6 +12,14 @@ async function delay(ms: number) {
 
 const ALL_NEW_LANGS = [
   { code: "hi", name: "Hindi", script: "Devanagari" },
+  { code: "kn", name: "Kannada", script: "Kannada" },
+  { code: "te", name: "Telugu", script: "Telugu" },
+  { code: "ta", name: "Tamil", script: "Tamil" },
+  { code: "de", name: "German", script: "Latin" },
+  { code: "fr", name: "French", script: "Latin" },
+  { code: "es", name: "Spanish", script: "Latin" },
+  { code: "zh", name: "Mandarin Chinese", script: "Simplified Chinese" },
+  { code: "ar", name: "Arabic", script: "Arabic" },
   { code: "pt", name: "Portuguese", script: "Latin" },
   { code: "ru", name: "Russian", script: "Cyrillic" },
   { code: "id", name: "Indonesian", script: "Latin" },
@@ -52,7 +60,7 @@ const ALL_NEW_LANGS = [
 const NON_LATIN_SCRIPTS = new Set([
   "Devanagari", "Bengali", "Gujarati", "Malayalam", "Gurmukhi", "Odia",
   "Sinhala", "Thai", "Japanese", "Hangul", "Cyrillic", "Arabic", "Persian",
-  "Nastaliq", "Tibetan", "Myanmar",
+  "Nastaliq", "Tibetan", "Myanmar", "Simplified Chinese", "Kannada", "Telugu", "Tamil",
 ]);
 
 function getScriptNote(lang: { name: string; script: string }): string {
@@ -267,6 +275,14 @@ export async function seedGitaAllLanguages() {
   let totalCreated = 0;
   
   const noCommentNotes: Record<string, string> = {
+    "Kannada": "ಶ್ರೀ ಶಂಕರಾಚಾರ್ಯರು ಈ ಶ್ಲೋಕಕ್ಕೆ ಭಾಷ್ಯ ಬರೆದಿಲ್ಲ. ಭಾಷ್ಯ 2.10 ರಿಂದ ಪ್ರಾರಂಭವಾಗುತ್ತದೆ.",
+    "Telugu": "శ్రీ శంకరాచార్యులు ఈ శ్లోకంపై భాష్యం రాయలేదు. భాష్యం 2.10 నుండి ప్రారంభమవుతుంది.",
+    "Tamil": "ஸ்ரீ சங்கராச்சார்யர் இந்த ஸ்லோகத்திற்கு பாஷ்யம் எழுதவில்லை. பாஷ்யம் 2.10 இலிருந்து தொடங்குகிறது.",
+    "German": "Sri Sankaracharya hat diesen Shloka nicht kommentiert. Der Kommentar beginnt ab 2.10.",
+    "French": "Sri Sankaracharya n'a pas commenté ce shloka. Le commentaire commence à partir de 2.10.",
+    "Spanish": "Sri Sankaracharya no comentó este shloka. El comentario comienza desde 2.10.",
+    "Mandarin Chinese": "斯里·商羯罗阿阇梨未对此颂文作注。注释从2.10开始。",
+    "Arabic": "لم يعلق سري شانكاراتشاريا على هذا الشلوكة. يبدأ التعليق من 2.10.",
     "Hindi": "Sri Sankaracharya ने इस श्लोक पर टिप्पणी नहीं की। भाष्य 2.10 से शुरू होता है।",
     "Portuguese": "Sri Sankaracharya não comentou este shloka. O comentário começa a partir de 2.10.",
     "Russian": "Шри Шанкарачарья не комментировал этот шлоку. Комментарий начинается с 2.10.",
