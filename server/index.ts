@@ -10,6 +10,7 @@ import { seedGitaAllLanguages } from "./seed-gita-all-languages";
 import { seedKathaUpanishad } from "./seed-katha-upanishad";
 import { seedKathaAllLanguages } from "./seed-katha-all-languages";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
+import { importTranslationDataFromFiles } from "./import-translation-data";
 
 const app = express();
 const httpServer = createServer(app);
@@ -122,6 +123,7 @@ async function runSeedOperations() {
     await seedWordMeaningsFromFile().catch(console.error);
     await seedKathaUpanishad().catch(console.error);
     log("All seed operations completed");
+    await importTranslationDataFromFiles().catch(err => console.error("Translation data import error:", err));
     seedEuropeanTranslations().catch(err => console.error("European translations error:", err));
     seedGitaAllLanguages().catch(err => console.error("Gita all languages error:", err));
     seedKathaAllLanguages().catch(err => console.error("Katha all languages error:", err));
