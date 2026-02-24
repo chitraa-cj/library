@@ -1,0 +1,668 @@
+{
+  "bookContext": {
+    "book": "Upanishads",
+    "introduction": "kathopanishad shankara bhashyam",
+    "bhashya": "Shankaracharya",
+    "commentators": []
+  },
+  "hierarchyConfig": {
+    "levels": 3,
+    "identifiers": [
+      "अध्याय",
+      "  वल्ली ",
+      "श्लोक"
+    ]
+  },
+  "entries": [
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "4"
+      ],
+      "sourceText": "स होवाच पितरं तत कस्मै मां दास्यसीति द्वितीयं तृतीयं तं होवाच मृत्यवे त्वा ददामीति ॥ ४ ॥",
+      "verseTranslations": {
+        "english": "He said unto his sire, father, to whom wilt thou give me; he said this again and for the third time. To him, he said unto Death do I give thee.\n\n \n\n",
+        "others": [
+          {
+            "id": 1771900699035,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) இவ்வாறு தவறினை செய்யப்பட்ட யாகத்தினால் தந்தைக்கு அநிஷ்ட்டமான பலன் ஏற்படாமல் இருப்பதற்காக சத்புத்திரனான நான் என்னை தியாகம் செய்தாவது நல்ல முறையாக யாகம் செய்து அந்த அநிஷ்ட்ட பலனை போக்க வேண்டும் என்று நினைத்து தந்தையின் சமீபம் சென்று இவ்வாறு கூறினான். தந்தையே எந்த ரித்விக்கின் பொருட்டு என்னை தானம் செய்வீர்கள் என்று கேட்டான். மறுபடியும் இரண்டாவது முறையாக யாருக்குக் கொடுப்பீர்கள் என்று கேட்டான். அவ்வாறே மறுபடியும் மூன்றாவது முறையாக என்னை யாருக்கு தானம் செய்வீர்கள் என்று கேட்டான். இது சிறுபையனுடைய சுபாவம் அல்ல என்று தந்தையானவர் உன்னை யமனுக்குக் கொடுக்கப்போகிறேன் என்று கூறினார்.\n"
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "तदेवं क्रत्वसम्पत्तिनिमित्तं पितुरनिष्टं फलं पुत्रेण सता निवारणीयं मया आत्मप्रदानेनापि क्रतुसम्पत्तिं कृत्वेत्येवं मन्यमानः पितरमुपगम्य स होवाच पितरम्  हे तत तात कस्मै ऋत्विग्विशेषाय दक्षिणार्थं मां दास्यसीति प्रयच्छसीत्येतत् । स एवमुक्तेन पित्रा उपेक्ष्यमाणोऽपि द्वितीयं तृतीयमपि उवाच  कस्मै मां दास्यसि कस्मै मां दास्यसीति । नायं कुमारस्वभाव इति क्रुद्धः सन् पिता तं ह पुत्रं किल उवाच मृत्यवे वैवस्वताय त्वा त्वां ददामीति ॥",
+        "english": "Thinking that, as being the duty of a good son, he should ward off the undesirable consequences, which might befall his father on account of the imperfection in the sacrifice, by even giving himself away and thus perfect the sacrifice, he approached his father and said to him, father, to whom, i.e., to which of the Ritviks will you give me as Dakshina, i.e., reward? though unheeded by his father thus addressed, he repeated the question a second time and a third time to whom will you give me, to whom will you give me? The father incensed at the thought that that was not like a boy said to the son to Death do I give thee.\n\n",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "5"
+      ],
+      "sourceText": "बहूनामेमि प्रथमो बहूनामेमि मध्यमः ।\nकिं स्विद्यमस्य कर्तव्यं यन्मयाद्य करिष्यति ॥ ५ ॥",
+      "verseTranslations": {
+        "english": "(Nachiketas thought) of many I go the first; of many I go midmost; what is there for Death to do which he can now do by me?\n\n\n \n\n",
+        "others": [
+          {
+            "id": 1771901187093,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அ-கை) இவ்வாறு கூறப்பட்ட புத்திரன் தனிமையில் அனுதாபத்துடன் இருந்தான். எவ்வாறு என்று கூறுகிறார்:\n(அனுவாதம்)அநேக சிஷ்யர்களுக்குள்ளும் அநேக புத்திரர்களுக்குள்ளும் முதன்மையானவனாய் முக்ய சிஷ்யனாகவும் இருக்கிறேன். அநேக மத்யம சிஷ்யர்களுள் மத்யம விருத்தி உடையவனாகவும் இருக்கிறேன். ஆனால் நான் ஒருபொழுதும் அதமவிருத்தி உடையவனாய் இருந்ததில்லை. இவ்வாறு சிறந்த குணமுடைய புத்திரனாகிய என்னை தந்தையானவர் யமனுக்குக் கொடுக்கப்போகிறேன் என்று கூறினார். இதனால் யமனுக்கு என்ன பிரயோஜனம் என்னைக்கொடுப்பதால் அவருக்கும் என்ன பலன் நிச்சயமாகப் பலனை எதிர்ப்பார்க்காமலேயே கோப வசத்தால் தந்தை இவ்வாறு கூறினார். அவ்வாறு கூறினாலும் அந்த தந்தையின் வாக்குப் பொய் ஆகிவிடக்கூடாது என்று நினைத்து எதற்காக இவ்வாறு கூறினேன் என்று வருத்தத்துடன் இருக்கும் தந்தையை நோக்கி வேதனையுடன் இவ்வாறு கூறினான்.\n"
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "स एवमुक्तः पुत्रः एकान्ते परिदेवयाञ्चकार । कथमिति, उच्यते  बहूनां शिष्याणां पुत्राणां वा एमि गच्छामि प्रथमः सन् मुख्यया शिष्यादिवृत्त्येत्यर्थः । मध्यमानां च बहूनां मध्यमः मध्यमयैव वृत्त्या एमि । नाधमया कदाचिदपि । तमेवं विशिष्टगुणमपि पुत्रं माम् मृत्यवे त्वा ददामि इत्युक्तवान् पिता । सः किंस्वित् यमस्य कर्तव्यं प्रयोजनं मया प्रदत्तेन करिष्यति यत्कर्तव्यम् अद्य ? नूनं प्रयोजनमनपेक्ष्यैव क्रोधवशादुक्तवान् पिता । तथापि तत्पितुर्वचो मृषा मा भूदिति ॥\n",
+        "english": "Thus addressed, the son alone in himself, anxiously reflected; how will be explained; among many, i.e., of disciples or sons, I go the first, i.e., in the matter of doing service as a disciple; of many a middling disciple, I behave like a middling disciple and never as the worst; still, my father has said that he will give me unto Death, though his son is of such good qualities. What is there to be done for Death which can now be done by me thus given? It is plain that my father has spoken under the influence of anger without any end in view; still my fathers words should not be falsified. Thus thinking, and after anxious reflection, he told his father who was full of grief what have I said.",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "6"
+      ],
+      "sourceText": "अनुपश्य यथा पूर्वे प्रतिपश्य तथा परे ।\nसस्यमिव मर्त्यः पच्यते सस्यमिवाजायते पुनः ॥ ६ ॥\n",
+      "verseTranslations": {
+        "english": "Call to mind how our ancestors behaved and mark also how others now behave; like corn, decays the mortal and like corn is born again.\n\n \n\n",
+        "others": [
+          {
+            "id": 1771901375198,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) உன்னுடைய தந்தை, பிதாமஹர்கள் முதலியவர்கள் எந்த நெறிமுறைகளை முன்பு கடைப்பிடித்தார்களோ அவைகளை நன்றாக ஆலோசியுங்கள். அதைப்பார்த்து அந்த நெறிமுறைகளை கடைபிடியுங்கள். இப்பொழுதுள்ள சான்றோர்களின் நெறிமுறைகளையும் ஆலோசியுங்கள். அவ்வாறே அந்த நெறிமுறைகளில் முன்னோர்களும், சான்றோர்களும் கடைபிடித்தவைகளில் மித்தை(பொய்) என்பது கிடையாது. எதனால் புல் பூண்டுகள் போல் மனிதர்கள் மரணத்தை அடைகிறார்கள். மரணமடைந்து புல், பூண்டு போல் மறுபடியும் பிறக்கிறார்கள். மேலும் இவ்வாறு உள்ள அநித்தியமான ஜீவலோகத்தில் எதற்காக பொய்யானவைகளை செய்ய வேண்டும். தன்னுடைய சத்தியத்தைக் காப்பாற்றவேண்டும். என்னை எமனின் பொருட்டு அனுப்புங்கள் என்பது அபிப்பிராயம்.\n(அ-கை) அந்த தந்தையானவர் இவ்வாறு கூறிய புத்திரனை சத்தியத்தின் பொருட்டு (யமனின் இருப்பிடத்திற்கு) அனுப்பிவைத்தார். யமன் வெளியில் சென்றதினால் அவன் யமனுடைய பவனத்திற்கு சென்று மூன்று இரவுகள் வசித்தார். சென்று திரும்பிய யமனிடம் அவருடைய மந்திரி அல்லது மனைவி இவ்வாறு தெரிவித்தனர்."
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "एवं मत्वा परिदेवनापूर्वकमाह पितरं शोकाविष्टं किं मयोक्तमिति  अनुपश्य आलोचय विभावयानुक्रमेण यथा येन प्रकारेण वृत्ताः पूर्वे अतिक्रान्ताः पितृपितामहादयस्तव । तान्दृष्ट्वा च तेषां वृत्तमास्थातुमर्हसि । वर्तमानाश्च अपरे साधवो यथा वर्तन्ते तांश्च तथा प्रतिपश्य आलोचय । न च तेषां मृषाकरणं वृत्तं वर्तमानं वा अस्ति । तद्विपरीतमसतां च वृत्तं मृषाकरणम् । न च मृषाभूतं कृत्वा कश्चिदजरामरो भवति ; यतः सस्यमिव मर्त्यः मनुष्यः पच्यते जीर्णो म्रियते, मृत्वा च सस्यमिव आजायते आविर्भवति पुनः ; एवमनित्ये जीवलोके किं मृषाकरणेन ? पालयात्मनः सत्यम् । प्रेषय मां यमायेत्यभिप्रायः ॥",
+        "english": "Remember and reflect how your deceased ancestor's father, grandfather and the rest conducted themselves; seeing them, it behoves you to travel in their path; see also how others, good men, now behave. There never was or is any falsehood in them; falsifying ones word is the manner of bad men and none who has broken his word can ever become undecaying and immortal. What is there gained by breaking ones word, seeing that man decays and dies like corn and is again born like corn in this, transitory world of the Jivas? The meaning is protect your truth and send me to Death.",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "7"
+      ],
+      "sourceText": "वैश्वानरः प्रविशति अतिथिर्ब्राह्मणो गृहान् ।\nतस्यैतां शान्तिं कुर्वन्ति हर वैवस्वतोदकम् ॥ ७ ॥\n",
+      "verseTranslations": {
+        "english": "Like fire, a Brahman guest enters houses; men give this to quiet him. Vaivasvaia! fetch water.\n\n",
+        "others": [
+          {
+            "id": 1771901507498,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) பிராஹ்மணன் அதிதி ரூபமாக இருந்து கொண்டு சாக்ஷாத் அக்னிபோல் இல்லங்களை தஹிப்பதுபோல் (எரிப்பதுபோல்) நுழைகிறான். ஆகையால் இல்லறத்தில் உள்ள சான்றோர்கள் அதிதிகளுக்கு அந்த எரிப்பதை சாந்தி செய்வதுபோல் அக்னிக்கு அந்த பாத்தியம், ஆசனம், முதலியவைகளை தானம் செய்து சாந்தி செய்கிறார்கள். ஆகையால் ஹே! வைவஸ்வத! நசிகேதசின் பொருட்டு பாத்தியத்திற்காக ஜலம் கொண்டு வாருங்கள். இவ்வாறு செய்யவில்லையெனில் பிரத்யவாயம் (நரகம்) கிடைக்கும் என்பது சுருதியினால் அறிகிறோம்.\n"
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "स एवमुक्तः पिता आत्मनः सत्यतायै प्रेषयामास । स च यमभवनं गत्वा तिस्रो रात्रीरुवास यमे प्रोषिते । प्रोष्यागतं यमम् अमात्या भार्या वा ऊचुर्बोधयन्तः  वैश्वानरः अग्निरेव साक्षात् प्रविशति अतिथिः सन् ब्राह्मणः गृहान् दहन्निव । तस्य दाहं शमयन्त इवाग्नेः एतां पाद्यासनादिदानलक्षणां शान्तिं कुर्वन्ति सन्तोऽतिथेर्यतः, अतः हर आहर हे वैवस्वत, उदकं नचिकेतसे पाद्यार्थम् ॥\n",
+        "english": "Thus addressed, the father sent him to Death to keep his word and he having gone to the mansion of Death fasted for three nights, Death being away; when Death had gone and returned, his ministers or wife said to inform him, a Brahman guest, verily like fire itself, enters houses burning them; and good men to allay his burning heat as that of fire, propitiate him by giving water to clean his feet, seat to sit upon, etc. Therefore, Oh Vaivasvata! fetch water to be given to Nachiketas; also because evil consequences are declared in default.",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "8"
+      ],
+      "sourceText": "आशाप्रतीक्षे सङ्गतं सूनृतां च इष्टापूर्ते पुत्रपशूंश्च सर्वान् ।\nएतद्वृङ्क्ते पुरुषस्याल्पमेधसो यस्यानश्नन्वसति ब्राह्मणो गृहे ॥ ८ ॥\n",
+      "verseTranslations": {
+        "english": "Hope and expectation, company with good men, true and pleasant discourse, sacrifices, acts of pious liberality, children and cattle, all these are destroyed in the case of the ignorant man, in whose house a Brahman guest fasting stays. (8)\n\n",
+        "others": [
+          {
+            "id": 1771901653240,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) எந்த சொற்ப அறிவுடையவனுடைய வீட்டில் ப்ராஹ்மணன் சாப்பிடாமல் வசிக்கிறானோ (அவனுடைய) आशा  ஆசை அதாவது அறியாததான பொருளில் விருப்பம் ஆசை எனப்படும். கிடைக்கும் பொருள் தீர்மானமாக இருக்கும் பொழுது அதை எதிர்பார்த்தல் ப்ரதீக்ஷா प्रतीक्षा இவ்விரண்டையும் அடைவதினால் ஏற்படும் பலனையும், இன்சொற்களால் ஏற்படும் பலனையும், इष्टं இஷ்ட்டம் என்பது .யாகம் முதலியனவைகளைச் செய்தலால் ஏற்படும் பலனையும் पूर्तं என்பது குளம், கோவில், சத்திரம், தோட்டம் இவைகளை உண்டாக்குவதாலும் அல்லது பாழ் அடையும் நிலையில் உள்ள முன்சொன்னவைகளை செப்பனிடுவதால் உண்டாகும் பலன்களையும் மற்றும் எல்லா புத்திரர்கள் பசுக்கள் ஆகிய எல்லாவற்றையும் நாசமாக்குகிறது என்பது பொருள். எனவே எந்த நிலையிலும் அதிதியைப் பூஜை செய்தே ஆக வேண்டும். அவனை உபேக்ஷிக்கலாகாது.\n(அஃகை) இவ்வாறு மனைவியாலும், துணைவர்களாலும், உணர்த்தப்பட்ட தர்மராஜன், நசிகேதனையணுகி அர்க்யபாத்ய, ஆசமனீயங்கள கொடுத்து பூஜித்து இவ்வாறு உரைக்கலனான்.\n"
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "यतश्चाकरणे प्रत्यवायः श्रूयते  आशाप्रतीक्षे, अनिर्ज्ञातप्राप्येष्टार्थप्रार्थना आशा, निर्ज्ञातप्राप्यार्थप्रतीक्षणं प्रतीक्षा, ते आशाप्रतीक्षे ; सङ्गतं सत्संयोगजं फलम् , सूनृतां च सूनृता हि प्रिया वाक् तन्निमित्तं च, इष्टापूर्ते इष्टं यागजं फलं पूर्तम् आरामादिक्रियाजं फलम् , पुत्रपशूंश्च पुत्रांश्च पशूंश्च सर्वान् , एतत् सर्वं यथोक्तं वृङ्क्ते वर्जयति विनाशयतीत्येतत् । पुरुषस्य अल्पमेधसः अल्पप्रज्ञस्य, यस्य अनश्नन् अभुञ्जानः ब्राह्मणः गृहे वसति । तस्मादनुपेक्षणीयः सर्वावस्थास्वप्यतिथिरित्यर्थः ॥\n",
+        "english": "Hope, i.e., wish for something not definitely known but attainable. Expectation, looking out for something definitely known and attainable. Company with good men, i.e., the fruit resulting from association with good men. Sweet discourse, i.e., the fruit of true and pleasant speech. Ishtam, i.e., the fruit of a sacrifice. Prtam, i.e., the fruit resulting from charities such as the laying out of a garden, etc. Putrapasun, i.e., children and cattle. All this is destroyed of the men with little intelligence in whose house, a Brahman, fasting stays. The meaning is that a guest is, therefore, under no circumstances to be neglected.",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "9"
+      ],
+      "sourceText": "तिस्रो रात्रीर्यदवात्सीर्गृहे मे अनश्नन्ब्रह्मन्नतिथिर्नमस्यः ।\nनमस्तेऽस्तु ब्रह्मन्स्वस्ति मेऽस्तु तस्मात्प्रति त्रीन्वरान्वृणीष्व ॥ ९ ॥",
+      "verseTranslations": {
+        "english": "As you have lived here. Oh Brahman, a venerable guest in my house for three nights fasting, be my prostration to you, Oh Brahman, may good befall me. Therefore, ask three boons in return.\n\n",
+        "others": [
+          {
+            "id": 1771901783767,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) ஹே ப்ரஹ்மன்! எதனால் என்னுடைய வீட்டில் வணக்கத்திற்குரிய அதிதியாய் இருந்துகொண்டு சாப்பிடாமல் மூன்று இரவுகள் வசித்தீர்களோ அதனால் உங்களுக்கு நமஸ்காரம். ஹே ப்ரஹ்மன்! நீங்கள் சாப்பிடாமல் எங்கள் வீட்டில் வசித்ததினால் ஏற்பட்ட அந்த தோசத்தின் நிவர்த்தியினால் எனக்கு மங்களம் உண்டாகட்டும். உங்களுடைய அனுக்கிரஹத்தால் எனக்கு எல்லா மங்களங்கள் ஏற்பட்டாலும் உங்களை அதிகமாக சந்தோஷப்படுத்துவதற்காக நீங்கள் சாப்பிடாமல் வசித்த ஒவ்வொரு இரவுக்கும் ஒவ்வொரு வரமாக நீங்கள் விரும்பும் விசேஷமான வரங்களை என்னிடமிருந்து பெற்றுக்கொள்ளுங்கள்.\n(அஃகை)இவ்வாறு வரத்தை அளிக்கிறேன் என்று கூறிய தர்மராஜனை நோக்கி நசிகேதன் கூறலானான்.\n"
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "एवमुक्तो मृत्युरुवाच नचिकेतसमुपगम्य पूजापुरःसरम्  तिस्रः रात्रीः यत् यस्मात् अवात्सीः उषितवानसि गृहे मे मम अनश्नन् हे ब्रह्मन् अतिथिः सन् नमस्यः नमस्कारार्हश्च, तस्मात् नमः ते तुभ्यम् अस्तु भवतु । हे ब्रह्मन् स्वस्ति भद्रं मे अस्तु । तस्मात् भवतोऽनशनेन मद्गृहवासनिमित्ताद्दोषात् । तत्प्राप्त्युपशमेन यद्यपि भवदनुग्रहेण सर्वं मम स्वस्ति स्यात् , तथापि त्वदधिकसम्प्रसादनार्थमनशनेनोषितामेकैकां रात्रिं प्रति त्रीन् वरान् वृणीष्व अभिप्रेतार्थविषयान्प्रार्थयस्व मत्तः ॥\n",
+        "english": "Thus addressed, Death having approached Nachiketas worshipfully, said as you have been living in my house fasting for three nights, a Brahman guest worthy of reverence, therefore be my prostration to you. Oh Brahman, therefore be good unto me and let me be freed from the sin of your having lived here fasting; although all good may befall me by your mere grace, still in order that I may propitiate you better, ask of me any three objects you wish for, one for every night you fasted.",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "10"
+      ],
+      "sourceText": "शान्तसङ्कल्पः सुमना यथा स्याद्वीतमन्युर्गौतमो माभिमृत्यो ।\nत्वत्प्रसृष्टं माभिवदेत्प्रतीत एतत्त्रयाणां प्रथमं वरं वृणे ॥ १० ॥",
+      "verseTranslations": {
+        "english": "(Nachiketas said) That Gautama may be freed from anxiety, be calm in mind, not wrath against me, that he may recognise and welcome me let go by youis, Oh Death, the first of the three boons I ask.\n\n",
+        "others": [
+          {
+            "id": 1771901928847,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) शान्तसङ्कल्पः சாந்தசங்கல்ப: என்றால் என்னுடைய பிதாவானவர் என்னைக்குறித்து அவன் யமனை அடைந்து என் மகன் என்ன செய்வான் என்ற சங்கல்பம் சாந்தமடைந்தவர் ஆகவும். सुमनाः சுமனா: பிரசன்ன (நிம்மதி அடைந்த மனதுடையவராகவும், वीतमन्यु வீதமன்யு: கோபம் நீங்கியவராகவும் என்னுடைய பிதாவாகிய கௌதமர் இருக்கும்படி அருளவேண்டும். மேலும் ஹே ம்ருத்யுவே! என் வீட்டை நோக்கி உன்னால் அனுப்பப்பட்ட என்னை அடையாளம் கண்டுகொண்டு அதாவது நான் அன்று எமனிடமனுப்பிய அந்த என் மகனே மறுபடியும் என்னை நாடி வந்துள்ளான் என்று என்னை அடையாளம் கண்டுகொண்டு பேசுபவராகவும் எவ்வாறு இருப்பாரோ அவ்வாறு அருள்புரிவீராக. இதை அதாவது தந்தையை மகிழ்வித்தல் என்ற இதை தாங்கள் அளித்த மூன்று வரங்களுள் முதல் வரமாக வேண்டுகிறேன்.\n(இவ்வாறு தந்தையின் மகிழ்வை முதல் வரத்தால் கேட்ட நசிகேதனை நோக்கி) தர்மராஜன் கூறலானான்.\n"
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "नचिकेतास्त्वाह  यदि दित्सुर्वरान् , शान्तसङ्कल्पः उपशान्तः सङ्कल्पो यस्य मां प्रति यमं प्राप्य किं नु करिष्यति मम पुत्रः इति, सः शान्तसङ्कल्पः सुमनाः प्रसन्नचित्तश्च यथा स्यात् वीतमन्युः विगतरोषश्च गौतमः मम पिता मा अभि मां प्रति हे मृत्यो ; किञ्च, त्वत्प्रसृष्टं त्वया विनिर्मुक्तं प्रेषितं गृहं प्रति मा माम् अभिवदेत् प्रतीतः लब्धस्मृतिः, स एवायं पुत्रो ममागतः इत्येवं प्रत्यभिजानन्नित्यर्थः । एतत्प्रयोजनं त्रयाणां वराणां प्रथमम् आद्यं वरं वृणे प्रार्थये यत्पितुः परितोषणम् ॥\n",
+        "english": "But Nachiketas replies if willing to grant boons, that my father be freed from anxiety, i.e., about me as to what his son would be doing after reaching Death, be calm in mind and not wrath against me; and again my father remember and believe me as the very son sent by him to you and sent home back by you and welcome me recognizing, Oh Deathis the first of the three boons I ask, the end of which is to gladden my father.",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "11"
+      ],
+      "sourceText": "यथा पुरस्ताद्भविता प्रतीत औद्दालकिरारुणिर्मत्प्रसृष्टः ।\nसुखं रात्रीः शयिता वीतमन्युस्त्वां ददृशिवान्मृत्युमुखात्प्रमुक्तम् ॥ ११ ॥\n",
+      "verseTranslations": {
+        "english": "(Death replies) Auddalaki, the son of Aruna will recognise you, as before, with my permission, will sleep during nights in peace and when he sees you returned from the jaws of Death, will lose his wrath.\n\n",
+        "others": [
+          {
+            "id": 1771902170084,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) உன்னுடைய தந்தையின் புத்தி முன்பு எவ்வாறு உன்னிடத்தில் பிரியமுடையதாய் இருந்ததோ அவ்வாறே உன்னை நினைவுகூர்ந்தவராய் ஔதாலகி அதாவது உத்தாலகரே ஔதாலகி இருப்பார். அருணருடைய பிள்ளையாய் இருப்பதாலும் ஆருணி: அதாவது பிதா, தத்தபிதா இருவருக்கும் பிண்டதானம் செய்பவர், என்னுடைய அனுக்ஞையினால் மற்ற இரவுகளில் சுகமாகவும், நிம்மதியாகவும் தூங்குபவராயும், கோபமற்றவராயும் இருப்பார். அவர் யமனிடமிருந்து விடுபட்டு இருக்கும் உன்னை புத்திரனாய் பார்ப்பார்.\nनचिकेता उवाच —\n(தந்தையின் நலனையும், நன்மனதையும், தர்மராஜனிடமிருந்து முதல் வரத்தால் பெற்ற நசிகேதன் ஸ்வர்க்கத்தை டைவதற்கான சாதனமாக உள்ள அக்னி வித்தை என்னும் அக்னி ஞானத்தைப் பெறுவதற்காக ஸ்வர்க்க ஸ்வரூபத்தை ம்மந்திரத்தால் கூறுகிறான்)\n"
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "मृत्युरुवाच  यथा बुद्धिः त्वयि पुरस्तात् पूर्वम् आसीत्स्नेहसमन्विता पितुस्तव, भविता प्रीतिसमन्वितस्तव पिता तथैव प्रतीतः प्रतीतवान्सन् । औद्दालकिः उद्दालक एव औद्दालकिः अरुणस्यापत्यम् आरुणिः द्व्यामुष्यायणो वा मत्प्रसृष्टः मयानुज्ञातः सन् उत्तरा अपि रात्रीः सुखं प्रसन्नमनाः शयिता स्वप्ता वीतमन्युः विगतमन्युश्च भविता स्यात् , त्वां पुत्रं ददृशिवान् दृष्टवान् सन् मृत्युमुखात् मृत्युगोचरात् प्रमुक्तं सन्तम् ॥\nस्वर्गे",
+        "english": "Death replied just as your fathers heart was affectionate towards you before, so your father Auddalaki, the son of Aruna (or the Dvyamushyayana, son of both Uddalaka and Aruna), will be affectionate towards you and confide in you with my permission; he will sleep the rest of the nights in peace of mind and will lose his wrath when he sees you released from the jaws of Death.",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "12"
+      ],
+      "sourceText": "स्वर्गे लोके न भयं किञ्चनास्ति न तत्र त्वं न जरया बिभेति ।\nउभे तीर्त्वा अशनायापिपासे शोकातिगो मोदते स्वर्गलोके ॥ १२ ॥\n",
+      "verseTranslations": {
+        "english": "(Nachiketas says) In heaven there is no fear. You are not there; nor there do they in old age fear. Having crossed both hunger and thirst, one in heaven rejoices being above grief.\n\n",
+        "others": [
+          {
+            "id": 1771902281276,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) ஸ்வர்க்கத்தில் வியாதி முதலியவைகளால் ஏற்படும் பயம் சிறிதும் கிடையாது. அங்கு ம்ருத்யுவாதிய உங்களுடைய ப்ரபாவம் செல்லாது. அங்கு இந்த உலகத்தில் உள்ளவர்கள் போல் முதுமை அடைந்து எந்த ஒருபுருஷனும் உங்களிடம் பயப்படுவது இல்லை. மேலும் திவ்யமான ஸ்வர்க்க லோகத்தில் பசி, தாகம், இரண்டும் நீங்கி, துக்கத்தை கடந்து அவ்வாறே மானச துக்கத்தை விட்டு எப்பொழுதும் சந்தோஷத்தை அடைகிறான்."
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "नचिकेता उवाच  स्वर्गे लोके रोगादिनिमित्तं भयं किञ्चन किञ्चिदपि नास्ति । न च तत्र त्वं मृत्यो सहसा प्रभवसि, अतो जरया युक्त इह लोक इव त्वत्तो न बिभेति कश्चित्तत्र । किं च उभे अशनायापिपासे तीर्त्वा अतिक्रम्य शोकमतीत्य गच्छतीति शोकातिगः सन् मानसेन दुःखेन वर्जितः मोदते हृष्यति स्वर्गलोके दिवि ॥\n",
+        "english": "Nachiketas said In heaven there is no fear at all caused by disease, etc. Nor do you rule there of might.' Therefore, none there, fears you, as men in this world do in old age; again, having subdued both hunger and thirst, one in heaven being free from all afflictions of the mind rejoices.",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "13"
+      ],
+      "sourceText": "स त्वमग्निं स्वर्ग्यमध्येषि मृत्यो प्रब्रूहि तं श्रद्दधानाय मह्यम् ।\nस्वर्गलोका अमृतत्वं भजन्त एतद्द्वितीयेन वृणे वरेण ॥ १३ ॥",
+      "verseTranslations": {
+        "english": "Oh Death! thou knowest the fire which leads to heaven; explain to me who am zealous that (the fire) by which those, whose world is heaven, attain immortality. I pray for this by my second boon.\n\n ",
+        "others": [
+          {
+            "id": 1771902451555,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) ஓ தர்மராஜனே! அத்தகைய ம்ருத்யுவாகிய நீர் இவ்வாறு நல்ல அம்சங்களுடைய ஸ்வர்க்கலோகத்தை அடைவதற்கான சாதனமாகிய அக்னியை அறிவீர். ஆகையால் சிரத்தை உடையவனாயும் சுவர்க்கத்தில் இச்சை உடையவனாகிய எனக்கு எந்த அக்னியினால் ஸ்வர்க்கலோகமானது யஜமானனுக்கு அம்ருதத்தை அதாவது மரணதர்மமற்றதன்மை உடைய தெய்வத்தன்மையை அடையச் செய்யுமோ அதை கூறுவீராக. அந்த இவ்அக்னி விக்ஞானத்தை இரண்டாவது வரத்தினால் ப்ரார்த்திக்கிறேன்.\n\n(அ-கை) இவ்வாறு கேட்ட நசிகேதனை நோக்கி தர்மராஜன் கூறலானான்.\n"
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "एवं गुणविशिष्टस्य स्वर्गलोकस्य प्राप्तिसाधनभूतम् अग्निं स्वर्ग्यं स त्वं मृत्युः अध्येषि स्मरसि, जानासीत्यर्थः । हे मृत्यो, यतः तं प्रब्रूहि कथय श्रद्दधानाय श्रद्धावते मह्यं स्वर्गार्थिने । येनाग्निना चितेन स्वर्गलोकाः स्वर्गो लोको येषां ते स्वर्गलोकाः यजमानाः अमृतत्वम् अमरणतां देवत्वं भजन्ते प्राप्नुवन्ति, तत् एतत् अग्निविज्ञानं द्वितीयेन वरेण वृणे ॥\n",
+        "english": "The fire, which helps one to attain the heaven possessed of such attributes, thou, Oh Death! knowest; and as thou knowest, teach me who am zealous by which fire sacrificing, men attain heaven and immortality or become Devas. This knowledge of the fire, I crave by my second boon.",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "14"
+      ],
+      "sourceText": "प्र ते ब्रवीमि तदु मे निबोध स्वर्ग्यमग्निं नचिकेतः प्रजानन् ।\nअनन्तलोकाप्तिमथो प्रतिष्ठां विद्धि त्वमेतं निहितं गुहायाम् ॥ १४ ॥\n",
+      "verseTranslations": {
+        "english": "(Death says) I will tell thee well; attend to me, Oh Nachiketas, I know the fire leading to heaven; know the fire which leads to heaven and also the support of the universe and which is seated in the cavity.\n\n ",
+        "others": [
+          {
+            "id": 1771902714426,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) ஹே நசிகேத! நன்றாக விசேஷமாக அறிந்த நான் உனக்கு எது உன்னால் வேண்டப்பட்டதோ அந்த ஸ்வர்க்கலோகத்தை அடைவதற்கான சுலபமான சாதனமாகிய அக்னியைக் குறித்துக் கூறுகிறேன். என்னுடைய வசனங்களை ஒருமுகப்படுத்தப்பட்ட மனதுடன் அறிந்து கொள். நன்றாக அறிந்துகொள் என்று கூறியது சிஷ்யனுடைய புத்தியை சமநிலைபடுத்துவதற்கான வசனமாகும்.\n(அனுவாதம்) இப்பொழுது அக்னிவித்தையை ஸ்துதி செய்கிறார். அனந்த லோகத்தின் அடைவு அதாவது ஸ்வர்க்கலோகத்தை அடைவதற்கான சாதனம் என்பதாகும். அவ்வாறு இருந்தாலும் ஜகத்திற்கு விராட் ரூபமாய் ஆஸ்ரயமாகிறது. என்னால் கூறப்போகிற அந்த இது குகையில் அதாவது ஞானிகளுடைய புத்தியில்  இருப்பதை நீ அறிவாயாக என்பது பொருள்."
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "मृत्योः प्रतिज्ञेयम्  ते तुभ्यं प्रब्रवीमि ; यत्त्वया प्रार्थितं तत् उ मे मम वचसः निबोध बुध्यस्व एकाग्रमनाः सन् । स्वर्ग्यं स्वर्गाय हितं स्वर्गसाधनम् अग्निं हे नचिकेतः प्रजानन् विज्ञातवान्सन्नहमित्यर्थः । प्रब्रवीमि तन्निबोधेति च शिष्यबुद्धिसमाधानार्थं वचनम् । अधुनाग्निं स्तौति  अनन्तलोकाप्तिं स्वर्गलोकफलप्राप्तिसाधनमित्येतत् , अथो अपि प्रतिष्ठाम् आश्रयं जगतो विराट्स्वरूपेण, तम् एतम् अग्निं मयोच्यमानं विद्धि विजानीहि त्वं निहितं स्थितं गुहायाम् । विदुषां बुद्धौ निविष्टमित्यर्थः ॥\n",
+        "english": "This is Deaths declaration. I will tell thee what has been solicited by thee; attend to what I say with concentrated mind. I know the fire, Oh Nachiketas, which helps one to heaven; I will tell thee and attend are expressions used to concentrate the disciple's intellect; now he praises the fire, know this fire as leading to heaven and as the stay of the universe in its form of virat and as located in the intelligence of knowing men.",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "15"
+      ],
+      "sourceText": "लोकादिमग्निं तमुवाच तस्मै या इष्टका यावतीर्वा यथा वा ।\nस चापि तत्प्रत्यवदद्यथोक्तमथास्य मृत्युः पुनरेवाह तुष्टः ॥ १५ ॥",
+      "verseTranslations": {
+        "english": "Death told him the fire, the source of the worlds what altars (to be raised), how many and how, and Nachiketas repeated it all as explained. Then Death, being delighted, said to him again.\n\n",
+        "others": [
+          {
+            "id": 1771902921817,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) நசிகேதனால் கேட்கப்பட் உலகத்தில் முதலில் தோன்றிய ரூபம்(சரீரம்) ஆகிய அந்த அக்னியைக் குறித்து அந்த நசிகேதனிடம் ம்ருத்யு கூறினார். மேலும் எவ்வாறு செய்ய வேண்டிய வகையும், எண்ணிக்கைகளையும் அல்லது எவ்வாறு அக்னியை செய்யவேண்டும் என்று எல்லாவற்றையும் கூறினார். அந்த நசிகேதனும் ம்ருத்யுவானவர் கூறியவாறு நன்றாக புரிந்துகொண்டு அதைக்குறித்து திருப்பிக்கூறினார். அவர் திரும்பிக்கூறியதைக் கண்டு. சந்தோஷமடைந்த ம்ருத்யு மறுபடியும் மூன்று வரங்களைத் தவிர வேறு ஒரு வரத்தை கொடுப்பதற்கு இச்சை உடையவராகி இவ்வாறு கூறினார்.\n"
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "इदं श्रुतेर्वचनम्  लोकादिं लोकानामादिं प्रथमशरीरित्वात् अग्निं तं प्रकृतं नचिकेतसा प्रार्थितम् उवाच उक्तवान्मृत्युः तस्मै नचिकेतसे । किञ्च, याः इष्टकाः चेतव्याः स्वरूपेण यावतीर्वा सङ्ख्यया यथा वा चीयतेऽग्निर्येन प्रकारेण सर्वमेतदुक्तवानित्यर्थः । स चापि नचिकेताः तत् मृत्युनोक्तं प्रत्यवदत् यथावत्प्रत्ययेनावदत् प्रत्युच्चारितवान् । अथ अस्य प्रत्युच्चारणेन तुष्टः सन् मृत्युः पुनरेवाह वरत्रयव्यतिरेकेणान्यं वरं दित्सुः ॥\n",
+        "english": "This, the Sruti itself says. Death explained o Nachiketas, the fire, which was the source of the worlds, being the first embodied existence, the same that was asked for by Nachiketas; again he told him of what form the sacrificial bricks were to be, how many in number and in what manner the sacrificial fire was to be lit and all this; Nachiketas also faithfully repeated what was told him by Death. Then delighted by his repetition, Death said to him again inclined to grant him a boon other than the three promised.",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "16"
+      ],
+      "sourceText": "तमब्रवीत्प्रीयमाणो महात्मा वरं तवेहाद्य ददामि भूयः ।\nतवैव नाम्ना भवितायमग्निः सृङ्कां चेमामनेकरूपां गृहाण ॥ १६ ॥\n",
+      "verseTranslations": {
+        "english": "Delighted, the high-souled Death told him. I give thee here this other boon; by thy name alone, shall this fire be known; and take, thou, this garland also of various hues.\n\n",
+        "others": [
+          {
+            "id": 1771903077178,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) சிஷ்யனுடைய யோக்கியதையை அறிந்து பிரியமடைந்தவரான மஹாத்மா அதாவது சிறந்த புத்தியுடைய ம்ருத்யு, நசிகேதஸைக் குறித்து கூறலானார். இப்பொழுது உனக்கு என்னுடைய பிரியத்தின் காரணமாக இங்கு மறுபடியும் நான்காவது வரம் தருகிறேன். என்னால் கூறப்போகிற இந்த அக்னி உன்னுடைய நசிகேதஸ் என்ற பெயரால் பிரசித்தமாகும். மேலும் ச்ருங்கா அதாவது ரத்னமயமான இந்த அநேக விதமான விசித்திரமான மாலையை அதாவது கோர்வையை கிரஹித்துக்கொள். அல்லது சிருங்காம் - அதாவது உத்தமமான கதியைக் கொடுக்கும் கர்மமயமான கதியைக் கிரஹித்துக்கொள். இதனுடைய தாத்பர்யம் என்னவெனில் இதைத்தவிர அநேக பலன்களுக்குக் காரணமான கர்மவிக்ஞானத்தை என்னிடமிருந்து அறிந்துகொள்.\n(அ.கை) மறுபடியும் கர்மத்தின் ஸ்துதியையே கூறுகிறார்:-\n"
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "कथम् ? तं नचिकेतसम् अब्रवीत् प्रीयमाणः शिष्यस्य योग्यतां पश्यन्प्रीयमाणः प्रीतिमनुभवन् महात्मा अक्षुद्रबुद्धिः वरं तव चतुर्थम् इह प्रीतिनिमित्तम् अद्य इदानीं ददामि भूयः पुनः प्रयच्छामि । तवैव नचिकेतसः नाम्ना अभिधानेन प्रसिद्धः भविता मयोच्यमानः अयम् अग्निः । किञ्च, सृङ्कां शब्दवतीं रत्नमयीं मालाम् इमाम् अनेकरूपां विचित्रां गृहाण स्वीकुरु । यद्वा, सृङ्काम् अकुत्सितां गतिं कर्ममयीं गृहाण । अन्यदपि कर्मविज्ञानमनेकफलहेतुत्वात्स्वीकुर्वित्यर्थः ॥\n",
+        "english": "How? He said to Nachiketas, being delighted with, i.e., experiencing great delight at the sight of true discipleship, and being liberal-minded I give you now here this other boon, the fourth, being pleased with you; the fire that I have explained shall become celebrated by your name alone. Moreover, accept this sounding garland set with precious stones and wonderful; or, the word srinkam may mean the no mean goal that can be attained by karma the whole passage signifying ' accept also the knowledge of Karma because it is the source of many fruits.",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "17"
+      ],
+      "sourceText": "त्रिणाचिकेतस्त्रिभिरेत्य सन्धिं त्रिकर्मकृत्तरति जन्ममृत्यू ।\nब्रह्मजज्ञं देवमीड्यं विदित्वा निचाय्येमां शान्तिमत्यन्तमेति ॥ १७ ॥",
+      "verseTranslations": {
+        "english": "The three-fold Nachiketas, being united with the three doing, the three-fold Karma, crosses birth and death, knowing the adorable, the bright, the omniscient fire born of Brahman and realising him, attains thorough peace.\n\n ",
+        "others": [
+          {
+            "id": 1771903219035,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) நாசிகேதா அக்னியாகத்தை மும்முறைசெய்தல் அல்லது த்ரிநாசிகேதா அக்னியை அறிந்தவனாயும் அதை அத்யயனம் செய்தவனாயும், அதை அனுஷ்டானம் செய்பவனாயும் இருப்பதால் த்ரிநாசிகேதா என்று கூறப்படுகிறது. மாதா, பிதா, ஆசாரியன் ஆகிய மூவர்களை அடைந்து அவர்களுடைய சம்பந்தத்தால் அதாவது மாதா முதலியவர்கள் கூறியவாறு (அறிவுறுத்தியவாறு) அடைந்து என்பதாகும். இதற்கு வேறு ஒரு சுருதியின் பிரமாண வாயிலாய் அறியப்படுகிறது. அதாவது “மாத்ருமான் பித்ருமான் ஆசாரியவான் ப்ரூயாத்” மாதா உடையவன், பிதா உடையவன் ஆசார்யன் உடையவன் கூறட்டும் என்று சுருதி வாக்கியம். வேதம், ஸ்மிருதி, சிஷ்ட்ட புருஷர்களை அடைந்தவர்களுக்கும் பிரத்யக்ஷ அனுமான ஆகமங்களின் சம்பந்தத்தை அடைந்தவர்களுக்கும், விசுத்தி அதாவது சித்த சுத்தியானது ப்ரத்யக்ஷம். (ஸ்பஷ்டமாக தெரிகிறது) த்ரிகர்மக்ருத் அதாவது யக்ஞம், அத்யயனம், தானம் ஆகிய இந்த மூன்று கர்மாக்களையும் செய்த கர்த்தா ஜன்ம மரணத்தைக் கடக்கிறான்.\nकिञ्च, ब्रह्मजज्ञम् , ब्रह्मणो हिरण्यगर्भाज्जातो ब्रह्मजः ब्रह्मजश्चासौ ज्ञश्चेति ब्रह्मजज्ञः । सर्वज्ञो ह्यसौ । तं देवं द्योतनाज्ज्ञानादिगुणवन्तम् , ईड्यं स्तुत्यं विदित्वा शास्त्रतः, निचाय्य दृष्ट्वा चात्मभावेन इमां स्वबुद्धिप्रत्यक्षां शान्तिम् उपरतिम् अत्यन्तम् एति अतिशयेनैति । वैराजं पदं ज्ञानकर्मसमुच्चयानुष्ठानेन प्राप्नोतीत्यर्थः ॥\n(அனுவாதம்) மேலும் ப்ரஹ்மஜக்ஞம் என்பது ப்ரஹ்மத்தினிடமிருந்து அதாவது ஹிரண்ய கர்பத்திடமிருந்து உண்டாவது ப்ரஹ்மஜக்ஞ: பிரஹ்ம்மஜக்ஞ: என்றால் சர்வக்ஞம் என்பது பொருள். அந்த தேவனை அதாவது தேஜோமயமானதால் ஞான முதலிய குணமுடையவராய் இருப்பதால். ஸ்துதிக்கத்தகுந்தவரும், அதை சாஸ்திரமூலமாக அறிந்து அதை ஆத்ம பாவமாக பார்த்து அதை தன்னுடைய புத்தியில் ப்ரத்யக்ஷமாக ஆத்யந்திக சாந்தியை அதாவது உபரதியை அடைகிறான். (ஞானகர்ம சமுச்சயத்தை அடைவான் என்பது இதன் பொருளாகும்.)\n(அஃகை) இப்பொழுது அக்னி விக்ஞானமும் அந்த யக்ஞத்தின் பலனைக் கூறி இந்த பிரகரணத்தை முடிக்கிறார்.\n"
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "पुनरपि कर्मस्तुतिमेवाह  त्रिणाचिकेतः त्रिः कृत्वा नाचिकेतोऽग्निश्चितो येन सः त्रिणाचिकेतः ; तद्विज्ञानवान्वा । त्रिभिः मातृपित्राचार्यैः एत्य प्राप्य सन्धिं सन्धानं सम्बन्धम् , मात्राद्यनुशासनं यथावत्प्राप्येत्येतत् । तद्धि प्रामाण्यकारणं श्रुत्यन्तरादवगम्यते यथा मातृमान्पितृमान् (बृ. उ. ४ । १ । २) इत्यादेः । वेदस्मृतिशिष्टैर्वा प्रत्यक्षानुमानागमैर्वा । तेभ्यो हि विशुद्धिः प्रत्यक्षा । त्रिकर्मकृत् इज्याध्ययनदानानां कर्ता तरति अतिक्रामति जन्ममृत्यू । किञ्च, ब्रह्मजज्ञम् , ब्रह्मणो हिरण्यगर्भाज्जातो ब्रह्मजः ब्रह्मजश्चासौ ज्ञश्चेति ब्रह्मजज्ञः । सर्वज्ञो ह्यसौ । तं देवं द्योतनाज्ज्ञानादिगुणवन्तम् , ईड्यं स्तुत्यं विदित्वा शास्त्रतः, निचाय्य दृष्ट्वा चात्मभावेन इमां स्वबुद्धिप्रत्यक्षां शान्तिम् उपरतिम् अत्यन्तम् एति अतिशयेनैति । वैराजं पदं ज्ञानकर्मसमुच्चयानुष्ठानेन प्राप्नोतीत्यर्थः ॥\n",
+        "english": "Again he praises Karma; the three-fold Nachiketas, i.e., he by whom the Nachiketa fire has been kindled thrice; or, he who knows, studies and performs in, the Nachiketa fire. United with the three, i.e., who united with his mother, father and preceptor, i.e., having duly received instruction from them; for, that such instruction is a source of authority, is inferred from other Srpitis, such as he who has a mother and he who has a father, etc. or, the three may refer to direct perception, inference and agamas or to the vedas, the Smritis and good men; for, knowledge of virtue from these sources is an obvious fact. Doing the threefold karma, i.e., performing sacrifices, reciting the vedas, and making gifts. Whoso does these, crosses or travels beyond birth and death; again Brahmajagnam: Brahmaja means born of Brahma, i.e., Hiranyagarbha; he who is born of Brahma and is omniscient is Brahmajagnah. Devam, so called because shining, i.e., having the qualities of knowledge, et. Idyam, worthy of praise. Knowing such fire, from the Sastras and having realised him as his own atman, one attains this absolute renunciation which is realized in his intellect. The meaning is that one attains the place of the virat, by the continued practice of Upasana and Karma.\n\n",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "18"
+      ],
+      "sourceText": "त्रिणाचिकेतस्त्रयमेतद्विदित्वा य एवं विद्वांश्चिनुते नाचिकेतम् ।\nस मृत्युपाशान्पुरतः प्रणोद्य शोकातिगो मोदते स्वर्गलोके ॥ १८ ॥",
+      "verseTranslations": {
+        "english": "The three-fold Nachiketas, knowing these three, who propitiates the Nachiketa fire with this knowledge, casts off Deaths meshes behind him, travels beyond grief and rejoices in heaven.\n\n",
+        "others": [
+          {
+            "id": 1771903349514,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "திரிநாசிகேதஸ்திரயம் முன்பு கூறப்பட்டஎந்த இஷ்ட்டி உள்ளதோ அதை உள்ளவாறு அறிந்து புரிந்துகொண்டு எவன் ஆத்ம ஸ்வரூபமாகவே அந்த நாசிகேதாக்னி என்ற யக்ஞத்தை மூன்றுமுறை எந்த வித்வான் செய்கின்றானோ அவன் ம்ருத்யு பாசத்திலிருந்து அதாவது அதர்ம, அக்ஞான ராகதுவேஷாதிகளாகிய லக்ஷணங்களை சரீரம் உள்ளபோதே நீக்கி மனதில் தோன்றும் துக்கங்கள் அற்றவனாய் ஸ்வர்க்கலோகத்தில் அதாவது வைராஜ்யத்தில் விராட் ஆத்ம ரூபத்தை அடைந்து அதில் மகிழ்கிறான். (மகிழ்ச்சி அடைகின்றான்.) (இதுவரை தந்தை மகன் உறவு, அவர்களுள் ஒருவர் பால் மற்றொருவருக்குள்ள அன்பு, போன்ற விஷயங்களையும், ஸ்வர்க்கலோகம் போன்றவைகளை அடைவதற்கான உபாயங்கள் போன்றவைகளாயுமுள்ள கர்மகாண்ட விஷயங்களையே இவ்விரு வரங்கள் விளக்கின. இவ்வாறு கர்மகாண்டத்தில் அவித்யா. காம கர்மரூபமான ஸம்ஸாரமே ஆத்மாவில் ஆரோபணஞ் செய்யப்பட்டதாகும். அவ்வாறு ஆன்மாவில் ஆரோபிக்கப்பட்ட அவித்தையை நீக்கி ஆன்மாவின் சுத்தஸ்வரூபத்தை விளக்குவதற்காக மூன்றாவது வரத்தைப் பற்றியதான அடுத்த மந்திரம் ஆரம்பிக்கப்படுகிறது.)\n"
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "इदानीमग्निविज्ञानचयनफलमुपसंहरति, प्रकरणं च  त्रिणाचिकेतः त्रयं यथोक्तम् या इष्टका यावतीर्वा यथा वा इति । एतत् विदित्वा अवगम्य यश्च एवम् आत्मस्वरूपेण अग्निं विद्वान् चिनुते निर्वर्तयति नाचिकेतमग्निं क्रतुम् , सः मृत्युपाशान् अधर्माज्ञानरागद्वेषादिलक्षणान् पुरतः अग्रतः, पूर्वमेव शरीरपातादित्यर्थः, प्रणोद्य अपहाय, शोकातिगः मानसैर्दुःखैर्विगत इत्येतत् , मोदते स्वर्गलोके वैराजे विराडात्मस्वरूपप्रतिपत्त्या ॥\n",
+        "english": "He now concludes the fruits, of the knowledge and the performance of sacrifice and with them, the present topic. The three-fold Nachiketas who properly understands what was said about the bricks, their numbers and mode and who realizing the fire as the atman completes the sacrifice called Nachiketa, shakes off even before death, the meshes of Death consisting in vice, ignorance, desire and hatred, etc., and devoid of all grief rejoices in heaven, i.e., by realizing his Self as the virat.",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "19"
+      ],
+      "sourceText": "एष तेऽग्निर्नचिकेतः स्वर्ग्यो यमवृणीथा द्वितीयेन वरेण ।\nएतमग्निं तवैव प्रवक्ष्यन्ति जनासस्तृतीयं वरं नचिकेतो वृणीष्व ॥ १९ ॥",
+      "verseTranslations": {
+        "english": "This is thy fire, Oh Nachiketas, which leads to heaven and which you craved for, by the second boon; people will call this fire thine alone; Oh Nachiketas, demand the third boon.\n\n",
+        "others": [
+          {
+            "id": 1771903456851,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) ஹே! நசிகேத! உன் பொருட்டு நீ கேட்ட அக்னி வரத்தை அதாவது ஸ்வர்க்க சாதனமான எந்த அக்னி வித்தையை வரமாகக் கேட்டாயோ அந்த அக்னிவரத்தையே இரண்டாவது வரமாக கொடுத்திருக்கிறேன். மேலும் அந்த அக்னியை உன் பெயரால் ஜனங்கள் கூறுவார்கள். இந்த நான்காவது வரம் என்னால் சந்தோஷமாக உனக்குக்கொடுக்கப்பட்டது. ஹே! நசிகேத! மூன்றாவதான வரத்தைக் கேள். அதனால் நான் கடன் அற்றவனாவேன்.\nएतावद्ध्यतिक्रान्तेन विधिप्रतिषेधार्थेन मन्त्रब्राह्मणेनावगन्तव्यं यद्वरद्वयसूचितं वस्तु नात्मतत्त्वविषययाथात्म्यविज्ञानम् । अतो विधिप्रतिषेधार्थविषयस्य आत्मनि क्रियाकारकफलाध्यारोपणलक्षणस्य स्वाभाविकस्याज्ञानस्य संसारबीजस्य निवृत्त्यर्थं तद्विपरीतब्रह्मात्मैकत्वविज्ञानं क्रियाकारकफलाध्यारोपणशून्यमात्यन्तिकनिःश्रेयसप्रयोजनं वक्तव्यमित्युत्तरो ग्रन्थ आरभ्यते । तमेतमर्थं द्वितीयवरप्राप्त्याप्यकृतार्थत्वं तृतीयवरगोचरमात्मज्ञानमन्तरेणेत्याख्यायिकया प्रपञ्जयति । यतः पूर्वस्मात्कर्मगोचरात्साध्यसाधनलक्षणादनित्याद्विरक्तस्यात्मज्ञानेऽधिकार इति तन्निन्दार्थं पुत्राद्युपन्यासेन प्रलोभनं क्रियते ।\n(அனுவாதம்)(அஃகை) விதிநிஷேதங்கள் எதனுடைய பிரயோஜனமோ அதை முன் கூறப்பட்ட மந்திர பிராஹ்மணத்தின் வாயிலாக இந்த இரண்டு வரங்களே காண்பிக்கப்பட்ட வஸ்து என்று அறிய வேண்டும். இதில் ஆத்ம தத்துவத்தின் யதார்த்த ஞானமன்று. ஆகையால் விதிநிஷேதார்த்த விஷயங்கள் ஆத்மாவிடத்தில் கிரியகாரக பலம் ஆகிய அத்யாரோபம் செய்யப்பட்ட சுவாபாவமான அக்ஞானமாகிய சம்சார பீஜத்தை நீக்குவதின் பொருட்டு அதைக்காட்டிலும் வேறான பிரஹ்மாத்மைக்ய ஞானம் அதாவது கிரியா, காரக பல அத்யாரோப லக்ஷணமற்றமுடிவான நிஸ்ச்ரேயஸ பிரயோஜனத்தைத் தெரிவிக்க வேண்டும் என்பதற்காக அடுத்ததாக கிரந்தம் ஆரம்பிக்கப்படுகிறது. அதன் பொருட்டு மூன்றாவது வரமாக அறியப்போகிற ஆத்ம ஞானத்தைக் காட்டிலும் வேறான இரண்டாவது வரத்தை அடைந்திருந்தாலும் க்ருதார்த்தம் அடைந்தது ஆகாது என்று இனிவரும் கதை விளக்குகிறது. எதனால் முன்பு அடைந்த கர்மவிஷயமான சாதன அநித்தியத்திலும் சாத்தியலக்ஷ்ணமான அநித்யத்திலும் விரக்தி அடைந்தவனுக்கே ஆத்மஞானத்தில் அதிகாரம் என்பதால் கர்மத்தை நிந்திப்பதற்காக புத்திரன் முதலியவைகளைக் கூறும் வாயிலாக அவற்றில் ஆசையை உண்டாக்கி இனிவரும் கதையினால் சுருதி அப்பொருளை (கர்ம வைராக்ய பூர்வகமான பொருளை) விளக்குவதாலென்க.\n(அ-கை)(அனுவாதம்) ஹே நசிகேதா மூன்றாவது வரத்தைக் கேள் என்று கூறப்பட்டவனாய் நசிகேதன் இவ்வாறு கூறலானான்:\n"
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "एषः ते तुभ्यम् अग्निः वरः हे नचिकेतः, स्वर्ग्यः स्वर्गसाधनः, यम् अग्निं वरम् अवृणीथाः वृतवान् प्रार्थितवानसि द्वितीयेन वरेण, सोऽग्निर्वरो दत्त इत्युक्तोपसंहारः । किञ्च, एतम् अग्निं तवैव नाम्ना प्रवक्ष्यन्ति जनासः जना इत्येतत् । एष वरो दत्तो मया चतुर्थस्तुष्टेन । तृतीयं वरं नचिकेतः वृणीष्व । तस्मिन्ह्यदत्ते ऋणवानेवाहमित्यभिप्रायः ॥\n",
+        "english": "Oh Nachiketas, this is the fire leading to heaven that you craved for, by the second boon; and the expression the boon has been granted should be supplied by way of concluding what has been said again, people will call this fire by thy name; this is the fourth boon which I granted being delighted with thee; Oh Nachiketas, demand the third boon. The meaning is that Death considered himself a debtor if that were not granted..",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "20"
+      ],
+      "sourceText": "येयं प्रेते विचिकित्सा मनुष्ये अस्तीत्येके नायमस्तीति चैके ।\nएतद्विद्यामनुशिष्टस्त्वयाहं वराणामेष वरस्तृतीयः ॥ २० ॥",
+      "verseTranslations": {
+        "english": "(Nachiketas said) This well-known doubt as to what becomes of a man after death,some say he is and some, he is not,I shall know being taught by thee. This boon is the third of the boons.\n\n \n\n",
+        "others": [
+          {
+            "id": 1771903640097,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்)இறந்த மனிதனிடத்தில் எனக்கு சந்தேஹம் இருக்கிறது. சரீரம் இந்திரியம் புத்தி இவைகளைக் காட்டிலும் வேறான தேஹாந்தர சம்பந்தி ஆத்மா இருக்கிறது என்று ஒரு சிலரும், அவ்வாறு இல்லை என்று ஒரு சிலரும் கூறுகின்றனர். இவ்வாறு இல்லை என்றும் இவ்வாறு இருக்கிறது என்றும் சிலர் கூறுவதால் இதில் நமக்கு பிரத்தியக்ஷமாகவோ, அனுமானத்தாலோ நிர்ணயம் செய்ய முடியாது. ஏனெனில் அது ஞானத்தின் அதீனமான பரமபுருஷார்த்தமாகும். ஆகையால் உங்களால் உபதேசிக்கப்பட்டு நான் அறிந்து கொள்வேனாக. நீங்கள் அளித்த வரங்களில் மீதமான மூன்றாவது வரமாகும்.\n(அ-கை) அந்த நசிகேதன் நிஸ்ரேயஸ் சாதனமான ஆத்மக் ஞானத்திற்கு பூர்ணமாக யோக்யம் (அருகதை) இருக்கிறதா அல்லது இல்லையா என்பதை அறிவதற்கு பரீக்ஷை செய்வதற்காக(யமன்) இவ்வாறு கூறுகிறார்.\n"
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "एतावद्ध्यतिक्रान्तेन विधिप्रतिषेधार्थेन मन्त्रब्राह्मणेनावगन्तव्यं यद्वरद्वयसूचितं वस्तु नात्मतत्त्वविषययाथात्म्यविज्ञानम् । अतो विधिप्रतिषेधार्थविषयस्य आत्मनि क्रियाकारकफलाध्यारोपणलक्षणस्य स्वाभाविकस्याज्ञानस्य संसारबीजस्य निवृत्त्यर्थं तद्विपरीतब्रह्मात्मैकत्वविज्ञानं क्रियाकारकफलाध्यारोपणशून्यमात्यन्तिकनिःश्रेयसप्रयोजनं वक्तव्यमित्युत्तरो ग्रन्थ आरभ्यते । तमेतमर्थं द्वितीयवरप्राप्त्याप्यकृतार्थत्वं तृतीयवरगोचरमात्मज्ञानमन्तरेणेत्याख्यायिकया प्रपञ्जयति । यतः पूर्वस्मात्कर्मगोचरात्साध्यसाधनलक्षणादनित्याद्विरक्तस्यात्मज्ञानेऽधिकार इति तन्निन्दार्थं पुत्राद्युपन्यासेन प्रलोभनं क्रियते । नचिकेता उवाच तृतीयं वरं नचिकेतो वृणीष्व इत्युक्तः सन्  येयं विचिकित्सा संशयः प्रेते मृते मनुष्ये, अस्ति इत्येके अस्ति शरीरेन्द्रियमनोबुद्धिव्यतिरिक्तो देहान्तरसम्बन्ध्यात्मा इत्येके मन्यन्ते, नायमस्ति इति चैके नायमेवंविधोऽस्तीति चैके । अत्र चास्माकं न प्रत्यक्षेण नाप्यनुमानेन निर्णयविज्ञानम् । एतद्विज्ञानाधीनो हि परः पुरुषार्थ इत्यतः एतत् विद्यां विजानीयाम् अहम् अनुशिष्टः ज्ञापितः त्वया । वराणामेष वरस्तृतीयोऽवशिष्टः ॥\n",
+        "english": "Thus much, which has been indicated by the two boons, is alone to be understood from the preceding Mantras and Brahmanas, which are mandatory or prohibitory in their import but not the knowledge of the true nature of the entity of the atman. Therefore, for the dispelling of natural ignorance (Avidya), which deals with matters the subject of positive and prohibitory injunctions, which consists in superposing on the atman, activity, agency and enjoyment, and which is the seed of samsara, it is necessary to explain the knowledge of the identity of the Brahman and the atman, which is contrary to that previously explained which is free from the fault of superposition of activity; agency, and enjoyment on the atman, and whose result is the attainment of absolute emancipation; with this end, the subsequent portion of this work is commenced. The anecdote explains how without this well-known knowledge of the atman, the subject of the third boon, all that is desirable is not achieved even by the obtaining of the second boon. Because, it is only those, who are disgusted with the result previously named in the nature of means and ends, transitory, and produced by karma, that are entitled to acquire the knowledge of the atman; therefore, to denounce Karma, it is sought to tempt Nachiketas away from his object, by promise of sons and the rest. Nachiketas being asked by Death to name his third boon, said: This doubt regarding man when dead,some say that there is an atman distinct from body, senses, mind and intellect and entering into another body; some say that there is no such atman; and this doubt cannot be resolved by us, either by direct perception or logical inference; and because the attainment of the highest consummation depends upon a clear knowledge of this. I would acquire this knowledge, being instructed by thee. This, the third, i.e., the last of the boons.",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "21"
+      ],
+      "sourceText": "देवैरत्रापि विचिकित्सितं पुरा न हि सुविज्ञेयमणुरेष धर्मः ।\nअन्यं वरं नचिकेतो वृणीष्व मा मोपरोत्सीरति मा सृजैनम् ॥ २१ ॥\n",
+      "verseTranslations": {
+        "english": "Here, even the gods of yore had doubt. Indeed it is not easy to knowsubtle is this matterOh, Nachiketas, ask for some other boon. Press not this on me; give this up for me.\n\n",
+        "others": [
+          {
+            "id": 1771903807834,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) தேவர்களும் முன்பு இந்த (ஆத்ம) வஸ்துவினிடத்தில் சந்தேஹம் உடையவர்களாய் இருந்தார்கள். சாதாரண மக்களும் இத்தத்வத்தை கேட்டும் நன்றாக அறியவில்லை. ஆகையால் இந்த ஆத்மா எனப்படும் தர்மம் மிக சூக்ஷ்மமானது. ஆகையால் நசிகேதன் வேறு ஒரு பலம் அதாவது சந்தேஹம் இன்றிய பலத்தைக் கேள். தனமுடையவன் கடன் பட்டவனை இம்சிப்பது போல் என்னை இம்சிக்காதே. இந்த வரத்தை என் பொருட்டு விட்டு விடு."
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "किमयमेकान्ततो निःश्रेयससाधनात्मज्ञानार्हो न वेत्येतत्परीक्षणार्थमाह  देवैरपि अत्र एतस्मिन्वस्तुनि विचिकित्सितं संशयितं पुरा पूर्वम् । न हि सुविज्ञेयं सुष्ठु विज्ञेयम् असकृच्छ्रुतमपि प्राकृतैर्जनैः, यतः अणुः सूक्ष्मः एषः आत्माख्यः धर्मः । अतः अन्यम् असन्दिग्धफलं वरं नचिकेतः, वृणीष्व । मा मां मा उपरोत्सीः उपरोधं मा कार्षीः अधमर्णमिवोत्तमर्णः । अतिसृज विमुञ्च एनं वरं मा मां प्रति ॥\n",
+        "english": "Death in order to test whether he was or was not absolutely fit to acquire the knowledge of the atman leading to emancipation, said this: Even by the gods in older times, doubt was entertained on this point. It is not easy to be known, though heard explained, by ordinary men. Because this subject of the atman is subtle. Therefore, Oh, Nachiketas, ask for another boon, whose fruit is certain; press me not as a creditor presses a debtor. Give up this boon for me.",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "22"
+      ],
+      "sourceText": "देवैरत्रापि विचिकित्सितं किल त्वं च मृत्यो यन्न सुज्ञेयमात्थ ।\nवक्ता चास्य त्वादृगन्यो न लभ्यो नान्यो वरस्तुल्य एतस्य कश्चित् ॥ २२ ॥\n",
+      "verseTranslations": {
+        "english": "Thou sayest, Oh Death, that even the gods had doubts here and that this is not easy to know. None other like thee, who could tell of this, can be found; no other boon can at all equal this.\n\n",
+        "others": [
+          {
+            "id": 1771903952156,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) இங்கு தேவர்களும் கூட இந்த வஸ்துவினிடத்தில் சந்தேஹமுடையவர்களாய் இருந்தார்கள் என்று உங்களிடமிருந்து அல்லவா நாங்கள் கேட்டோம். ஹே! மிருத்யுவே! நீங்களும் ஆத்மதத்துவத்தை நன்றாக தெரிந்து கொள்வதற்கான யோகியதையை தெரிவிக்கவில்லை. அதனால் பண்டிதர்களாலும் அறிய முடியாதலால் இந்த தர்மத்தைப் பற்றி கூறுவதில் உங்களுக்கு சமானமாக ஒரு பண்டிதரையும் எவ்வளவு தேடினாலும் கிடைக்கமாட்டார்கள். இந்த வரம் நிஸ்ஸ்ரேயஸின் பொருட்டாகும். ஆகையால் இதற்கு சமானமான வேறு ஒன்று கிடையாது. ஏன் எனில் மற்ற எல்லாவரமும் அநித்யபலம் உடையதாகும் என்பது இதனுடைய அபிப்ராயம்.\n(அஃகை) இவ்வாறு நசிகேதன் கூறிய பின்பும் மிருத்யுவானவர் அவனை ஏமாற்றுவதற்காக கூறுகிறார்.\n"
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "एवमुक्तो नचिकेता आह  देवैरत्रापि विचिकित्सितं किलेति भवत एव नः श्रुतम् । त्वं च मृत्यो, यत् यस्मात् न सुज्ञेयम् आत्मतत्त्वम् आत्थ कथयसि । अतः पण्डितैरप्यवेदनीयत्वात् वक्ता च अस्य धर्मस्य त्वादृक् त्वत्तुल्यः अन्यः पण्डितश्च न लभ्यः अन्विष्यमाणोऽपि । अयं तु वरो निःश्रेयसप्राप्तिहेतुः । अतः न अन्यः वरः तुल्यः सदृशः अस्ति एतस्य कश्चिदपि । अनित्यफलत्वादन्यस्य सर्वस्यैवेत्यभिप्रायः ॥\n",
+        "english": "Thus addressed, Nachiketas said, I have heard from yourself that even the gods had doubt on this point and you say, Oh Death, that the true nature of the atman is not easy to know. As this cannot be known even by the learned, another, learned like you 2 to explain this, cannot be found, though sought. This boon also is a means to the attainment of emancipation and there is no other boon which can at all weigh with this. The meaning is that other boons bear only transitory fruits.",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "23"
+      ],
+      "sourceText": "शतायुषः पुत्रपौत्रान्वृणीष्व बहून्पशून्हस्तिहिरण्यमश्वान् ।\nभूमेर्महदायतनं वृणीष्व स्वयं च जीव शरदो यावदिच्छसि ॥ २३ ॥",
+      "verseTranslations": {
+        "english": "(Death says) ask for centenarian sons and grandsons, many cattle, elephants, gold and horses. Ask for wide extent of earth and live yourself, as many autumns as you like.\n\n",
+        "others": [
+          {
+            "id": 1771904078105,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) நூறு ஆயுள் உடைய புத்திரபௌத்திரர்களை (மகன்கள், பேரன்களை) வரமாக பெற்றுக்கொள். மேலும் பசு முதலிய லக்ஷக்கணக்கான அநேக பசுக்களையும், யானைகளையும் தங்கத்தையும், குதிரைகளையும், அவ்வாறே மிக விஸ்தாரணமான நிலத்தை உடைய ராஜ்யத்தை வரமாகப் பெற்றுக்கொள். மேலும் உனக்கு குறுகிய ஆயுள் இருந்தால் இதெல்லாம் வீணாகும். ஆகையால் நீ எதுவரை ஜீவிக்க இச்சிக்கிறாயோ அதுவரை இந்த இந்திரிய முதலியவைகளை உடைய சரீரத்தை தரித்துக் கொண்டு இரு.\n"
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "एवमुक्तोऽपि पुनः प्रलोभयन्नुवाच मृत्युः  शतायुषः शतं वर्षाणि आयूंषि येषां तान् शतायुषः पुत्रपौत्रान् वृणीष्व । किञ्च, गवादिलक्षणान् बहून् पशून् हस्तिहिरण्यम् , हस्ती च हिरण्यं च हस्तिहिरण्यम् , अश्वांश्च । किञ्च, भूमेः पृथिव्याः महत् विस्तीर्णम् आयतनम् आश्रयं मण्डलं साम्राज्यं वृणीष्व । किञ्च, सर्वमप्येतदनर्थकं स्वयं चेदल्पायुरित्यत आह  स्वयं च त्वं जीव धारय शरीरं समग्रेन्द्रियकलापं शरदः वर्षाणि यावत् इच्छसि जीवितुम् ॥\n",
+        "english": "Though thus addressed, still Death said, to tempt him again. Satayushah, those who live a hundred years, i.e., centenarians; ask for centenarian sons and grandsons, besides, many cattle such as cows, etc., elephants, gold and horses. Ask for sovereignty over a large circuit of earth. And as all this would be useless, if he were himself short-lived, Death added and yourself live as many years as you like with a body, where all the organs are vigorou.",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "24"
+      ],
+      "sourceText": "एतत्तुल्यं यदि मन्यसे वरं वृणीष्व वित्तं चिरजीविकां च ।\nमहाभूमौ नचिकेतस्त्वमेधि कामानां त्वा कामभाजं करोमि ॥ २४ ॥\n",
+      "verseTranslations": {
+        "english": "Some boon equal to this, if thou thinkest fit, demandwealth and longevity; be king of the wide earth, Nachiketas, I shall make thee enjoy all thy desires (pertaining to earth and heaven).\n\n \n\n",
+        "others": [
+          {
+            "id": 1771904170977,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) முன்பு அருளியதற்கு சமமான வேறு வரத்தையோ அல்லது அதைக் காட்டிலும் சிறப்பானது என்று நீ எதை நினைக்கிறாயோ அந்த வரத்தையும் கேள். மேலும் பொன், ரத்தினங்கள் முதலிய செல்வத்தையும் தீர்க்க காலம் வசித்தலையும் வரமாக கேட்பாயாக. ஹே!நசிகேத: அதிகமாக கூறி என்ன பயன். நீ விஸ்தாரமான பூமிக்கு ராஜாவாக ஆவாயாக. மேலும் வேறு காமனைகள் அதாவது தேவர்கள், மனிதர்கள் எதை விரும்புவார்களோ அத்தனை காமனைகளையும் நீ விரும்பியவாறு அனுபவிப்பதற்கு அளிக்கிறேன்: ஏன் எனில் நான் சத்யசங்கல்பதேவன்.\n"
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "एतत्तुल्यम् एतेन यथोपदिष्टेन सदृशम् अन्यमपि यदि मन्यसे वरम् , तमपि वृणीष्व । किञ्च, वित्तं प्रभूतं हिरण्यरत्नादि चिरजीविकां च सह वित्तेन वृणीष्वेत्येतत् । किं बहुना ? महाभूमौ महत्यां भूमौ राजा नचिकेतः त्वम् एधि भव । किञ्चान्यत् , कामानां दिव्यानां मानुषाणां च त्वा त्वां कामभाजं कामभागिनं कामार्हं करोमि, सत्यसङ्कल्पो ह्यहं देवः ॥\n",
+        "english": "If you think of any other boon equal to that already explained, ask for that also; besides, ask for large quantities of gold and precious stones and longevity to boot. In short, rule as king in the, wide earth; moreover, I shall make thee enjoy all thy desires pertaining to men and gods; for, I am a Deva whose will never fails.\n\n",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "25"
+      ],
+      "sourceText": "ये ये कामा दुर्लभा मर्त्यलोके सर्वान्कामांश्छन्दतः प्रार्थयस्व ।\nइमा रामाः सरथाः सतूर्या न हीदृशा लम्भनीया मनुष्यैः ।\nआभिर्मत्प्रत्ताभिः परिचारयस्व नचिकेतो मरणं मानुप्राक्षीः ॥ २५ ॥\n",
+      "verseTranslations": {
+        "english": "Whatever desires are difficult to realise in the land of mortals, ask, as thou likest, for all such desired objects. These nymphs have their chariots and lutes; and women like these are not enjoyable by mortals; with these, by me given, have thy services performed. Oh Nachiketas, do not ask about death.\n\n ",
+        "others": [
+          {
+            "id": 1771904319645,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) மனித உலகத்தில் எந்த எந்த காமனைகள் அவசியம் வேண்டப்பட்டவையும் மிகவும் அரிதாகுமோ அந்த எல்லா காமனைகளையும் நீ வேண்டுவாயாக, மேலும் புருஷர்களை ரமிக்கச் செய்வதால் ராமா: எனப்படும் தேவலோகத்து அப்சரசுகள் ரதங்களைக் கூடியவர்கள், சங்கீத வாத்தியங்களை உடையவர்கள் ஆகிய இவ்வாறு உள்ளவர்கள் எங்களைப் போன்றவர்களின் பிரஸாதம் (அருள்) இன்றி வேறு சாதனத்தால் மனிதர்களால் அடைய முடியாது, என்னால் அளிக்கப்பட்ட பரிச்சாரிணிகளால் (சேவை செய்பவர்களால்) பரிச்சாரம் (சேவைகள்)செய்து கொள். அதாவது, அவர்களைக் கொண்டு உனக்கு பாதம் கழுவுதல் முதலிய சேவைகளை செய்து கொள்வாயாக என்பது பொருள். ஹே நசிகேத மரணத்தைக் குறிது உயிர் பிரிந்த உடன் ஜீவன் இருக்கிறதா? அல்லது இல்லையா என்றகேள்வி காகத்தின் பற்களை எண்ணுவதற்கு ஒப்பாகும். ஆகையால் அதைக் குறித்து கேள்வி நீ எழுப்புவது பொருந்தாது.\n(அஃகை) இவ்வாறு பலவாராக தர்மராஜன் குழப்பமேற்படுத்திய (ஆசையை உண்டாக்கிய) போதிலும், கலக்கமுறாத பெருங்குளம் போல் நசிகேதன் கூறலானான். (இஃது எல்லாவற்றினின்றும் விரக்தி அடைந்தவனும், சம, தமாதி குணங்களோடு கூடியவனுமே ஞானமார்க்கத்தைப் பற்றிய உபதேசம் பெறத்தகுந்த அதிகாரி என்பதனை விளக்குகிறது இம்மந்திரம்.)"
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "ये ये कामाः प्रार्थनीयाः दुर्लभाश्च मर्त्यलोके, सर्वान् तान् कामान् छन्दतः इच्छातः प्रार्थयस्व । किञ्च, इमाः दिव्या अप्सरसः, रमयन्ति पुरुषानिति रामाः, सह रथैर्वर्तन्त इति सरथाः, सतूर्याः सवादित्राः, ताश्च न हि लम्भनीयाः प्रापणीयाः ईदृशाः एवंविधाः मनुष्यैः मर्त्यैः अस्मदादिप्रसादमन्तरेण । आभिः मत्प्रत्ताभिः मया प्रदत्ताभिः परिचारिकाभिः परिचारयस्व आत्मानम् , पादप्रक्षालनादिशुश्रूषां कारयात्मन इत्यर्थः । हे नचिकेतः, मरणं मरणसम्बद्धं प्रश्नं प्रेत्यास्ति नास्तीति काकदन्तपरीक्षारूपं मा अनुप्राक्षीः मैवं प्रष्टुमर्हसि ॥\n",
+        "english": "Ask, as you like, for all desired objects, which are covetable, but not easily attainable in the land of mortals. Again, here are these celestial nymphs (the term Ramas meaning those who delight males) with their chariots and with their musical instruments; and women like these cannot be obtained by mortals without the grace of beings like us; with these female attendants given by me, have thy services performed, such as cleaning the feet with water, etc.; Oh Nachiketas, it does not become you to put me the question connected with death, i.e., whether, when man is dead, there is or is not anything survivinga question (as unprofitable as that) of examining the number of crows teeth.",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "26"
+      ],
+      "sourceText": "श्वोभावा मर्त्यस्य यदन्तकैतत्सर्वेन्द्रियाणां जरयन्ति तेजः ।\nअपि सर्वं जीवितमल्पमेव तवैव वाहास्तव नृत्यगीते ॥ २६ ॥",
+      "verseTranslations": {
+        "english": "(Nachiketas says) Ephemeral these; Oh Death, these tend to the decay of the fire (vigour) of all the senses in man. Even the longest life is, indeed, short. Thine alone be the chariots, the dance and music.\n\n ",
+        "others": [
+          {
+            "id": 1771904448168,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) (உங்களால் அளிக்கப்படும் போகங்கள்) நாளை இருக்குமோ, இல்லாமல் போகுமோ, என்று நிச்சயமற்றதாகும். உங்களால் அளிக்கப்படும் போகங்கள் நாளை இல்லாமல் போகும். ஹே ம்ருத்யு! மேலும் மனிதர்களின் முடிவை அளிப்பது எதுவோ அது அப்சரஸ் முதலிய போகங்கள் அவைகள் இந்திரியங்களின் தேஜஸ்ஸை இல்லாமல் செய்கிறது. தர்மம், வீரியம், பிரக்ஞாதேஜஸ்யசஸ் (புகழ்) முதலியவைகளை நசிக்கச் செய்வதால் அவைகள் அநர்த்தங்களே. நீங்கள் எந்த நீண்டாயுளை கொடுத்தீர்களோ அதைக் குறித்தும் கேளுங்கள், பிரஹ்மா முதல் எது எல்லாம் ஜீவிக்கிறதோ அதுவெல்லாம் அல்ப ஆயுளே. என்னவென்று கூறுவது நம்முடைய தீர்க்க ஆயுளை. ஆகையால் ரத முதலியவைகளும் அவ்வாறே நடனம் கீதம் முதலியவைகளும் உங்களிடமே இருக்கட்டும்."
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "मृत्युना एवं प्रलोभ्यमानोऽपि नचिकेता महाह्रदवदक्षोभ्य आह  श्वो भविष्यन्ति न वेति सन्दिह्यमान एव येषां भावो भवनं त्वयोपन्यस्तानां भोगानां ते श्वोभावाः । किञ्च, मर्त्यस्य मनुष्यस्य अन्तक हे मृत्यो, यत् एतत् सर्वेन्द्रियाणां तेजः तत् जरयन्ति अपक्षपयन्ति । अप्सरःप्रभृतयो भोगा अनर्थायैवैते, धर्मवीर्यप्रज्ञातेजोयशःप्रभृतीनां क्षपयितृत्वात् । यां चापि दीर्घजीविकां त्वं दित्ससि तत्रापि शृणु । सर्वं यद्ब्रह्मणोऽपि जीवितम् आयुः अल्पमेव, किमुतास्मदादिदीर्घजीविका । अतः तवैव तिष्ठन्तु वाहाः रथादयः, तथा तव नृत्यगीते च ॥\n",
+        "english": "Though thus tempted, Nachiketas unagitated like a large lake, said: svobhavah, enjoyments whose existence the next day is a matter of doubt; the enjoyments enumerated by you are ephemeral; again. Oh Death, they tend to the decline of the vigour of all the organs of man. These nymphs and other enjoyments only tend to harm, because they destroy virtue, strength, intellect, vigour, fame and the rest. As for the longevity that you will give me, hear me on that point. All life, even that of Brahma is, indeed, short. What need be said of our longevity. Therefore, keep the chariots, etc., for thyself alone, as also the dance and music.",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "27"
+      ],
+      "sourceText": "न वित्तेन तर्पणीयो मनुष्यो लप्स्यामहे वित्तमद्राक्ष्म चेत्त्वा ।\nजीविष्यामो यावदीशिष्यसि त्वं वरस्तु मे वरणीयः स एव ॥ २७ ॥",
+      "verseTranslations": {
+        "english": "Man is not to be satisfied with wealth; if wealth, were wanted, we shall get it, if we only see thee. We shall also live, as long as you rule. Therefore, that boon alone is fit to be craved by me. \n\n ",
+        "others": [
+          {
+            "id": 1771904585098,
+            "language": "Tamil",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) மனிதன் மிகுந்த செல்வத்தினால் திருப்தி அடையமாட்டான். உலகில் ஒருவரும் செல்வத்தை அடைந்ததால் திருப்தி அடைந்ததாகப் பார்க்கப்படவில்லை. எங்களுக்கு செல்வத்தில் ஆசையிருந்தால் உங்களைப் பார்த்ததினாலேயே இந்த செல்வம் கிடைத்திருக்கும். அவ்வாறே ஜீவிதமும் (ஆயுளும்) கிடைத்திருக்கும். நீங்கள் எது வரையில் யம பதவியில் யஜமானனாக இருந்து கொண்டு நடத்திக் கொண்டிருக்கிறீர்களோ (சாசனை செய்து கொண்டிருக்கிறீர்களோ) அது வரை நாங்கள் ஜீவித்துக் கொண்டிருப்போம். மனிதன் உங்களை அடைந்து எவ்வாறு அல்பதனமும், ஆயுளும் உடையவனாக ஆவான்? அந்த வரமானது ஆத்ம விக்ஞானமாய் இருந்தால் மட்டுமே வரமாக கேட்க வேண்டும்.\nஏனென்றால்\n"
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "किञ्च, न प्रभूतेन वित्तेन तर्पणीयो मनुष्यः । न हि लोके वित्तलाभः कस्यचित्तृप्तिकरो दृष्टः । यदि नामास्माकं वित्ततृष्णा स्यात् , लप्स्यामहे प्राप्स्यामहे वित्तम् , अद्राक्ष्म दृष्टवन्तो वयं चेत् त्वा त्वाम् । जीवितमपि तथैव  जीविष्यामः यावत् याम्ये पदे त्वम् ईशिष्यसि ईशिष्यसे प्रभुः स्याः । कथं हि मर्त्यस्त्वया समेत्याल्पधनायुर्भवेत् ? वरस्तु मे वरणीयः स एव यदात्मविज्ञानम् ॥\n",
+        "english": "Moreover, man is not to be satisfied with much wealth; for, attainment of wealth has not been found to ensure delight to anybody. If ever we have thirst for wealth, we shall get it, if we have seen thee; so also, long life; we shall live, as long as you rule in your place; for, how could a mortal, after approaching thee, become poor or short-lived. Therefore, the boon fit to be craved for by me is that alone, i.e., the knowledge of the atman.",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "28"
+      ],
+      "sourceText": "अजीर्यताममृतानामुपेत्य जीर्यन्मर्त्यः क्वधःस्थः प्रजानन् ।\nअभिध्यायन्वर्णरतिप्रमोदानतिदीर्घे जीविते को रमेत ॥ २८ ॥\n",
+      "verseTranslations": {
+        "english": "Oh Death, tell us that in which men have this doubt, and which is about the great hereafter; no other boon doth Nachiketas crave, than this which entered into the secret. \n\n ",
+        "others": [
+          {
+            "id": 1771904816979,
+            "language": "",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) வயது காரணமாக தேய்வு, முதிற்சி, முதலியவைகள் அற்றவர்களும், மரண தர்மம் அற்றவர்களுமான தேவர்களால் தங்கள் போன்றோரின் பக்கத்தில் நெருங்கிய பின் அத்தகைய உத்தமர்களிடத்தில் உத்தம புருஷார்த்தம் உள்ளது என்று அறிந்துள்ளவன். அந்தரிக்ஷாதி லோகங்களுக்குக் கீழே உள்ள மண்ணுலகில் வாழ்பவனும், மேலும் தனக்குக் கீழான மனைவி, மக்கள் பால் ஆசை கொண்டவனும் மூப்பு, மரணம், இவைகளைக் கொண்டவனான அவிவேக மனிதனால் வேண்டப்படும் புத்திரன், செல்வம், பொன், முதலான அஸ்திர பொருள்களை எவ்வாறு வேண்டுவான்.\n(அனுவாதம்) क्व तथास्थ (க்வ ததாஸ்த்த) என்பது பாடந்தரம். இந்த பஷத்தில் அக்ஷரத்தைச் சேர்க்கவேண்டும். அந்த புத்திரன் முதலியவைகளில் ஆஸ்த்தா (ஆசை, பற்று) என்பது அதன் பரமான (அதைக் குறித்தே உள்ள) பிரவிர்த்தியாம். அதில் அசாரத்தை அறிந்தவன் ஒருவனும் அதில் இச்சை கொள்ளமாட்டான். ஏன் எனில் எல்லோரும் மேலும் மேலும் மேன்மையை அடைய விரும்புகின்றனர். ஆகையால் புத்திரன் தனம் முதலியவைகளில் லோபத்தை அடையமாட்டார்கள். அவ்வாறே வர்ண ராகத்தினால் அடையப்படும் அப்சரஸ் முதலிய சுகங்களில் அஸ்திரத்தன்மையை பாவனை செய்து அதை மித்யா ரூபமாய் அறிந்த விவேகி புருஷன் அதிக காலம் ஜீவிப்பதற்கு எவ்வாறு இச்சிப்பான்.\n"
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "यतश्च अजीर्यतां वयोहानिमप्राप्नुवताम् अमृतानां सकाशम् उपेत्य उपगम्य आत्मन उत्कृष्टं प्रयोजनान्तरं प्राप्तव्यं तेभ्यः प्रजानन् उपलभमानः स्वयं तु जीर्यन् मर्त्यः जरामरणवान् क्वधःस्थः कुः पृथिवी अधश्चासावन्तरिक्षादिलोकापेक्षया तस्यां तिष्ठतीति क्वधःस्थः सन् कथमेवमविवेकिभिः प्रार्थनीयं पुत्रवित्ताद्यस्थिरं वृणीते । क्व तदास्थः इति वा पाठान्तरम् । अस्मिन्पक्षे चैवमक्षरयोजना तेषु पुत्रादिषु आस्था आस्थितिः तात्पर्येण वर्तनं यस्य स तदास्थः । ततोऽधिकतरं पुरुषार्थं दुष्प्रापमपि अभिप्रेप्सुः क्व तदास्थो भवेत् ? न कश्चित्तदसारज्ञस्तदर्थी स्यादित्यर्थः । सर्वो ह्युपर्युपर्येव बुभूषति लोकः । तस्मान्न पुत्रवित्तादिलोभैः प्रलोभ्योऽहम् । किञ्च, अप्सरःप्रमुखान् वर्णरतिप्रमोदान् अनवस्थितरूपतया अभिध्यायन् निरूपयन् यथावत् अतिदीर्घे जीविते कः विवेकी रमेत ॥\n",
+        "english": "Therefore, giving up the idea of tempting me by promise of ephemeral objects, tell us, Oh Death, that which was solicited by me, i.e., the well-ascertained knowledge of the atman, about which they doubt whether it is or no, when men die, which relates to the world to come and which serves to be of great benefit. Why say much? Than the present boon about the atman which goes into an inexplicable secret, no other boon which is to be craved for only by the ignorant and whose subject is something transitory, Nachiketas does crave for, even in thought. The Sruti itself says this.\n\n \n\n",
+        "others": []
+      },
+      "teekas": []
+    },
+    {
+      "hierarchyValues": [
+        "1",
+        "1",
+        "29"
+      ],
+      "sourceText": "यस्मिन्निदं विचिकित्सन्ति मृत्यो यत्साम्पराये महति ब्रूहि नस्तत् ।\nयोऽयं वरो गूढमनुप्रविष्टो नान्यं तस्मान्नचिकेता वृणीते ॥ २९ ॥",
+      "verseTranslations": {
+        "english": "Oh Death, tell us that in which men have this doubt, and which is about the great hereafter; no other boon doth Nachiketas crave, than this which entered into the secret. \n\n ",
+        "others": [
+          {
+            "id": 1771905039830,
+            "language": "",
+            "author": "Sri Gurupada Dhoolika Sudarshana Ramasubrahmanya Raja",
+            "text": "(அனுவாதம்) ஹே மிருத்யோ! மரணத்திற்குப் பின் இருக்கின்றது இல்லை என்ற விஷயத்தில் சந்தேஹம் உண்டாகிறதோ எந்த விஷயமானது (எந்த ஆன்மாவைப் பற்றி நிர்ணயிக்கக்கூடிய விஷயமானது) பரலோக விஷயத்தில் பெரும் பயனையடையக் காரணமோ அதைக் கூறுவீராக. அதிகம் கூறுவானேன் எந்த இந்த ஆன்மா விஷயத்தைப் பற்றிய வரமானது விளக்கக் கடினமானதோ மிகவும் ரஹஸ்யமானதோ ஆகையால் அதனின்றும் வேறுபட்ட மற்றொரு வரத்தை நசிகேதன் மனதாலும் கேட்கமாட்டான் என்பது சுருதியின் வாக்கியமாகும்.\n"
+          }
+        ]
+      },
+      "bhashyaContent": {
+        "sanskrit": "अतो विहायानित्यैः कामैः प्रलोभनम् , यन्मया प्रार्थितं यस्मिन् प्रेते इदं विचिकित्सनं विचिकित्सन्ति अस्ति नास्तीत्येवंप्रकारं हे मृत्यो, साम्पराये परलोकविषये महति महाप्रयोजननिमित्ते आत्मनो निर्णयविज्ञानं यत् , तत् ब्रूहि कथय नः अस्मभ्यम् । किं बहुना, योऽयं प्रकृत आत्मविषयः वरः गूढं गहनं दुर्विवेचनं प्राप्तः अनुप्रविष्टः, तस्मात् वरात् अन्यम् अविवेकिभिः प्रार्थनीयमनित्यविषयं वरं नचिकेताः न वृणीते मनसापि इति श्रुतेर्वचनमिति ॥",
+        "english": "Therefore, giving up the idea of tempting me by promise of ephemeral objects, tell us, Oh Death, that which was solicited by me, i.e., the well-ascertained knowledge of the atman, about which they doubt whether it is or no, when men die, which relates to the world to come and which serves to be of great benefit. Why say much? Than the present boon about the atman which goes into an inexplicable secret, no other boon which is to be craved for only by the ignorant and whose subject is something transitory, Nachiketas does crave for, even in thought. The Sruti itself says this.\n\n ",
+        "others": []
+      },
+      "teekas": []
+    }
+  ]
+}

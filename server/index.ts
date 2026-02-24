@@ -7,6 +7,7 @@ import { seedBhagavadGita, repairGitaSectionTitles } from "./seed-gita";
 import { seedWordMeaningsFromFile } from "./seed-word-meanings-local";
 import { seedEuropeanTranslations } from "./seed-european-translations";
 import { seedGitaAllLanguages } from "./seed-gita-all-languages";
+import { seedKathaUpanishad } from "./seed-katha-upanishad";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 
 const app = express();
@@ -118,6 +119,7 @@ async function runSeedOperations() {
     await seedBhagavadGita().catch(console.error);
     await repairGitaSectionTitles().catch(console.error);
     await seedWordMeaningsFromFile().catch(console.error);
+    await seedKathaUpanishad().catch(console.error);
     log("All seed operations completed");
     seedEuropeanTranslations().catch(err => console.error("European translations error:", err));
     seedGitaAllLanguages().catch(err => console.error("Gita all languages error:", err));
