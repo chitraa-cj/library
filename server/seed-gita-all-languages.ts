@@ -3,8 +3,9 @@ import { db } from "./db";
 import { explanations, verses, books, verseTranslations } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 
-const BATCH_SIZE = 5;
-const DELAY_MS = 300;
+const BATCH_SIZE = 10;
+const DELAY_MS = 100;
+const PARALLEL_LANGS = 2;
 
 async function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -299,7 +300,147 @@ export async function seedGitaAllLanguages() {
   }
 
   let totalCreated = 0;
-  
+
+  async function processLanguage(
+    lang: { code: string; name: string; script: string },
+    allVerses: Array<any>,
+    openai: OpenAI,
+    vtKeys: Set<string>,
+    expKeys: Set<string>,
+    engTransMap: Map<string, string>,
+    engExpMap: Map<string, string>,
+    noCommentNotes: Record<string, string>,
+  ) {
+    let langVtCreated = 0;
+    let langExpCreated = 0;
+
+    let vtNeeded = 0;
+    let expNeeded = 0;
+    for (const verse of allVerses) {
+      if (!vtKeys.has(`${verse.id}-${lang.code}`)) vtNeeded++;
+      if (!expKeys.has(`${verse.id}-${lang.code}-Sri Shankaracharya`)) expNeeded++;
+    }
+
+    if (vtNeeded === 0 && expNeeded === 0) {
+      console.log(`[Gita All] ${lang.name} (${lang.code}): already complete, skipping`);
+      return 0;
+    }
+
+    console.log(`[Gita All] Starting ${lang.name} (${lang.code}): ${vtNeeded} VT + ${expNeeded} commentary needed`);
+
+    for (let i = 0; i < allVerses.length; i += BATCH_SIZE) {
+      const batch = allVerses.slice(i, i + BATCH_SIZE);
+
+      const vtBatch: Array<{ id: string; verseNumber: number; adhyayNumber: number | null; content: string }> = [];
+      for (const v of batch) {
+        if (!vtKeys.has(`${v.id}-${lang.code}`) && engTransMap.has(v.id)) {
+          vtBatch.push({ id: v.id, verseNumber: v.verseNumber, adhyayNumber: v.adhyayNumber, content: engTransMap.get(v.id)! });
+        }
+      }
+
+      const expBatch: Array<{ id: string; verseNumber: number; adhyayNumber: number | null; content: string }> = [];
+      for (const v of batch) {
+        if (!expKeys.has(`${v.id}-${lang.code}-Sri Shankaracharya`) && engExpMap.has(v.id)) {
+          expBatch.push({ id: v.id, verseNumber: v.verseNumber, adhyayNumber: v.adhyayNumber, content: engExpMap.get(v.id)! });
+        }
+      }
+
+      const promises: Promise<void>[] = [];
+
+      if (vtBatch.length > 0) {
+        promises.push((async () => {
+          const results = await translateBatchedVerses(openai, vtBatch, lang, "sloka");
+          for (const r of results) {
+            if (r.translated) {
+              try {
+                await db.insert(verseTranslations).values({
+                  verseId: r.verseId,
+                  languageCode: lang.code,
+                  content: r.translated,
+                  isAiTranslated: true,
+                });
+                vtKeys.add(`${r.verseId}-${lang.code}`);
+                langVtCreated++;
+              } catch (err: any) {
+                if (!err.message?.includes("duplicate")) {
+                  console.error(`[Gita All] VT insert error: ${err.message}`);
+                }
+              }
+            }
+          }
+        })());
+      }
+
+      if (expBatch.length > 0) {
+        for (const v of expBatch) {
+          const verseRef = `${v.adhyayNumber || 1}.${v.verseNumber}`;
+          const isNoComment = v.content.length < 100 && v.content.includes("did not comment");
+
+          if (isNoComment) {
+            const translated = noCommentNotes[lang.name]
+              ? `${verseRef} ${noCommentNotes[lang.name]}`
+              : `${verseRef} ${v.content}`;
+            promises.push((async () => {
+              try {
+                await db.insert(explanations).values({
+                  verseId: v.id,
+                  languageCode: lang.code,
+                  authorName: "Sri Shankaracharya",
+                  content: translated,
+                  isAiTranslated: true,
+                });
+                expKeys.add(`${v.id}-${lang.code}-Sri Shankaracharya`);
+                langExpCreated++;
+              } catch (err: any) {
+                if (!err.message?.includes("duplicate")) {
+                  console.error(`[Gita All] Exp insert error: ${err.message}`);
+                }
+              }
+            })());
+          }
+        }
+
+        const realExpBatch = expBatch.filter(v => !(v.content.length < 100 && v.content.includes("did not comment")));
+        if (realExpBatch.length > 0) {
+          promises.push((async () => {
+            const results = await translateBatchedVerses(openai, realExpBatch, lang, "commentary");
+            for (const r of results) {
+              if (r.translated) {
+                try {
+                  await db.insert(explanations).values({
+                    verseId: r.verseId,
+                    languageCode: lang.code,
+                    authorName: "Sri Shankaracharya",
+                    content: r.translated,
+                    isAiTranslated: true,
+                  });
+                  expKeys.add(`${r.verseId}-${lang.code}-Sri Shankaracharya`);
+                  langExpCreated++;
+                } catch (err: any) {
+                  if (!err.message?.includes("duplicate")) {
+                    console.error(`[Gita All] Exp insert error: ${err.message}`);
+                  }
+                }
+              }
+            }
+          })());
+        }
+      }
+
+      if (promises.length > 0) {
+        await Promise.all(promises);
+        await delay(DELAY_MS);
+      }
+
+      if ((i / BATCH_SIZE) % 25 === 0 && i > 0) {
+        console.log(`[Gita All] ${lang.name}: ${Math.floor(i / BATCH_SIZE)}/${Math.ceil(allVerses.length / BATCH_SIZE)} batches, VT: ${langVtCreated}, Exp: ${langExpCreated}`);
+      }
+    }
+
+    console.log(`[Gita All] ${lang.name} done: VT=${langVtCreated}, Exp=${langExpCreated}`);
+    return langVtCreated + langExpCreated;
+  }
+
   const noCommentNotes: Record<string, string> = {
     "Kannada": "ಶ್ರೀ ಶಂಕರಾಚಾರ್ಯರು ಈ ಶ್ಲೋಕಕ್ಕೆ ಭಾಷ್ಯ ಬರೆದಿಲ್ಲ. ಭಾಷ್ಯ 2.10 ರಿಂದ ಪ್ರಾರಂಭವಾಗುತ್ತದೆ.",
     "Telugu": "శ్రీ శంకరాచార్యులు ఈ శ్లోకంపై భాష్యం రాయలేదు. భాష్యం 2.10 నుండి ప్రారంభమవుతుంది.",
@@ -354,10 +495,8 @@ export async function seedGitaAllLanguages() {
     "Hebrew": "סרי שנקראצ'ריה לא פירש שלוקה זו. הפירוש מתחיל מ-2.10.",
   };
 
+  const langsToProcess: typeof ALL_NEW_LANGS = [];
   for (const lang of ALL_NEW_LANGS) {
-    let langVtCreated = 0;
-    let langExpCreated = 0;
-
     const legacyCode = LEGACY_CODE_MAP[lang.code];
     if (legacyCode) {
       const legacyVtCount = legacyVtCoverage.get(legacyCode)?.size || 0;
@@ -367,134 +506,17 @@ export async function seedGitaAllLanguages() {
         continue;
       }
     }
+    langsToProcess.push(lang);
+  }
 
-    let vtNeeded = 0;
-    let expNeeded = 0;
-    for (const verse of allVerses) {
-      if (!vtKeys.has(`${verse.id}-${lang.code}`)) vtNeeded++;
-      if (!expKeys.has(`${verse.id}-${lang.code}-Sri Shankaracharya`)) expNeeded++;
-    }
+  console.log(`[Gita All] ${langsToProcess.length} languages need processing, running ${PARALLEL_LANGS} in parallel`);
 
-    if (vtNeeded === 0 && expNeeded === 0) {
-      console.log(`[Gita All] ${lang.name} (${lang.code}): already complete, skipping`);
-      continue;
-    }
-
-    console.log(`[Gita All] Starting ${lang.name} (${lang.code}): ${vtNeeded} VT + ${expNeeded} commentary needed`);
-
-    for (let i = 0; i < allVerses.length; i += BATCH_SIZE) {
-      const batch = allVerses.slice(i, i + BATCH_SIZE);
-
-      const vtBatch: Array<{ id: string; verseNumber: number; adhyayNumber: number | null; content: string }> = [];
-      for (const v of batch) {
-        if (!vtKeys.has(`${v.id}-${lang.code}`) && engTransMap.has(v.id)) {
-          vtBatch.push({ id: v.id, verseNumber: v.verseNumber, adhyayNumber: v.adhyayNumber, content: engTransMap.get(v.id)! });
-        }
-      }
-
-      const expBatch: Array<{ id: string; verseNumber: number; adhyayNumber: number | null; content: string }> = [];
-      for (const v of batch) {
-        if (!expKeys.has(`${v.id}-${lang.code}-Sri Shankaracharya`) && engExpMap.has(v.id)) {
-          expBatch.push({ id: v.id, verseNumber: v.verseNumber, adhyayNumber: v.adhyayNumber, content: engExpMap.get(v.id)! });
-        }
-      }
-
-      const promises: Promise<void>[] = [];
-
-      if (vtBatch.length > 0) {
-        promises.push((async () => {
-          const results = await translateBatchedVerses(openai, vtBatch, lang, "sloka");
-          for (const r of results) {
-            if (r.translated) {
-              try {
-                await db.insert(verseTranslations).values({
-                  verseId: r.verseId,
-                  languageCode: lang.code,
-                  content: r.translated,
-                  isAiTranslated: true,
-                });
-                vtKeys.add(`${r.verseId}-${lang.code}`);
-                langVtCreated++;
-                totalCreated++;
-              } catch (err: any) {
-                if (!err.message?.includes("duplicate")) {
-                  console.error(`[Gita All] VT insert error: ${err.message}`);
-                }
-              }
-            }
-          }
-        })());
-      }
-
-      if (expBatch.length > 0) {
-        for (const v of expBatch) {
-          const verseRef = `${v.adhyayNumber || 1}.${v.verseNumber}`;
-          const isNoComment = v.content.length < 100 && v.content.includes("did not comment");
-
-          if (isNoComment) {
-            const translated = noCommentNotes[lang.name] 
-              ? `${verseRef} ${noCommentNotes[lang.name]}`
-              : `${verseRef} ${v.content}`;
-            promises.push((async () => {
-              try {
-                await db.insert(explanations).values({
-                  verseId: v.id,
-                  languageCode: lang.code,
-                  authorName: "Sri Shankaracharya",
-                  content: translated,
-                  isAiTranslated: true,
-                });
-                expKeys.add(`${v.id}-${lang.code}-Sri Shankaracharya`);
-                langExpCreated++;
-                totalCreated++;
-              } catch (err: any) {
-                if (!err.message?.includes("duplicate")) {
-                  console.error(`[Gita All] Exp insert error: ${err.message}`);
-                }
-              }
-            })());
-          }
-        }
-
-        const realExpBatch = expBatch.filter(v => !(v.content.length < 100 && v.content.includes("did not comment")));
-        if (realExpBatch.length > 0) {
-          promises.push((async () => {
-            const results = await translateBatchedVerses(openai, realExpBatch, lang, "commentary");
-            for (const r of results) {
-              if (r.translated) {
-                try {
-                  await db.insert(explanations).values({
-                    verseId: r.verseId,
-                    languageCode: lang.code,
-                    authorName: "Sri Shankaracharya",
-                    content: r.translated,
-                    isAiTranslated: true,
-                  });
-                  expKeys.add(`${r.verseId}-${lang.code}-Sri Shankaracharya`);
-                  langExpCreated++;
-                  totalCreated++;
-                } catch (err: any) {
-                  if (!err.message?.includes("duplicate")) {
-                    console.error(`[Gita All] Exp insert error: ${err.message}`);
-                  }
-                }
-              }
-            }
-          })());
-        }
-      }
-
-      if (promises.length > 0) {
-        await Promise.all(promises);
-        await delay(DELAY_MS);
-      }
-
-      if ((i / BATCH_SIZE) % 50 === 0 && i > 0) {
-        console.log(`[Gita All] ${lang.name}: ${Math.floor(i / BATCH_SIZE)}/${Math.ceil(allVerses.length / BATCH_SIZE)} batches, VT: ${langVtCreated}, Exp: ${langExpCreated}`);
-      }
-    }
-
-    console.log(`[Gita All] ${lang.name} done: VT=${langVtCreated}, Exp=${langExpCreated}`);
+  for (let li = 0; li < langsToProcess.length; li += PARALLEL_LANGS) {
+    const langBatch = langsToProcess.slice(li, li + PARALLEL_LANGS);
+    const results = await Promise.all(
+      langBatch.map(lang => processLanguage(lang, allVerses, openai, vtKeys, expKeys, engTransMap, engExpMap, noCommentNotes))
+    );
+    for (const r of results) totalCreated += r;
   }
 
   console.log(`[Gita All] All languages complete. Total created: ${totalCreated}`);

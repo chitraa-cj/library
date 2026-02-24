@@ -3,8 +3,9 @@ import { db } from "./db";
 import { explanations, verses, books, verseTranslations, languages } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 
-const BATCH_SIZE = 3;
-const DELAY_MS = 500;
+const BATCH_SIZE = 10;
+const DELAY_MS = 100;
+const PARALLEL_LANGS = 3;
 
 async function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -188,6 +189,23 @@ export async function seedKathaAllLanguages() {
     .where(eq(verses.bookId, bookId));
   const expKeys = new Set(existingExp.map(e => `${e.verseId}-${e.languageCode}-${e.authorName}`));
 
+  const engTransMap = new Map<string, string>();
+  const engExpMap = new Map<string, string>();
+
+  const allEngTrans = await db.select().from(verseTranslations)
+    .innerJoin(verses, eq(verseTranslations.verseId, verses.id))
+    .where(and(eq(verses.bookId, bookId), eq(verseTranslations.languageCode, "en")));
+  for (const row of allEngTrans) {
+    engTransMap.set(row.verse_translations.verseId, row.verse_translations.content);
+  }
+
+  const allEngExp = await db.select().from(explanations)
+    .innerJoin(verses, eq(explanations.verseId, verses.id))
+    .where(and(eq(verses.bookId, bookId), eq(explanations.languageCode, "en"), eq(explanations.authorName, "Sri Shankaracharya")));
+  for (const row of allEngExp) {
+    engExpMap.set(row.explanations.verseId, row.explanations.content);
+  }
+
   let vtNeeded = 0;
   let expNeeded = 0;
 
@@ -208,8 +226,9 @@ export async function seedKathaAllLanguages() {
 
   let totalCreated = 0;
 
-  for (const lang of ALL_LANGS) {
+  async function processKathaLang(lang: { code: string; name: string; script: string }) {
     const scriptNote = getScriptNote(lang);
+    let langCreated = 0;
 
     let langVtNeeded = 0;
     let langExpNeeded = 0;
@@ -219,7 +238,7 @@ export async function seedKathaAllLanguages() {
     }
 
     if (langVtNeeded === 0 && langExpNeeded === 0) {
-      continue;
+      return 0;
     }
 
     console.log(`[Katha All] Starting ${lang.name} (${lang.code}): ${langVtNeeded} VT + ${langExpNeeded} bhashyam needed`);
@@ -230,21 +249,15 @@ export async function seedKathaAllLanguages() {
 
       for (const verse of batch) {
         const vtKey = `${verse.id}-${lang.code}`;
-        if (!vtKeys.has(vtKey)) {
+        if (!vtKeys.has(vtKey) && engTransMap.has(verse.id)) {
+          const engContent = engTransMap.get(verse.id)!;
           const p = (async () => {
             try {
-              const engTrans = await db.select().from(verseTranslations).where(
-                and(eq(verseTranslations.verseId, verse.id), eq(verseTranslations.languageCode, "en"))
-              );
-              if (engTrans.length === 0) return;
-
-              const prompt = `You are an expert Sanskrit scholar. Translate this Katha Upanishad (Kaṭhopaniṣad) verse from English to ${lang.name}. ${scriptNote} Maintain scholarly register and philosophical precision.\n\nSOURCE:\n${engTrans[0].content}\n\nProvide ONLY the ${lang.name} meaning translation (not transliteration).`;
+              const prompt = `You are an expert Sanskrit scholar. Translate this Katha Upanishad (Kaṭhopaniṣad) verse from English to ${lang.name}. ${scriptNote} Maintain scholarly register and philosophical precision.\n\nSOURCE:\n${engContent}\n\nProvide ONLY the ${lang.name} meaning translation (not transliteration).`;
               const translated = await translateText(openai, prompt, 2048);
-              if (!isValidTranslation(translated, engTrans[0].content.length)) {
-                console.warn(`[Katha All] Skipping invalid VT for V${verse.verseNumber} → ${lang.name}`);
+              if (!isValidTranslation(translated, engContent.length)) {
                 return;
               }
-
               await db.insert(verseTranslations).values({
                 verseId: verse.id,
                 languageCode: lang.code,
@@ -252,32 +265,24 @@ export async function seedKathaAllLanguages() {
                 isAiTranslated: true,
               });
               vtKeys.add(vtKey);
-              totalCreated++;
+              langCreated++;
             } catch (error: any) {
-              console.error(`[Katha All] VT V${verse.verseNumber} → ${lang.name}: ${error.message}`);
-              await delay(3000);
+              if (!error.message?.includes("duplicate")) {
+                console.error(`[Katha All] VT V${verse.verseNumber} → ${lang.name}: ${error.message}`);
+              }
             }
           })();
           promises.push(p);
         }
 
         const expKey = `${verse.id}-${lang.code}-Sri Shankaracharya`;
-        if (!expKeys.has(expKey)) {
+        if (!expKeys.has(expKey) && engExpMap.has(verse.id)) {
+          const engContent = engExpMap.get(verse.id)!;
           const p = (async () => {
             try {
-              const engExp = await db.select().from(explanations).where(
-                and(
-                  eq(explanations.verseId, verse.id),
-                  eq(explanations.languageCode, "en"),
-                  eq(explanations.authorName, "Sri Shankaracharya")
-                )
-              );
-              if (engExp.length === 0) return;
-
-              const prompt = `You are an expert Sanskrit scholar specializing in Advaita Vedanta. Translate this Sri Shankaracharya's Bhashya (commentary) on Katha Upanishad (Kaṭhopaniṣad) from English to ${lang.name}. ${scriptNote} Maintain philosophical precision and scholarly register.\n\nSOURCE:\n${engExp[0].content}\n\nProvide ONLY the ${lang.name} translation.`;
+              const prompt = `You are an expert Sanskrit scholar specializing in Advaita Vedanta. Translate this Sri Shankaracharya's Bhashya (commentary) on Katha Upanishad (Kaṭhopaniṣad) from English to ${lang.name}. ${scriptNote} Maintain philosophical precision and scholarly register.\n\nSOURCE:\n${engContent}\n\nProvide ONLY the ${lang.name} translation.`;
               const translated = await translateText(openai, prompt);
-              if (!isValidTranslation(translated, engExp[0].content.length)) {
-                console.warn(`[Katha All] Skipping invalid Exp for V${verse.verseNumber} → ${lang.name}`);
+              if (!isValidTranslation(translated, engContent.length)) {
                 return;
               }
               await db.insert(explanations).values({
@@ -288,10 +293,11 @@ export async function seedKathaAllLanguages() {
                 isAiTranslated: true,
               });
               expKeys.add(expKey);
-              totalCreated++;
+              langCreated++;
             } catch (error: any) {
-              console.error(`[Katha All] Exp V${verse.verseNumber} → ${lang.name}: ${error.message}`);
-              await delay(3000);
+              if (!error.message?.includes("duplicate")) {
+                console.error(`[Katha All] Exp V${verse.verseNumber} → ${lang.name}: ${error.message}`);
+              }
             }
           })();
           promises.push(p);
@@ -304,7 +310,25 @@ export async function seedKathaAllLanguages() {
       }
     }
 
-    console.log(`[Katha All] ${lang.name} done, total created so far: ${totalCreated}`);
+    console.log(`[Katha All] ${lang.name} done: ${langCreated} created`);
+    return langCreated;
+  }
+
+  const langsToProcess = ALL_LANGS.filter(lang => {
+    let needed = 0;
+    for (const verse of allVerses) {
+      if (!vtKeys.has(`${verse.id}-${lang.code}`)) needed++;
+      if (!expKeys.has(`${verse.id}-${lang.code}-Sri Shankaracharya`)) needed++;
+    }
+    return needed > 0;
+  });
+
+  console.log(`[Katha All] ${langsToProcess.length} languages need processing, running ${PARALLEL_LANGS} in parallel`);
+
+  for (let li = 0; li < langsToProcess.length; li += PARALLEL_LANGS) {
+    const langBatch = langsToProcess.slice(li, li + PARALLEL_LANGS);
+    const results = await Promise.all(langBatch.map(lang => processKathaLang(lang)));
+    for (const r of results) totalCreated += r;
   }
 
   console.log(`[Katha All] Seeding complete: ${totalCreated} new translations/transliterations created`);
