@@ -24,6 +24,54 @@ const SOUTH_INDIAN_LANGS = [
   { code: "tamil", dbCode: "ta", name: "Tamil", nativeName: "தமிழ்", script: "Tamil" },
 ];
 
+const NEW_LANGS = [
+  { code: "pt", dbCode: "pt", name: "Portuguese", nativeName: "Português", script: "Latin" },
+  { code: "ru", dbCode: "ru", name: "Russian", nativeName: "Русский", script: "Cyrillic" },
+  { code: "id", dbCode: "id", name: "Indonesian", nativeName: "Bahasa Indonesia", script: "Latin" },
+  { code: "ja", dbCode: "ja", name: "Japanese", nativeName: "日本語", script: "Japanese" },
+  { code: "pcm", dbCode: "pcm", name: "Nigerian Pidgin", nativeName: "Naijá", script: "Latin" },
+  { code: "arz", dbCode: "arz", name: "Egyptian Arabic", nativeName: "مصري", script: "Arabic" },
+  { code: "vi", dbCode: "vi", name: "Vietnamese", nativeName: "Tiếng Việt", script: "Latin" },
+  { code: "ha", dbCode: "ha", name: "Hausa", nativeName: "Hausa", script: "Latin" },
+  { code: "tr", dbCode: "tr", name: "Turkish", nativeName: "Türkçe", script: "Latin" },
+  { code: "ko", dbCode: "ko", name: "Korean", nativeName: "한국어", script: "Hangul" },
+  { code: "th", dbCode: "th", name: "Thai", nativeName: "ไทย", script: "Thai" },
+  { code: "it", dbCode: "it", name: "Italian", nativeName: "Italiano", script: "Latin" },
+  { code: "si", dbCode: "si", name: "Sinhalese", nativeName: "සිංහල", script: "Sinhala" },
+  { code: "uk", dbCode: "uk", name: "Ukrainian", nativeName: "Українська", script: "Cyrillic" },
+  { code: "fa", dbCode: "fa", name: "Persian", nativeName: "فارسی", script: "Persian" },
+  { code: "ku", dbCode: "ku", name: "Kurdish", nativeName: "Kurdî", script: "Latin" },
+  { code: "az", dbCode: "az", name: "Azerbaijani", nativeName: "Azərbaycan", script: "Latin" },
+  { code: "mn", dbCode: "mn", name: "Mongolian", nativeName: "Монгол", script: "Cyrillic" },
+  { code: "bo", dbCode: "bo", name: "Tibetan", nativeName: "བོད་སྐད", script: "Tibetan" },
+  { code: "my", dbCode: "my", name: "Burmese", nativeName: "မြန်မာ", script: "Myanmar" },
+  { code: "ms", dbCode: "ms", name: "Malay", nativeName: "Bahasa Melayu", script: "Latin" },
+  { code: "gu", dbCode: "gu", name: "Gujarati", nativeName: "ગુજરાતી", script: "Gujarati" },
+  { code: "bho", dbCode: "bho", name: "Bhojpuri", nativeName: "भोजपुरी", script: "Devanagari" },
+  { code: "as", dbCode: "as", name: "Assamese", nativeName: "অসমীয়া", script: "Bengali" },
+  { code: "ks", dbCode: "ks", name: "Kashmiri", nativeName: "कॉशुर", script: "Devanagari" },
+  { code: "mr", dbCode: "mr", name: "Marathi", nativeName: "मराठी", script: "Devanagari" },
+  { code: "kok", dbCode: "kok", name: "Konkani", nativeName: "कोंकणी", script: "Devanagari" },
+  { code: "ml", dbCode: "ml", name: "Malayalam", nativeName: "മലയാളം", script: "Malayalam" },
+  { code: "pa", dbCode: "pa", name: "Punjabi", nativeName: "ਪੰਜਾਬੀ", script: "Gurmukhi" },
+  { code: "bn", dbCode: "bn", name: "Bengali", nativeName: "বাংলা", script: "Bengali" },
+  { code: "mni", dbCode: "mni", name: "Manipuri", nativeName: "মণিপুরী", script: "Bengali" },
+  { code: "ne", dbCode: "ne", name: "Nepali", nativeName: "नेपाली", script: "Devanagari" },
+  { code: "ur", dbCode: "ur", name: "Urdu", nativeName: "اردو", script: "Nastaliq" },
+  { code: "or", dbCode: "or", name: "Odia", nativeName: "ଓଡ଼ିଆ", script: "Odia" },
+  { code: "sd", dbCode: "sd", name: "Sindhi", nativeName: "سنڌي", script: "Arabic" },
+];
+
+const SCRIPTS_NEEDING_TRANSLITERATION = new Set([
+  "Kannada", "Telugu", "Tamil", "Bengali", "Gujarati", "Malayalam", "Gurmukhi", "Odia",
+  "Sinhala", "Thai", "Japanese", "Hangul", "Cyrillic", "Arabic", "Persian", "Nastaliq",
+  "Tibetan", "Myanmar", "Simplified Chinese",
+]);
+
+function needsTransliteration(script: string): boolean {
+  return SCRIPTS_NEEDING_TRANSLITERATION.has(script);
+}
+
 async function getOpenAI(): Promise<OpenAI | null> {
   if (!process.env.OPENAI_API_KEY) {
     console.log("[European translations] No OPENAI_API_KEY set, skipping");
@@ -264,6 +312,7 @@ async function seedIshaEuropeanTranslations(openai: OpenAI, bookId: string): Pro
   const allLangs = [
     ...EUROPEAN_LANGS,
     ...SOUTH_INDIAN_LANGS,
+    ...NEW_LANGS,
     { code: "hi", dbCode: "hi", name: "Hindi", nativeName: "हिन्दी", script: "Devanagari" },
   ];
 
@@ -273,15 +322,16 @@ async function seedIshaEuropeanTranslations(openai: OpenAI, bookId: string): Pro
       if (!expKeys.has(`${verse.id}-${lang.code}-Adi Shankaracharya`)) needed++;
       if (!expKeys.has(`${verse.id}-${lang.code}-Anandagiri`)) needed++;
       if (!vtAiKeys.has(`${verse.id}-${lang.code}`)) needed++;
+      if (needsTransliteration(lang.script) && !vtKeys.has(`${verse.id}-${lang.code}`)) needed++;
     }
   }
 
   if (needed === 0) {
-    console.log("[Isha European] All translations exist already");
+    console.log("[Isha All] All translations exist already");
     return 0;
   }
 
-  console.log(`[Isha European] Need approximately ${needed} translations`);
+  console.log(`[Isha All] Need approximately ${needed} translations/transliterations`);
 
   let totalCreated = 0;
 
@@ -290,17 +340,27 @@ async function seedIshaEuropeanTranslations(openai: OpenAI, bookId: string): Pro
     const engBhashyam = verseExps.find(e => e.authorName === "Adi Shankaracharya" && e.languageCode === "english");
     const devTeeka = verseExps.find(e => e.authorName === "Anandagiri" && e.languageCode === "devanagari");
 
+    const devTrans = await db.select().from(verseTranslations).where(
+      and(eq(verseTranslations.verseId, verse.id), eq(verseTranslations.languageCode, "devanagari"))
+    );
+    const devanagariContent = devTrans.length > 0 ? devTrans[0].content : "";
+
     for (const lang of allLangs) {
-      const isHindi = lang.code === "hi";
+      const usesNativeScript = needsTransliteration(lang.script);
+      const isDevanagariScript = lang.script === "Devanagari";
       const targetLangName = lang.name;
+
+      const getScriptNote = (): string => {
+        if (isDevanagariScript) return "Keep Sanskrit terms in Devanagari.";
+        if (usesNativeScript) return `Write in ${lang.script} script. Keep Sanskrit terms in ${lang.script} script.`;
+        return "Use IAST for Sanskrit terms.";
+      };
 
       if (engBhashyam) {
         const bhashyamKey = `${verse.id}-${lang.code}-Adi Shankaracharya`;
         if (!expKeys.has(bhashyamKey)) {
           try {
-            const isSouthIndian = SOUTH_INDIAN_LANGS.some(si => si.code === lang.code);
-            const scriptNote = isHindi ? "Keep Sanskrit terms in Devanagari." : isSouthIndian ? `Write in ${lang.script} script. Keep Sanskrit terms in ${lang.script} script.` : "Use IAST for Sanskrit terms.";
-            const prompt = `You are an expert Sanskrit scholar specializing in Advaita Vedanta. Translate this Shankaracharya's Bhashya on Isha Upanishad from English to ${targetLangName}. ${scriptNote} Maintain scholarly register.\n\nSOURCE:\n${engBhashyam.content}\n\nProvide ONLY the ${targetLangName} translation.`;
+            const prompt = `You are an expert Sanskrit scholar specializing in Advaita Vedanta. Translate this Shankaracharya's Bhashya on Isha Upanishad from English to ${targetLangName}. ${getScriptNote()} Maintain scholarly register.\n\nSOURCE:\n${engBhashyam.content}\n\nProvide ONLY the ${targetLangName} translation.`;
             const translated = await translateText(openai, prompt);
             await db.insert(explanations).values({
               verseId: verse.id,
@@ -323,9 +383,7 @@ async function seedIshaEuropeanTranslations(openai: OpenAI, bookId: string): Pro
         if (!expKeys.has(teekaKey)) {
           try {
             const context = engBhashyam?.content?.substring(0, 300) || "";
-            const isSouthIndian2 = SOUTH_INDIAN_LANGS.some(si => si.code === lang.code);
-            const scriptNote2 = isHindi ? "Keep Sanskrit terms in Devanagari." : isSouthIndian2 ? `Write in ${lang.script} script. Keep Sanskrit terms in ${lang.script} script.` : "Use IAST for Sanskrit terms.";
-            const prompt = `You are an expert Sanskrit scholar. Translate this Anandagiri's Tika (sub-commentary) on Isha Upanishad from Sanskrit to ${targetLangName}. ${scriptNote2} Maintain scholarly register.\n\n${context ? `Context: ${context}\n\n` : ""}SOURCE:\n${devTeeka.content}\n\nProvide ONLY the ${targetLangName} translation.`;
+            const prompt = `You are an expert Sanskrit scholar. Translate this Anandagiri's Tika (sub-commentary) on Isha Upanishad from Sanskrit to ${targetLangName}. ${getScriptNote()} Maintain scholarly register.\n\n${context ? `Context: ${context}\n\n` : ""}SOURCE:\n${devTeeka.content}\n\nProvide ONLY the ${targetLangName} translation.`;
             const translated = await translateText(openai, prompt);
             await db.insert(explanations).values({
               verseId: verse.id,
@@ -350,9 +408,7 @@ async function seedIshaEuropeanTranslations(openai: OpenAI, bookId: string): Pro
             and(eq(verseTranslations.verseId, verse.id), eq(verseTranslations.languageCode, "english"))
           );
           if (engTrans.length > 0) {
-            const isSouthIndian = SOUTH_INDIAN_LANGS.some(si => si.code === lang.code);
-            const scriptNote = isHindi ? "Keep Sanskrit terms in Devanagari." : isSouthIndian ? `Write in ${lang.script} script. Keep Sanskrit terms in ${lang.script} script.` : "Use IAST for Sanskrit terms.";
-            const prompt = `You are an expert Sanskrit scholar. Translate this Isha Upanishad verse from English to ${targetLangName}. ${scriptNote} Maintain scholarly register.\n\nSOURCE:\n${engTrans[0].content}\n\nProvide ONLY the ${targetLangName} meaning translation (not transliteration).`;
+            const prompt = `You are an expert Sanskrit scholar. Translate this Isha Upanishad verse from English to ${targetLangName}. ${getScriptNote()} Maintain scholarly register.\n\nSOURCE:\n${engTrans[0].content}\n\nProvide ONLY the ${targetLangName} meaning translation (not transliteration).`;
             const translated = await translateText(openai, prompt, 2048);
             await db.insert(verseTranslations).values({
               verseId: verse.id,
@@ -369,10 +425,29 @@ async function seedIshaEuropeanTranslations(openai: OpenAI, bookId: string): Pro
         }
       }
 
+      if (usesNativeScript && !isDevanagariScript && devanagariContent && !vtKeys.has(vtKey)) {
+        try {
+          const prompt = `You are an expert in Indian scripts and Sanskrit transliteration. Transliterate the following Sanskrit verse from Devanagari script to ${lang.script} script. Preserve the exact Sanskrit sounds, only change the script. Do NOT translate meaning — only change the script.\n\nDEVANAGARI:\n${devanagariContent}\n\nProvide ONLY the ${lang.script} script transliteration.`;
+          const transliterated = await translateText(openai, prompt, 1024);
+          await db.insert(verseTranslations).values({
+            verseId: verse.id,
+            languageCode: lang.code,
+            content: transliterated,
+            isAiTranslated: false,
+          });
+          vtKeys.add(vtKey);
+          totalCreated++;
+        } catch (error: any) {
+          console.error(`[Isha] Translit V${verse.verseNumber} → ${lang.script}: ${error.message}`);
+          await delay(3000);
+        }
+      }
+
       await delay(DELAY_MS);
     }
+    console.log(`[Isha All] V${verse.verseNumber} done, total: ${totalCreated}`);
   }
 
-  console.log(`[Isha European] Done: ${totalCreated} new translations`);
+  console.log(`[Isha All] Done: ${totalCreated} new translations`);
   return totalCreated;
 }
