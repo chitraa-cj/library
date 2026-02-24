@@ -62,6 +62,32 @@ function getScriptNote(lang: { name: string; script: string }): string {
   return "Keep Sanskrit proper nouns in IAST transliteration.";
 }
 
+function isRefusalResponse(text: string): boolean {
+  const refusalPatterns = [
+    /I'm sorry.*can't assist/i,
+    /I'm sorry.*cannot assist/i,
+    /I cannot.*translate/i,
+    /I'm unable to.*translate/i,
+    /I apologize.*cannot/i,
+    /I can't help with/i,
+    /cannot comply/i,
+    /against.*policy/i,
+    /safety.*guidelines/i,
+    /not able to.*provide/i,
+    /I'm not able to/i,
+    /I cannot help/i,
+    /I'm sorry.*can't help/i,
+  ];
+  return refusalPatterns.some(p => p.test(text));
+}
+
+function isValidTranslation(text: string, sourceLength: number): boolean {
+  if (!text || text.trim().length === 0) return false;
+  if (isRefusalResponse(text)) return false;
+  if (text.trim().length < Math.min(20, sourceLength * 0.1)) return false;
+  return true;
+}
+
 async function translateText(openai: OpenAI, prompt: string, maxTokens: number = 4096): Promise<string> {
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -69,7 +95,46 @@ async function translateText(openai: OpenAI, prompt: string, maxTokens: number =
     max_tokens: maxTokens,
     temperature: 0.3,
   });
-  return response.choices[0].message.content || "";
+  const content = response.choices[0].message.content || "";
+  if (isRefusalResponse(content)) {
+    console.warn(`[Gita All] AI refusal detected, retrying with simplified prompt...`);
+    const retryResponse = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "You are a scholarly translator. Translate the given text accurately." },
+        { role: "user", content: prompt }
+      ],
+      max_tokens: maxTokens,
+      temperature: 0.5,
+    });
+    const retryContent = retryResponse.choices[0].message.content || "";
+    if (isRefusalResponse(retryContent)) {
+      console.warn(`[Gita All] AI refusal persisted on retry, returning empty`);
+      return "";
+    }
+    return retryContent;
+  }
+  return content;
+}
+
+async function translateSingleVerse(
+  openai: OpenAI,
+  verse: { id: string; verseNumber: number; adhyayNumber: number | null; content: string },
+  lang: { code: string; name: string; script: string },
+  type: "sloka" | "commentary"
+): Promise<{ verseId: string; translated: string }> {
+  const scriptNote = getScriptNote(lang);
+  const typeLabel = type === "sloka" ? "verse translation" : "Sri Shankaracharya commentary";
+  const prompt = `You are an expert Sanskrit scholar. Translate this Bhagavad Gita ${typeLabel} from English to ${lang.name}. ${scriptNote} Maintain scholarly register.\n\nSOURCE:\n${verse.content}\n\nProvide ONLY the ${lang.name} translation.`;
+  try {
+    const result = await translateText(openai, prompt, 2048);
+    if (!isValidTranslation(result, verse.content.length)) {
+      return { verseId: verse.id, translated: "" };
+    }
+    return { verseId: verse.id, translated: result.trim() };
+  } catch {
+    return { verseId: verse.id, translated: "" };
+  }
 }
 
 async function translateBatchedVerses(
@@ -95,12 +160,36 @@ Provide ONLY the ${lang.name} translations, separated by ===VERSE_N=== markers. 
 
   try {
     const result = await translateText(openai, prompt, 4096);
+    if (!result || isRefusalResponse(result)) {
+      console.warn(`[Gita All] Batch refused for ${lang.name}, falling back to single-verse calls`);
+      const singleResults: Array<{ verseId: string; translated: string }> = [];
+      for (const v of verseBatch) {
+        const r = await translateSingleVerse(openai, v, lang, type);
+        singleResults.push(r);
+        await new Promise(res => setTimeout(res, 200));
+      }
+      return singleResults;
+    }
     const parts = result.split(/===VERSE_\d+===/).filter(p => p.trim());
     
-    return verseBatch.map((v, i) => ({
-      verseId: v.id,
-      translated: (parts[i] || "").trim().replace(/^\[[\d.]+\]\s*/, ""),
-    }));
+    if (parts.length !== verseBatch.length) {
+      console.warn(`[Gita All] Batch misaligned for ${lang.name}: expected ${verseBatch.length}, got ${parts.length}. Falling back to single-verse calls.`);
+      const singleResults: Array<{ verseId: string; translated: string }> = [];
+      for (const v of verseBatch) {
+        const r = await translateSingleVerse(openai, v, lang, type);
+        singleResults.push(r);
+        await new Promise(res => setTimeout(res, 200));
+      }
+      return singleResults;
+    }
+
+    return verseBatch.map((v, i) => {
+      const translated = (parts[i] || "").trim().replace(/^\[[\d.]+\]\s*/, "");
+      if (!isValidTranslation(translated, v.content.length)) {
+        return { verseId: v.id, translated: "" };
+      }
+      return { verseId: v.id, translated };
+    });
   } catch (error: any) {
     console.error(`[Gita All] Batch translate failed for ${lang.name}: ${error.message}`);
     return [];

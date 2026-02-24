@@ -100,6 +100,25 @@ async function ensureLanguages() {
   }
 }
 
+function isRefusalResponse(text: string): boolean {
+  const refusalPatterns = [
+    /I'm sorry.*can't assist/i,
+    /I'm sorry.*cannot assist/i,
+    /I cannot.*translate/i,
+    /I'm unable to.*translate/i,
+    /I apologize.*cannot/i,
+    /I can't help with/i,
+    /cannot comply/i,
+    /against.*policy/i,
+    /safety.*guidelines/i,
+    /not able to.*provide/i,
+    /I'm not able to/i,
+    /I cannot help/i,
+    /I'm sorry.*can't help/i,
+  ];
+  return refusalPatterns.some(p => p.test(text));
+}
+
 async function translateText(openai: OpenAI, prompt: string, maxTokens: number = 4096): Promise<string> {
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -107,7 +126,26 @@ async function translateText(openai: OpenAI, prompt: string, maxTokens: number =
     max_tokens: maxTokens,
     temperature: 0.3,
   });
-  return response.choices[0].message.content || "";
+  const content = response.choices[0].message.content || "";
+  if (isRefusalResponse(content)) {
+    console.warn(`[Isha All] AI refusal detected, retrying...`);
+    const retryResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: "You are a scholarly translator. Translate the given text accurately." },
+        { role: "user", content: prompt }
+      ],
+      max_tokens: maxTokens,
+      temperature: 0.5,
+    });
+    const retryContent = retryResponse.choices[0].message.content || "";
+    if (isRefusalResponse(retryContent)) {
+      console.warn(`[Isha All] AI refusal persisted on retry, returning empty`);
+      return "";
+    }
+    return retryContent;
+  }
+  return content;
 }
 
 export async function seedEuropeanTranslations() {
@@ -202,6 +240,10 @@ async function seedGitaEuropeanTranslations(openai: OpenAI, bookId: string): Pro
               const scriptNote = isSouthIndian ? `Write in ${lang.script} script. Keep Sanskrit terms in ${lang.script} script.` : "Keep Sanskrit terms in IAST transliteration.";
               const prompt = `You are an expert Sanskrit scholar. Translate this Bhagavad Gita verse translation from English to ${lang.name}. ${scriptNote} Maintain scholarly register.\n\nSOURCE:\n${engTrans[0].content}\n\nProvide ONLY the ${lang.name} meaning translation (not transliteration).`;
               const translated = await translateText(openai, prompt, 2048);
+              if (!translated || translated.trim().length < 10 || isRefusalResponse(translated)) {
+                console.warn(`[Gita European] Skipping invalid VT for V${verse.verseNumber} → ${lang.name}`);
+                return;
+              }
               await db.insert(verseTranslations).values({
                 verseId: verse.id,
                 languageCode: lang.code,
@@ -252,6 +294,10 @@ async function seedGitaEuropeanTranslations(openai: OpenAI, bookId: string): Pro
                 translated = await translateText(openai, prompt);
               }
 
+              if (!translated || translated.trim().length < 10 || isRefusalResponse(translated)) {
+                console.warn(`[Gita European] Skipping invalid Exp for V${verse.verseNumber} → ${lang.name}`);
+                return;
+              }
               await db.insert(explanations).values({
                 verseId: verse.id,
                 languageCode: lang.code,
