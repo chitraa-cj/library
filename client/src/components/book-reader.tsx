@@ -920,7 +920,8 @@ export function BookReader({
       return iastParts.length > 0 ? iastParts.join("\n") : null;
     };
 
-    const showTranslation = effectiveLang && effectiveLang !== "devanagari" && effectiveLang !== "sa";
+    const showTranslation = true;
+    const chapterTransLang = (effectiveLang && effectiveLang !== "devanagari" && effectiveLang !== "sa") ? effectiveLang : "en";
 
     const filteredChapterVerses = chapterViewKhanda != null && selectedKhandaInfo
       ? chapterVerses?.filter(v => selectedKhandaInfo.verses.some(sv => sv.verseNumber === v.verseNumber))
@@ -1001,7 +1002,7 @@ export function BookReader({
                         </div>
                         {khandaVerses.map((verse, idx) => {
                           const devanagari = getChapterDevanagari(verse);
-                          const translation = showTranslation ? getChapterTranslation(verse, effectiveLang!) : "";
+                          const translation = showTranslation ? getChapterTranslation(verse, chapterTransLang) : "";
                           const iast = showIast ? getChapterIast(verse) : null;
                           const verseLabel = `${chapterViewAdhyay}.${khanda.khandaNumber}.${idx + 1}`;
                           return (
@@ -1057,7 +1058,7 @@ export function BookReader({
                 ) : (
                   filteredChapterVerses.map((verse, idx) => {
                     const devanagari = getChapterDevanagari(verse);
-                    const translation = showTranslation ? getChapterTranslation(verse, effectiveLang!) : "";
+                    const translation = showTranslation ? getChapterTranslation(verse, chapterTransLang) : "";
                     const iast = showIast ? getChapterIast(verse) : null;
                     const verseLabel = chapterViewKhanda != null
                       ? `${chapterViewAdhyay}.${chapterViewKhanda}.${idx + 1}`
