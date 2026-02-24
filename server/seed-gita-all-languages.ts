@@ -3,8 +3,8 @@ import { db } from "./db";
 import { explanations, verses, books, verseTranslations } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 
-const BATCH_SIZE = 3;
-const DELAY_MS = 500;
+const BATCH_SIZE = 5;
+const DELAY_MS = 300;
 
 async function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -242,6 +242,12 @@ export async function seedGitaAllLanguages() {
 
   console.log(`[Gita All] Found ${allVerses.length} verses, ${ALL_NEW_LANGS.length} languages to process`);
 
+  const LEGACY_CODE_MAP: Record<string, string> = {
+    "kn": "kannada", "te": "telugu", "ta": "tamil",
+    "de": "german", "fr": "french", "es": "spanish",
+    "zh": "mandarin", "ar": "arabic",
+  };
+
   const existingVT = await db.select({
     verseId: verseTranslations.verseId,
     languageCode: verseTranslations.languageCode,
@@ -258,6 +264,18 @@ export async function seedGitaAllLanguages() {
     .innerJoin(verses, eq(explanations.verseId, verses.id))
     .where(eq(verses.bookId, bookId));
   const expKeys = new Set(existingExp.map(e => `${e.verseId}-${e.languageCode}-${e.authorName}`));
+
+  const legacyVtCoverage = new Map<string, Set<string>>();
+  for (const e of existingVT) {
+    if (!legacyVtCoverage.has(e.languageCode)) legacyVtCoverage.set(e.languageCode, new Set());
+    legacyVtCoverage.get(e.languageCode)!.add(e.verseId);
+  }
+  const legacyExpCoverage = new Map<string, Set<string>>();
+  for (const e of existingExp) {
+    if (e.authorName !== "Sri Shankaracharya") continue;
+    if (!legacyExpCoverage.has(e.languageCode)) legacyExpCoverage.set(e.languageCode, new Set());
+    legacyExpCoverage.get(e.languageCode)!.add(e.verseId);
+  }
 
   const engTransMap = new Map<string, string>();
   const engExpMap = new Map<string, string>();
@@ -339,6 +357,16 @@ export async function seedGitaAllLanguages() {
   for (const lang of ALL_NEW_LANGS) {
     let langVtCreated = 0;
     let langExpCreated = 0;
+
+    const legacyCode = LEGACY_CODE_MAP[lang.code];
+    if (legacyCode) {
+      const legacyVtCount = legacyVtCoverage.get(legacyCode)?.size || 0;
+      const legacyExpCount = legacyExpCoverage.get(legacyCode)?.size || 0;
+      if (legacyVtCount >= allVerses.length && legacyExpCount >= allVerses.length) {
+        console.log(`[Gita All] ${lang.name} (${lang.code}): already covered by legacy code '${legacyCode}' (VT:${legacyVtCount}, Exp:${legacyExpCount}), skipping`);
+        continue;
+      }
+    }
 
     let vtNeeded = 0;
     let expNeeded = 0;
