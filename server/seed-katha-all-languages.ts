@@ -55,12 +55,20 @@ const ALL_LANGS = [
   { code: "ur", name: "Urdu", script: "Nastaliq" },
   { code: "or", name: "Odia", script: "Odia" },
   { code: "sd", name: "Sindhi", script: "Arabic" },
+  { code: "pl", name: "Polish", script: "Latin" },
+  { code: "nl", name: "Dutch", script: "Latin" },
+  { code: "sv", name: "Swedish", script: "Latin" },
+  { code: "el", name: "Greek", script: "Greek" },
+  { code: "sw", name: "Swahili", script: "Latin" },
+  { code: "am", name: "Amharic", script: "Ge'ez" },
+  { code: "he", name: "Hebrew", script: "Hebrew" },
 ];
 
 const NON_LATIN_SCRIPTS = new Set([
   "Devanagari", "Bengali", "Gujarati", "Malayalam", "Gurmukhi", "Odia",
   "Sinhala", "Thai", "Japanese", "Hangul", "Cyrillic", "Arabic", "Persian",
   "Nastaliq", "Tibetan", "Myanmar", "Simplified Chinese", "Kannada", "Telugu", "Tamil",
+  "Greek", "Ge'ez", "Hebrew",
 ]);
 
 function getScriptNote(lang: { name: string; script: string }): string {

@@ -60,12 +60,19 @@ const NEW_LANGS = [
   { code: "ur", dbCode: "ur", name: "Urdu", nativeName: "اردو", script: "Nastaliq" },
   { code: "or", dbCode: "or", name: "Odia", nativeName: "ଓଡ଼ିଆ", script: "Odia" },
   { code: "sd", dbCode: "sd", name: "Sindhi", nativeName: "سنڌي", script: "Arabic" },
+  { code: "pl", dbCode: "pl", name: "Polish", nativeName: "Polski", script: "Latin" },
+  { code: "nl", dbCode: "nl", name: "Dutch", nativeName: "Nederlands", script: "Latin" },
+  { code: "sv", dbCode: "sv", name: "Swedish", nativeName: "Svenska", script: "Latin" },
+  { code: "el", dbCode: "el", name: "Greek", nativeName: "Ελληνικά", script: "Greek" },
+  { code: "sw", dbCode: "sw", name: "Swahili", nativeName: "Kiswahili", script: "Latin" },
+  { code: "am", dbCode: "am", name: "Amharic", nativeName: "አማርኛ", script: "Ge'ez" },
+  { code: "he", dbCode: "he", name: "Hebrew", nativeName: "עברית", script: "Hebrew" },
 ];
 
 const SCRIPTS_NEEDING_TRANSLITERATION = new Set([
   "Kannada", "Telugu", "Tamil", "Bengali", "Gujarati", "Malayalam", "Gurmukhi", "Odia",
   "Sinhala", "Thai", "Japanese", "Hangul", "Cyrillic", "Arabic", "Persian", "Nastaliq",
-  "Tibetan", "Myanmar", "Simplified Chinese",
+  "Tibetan", "Myanmar", "Simplified Chinese", "Greek", "Ge'ez", "Hebrew",
 ]);
 
 function needsTransliteration(script: string): boolean {

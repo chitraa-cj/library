@@ -55,12 +55,20 @@ const ALL_NEW_LANGS = [
   { code: "ur", name: "Urdu", script: "Nastaliq" },
   { code: "or", name: "Odia", script: "Odia" },
   { code: "sd", name: "Sindhi", script: "Arabic" },
+  { code: "pl", name: "Polish", script: "Latin" },
+  { code: "nl", name: "Dutch", script: "Latin" },
+  { code: "sv", name: "Swedish", script: "Latin" },
+  { code: "el", name: "Greek", script: "Greek" },
+  { code: "sw", name: "Swahili", script: "Latin" },
+  { code: "am", name: "Amharic", script: "Ge'ez" },
+  { code: "he", name: "Hebrew", script: "Hebrew" },
 ];
 
 const NON_LATIN_SCRIPTS = new Set([
   "Devanagari", "Bengali", "Gujarati", "Malayalam", "Gurmukhi", "Odia",
   "Sinhala", "Thai", "Japanese", "Hangul", "Cyrillic", "Arabic", "Persian",
   "Nastaliq", "Tibetan", "Myanmar", "Simplified Chinese", "Kannada", "Telugu", "Tamil",
+  "Greek", "Ge'ez", "Hebrew",
 ]);
 
 function getScriptNote(lang: { name: string; script: string }): string {
@@ -319,6 +327,13 @@ export async function seedGitaAllLanguages() {
     "Urdu": "سری شنکراچاریا نے اس شلوک پر تبصرہ نہیں کیا۔ بھاشیم 2.10 سے شروع ہوتا ہے۔",
     "Odia": "ଶ୍ରୀ ଶଙ୍କରାଚାର୍ଯ୍ୟ ଏହି ଶ୍ଲୋକ ଉପରେ ଭାଷ୍ୟ ଲେଖିନାହାନ୍ତି। ଭାଷ୍ୟ 2.10 ଠାରୁ ଆରମ୍ଭ ହୁଏ।",
     "Sindhi": "سري شنڪراچاريا هن شلوڪ تي تبصرو نه ڪيو. ڀاشيم 2.10 کان شروع ٿئي ٿو.",
+    "Polish": "Sri Sankaracharya nie skomentował tego shloki. Komentarz zaczyna się od 2.10.",
+    "Dutch": "Sri Sankaracharya heeft deze shloka niet becommentarieerd. Het commentaar begint vanaf 2.10.",
+    "Swedish": "Sri Sankaracharya kommenterade inte denna shloka. Kommentaren börjar från 2.10.",
+    "Greek": "Ο Σρι Σανκαραχάρυα δεν σχολίασε αυτή τη σλόκα. Το σχόλιο ξεκινά από 2.10.",
+    "Swahili": "Sri Sankaracharya hakutoa maoni kuhusu shloka hii. Maoni yanaanza kutoka 2.10.",
+    "Amharic": "ስሪ ሳንካራቻርያ ይህን ሽሎካ አልተንተኑም። ትርጓሜው ከ2.10 ይጀምራል።",
+    "Hebrew": "סרי שנקראצ'ריה לא פירש שלוקה זו. הפירוש מתחיל מ-2.10.",
   };
 
   for (const lang of ALL_NEW_LANGS) {
