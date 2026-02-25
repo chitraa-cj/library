@@ -5,38 +5,99 @@ const SOURCE_TEXT = `Bahūnām, among many-of many sons or disciples; emi, I go 
 
 const PROMPTS = [
   {
-    name: "Prompt A: Direct Scholarly Translation",
+    name: "Prompt A: शुद्ध Hindi with Sanskrit References — Scholarly",
     build: (lang: string, script: string) => ({
-      system: "You are an expert Sanskrit scholar specializing in Advaita Vedanta philosophy.",
-      user: `Translate this Shankaracharya's Bhashya on Katha Upanishad from English to ${lang}. Write in ${script} script. Keep Sanskrit technical terms in ${script} script. Maintain scholarly register.\n\nSOURCE:\n${SOURCE_TEXT}\n\nProvide ONLY the ${lang} translation.`
+      system: "You are an expert Sanskrit scholar specializing in Advaita Vedanta philosophy. You write in शुद्ध (pure) contemporary Hindi using modern grammatical constructs while preserving the philosophical precision of the original.",
+      user: `Rewrite this Shankaracharya Bhashya on the Katha Upanishad using contemporary शुद्ध ${lang} constructs. 
+
+CRITICAL RULES:
+1. Write in शुद्ध (pure, refined) contemporary ${lang} — NOT colloquial, NOT literal word-by-word translation
+2. For EVERY key Sanskrit term, include the original word with transliteration inline, like: बहूनां (Bahūnām) – अनेक पुत्रों या शिष्यों के बीच; एमि (emi) – मैं स्थान रखता हूँ
+3. The ${lang} prose should flow naturally between these reference terms
+4. Use ${script} script throughout
+5. Maintain scholarly register and philosophical depth
+
+SOURCE (English):
+${SOURCE_TEXT}
+
+Provide ONLY the ${lang} rewrite with inline Sanskrit references:`
     }),
   },
   {
-    name: "Prompt B: Contextual + Meaning-Focused",
+    name: "Prompt B: शुद्ध Hindi with Sanskrit References — Contextual Narrative",
     build: (lang: string, script: string) => ({
-      system: `You are a renowned Sanskrit-to-${lang} translator who has spent decades translating Vedantic commentaries. Your translations are known for capturing both the philosophical depth and natural ${lang} readability.`,
-      user: `Translate the following Shankaracharya Bhashya (commentary) on the Katha Upanishad into ${lang}.\n\nIMPORTANT INSTRUCTIONS:\n- Translate the MEANING, not word-by-word. The ${lang} should read naturally as if originally written in ${lang}.\n- Preserve Sanskrit philosophical terms (Brahman, Atman, etc.) in ${script} script.\n- Provide context where the original assumes familiarity with the narrative (e.g., mention Nachiketa, Yama by name).\n- Maintain the philosophical precision and scholarly tone.\n\nEnglish Bhashya:\n${SOURCE_TEXT}\n\n${lang} translation:`
+      system: `You are a renowned Vedantic translator known for making Shankaracharya's commentaries accessible in शुद्ध (pure) contemporary ${lang}. You always include original Sanskrit terms with transliterations as inline references, and you name characters (नचिकेता, यमराज) explicitly for clarity.`,
+      user: `Rewrite this Shankaracharya Bhashya on the Katha Upanishad in contemporary शुद्ध ${lang}.
+
+CRITICAL RULES:
+1. Use शुद्ध (pure, refined) modern ${lang} — the text should read naturally as contemporary scholarly ${lang}
+2. Include original Sanskrit reference words inline with transliteration, e.g.: बहूनां (Bahūnām) – अनेक पुत्रों या शिष्यों के बीच; प्रथमः (prathamah) – प्रथम श्रेणी में
+3. Name characters explicitly: use नचिकेता instead of "the son", यमराज instead of "Death"
+4. Provide narrative context where needed so a ${lang} reader understands the story
+5. Write in ${script} script, maintain philosophical precision
+
+SOURCE (English):
+${SOURCE_TEXT}
+
+${lang} rewrite with inline Sanskrit references:`
     }),
   },
   {
-    name: "Prompt C: Paraphrase + Explain Style",
+    name: "Prompt C: शुद्ध Hindi with Sanskrit References — Accessible Scholarly",
     build: (lang: string, script: string) => ({
-      system: `You are a ${lang} scholar who specializes in making ancient Indian philosophical texts accessible to modern ${lang} readers while maintaining their depth and accuracy.`,
-      user: `Below is Adi Shankaracharya's commentary (Bhashya) on a verse from the Katha Upanishad, in English. Translate it into clear, natural ${lang} that an educated ${lang} reader would find easy to understand.\n\nGuidelines:\n1. Do NOT translate word-by-word from English. Understand the meaning and express it naturally in ${lang}.\n2. Keep Sanskrit terms like Brahman, Atman, Nachiketa, Yama etc. in their original ${script} form.\n3. Where the English is awkward or unclear, refer to what Shankaracharya likely meant in the original Sanskrit context and express that clearly.\n4. The tone should be scholarly but readable.\n\nEnglish source:\n${SOURCE_TEXT}\n\n${lang} translation:`
+      system: `You are a ${lang} scholar who makes ancient Indian philosophical texts accessible to modern educated ${lang} readers. You write in शुद्ध (pure) contemporary ${lang} and always embed original Sanskrit terms with their transliterations as reference anchors within the text.`,
+      user: `Rewrite Adi Shankaracharya's Bhashya on the Katha Upanishad in clear, contemporary शुद्ध ${lang}.
+
+CRITICAL FORMAT:
+- Every key Sanskrit word must appear inline with transliteration: e.g., बहूनां (Bahūnām) – अनेक पुत्रों में; एमि (emi) – मैं जाता हूँ; प्रथमः (prathamah) – प्रथम
+- Between these reference anchors, write flowing, natural शुद्ध ${lang} prose
+- Do NOT translate word-by-word from English — understand the meaning and express it in contemporary ${lang}
+- Where the English is awkward, express what Shankaracharya meant in natural ${lang}
+- Use ${script} script, scholarly but readable tone
+
+SOURCE (English):
+${SOURCE_TEXT}
+
+${lang} rewrite:`
     }),
   },
   {
-    name: "Prompt D: Two-Step (Understand then Translate)",
+    name: "Prompt D: शुद्ध Hindi with Sanskrit References — Deep Understanding",
     build: (lang: string, script: string) => ({
-      system: `You are a bilingual Sanskrit-${lang} scholar with expertise in Advaita Vedanta. You first deeply understand texts before translating them.`,
-      user: `I need you to translate Shankaracharya's Bhashya on the Katha Upanishad from English to ${lang}.\n\nStep 1: First, internally understand what this passage is saying - who is speaking, what philosophical point is being made, and what the narrative context is.\n\nStep 2: Then write a natural, fluent ${lang} translation that captures the full meaning. Do not produce a word-by-word translation. The ${lang} should sound like it was written by a ${lang}-speaking Vedanta scholar.\n\nPreserve Sanskrit philosophical terms in ${script}. Maintain scholarly precision.\n\nEnglish Bhashya:\n${SOURCE_TEXT}\n\nProvide ONLY the final ${lang} translation (not the understanding step):`
+      system: `You are a bilingual Sanskrit-${lang} scholar with deep expertise in Advaita Vedanta. You first understand texts deeply, then rewrite them in शुद्ध (pure) contemporary ${lang} with original Sanskrit reference terms embedded inline.`,
+      user: `Rewrite this Shankaracharya Bhashya on the Katha Upanishad in contemporary शुद्ध ${lang}.
+
+Step 1: Internally understand the passage — who is speaking (नचिकेता), what is the narrative context, what philosophical point is being made.
+
+Step 2: Rewrite in शुद्ध contemporary ${lang} following these rules:
+- Include original Sanskrit terms with transliteration inline: बहूनां (Bahūnām) – अनेक; एमि (emi) – मैं जाता हूँ; कर्तव्यम् (kartavyam) – प्रयोजन
+- Write flowing contemporary ${lang} prose between these reference terms  
+- Do NOT produce word-by-word translation — the output should sound like a modern ${lang} Vedantic scholar wrote it
+- Use ${script} script throughout
+
+SOURCE (English):
+${SOURCE_TEXT}
+
+Provide ONLY the final ${lang} rewrite (not the understanding step):`
     }),
   },
   {
-    name: "Prompt E: Reference-Aware + Narrative Context",
+    name: "Prompt E: शुद्ध Hindi with Sanskrit References — Narrative-Aware",
     build: (lang: string, script: string) => ({
-      system: `You are translating Adi Shankaracharya's commentary on the Katha Upanishad for a ${lang}-language scholarly publication. The Katha Upanishad narrates the dialogue between young Nachiketa and Yama (the lord of death). Shankaracharya's bhashya explains each verse's deeper Vedantic meaning.`,
-      user: `Translate the following English rendering of Shankaracharya's Bhashya into ${lang}.\n\nTranslation principles:\n- Produce a meaning-faithful ${lang} rendering, NOT a literal word-by-word translation\n- The ${lang} must flow naturally and be self-contained (a ${lang} reader should understand it without referring to the English)\n- Use proper ${lang} grammatical structures and idiomatic expressions\n- Keep all Sanskrit technical terms and proper nouns in ${script} (e.g., Nachiketa, Yama, Brahman, Atman, Karma)\n- Where the English says things like "the son" or "Death", use the actual names for clarity\n- Maintain the philosophical depth and scholarly register\n\nEnglish Bhashya:\n${SOURCE_TEXT}\n\n${lang} translation:`
+      system: `You are rewriting Adi Shankaracharya's commentary on the Katha Upanishad for a ${lang}-language scholarly publication. The Katha Upanishad narrates the dialogue between young नचिकेता (Nachiketa) and यमराज (Yama). You write in शुद्ध (pure) contemporary ${lang} and always anchor your text with original Sanskrit reference words.`,
+      user: `Rewrite the following English rendering of Shankaracharya's Bhashya in contemporary शुद्ध ${lang}.
+
+TRANSLATION PRINCIPLES:
+1. शुद्ध contemporary ${lang}: Use refined modern ${lang} grammatical constructs, NOT literal English translation
+2. Sanskrit reference anchors: Embed original terms inline — e.g., बहूनां (Bahūnām) – अनेक पुत्रों या शिष्यों में; एमि (emi) – मैं स्थान रखता हूँ; प्रथमः (prathamah) – प्रथम श्रेणी में
+3. Character names: Use नचिकेता (not "the son"), यमराज (not "Death")
+4. Self-contained: A ${lang} reader should understand the passage without referring to English
+5. ${script} script, scholarly register, philosophical precision
+
+SOURCE (English):
+${SOURCE_TEXT}
+
+${lang} rewrite:`
     }),
   },
 ];
@@ -53,14 +114,14 @@ async function main() {
   }
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-  let markdown = "# Prompt Comparison: Katha Upanishad Bhashya — Hindi & Tamil\n\n";
+  let markdown = "# Prompt Comparison v3: शुद्ध Hindi & Tamil with Sanskrit References\n\n";
   markdown += "Generated: " + new Date().toISOString() + "\n\n";
   markdown += "## English Source\n\n";
   markdown += SOURCE_TEXT + "\n\n";
   markdown += "---\n\n";
 
   for (const lang of LANGUAGES) {
-    markdown += `## ${lang.name} Translations\n\n`;
+    markdown += `## ${lang.name} Translations (शुद्ध contemporary with Sanskrit references)\n\n`;
 
     for (const prompt of PROMPTS) {
       console.log(`Running: ${prompt.name} → ${lang.name}...`);
@@ -87,8 +148,8 @@ async function main() {
     markdown += "---\n\n";
   }
 
-  fs.writeFileSync("data/prompt-comparison-katha-v2.md", markdown);
-  console.log("\nResults written to data/prompt-comparison-katha-v2.md");
+  fs.writeFileSync("data/prompt-comparison-katha-v3.md", markdown);
+  console.log("\nResults written to data/prompt-comparison-katha-v3.md");
 }
 
 main().then(() => process.exit(0)).catch(e => { console.error(e); process.exit(1); });
