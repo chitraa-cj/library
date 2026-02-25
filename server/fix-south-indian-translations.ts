@@ -3,7 +3,7 @@ import { db } from "./db";
 import { explanations, verses, books } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 
-const DELAY_MS = 500;
+const DELAY_MS = 400;
 
 async function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -25,51 +25,42 @@ function isRefusalResponse(text: string): boolean {
   return refusalPatterns.some(p => p.test(text));
 }
 
-function isSanskritTransliteration(content: string, langCode: string): boolean {
-  const sanskritPatterns = [
-    /इत्यादयो मन्त्राः/,
-    /ইত্যাদয়ো মন্ত্রাঃ/,
-    /ఇత్యాదయో మన్త్రాః/,
-    /ಇತ್ಯಾದಯೋ ಮಂತ್ರಾಃ/,
-    /இத்யாதயோ மந்த்ரா/,
-    /कर्मस्वविनियुक्ताः/,
-    /కర్మస్వవినియుక్తాః/,
-    /ಕರ್ಮಸ್ವವಿನಿಯುಕ್ತಾಃ/,
-    /கர்மஸ்வவிநியுக்தா/,
-    /तेषामकर्मशेषस्य/,
-    /తేషామకర్మశేషస్య/,
-    /ತೇಷಾಮಕರ್ಮಶೇಷಸ್ಯ/,
-    /तद्विरोधात्कर्मसु/,
-    /తద్విరోధాత్కర్మసు/,
-    /ತದ್ವಿರೋಧಾತ್ಕರ್ಮಸು/,
-  ];
-  return sanskritPatterns.some(p => p.test(content));
+function isActualTranslation(content: string, langCode: string): boolean {
+  if (!content || content.length < 100) return false;
+  const teluguNativeWords = /అనగా|అంటే|కాబట్టి|ఎందుకంటే|వివరిస్తా|అయితే|చేయబడ|ఉపయోగించ|మరియు|కారణం|అందువల్ల|ద్వారా|ఎందుకు|వారు|అది/;
+  const kannadaNativeWords = /ಅಂದರೆ|ಏಕೆಂದರೆ|ಆದ್ದರಿಂದ|ವಿವರಿಸ|ಆಗಿದೆ|ಮಾಡಲಾ|ಬಳಸಲಾ|ಮತ್ತು|ಕಾರಣ|ಅವರು|ಅದು|ಹೇಗೆ|ಇದು/;
+  const tamilNativeWords = /என்று|ஏனெனில்|ஆகையால்|விளக்கு|ஆகும்|செய்யப்|பயன்படுத்|மற்றும்|காரணம்|அவர்கள்|அது|எப்படி|இது/;
+
+  if (langCode === "telugu") return teluguNativeWords.test(content);
+  if (langCode === "kannada") return kannadaNativeWords.test(content);
+  if (langCode === "tamil") return tamilNativeWords.test(content);
+  return false;
 }
 
 async function translateText(openai: OpenAI, prompt: string): Promise<string> {
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
-    messages: [{ role: "user", content: prompt }],
+    messages: [
+      { role: "system", content: "You are a scholarly translator specializing in Advaita Vedanta philosophy. Translate the given text accurately and completely into the requested language." },
+      { role: "user", content: prompt }
+    ],
     max_tokens: 4096,
     temperature: 0.3,
   });
   const content = response.choices[0].message.content || "";
   if (isRefusalResponse(content)) {
-    console.warn(`Refusal detected, retrying with system message...`);
+    console.warn(`Refusal detected, retrying...`);
     const retryResponse = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
-        { role: "system", content: "You are a scholarly translator specializing in Advaita Vedanta philosophy. Translate the given text accurately and completely." },
+        { role: "system", content: "You are a scholarly translator. Translate the given text accurately." },
         { role: "user", content: prompt }
       ],
       max_tokens: 4096,
       temperature: 0.5,
     });
     const retryContent = retryResponse.choices[0].message.content || "";
-    if (isRefusalResponse(retryContent)) {
-      console.warn(`Refusal persisted on retry`);
-      return "";
-    }
+    if (isRefusalResponse(retryContent)) return "";
     return retryContent;
   }
   return content;
@@ -110,12 +101,33 @@ export async function fixSouthIndianTranslations() {
         e => e.authorName === "Adi Shankaracharya" && e.languageCode === lang.code
       );
 
-      if (!existing) {
-        console.log(`[Fix South Indian] V${verse.verseNumber} ${lang.name}: No entry found, will insert`);
-        try {
-          const prompt = `You are an expert Sanskrit scholar specializing in Advaita Vedanta. Translate this Shankaracharya's Bhashya on Isha Upanishad from English to ${lang.name}. Write in ${lang.script} script. Keep Sanskrit technical terms (Brahman, Atman, etc.) in ${lang.script} script. Maintain scholarly register and philosophical precision.\n\nSOURCE:\n${engBhashyam.content}\n\nProvide ONLY the ${lang.name} translation.`;
-          const translated = await translateText(openai, prompt);
-          if (translated && !isRefusalResponse(translated)) {
+      if (existing && isActualTranslation(existing.content || "", lang.code)) {
+        console.log(`[Fix South Indian] V${verse.verseNumber} ${lang.name}: Already has actual translation, skipping`);
+        continue;
+      }
+
+      const action = existing ? "UPDATING" : "INSERTING";
+      console.log(`[Fix South Indian] V${verse.verseNumber} ${lang.name}: ${action}...`);
+
+      try {
+        const prompt = `You are an expert Sanskrit scholar specializing in Advaita Vedanta. Translate this Shankaracharya's Bhashya on Isha Upanishad from English into ${lang.name} language. 
+
+IMPORTANT: Write the translation as actual ${lang.name} LANGUAGE text that a ${lang.name}-speaking person can read and understand. Do NOT simply transliterate the Sanskrit into ${lang.script} script. The output must be natural ${lang.name} prose.
+
+Write in ${lang.script} script. Keep Sanskrit technical terms (like Brahman, Atman, Parameshwara, etc.) in ${lang.script} script. Maintain scholarly register and philosophical precision.
+
+SOURCE (English):
+${engBhashyam.content}
+
+Provide ONLY the ${lang.name} language translation:`;
+        const translated = await translateText(openai, prompt);
+
+        if (translated && !isRefusalResponse(translated) && translated.length > 150) {
+          if (existing) {
+            await db.update(explanations)
+              .set({ content: translated, isAiTranslated: true })
+              .where(eq(explanations.id, existing.id));
+          } else {
             await db.insert(explanations).values({
               verseId: verse.id,
               languageCode: lang.code,
@@ -123,39 +135,11 @@ export async function fixSouthIndianTranslations() {
               content: translated,
               isAiTranslated: true,
             });
-            updated++;
-            console.log(`[Fix South Indian] V${verse.verseNumber} ${lang.name}: INSERTED (${translated.length} chars)`);
           }
-          await delay(DELAY_MS);
-        } catch (error: any) {
-          console.error(`[Fix South Indian] V${verse.verseNumber} ${lang.name} insert error: ${error.message}`);
-          await delay(3000);
-        }
-        continue;
-      }
-
-      const needsUpdate = isSanskritTransliteration(existing.content || "", lang.code) ||
-                           (existing.content || "").length < 200;
-
-      if (!needsUpdate) {
-        console.log(`[Fix South Indian] V${verse.verseNumber} ${lang.name}: Already has proper translation (${(existing.content || "").length} chars), skipping`);
-        continue;
-      }
-
-      console.log(`[Fix South Indian] V${verse.verseNumber} ${lang.name}: Transliterated Sanskrit detected (${(existing.content || "").length} chars), replacing...`);
-
-      try {
-        const prompt = `You are an expert Sanskrit scholar specializing in Advaita Vedanta. Translate this Shankaracharya's Bhashya on Isha Upanishad from English to ${lang.name}. Write in ${lang.script} script. Keep Sanskrit technical terms (Brahman, Atman, etc.) in ${lang.script} script. Maintain scholarly register and philosophical precision.\n\nSOURCE:\n${engBhashyam.content}\n\nProvide ONLY the ${lang.name} translation.`;
-        const translated = await translateText(openai, prompt);
-
-        if (translated && !isRefusalResponse(translated) && translated.length > 200) {
-          await db.update(explanations)
-            .set({ content: translated, isAiTranslated: true })
-            .where(eq(explanations.id, existing.id));
           updated++;
-          console.log(`[Fix South Indian] V${verse.verseNumber} ${lang.name}: UPDATED (${(existing.content || "").length} → ${translated.length} chars)`);
+          console.log(`[Fix South Indian] V${verse.verseNumber} ${lang.name}: DONE (${translated.length} chars)`);
         } else {
-          console.warn(`[Fix South Indian] V${verse.verseNumber} ${lang.name}: Translation too short or refused, skipping`);
+          console.warn(`[Fix South Indian] V${verse.verseNumber} ${lang.name}: Translation too short or refused`);
         }
 
         await delay(DELAY_MS);
