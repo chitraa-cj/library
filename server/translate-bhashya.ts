@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import fs from "fs";
 
 const SOURCE_TEXT = process.argv[2] || "";
@@ -10,7 +10,7 @@ Usage: npx tsx server/translate-bhashya.ts "YOUR ENGLISH BHASHYA TEXT HERE"
 Example:
   npx tsx server/translate-bhashya.ts "Eşah, this-the Self about whom you ask me..."
 
-Output will be saved to data/bhashya-translation-output.md
+Output will be saved to data/bhashya-translation-<timestamp>.md
 `);
   process.exit(0);
 }
@@ -120,14 +120,18 @@ const LANGUAGES = [
 ];
 
 async function main() {
-  if (!process.env.OPENAI_API_KEY) {
-    console.log("Error: OPENAI_API_KEY not set");
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.log("Error: GEMINI_API_KEY not set");
     process.exit(1);
   }
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-  let markdown = `# Bhashya Translation Output\n\n`;
+  let markdown = `# Bhashya Translation Output (Gemini)\n\n`;
+  markdown += `Model: gemini-2.0-flash\n`;
   markdown += `Generated: ${new Date().toISOString()}\n\n`;
   markdown += `## English Source\n\n${SOURCE_TEXT}\n\n---\n\n`;
 
@@ -136,17 +140,16 @@ async function main() {
     for (const prompt of PROMPTS) {
       console.log(`${prompt.name} → ${lang.name}...`);
       const p = prompt.build(lang.name, lang.script);
+      const fullPrompt = `${p.system}\n\n${p.user}`;
       try {
-        const response = await openai.chat.completions.create({
-          model: "gpt-4o",
-          messages: [
-            { role: "system", content: p.system },
-            { role: "user", content: p.user },
-          ],
-          max_tokens: 4096,
-          temperature: 0.3,
+        const result = await model.generateContent({
+          contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
+          generationConfig: {
+            temperature: 0.3,
+            maxOutputTokens: 4096,
+          },
         });
-        const translation = response.choices[0].message.content || "";
+        const translation = result.response.text() || "";
         console.log(`  ✓ ${translation.length} chars`);
         markdown += `### ${prompt.name}\n\n${translation}\n\n`;
       } catch (err: any) {
