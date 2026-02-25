@@ -180,7 +180,20 @@ function HomePageContent() {
   const headerAuthors = useMemo(() => {
     if (!commentaryOptions) return [];
     if (!selectedCommentaryLanguage) return commentaryOptions.authors;
-    return commentaryOptions.authors.filter(a => a.languageCodes.includes(selectedCommentaryLanguage));
+    const langAliases: Record<string, string[]> = {
+      "english": ["english", "en"], "en": ["english", "en"],
+      "hi": ["hi", "hindi"], "hindi": ["hi", "hindi"],
+      "de": ["de", "german"], "german": ["de", "german"],
+      "fr": ["fr", "french"], "french": ["fr", "french"],
+      "es": ["es", "spanish"], "spanish": ["es", "spanish"],
+      "zh": ["zh", "mandarin", "chinese"], "mandarin": ["zh", "mandarin", "chinese"], "chinese": ["zh", "mandarin", "chinese"],
+      "ar": ["ar", "arabic"], "arabic": ["ar", "arabic"],
+      "kn": ["kn", "kannada"], "kannada": ["kn", "kannada"],
+      "te": ["te", "telugu"], "telugu": ["te", "telugu"],
+      "ta": ["ta", "tamil"], "tamil": ["ta", "tamil"],
+    };
+    const matchCodes = langAliases[selectedCommentaryLanguage] || [selectedCommentaryLanguage];
+    return commentaryOptions.authors.filter(a => a.languageCodes.some(c => matchCodes.includes(c)));
   }, [commentaryOptions, selectedCommentaryLanguage]);
 
   useEffect(() => {
@@ -196,8 +209,15 @@ function HomePageContent() {
   useEffect(() => {
     if (!user || prefsApplied) return;
     if (user.preferredLanguage) {
-      setSelectedCommentaryLanguage(user.preferredLanguage);
-      localStorage.setItem('preferredLanguage', user.preferredLanguage);
+      const prefLegacyAliases: Record<string, string> = {
+        en: "english", sa: "devanagari", sanskrit: "devanagari",
+        hi: "hindi", kn: "kannada", te: "telugu", ta: "tamil",
+        de: "german", fr: "french", es: "spanish",
+        zh: "mandarin", chinese: "mandarin", ar: "arabic",
+      };
+      const normalizedLang = prefLegacyAliases[user.preferredLanguage.toLowerCase().trim()] || user.preferredLanguage;
+      setSelectedCommentaryLanguage(normalizedLang);
+      localStorage.setItem('preferredLanguage', normalizedLang);
     }
     if (user.preferredAuthor) {
       setSelectedAuthor(user.preferredAuthor);
