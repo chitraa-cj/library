@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import fs from "fs";
 
-const SOURCE_TEXT = `Bahūnām, among many-of many sons or disciples; emi, I go (rank); prathamah, as first, that is to say, through the foremost conduct of a disciple etc. And bahūnām, among many-many middling ones; madhyamah emi, I move (count) as a middling one, I behave through the middling conduct. But never do I behave as the worst.1 Though I am a son possessed of such quality, still to me my father has said, "To Death I shall offer you," Kim svit, what; kartavyam, purpose; yamasya, of Death-can there be; which purpose he (my father) adya, today; karişyati, will achieve; mayā, through me, by sending me? "My father must have certainly spoken so out of anger without any consideration of purpose. Still the words of that father must not be falsified", thinking thus, he said sorrowfully to his father, remorseful as the latter was because of the thought, "What a thing I have uttered!"`;
+const SOURCE_TEXT = `Eşah, this-the Self about whom you ask me; (when) proktah, spoken of; avareņa nareņa, by an inferior man, i.e. by a man of worldly understanding; na hi suvijňeyah, is not certainly liable to be adequately understood; for It is bahudhā, variously-such as "It exists", "It does not exist", "It is the doer", "It is not the doer"; cintyamānah, deliberated on-by disputants. How, again, is It well understood? This is being said: The Self ananyaprokte, when spoken of by a non-different man, by the teacher who does not see duality, who has become identified with the Brahman that is to be revealed (by him¹); atra, here, with regard to the Self; na asti, there does not remain; gatih, cogitation, of various kinds as to whether It exists or not; for from the Self is ruled out all thoughts involving doubt.`;
 
 const PROMPTS = [
   {
@@ -148,8 +148,8 @@ async function main() {
     markdown += "---\n\n";
   }
 
-  fs.writeFileSync("data/prompt-comparison-katha-v3.md", markdown);
-  console.log("\nResults written to data/prompt-comparison-katha-v3.md");
+  fs.writeFileSync("data/prompt-comparison-katha-v4.md", markdown);
+  console.log("\nResults written to data/prompt-comparison-katha-v4.md");
 }
 
 main().then(() => process.exit(0)).catch(e => { console.error(e); process.exit(1); });
