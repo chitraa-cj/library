@@ -33,7 +33,11 @@ Bahūnām, among many-of many sons or disciples; emi, I go (rank); prathamah, as
 
 ### Prompt C: शुद्ध — Accessible Scholarly
 
-ERROR: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent: [429 Too Many Requests] Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.
+नचिकेता अपने पिता से कहता है: मैं **बहूनां (Bahūnām)** – अनेक पुत्रों या शिष्यों में, **प्रथमः (prathamah)** – प्रथम, **एमि (emi)** – गिना जाता हूँ, अर्थात् मेरा आचरण सदैव श्रेष्ठ शिष्यों जैसा रहा है। और **बहूनां (Bahūnām)** – बहुतों में, मैं **मध्यमः (madhyamah)** – मध्यम, **एमि (emi)** – गिना जाता हूँ, अर्थात् मेरा व्यवहार मध्यम श्रेणी का भी होता है। परंतु, मैं कभी भी निकृष्ट आचरण नहीं करता।
+
+इतने उत्तम गुणों वाला पुत्र होने पर भी, मेरे पिता ने मुझसे कहा है, "मैं तुम्हें मृत्यु को अर्पित करूँगा।" नचिकेता मन ही मन विचार करता है, "मृत्यु के देवता यम का **किं स्वित् (Kim svit)** – क्या, **कर्तव्यम् (kartavyam)** – प्रयोजन हो सकता है, जिसे मेरे पिता **अद्य (adya)** – आज, मुझे भेजकर **मया (mayā)** – मेरे द्वारा, **करिष्यति (kariṣyati)** – पूरा करेंगे?"
+
+"निश्चित रूप से मेरे पिता ने क्रोधवश बिना किसी प्रयोजन के यह बात कही होगी। फिर भी, पिता के वचनों को असत्य नहीं होने देना चाहिए," – ऐसा सोचकर, उसने अपने पिता से दुःखपूर्वक कहा। पिता उस समय पश्चाताप कर रहे थे कि "मैंने यह क्या कह दिया!"
 
 ### Prompt D: शुद्ध — Deep Understanding
 
