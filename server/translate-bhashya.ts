@@ -127,11 +127,11 @@ async function main() {
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
   let markdown = `# Bhashya Translation Output (Gemini)\n\n`;
-  markdown += `Model: gemini-2.0-flash\n`;
+  markdown += `Model: gemini-2.5-flash\n`;
   markdown += `Generated: ${new Date().toISOString()}\n\n`;
   markdown += `## English Source\n\n${SOURCE_TEXT}\n\n---\n\n`;
 
@@ -156,6 +156,8 @@ async function main() {
         console.error(`  ✗ ${err.message}`);
         markdown += `### ${prompt.name}\n\nERROR: ${err.message}\n\n`;
       }
+      fs.writeFileSync(`data/bhashya-translation-latest.md`, markdown + "\n(partial — in progress)\n");
+      await new Promise(r => setTimeout(r, 2000));
     }
     markdown += "---\n\n";
   }
