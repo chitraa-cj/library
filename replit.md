@@ -142,6 +142,9 @@ The commentary data (Shankaracharya bhashya, Anandagiri teeka, etc.) uses a mult
 - **Translation scripts**: `server/translate-teeka-and-hindi.ts` for Isha teeka + Hindi, `server/seed-european-translations.ts` for all non-South-Indian language translations (German/French/Spanish/Mandarin/Arabic)
 
 ## Notes
+- **SIGHUP Handler**: The server registers a SIGHUP handler at the top of `server/index.ts` to prevent the Replit workflow system's SIGHUP signals from killing the process. Without this, the app crashes ~25-30 seconds after startup.
+- **Request Logging**: The Express request logger in `server/index.ts` logs method/path/status/duration only (no response body capture) to avoid heavy JSON.stringify operations on large translation responses.
+- **Background Translation Tasks**: `seedGitaAllLanguages`, `seedKathaAllLanguages`, and `seedEuropeanTranslations` are NOT run on startup. Run manually when needed via `npx tsx server/seed-gita-all-languages.ts` etc.
 - **SendGrid Integration**: User dismissed the Replit SendGrid connector and chose to leave email OTP authentication out for now. Can revisit later if needed.
 - **Branding**: Main header uses "Advaita Vaaridhi - Encyclopaedia of Advaita Vedanta". Sidebar still shows "Ekatma Dham - Abode of Oneness" branding with oneness.org.in logo.
 - **Book-specific media**: Videos/audio are per-book, configured in `bookMediaConfig` (book-reader.tsx) and `bookVideoConfig` (welcome-screen.tsx). Only books with config show video. Currently only Isha Upanishad has a video.
