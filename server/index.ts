@@ -5,10 +5,7 @@ import { createServer } from "http";
 import { seedDatabase, seedAdditionalCommentaries, updateIncompleteShankaraExplanations, seedEnglishVerseTranslations, seedSouthIndianVerseTranslations, updateVerseSectionTitles, updateIshaUpanishadHierarchy, syncAuthoritativeCommentaryData } from "./seed";
 import { seedBhagavadGita, repairGitaSectionTitles } from "./seed-gita";
 import { seedWordMeaningsFromFile } from "./seed-word-meanings-local";
-import { seedEuropeanTranslations } from "./seed-european-translations";
-import { seedGitaAllLanguages } from "./seed-gita-all-languages";
 import { seedKathaUpanishad } from "./seed-katha-upanishad";
-import { seedKathaAllLanguages } from "./seed-katha-all-languages";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 import { importTranslationDataFromFiles } from "./import-translation-data";
 import { syncSouthIndianBhashya } from "./sync-south-indian-bhashya";
@@ -59,7 +56,8 @@ app.use((req, res, next) => {
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+        const responseStr = JSON.stringify(capturedJsonResponse);
+        logLine += ` :: ${responseStr.length > 500 ? responseStr.slice(0, 500) + '...[truncated]' : responseStr}`;
       }
 
       log(logLine);
@@ -126,9 +124,6 @@ async function runSeedOperations() {
     log("All seed operations completed");
     await importTranslationDataFromFiles().catch(err => console.error("Translation data import error:", err));
     await syncSouthIndianBhashya().catch(err => console.error("South Indian bhashya sync error:", err));
-    seedEuropeanTranslations().catch(err => console.error("European translations error:", err));
-    seedGitaAllLanguages().catch(err => console.error("Gita all languages error:", err));
-    seedKathaAllLanguages().catch(err => console.error("Katha all languages error:", err));
   } catch (err) {
     console.error("Seed operations failed:", err);
   }
