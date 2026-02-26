@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { storage } from "./storage";
 import { books, verses, verseTranslations, explanations, languages } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { COMPLETE_SHANKARA_BHASHYA } from "./complete-bhashya-data";
 import { authoritativeCommentaryData } from "./authoritative-commentary-data";
 
@@ -1662,5 +1662,106 @@ export async function syncAuthoritativeCommentaryData() {
     console.log(`Commentary sync: updated ${updatedCount}, inserted ${insertedCount} entries`);
   } else {
     console.log("All commentary data is already up to date");
+  }
+}
+
+export async function cleanupDuplicateTranslations() {
+  console.log("Checking for duplicate verse translations...");
+  const dupVTResult = await db.execute(sql`
+    SELECT COUNT(*) as cnt FROM (
+      SELECT verse_id, language_code FROM verse_translations 
+      GROUP BY verse_id, language_code HAVING COUNT(*) > 1
+    ) sub
+  `);
+  const dupVTCount = Number(dupVTResult.rows?.[0]?.cnt || 0);
+  
+  if (dupVTCount > 0) {
+    const deleteVT = await db.execute(sql`
+      DELETE FROM verse_translations 
+      WHERE id IN (
+        SELECT id FROM (
+          SELECT id, ROW_NUMBER() OVER (
+            PARTITION BY verse_id, language_code 
+            ORDER BY length(content) DESC, id
+          ) as rn
+          FROM verse_translations
+        ) sub WHERE rn > 1
+      )
+    `);
+    console.log(`Cleaned ${dupVTCount} duplicate verse translation groups`);
+  } else {
+    console.log("No duplicate verse translations found");
+  }
+
+  console.log("Checking for duplicate explanations...");
+  const dupExpResult = await db.execute(sql`
+    SELECT COUNT(*) as cnt FROM (
+      SELECT verse_id, language_code, author_name FROM explanations 
+      GROUP BY verse_id, language_code, author_name HAVING COUNT(*) > 1
+    ) sub
+  `);
+  const dupExpCount = Number(dupExpResult.rows?.[0]?.cnt || 0);
+  
+  if (dupExpCount > 0) {
+    const deleteExp = await db.execute(sql`
+      DELETE FROM explanations 
+      WHERE id IN (
+        SELECT id FROM (
+          SELECT id, ROW_NUMBER() OVER (
+            PARTITION BY verse_id, language_code, author_name 
+            ORDER BY length(content) DESC, id
+          ) as rn
+          FROM explanations
+        ) sub WHERE rn > 1
+      )
+    `);
+    console.log(`Cleaned ${dupExpCount} duplicate explanation groups`);
+  } else {
+    console.log("No duplicate explanations found");
+  }
+}
+
+export async function fixIncompleteTranslations() {
+  console.log("Checking for incomplete Konkani (kok) bhashya on Isha verse 9...");
+  
+  const konkaniContent = `अन्धं तमः प्रविशन्ति (Andhaṃ Tamaḥ Praviśanti) = ते घोर अज्ञान (Ghora Ajñān) आशिल्ल्या काळोखांत (Kāḷokhānta) प्रवेस करतात.
+ये अविद्ययाम् उपासते (Ye Avidyāyām Upāsate) = जे अविद्या (Avidyā) – म्हळ्यार, फकत कर्मकांड (Karmakāṇḍa) आनी ताचे फाटल्यान आशिल्ले अज्ञान (Ajñān) – हाची उपासना करतात.
+ततो भूय इव ते तमः (Tato Bhūya Iva Te Tamaḥ) = ताचेपरस चड, ते आनीकय व्हड काळोखांत (Vhaḍ Kāḷokhānta) प्रवेस करतात.
+य उ विद्यायां रताः (Ya U Vidyāyāṃ Ratāḥ) = जे फकत विद्या (Vidyā) – म्हळ्यार, शाब्दिक ज्ञान (Śābdik Jñān) वा सिद्धांतांत (Siddhāntānta) – रमतात वा निश्ठेन आसतात.
+
+हो श्लोक (Śloka) दोन टोकांच्या मार्गांविशीं (Mārgāṃviśīṃ) इशारो दिता: एक म्हणजे जे फकत कर्मकांड (Karmakāṇḍa) करतात, पूण ताचे फाटल्यान आशिल्लें खरें ज्ञान (Kharẽ Jñān) समजूंक नासतात, आनी दुसरे जे फकत सैद्धांतिक ज्ञान (Said'dhāntik Jñān) मेळयतात, पूण कर्मावरवीं मेळपी चित्तशुद्धीकरणाचे (Cittaśuddhikaraṇāche) गरजेक दुर्लक्षीत (Durlakṣīt) करतात.
+
+जे अविद्या (Avidyā) – म्हळ्यार अज्ञान (Ajñān), ह्या संदर्भांत, अर्थ समजूंक नासतांना फकत कर्मकांडाचेर (Karmakāṇḍācher) विश्वास दवरपी लोक – ते काळोखांत (Kāḷokhānta) प्रवेस करतात; तांकां मोक्ष (Mokṣa) वा मुक्ती (Mukti) मेळना. पूण, जे फकत विद्या (Vidyā) – म्हळ्यार ज्ञान (Jñān) – हाचेरच निश्ठेन आसतात, पूण ताच्या आदल्यो (Ādalyo) तयारीच्यो शिस्ती (Tayārīcyo Śistī) पाळनात, ते ताचेय परस घोर काळोखांत (Ghora Kāḷokhānta) प्रवेस करतात. कारण ते आपल्या शिकपाचो (Śikpācho) आनी पांडित्याचो (Pāṇḍityācho) अहंकर (Ahaṅkāra) बाळगतात आनी गरजेच्या नैतिक (Naitik) आनी आध्यात्मिक (Ādhyātmik) शिस्तींक (Śistīka) पुरायपणान दुर्लक्षीत करतात.`;
+
+  const ishaBook = await db.select().from(books).where(eq(books.slug, "isha-upanishad-bhashya"));
+  if (ishaBook.length === 0) {
+    console.log("Isha Upanishad book not found, skipping");
+    return;
+  }
+  
+  const ishaVerses = await db.select().from(verses).where(eq(verses.bookId, ishaBook[0].id));
+  const verse9 = ishaVerses.find(v => v.verseNumber === 9);
+  if (!verse9) {
+    console.log("Isha verse 9 not found, skipping");
+    return;
+  }
+
+  const kokExplanations = await db.select().from(explanations).where(
+    and(
+      eq(explanations.verseId, verse9.id),
+      eq(explanations.languageCode, "kok"),
+      eq(explanations.authorName, "Adi Shankaracharya")
+    )
+  );
+
+  if (kokExplanations.length > 0 && kokExplanations[0].content.length < 300) {
+    await db.update(explanations)
+      .set({ content: konkaniContent })
+      .where(eq(explanations.id, kokExplanations[0].id));
+    console.log("Fixed incomplete Konkani bhashya for Isha verse 9");
+  } else if (kokExplanations.length === 0) {
+    console.log("Konkani bhashya for Isha verse 9 not found, skipping");
+  } else {
+    console.log("Konkani bhashya for Isha verse 9 already complete");
   }
 }

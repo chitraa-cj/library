@@ -6,7 +6,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
-import { seedDatabase, seedAdditionalCommentaries, updateIncompleteShankaraExplanations, seedEnglishVerseTranslations, seedSouthIndianVerseTranslations, updateVerseSectionTitles, updateIshaUpanishadHierarchy, syncAuthoritativeCommentaryData } from "./seed";
+import { seedDatabase, seedAdditionalCommentaries, updateIncompleteShankaraExplanations, seedEnglishVerseTranslations, seedSouthIndianVerseTranslations, updateVerseSectionTitles, updateIshaUpanishadHierarchy, syncAuthoritativeCommentaryData, cleanupDuplicateTranslations, fixIncompleteTranslations } from "./seed";
 import { seedBhagavadGita, repairGitaSectionTitles } from "./seed-gita";
 import { seedWordMeaningsFromFile } from "./seed-word-meanings-local";
 import { seedKathaUpanishad } from "./seed-katha-upanishad";
@@ -112,6 +112,8 @@ async function runSeedOperations() {
     await repairGitaSectionTitles().catch(console.error);
     await seedWordMeaningsFromFile().catch(console.error);
     await seedKathaUpanishad().catch(console.error);
+    await cleanupDuplicateTranslations().catch(console.error);
+    await fixIncompleteTranslations().catch(console.error);
     log("All seed operations completed");
     await importTranslationDataFromFiles().catch(err => console.error("Translation data import error:", err));
     await syncSouthIndianBhashya().catch(err => console.error("South Indian bhashya sync error:", err));
