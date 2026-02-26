@@ -47,6 +47,7 @@ interface WordTooltipProps {
   verseId?: string;
   className?: string;
   useWordMeanings?: boolean;
+  globalLanguage?: string;
 }
 
 interface TooltipPosition {
@@ -62,6 +63,26 @@ function normalizeWord(word: string): string {
     .toLowerCase();
 }
 
+const LANG_CODE_TO_TOOLTIP: Record<string, string> = {
+  en: "english", english: "english",
+  hi: "hindi", hindi: "hindi",
+  kn: "kannada", kannada: "kannada",
+  ta: "tamil", tamil: "tamil",
+  te: "telugu", telugu: "telugu",
+  de: "english", german: "english",
+  fr: "english", french: "english",
+  es: "english", spanish: "english",
+  zh: "english", mandarin: "english", chinese: "english",
+  ar: "english", arabic: "english",
+  sa: "hindi", devanagari: "hindi", sanskrit: "hindi",
+  pt: "english", portuguese: "english",
+};
+
+function resolveTooltipLang(lang?: string): string {
+  if (!lang) return "english";
+  return LANG_CODE_TO_TOOLTIP[lang.toLowerCase()] || "english";
+}
+
 export function WordTooltip({ 
   content, 
   commentaryContent = "",
@@ -69,6 +90,7 @@ export function WordTooltip({
   verseId,
   className = "",
   useWordMeanings: enableWordMeanings = true,
+  globalLanguage,
 }: WordTooltipProps) {
   const instanceId = useId();
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
@@ -79,8 +101,21 @@ export function WordTooltip({
   const [directMeaning, setDirectMeaning] = useState<DirectWordMeaning | null>(null);
   const [showAllMeanings, setShowAllMeanings] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [targetLanguage, setTargetLanguage] = useState("english");
+  const [targetLanguage, setTargetLanguage] = useState(() => resolveTooltipLang(globalLanguage));
   const { t } = useTranslation(targetLanguage);
+
+  useEffect(() => {
+    if (globalLanguage) {
+      const newLang = resolveTooltipLang(globalLanguage);
+      setTargetLanguage(prevLang => {
+        if (prevLang !== newLang && selectedWord && showTooltip && !showAllMeanings) {
+          setTranslation(null);
+          fetchAiTranslation(selectedWord, newLang);
+        }
+        return newLang;
+      });
+    }
+  }, [globalLanguage]);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const clickedWordRef = useRef<DOMRect | null>(null);
 
@@ -340,7 +375,7 @@ export function WordTooltip({
               ) : (
                 <>
                   <Sparkles className="h-4 w-4 text-primary" />
-                  <span className="font-semibold text-primary text-sm">AI Word Analysis</span>
+                  <span className="font-semibold text-primary text-sm">{t("aiWordAnalysis")}</span>
                 </>
               )}
             </div>
@@ -361,7 +396,7 @@ export function WordTooltip({
             <>
               <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border">
                 <Globe className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Translate to:</span>
+                <span className="text-xs text-muted-foreground">{t("translateTo")}</span>
                 <Select value={targetLanguage} onValueChange={handleLanguageChange}>
                   <SelectTrigger className="h-7 w-[140px] text-xs bg-card" data-testid="select-target-language">
                     <SelectValue />

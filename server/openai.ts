@@ -74,14 +74,16 @@ export async function translateWord(
   const truncatedVerse = verseContext.slice(0, 300);
   const truncatedCommentary = commentaryContext.slice(0, 500);
 
-  const prompt = `Sanskrit scholar: Analyze "${word}" from Īśāvāsyopaniṣad.
+  const prompt = `Sanskrit scholar: Analyze "${word}" from a sacred text.
 Source: ${sourceLang} → Target: ${targetLang}
 
 Context: ${truncatedVerse}
 Commentary: ${truncatedCommentary}
 
+IMPORTANT: ALL fields in the response MUST be written in ${targetLang}. Do NOT use English for any field unless the target language is English.
+
 JSON response:
-{"translation":"${targetLang} meaning","grammaticalInfo":"root, formation, case/gender/tense","etymology":"word origin","contextualMeaning":"Advaita interpretation"}`;
+{"translation":"meaning in ${targetLang}","grammaticalInfo":"root, formation, case/gender/tense in ${targetLang}","etymology":"word origin in ${targetLang}","contextualMeaning":"Advaita interpretation in ${targetLang}"}`;
 
   try {
     const response = await openai.chat.completions.create({

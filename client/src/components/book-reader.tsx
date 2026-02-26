@@ -290,6 +290,7 @@ function VerseExplanation({
                 verseId={verseId}
                 className="inline"
                 useWordMeanings={false}
+                globalLanguage={languageCode}
               />
             </div>
             {englishVersion && (
@@ -1233,6 +1234,7 @@ export function BookReader({
                     commentaryContent={commentaryContext}
                     sourceLanguage="devanagari"
                     verseId={currentVerse.id}
+                    globalLanguage={lang}
                   />
                 </div>
 
@@ -1258,6 +1260,7 @@ export function BookReader({
                             commentaryContent={commentaryContext}
                             sourceLanguage={translation.languageCode}
                             verseId={currentVerse.id}
+                            globalLanguage={lang}
                           />
                         </div>
                       </div>
