@@ -43,6 +43,8 @@ export const bookTitleTranslations: ContentMap = {
     sd: "ايشاواسيوپنيشد",
     ks: "ईशावास्योपनिषद्",
     bho: "ईशावास्योपनिषद्",
+    gu: "ઈશાવાસ્યોપનિષદ",
+    my: "ဣသာဝါဿျောပနိသဒ်",
   },
   "Kaṭhopaniṣad": {
     en: "Kaṭhopaniṣad",
@@ -86,6 +88,8 @@ export const bookTitleTranslations: ContentMap = {
     sd: "ڪٺوپنيشد",
     ks: "कठोपनिषद्",
     bho: "कठोपनिषद्",
+    gu: "કઠોપનિષદ",
+    my: "ကထောပနိသဒ်",
   },
   "श्रीमद्भगवद्गीता": {
     en: "Śrīmad Bhagavad Gītā",
@@ -129,6 +133,8 @@ export const bookTitleTranslations: ContentMap = {
     sd: "شريمد ڀڳود گيتا",
     ks: "श्रीमद् भगवद् गीता",
     bho: "श्रीमद्भगवद्गीता",
+    gu: "શ્રીમદ્ ભગવદ્ ગીતા",
+    my: "Śrīmad Bhagavad Gītā",
   },
 };
 
@@ -1422,6 +1428,7 @@ export const bookCategoryTranslations: ContentMap = {
     mni: "উপনিষদ",
     bho: "Upanishad",
 
+    ks: "उपनिषद",
   },
   "Gita": {
     en: "Gita",
@@ -1467,6 +1474,7 @@ export const bookCategoryTranslations: ContentMap = {
     mni: "গীতা",
     bho: "Gita",
 
+    ks: "गीता",
   },
 };
 
@@ -1620,6 +1628,8 @@ export const chapterTitleTranslations: ContentMap = {
     sd: "باب 1",
     ks: "अध्याय १",
     bho: "अध्याय 1",
+    gu: "અધ્યાય 1",
+    my: "Adhyāya 1",
   },
   "अध्याय 2": {
     en: "Chapter 2",
@@ -1663,6 +1673,8 @@ export const chapterTitleTranslations: ContentMap = {
     sd: "باب 2",
     ks: "अध्याय २",
     bho: "अध्याय 2",
+    gu: "અધ્યાય 2",
+    my: "Adhyāya 2",
   },
   "Jñāna-Karma Kāṇḍa": {
     en: "Jñāna-Karma Kāṇḍa",
@@ -1706,6 +1718,8 @@ export const chapterTitleTranslations: ContentMap = {
     sd: "Jñāna-Karma ڪانڊ",
     ks: "Jñāna-Karma खण्ड",
     bho: "Jñāna-Karma कांड",
+    gu: "Jñāna-Karma Kāṇḍa",
+    my: "Jñāna-Karma Kāṇḍa",
   },
   "Vidyā-Avidyā Vicāra": {
     en: "Vidyā-Avidyā Vicāra",
@@ -1749,6 +1763,8 @@ export const chapterTitleTranslations: ContentMap = {
     sd: "Vidyā-Avidyā وچار",
     ks: "Vidyā-Avidyā विचार",
     bho: "Vidyā-Avidyā विचार",
+    gu: "Vidyā-Avidyā Vicāra",
+    my: "Vidyā-Avidyā Vicāra",
   },
   "Prārthanā Kāṇḍa": {
     en: "Prārthanā Kāṇḍa",
@@ -1792,6 +1808,8 @@ export const chapterTitleTranslations: ContentMap = {
     sd: "پرارٿنا ڪانڊ",
     ks: "प्रार्थना खण्ड",
     bho: "प्रार्थना कांड",
+    gu: "Prārthanā Kāṇḍa",
+    my: "Prārthanā Kāṇḍa",
   },
   "अर्जुनविषादयोग - Arjun Viṣhād Yog": {
     en: "Arjuna Viṣhāda Yoga",
@@ -2666,6 +2684,8 @@ export const sectionTitleTranslations: ContentMap = {
     sd: "Nachiketas ۽ يگيه",
     ks: "Nachiketas और यज्ञ",
     bho: "Nachiketas आ यज्ञ",
+    gu: "Nachiketas અને યજ્ઞ",
+    my: "Nachiketas နှင့် ယဇ်ပူဇာ",
   },
   "The Three Boons": {
     en: "The Three Boons",
@@ -2709,6 +2729,8 @@ export const sectionTitleTranslations: ContentMap = {
     sd: "ٽي ور",
     ks: "त्रे वरदान",
     bho: "तीन वरदान",
+    gu: "ત્રણ વરદાન",
+    my: "ဆုသုံးပါး",
   },
   "The Soul's Journey": {
     en: "The Soul's Journey",
@@ -2752,6 +2774,8 @@ export const sectionTitleTranslations: ContentMap = {
     sd: "آتما جو سفر",
     ks: "आत्माची यात्रा",
     bho: "आत्मा के यात्रा",
+    gu: "આત્માની યાત્રા",
+    my: "ဝိညာဉ်၏ ခရီး",
   },
   "The Razor's Edge": {
     en: "The Razor's Edge",
@@ -2795,6 +2819,8 @@ export const sectionTitleTranslations: ContentMap = {
     sd: "استريءَ جي ڌار",
     ks: "उस्तूरक धार",
     bho: "छुरा के धार",
+    gu: "ક્ષુરધાર",
+    my: "ဓါးသွား၏ အစွန်း",
   },
   "The Inner Self": {
     en: "The Inner Self",
@@ -2838,6 +2864,8 @@ export const sectionTitleTranslations: ContentMap = {
     sd: "اندروني آتما",
     ks: "अंदरूनी आत्मा",
     bho: "अंतर आत्मा",
+    gu: "અંતર આત્મા",
+    my: "အတွင်းအတ္တ",
   },
   "The Supreme Brahman": {
     en: "The Supreme Brahman",
@@ -2881,6 +2909,8 @@ export const sectionTitleTranslations: ContentMap = {
     sd: "اعلىٰ Brahman",
     ks: "परम Brahman",
     bho: "परम Brahman",
+    gu: "પરમ Brahman",
+    my: "အမြင့်မြတ်ဆုံး Brahman",
   },
   "Introduction & Renunciation": {
     en: "Introduction & Renunciation",
@@ -2924,6 +2954,8 @@ export const sectionTitleTranslations: ContentMap = {
     sd: "تعارف ۽ تياڳ",
     ks: "प्रस्तावना और त्याग",
     bho: "परिचय आ त्याग",
+    gu: "પ્રસ્તાવના અને સંન્યાસ",
+    my: "နိဒါန်း နှင့် စွန့်လွှတ်ခြင်း",
   },
   "Nature of the Self": {
     en: "Nature of the Self",
@@ -2967,6 +2999,8 @@ export const sectionTitleTranslations: ContentMap = {
     sd: "آتما جي ماهيت",
     ks: "आत्मिक स्वरूप",
     bho: "आत्मा के स्वरूप",
+    gu: "આત્માનું સ્વરૂપ",
+    my: "အတ္တ၏ သဘာဝ",
   },
   "Vidyā & Avidyā": {
     en: "Vidyā & Avidyā",
@@ -3010,6 +3044,8 @@ export const sectionTitleTranslations: ContentMap = {
     sd: "Vidyā ۽ Avidyā",
     ks: "Vidyā और Avidyā",
     bho: "Vidyā आ Avidyā",
+    gu: "Vidyā અને Avidyā",
+    my: "Vidyā နှင့် Avidyā",
   },
   "Sambhūti & Asambhūti": {
     en: "Sambhūti & Asambhūti",
@@ -3053,6 +3089,8 @@ export const sectionTitleTranslations: ContentMap = {
     sd: "Sambhūti ۽ Asambhūti",
     ks: "Sambhūti और Asambhūti",
     bho: "Sambhūti आ Asambhūti",
+    gu: "Sambhūti અને Asambhūti",
+    my: "Sambhūti နှင့် Asambhūti",
   },
   "Prayers to the Sun": {
     en: "Prayers to the Sun",
@@ -3096,6 +3134,8 @@ export const sectionTitleTranslations: ContentMap = {
     sd: "سج لاءِ پرارٿنائون",
     ks: "सूर्येस प्रार्थना",
     bho: "सूर्य के प्रार्थना",
+    gu: "સૂર્યને પ્રાર્થનાઓ",
+    my: "နေနတ်မင်း ဆုတောင်း",
   },
   "Final Prayers": {
     en: "Final Prayers",
@@ -3139,6 +3179,8 @@ export const sectionTitleTranslations: ContentMap = {
     sd: "آخري پرارٿنائون",
     ks: "अंतिम प्रार्थना",
     bho: "अंतिम प्रार्थना",
+    gu: "અંતિમ પ્રાર્થનાઓ",
+    my: "နောက်ဆုံး ဆုတောင်းများ",
   },
 };
 
@@ -3185,6 +3227,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     sd: "Śaṅkara پاران شروعاتي تبصرا",
     ks: "Śaṅkaraची प्रस्तावना",
     bho: "Śaṅkara के प्रस्तावना",
+    gu: "Śaṅkaraની પ્રસ્તાવના",
+    my: "Śaṅkara ၏ နိဒါန်းစကား",
   },
   "Devotion to Jñāna (Knowledge)": {
     en: "Devotion to Jñāna (Knowledge)",
@@ -3228,6 +3272,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     sd: "Jñāna ڏانهن ڀڳتي",
     ks: "Jñāna भक्ति",
     bho: "Jñāna के भक्ति",
+    gu: "Jñāna પ્રતિ ભક્તિ",
+    my: "Jñāna ကိုးကွယ်မှု",
   },
   "Devotion to Karma (Action)": {
     en: "Devotion to Karma (Action)",
@@ -3271,6 +3317,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     sd: "Karma ڏانهن ڀڳتي",
     ks: "Karma भक्ति",
     bho: "Karma के भक्ति",
+    gu: "Karma પ્રતિ ભક્તિ",
+    my: "Karma ကိုးကွယ်မှု",
   },
   "The Fate of the Self-Slayers": {
     en: "The Fate of the Self-Slayers",
@@ -3314,6 +3362,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     sd: "آتما گھاتڪن جو انجام",
     ks: "आत्मघाती गति",
     bho: "आत्मघाती के गति",
+    gu: "આત્મઘાતીઓની ગતિ",
+    my: "မိမိကိုယ်ကို သတ်သူတို့၏ ကံကြမ္မာ",
   },
   "Nature of the Supreme Self": {
     en: "Nature of the Supreme Self",
@@ -3357,6 +3407,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     sd: "پرم آتما جي ماهيت",
     ks: "परम आत्मा स्वरूप",
     bho: "परम आत्मा के स्वरूप",
+    gu: "પરમ આત્માનું સ્વરૂપ",
+    my: "အမြင့်မြတ်ဆုံး အတ္တ၏ သဘာဝ",
   },
   "Vision of Unity in All Beings": {
     en: "Vision of Unity in All Beings",
@@ -3400,6 +3452,8 @@ export const verseSectionTitleTranslations: ContentMap = {
     sd: "وجودن ۾ ايڪتا",
     ks: "सर्वभूतस एकता दर्शन",
     bho: "सब जीव में एकता के दर्शन",
+    gu: "સર્વ ભૂતોમાં એકતાનું દર્શન",
+    my: "သတ္တဝါအားလုံး၌ စည်းလုံးခြင်း အမြင်",
   },
   "Freedom from Delusion and Sorrow": {
     en: "Freedom from Delusion and Sorrow",
@@ -3445,6 +3499,7 @@ export const verseSectionTitleTranslations: ContentMap = {
     mni: "ভ্রম-দুঃখদগী নিংতম্বা",
     bho: "मोह आ शोक से मुक्ति",
 
+    ks: "मोह ते गम निश नजात",
   },
   "Nature of the Self - Unmoving Yet Swift": {
     en: "Nature of the Self - Unmoving Yet Swift",
@@ -3490,6 +3545,7 @@ export const verseSectionTitleTranslations: ContentMap = {
     mni: "আত্মার সরূপ - চেৎনদ্রবা অদুমদা য়ু",
     bho: "आत्मा के स्वरूप - अचल फिर भी तेज़",
 
+    ks: "आत्माक स्वभाव - अटळ मगर तेज",
   },
   "The Self - Far and Near": {
     en: "The Self - Far and Near",
@@ -3535,6 +3591,7 @@ export const verseSectionTitleTranslations: ContentMap = {
     mni: "আত্মা - লাপ্না নক্না",
     bho: "आत्मा - दूर आ पासे",
 
+    ks: "आत्मा - दूर ते पॅच्य",
   },
   "Avidyā and Vidyā - A Warning": {
     en: "Avidyā and Vidyā - A Warning",
@@ -3580,6 +3637,7 @@ export const verseSectionTitleTranslations: ContentMap = {
     mni: "Avidyā অমসুং Vidyā - চিন্থুং",
     bho: "Avidyā आ Vidyā - एगो चेतावनी",
 
+    ks: "Avidyā ते Vidyā - चेतावणी",
   },
   "The Fruits of Knowledge and Ignorance": {
     en: "The Fruits of Knowledge and Ignorance",
@@ -3625,6 +3683,7 @@ export const verseSectionTitleTranslations: ContentMap = {
     mni: "Vidyā অমসুং Avidyāগী মপাক্",
     bho: "ज्ञान आ अज्ञान के फल",
 
+    ks: "ज्ञान ते अज्ञानक फल",
   },
   "Combining Vidyā and Avidyā": {
     en: "Combining Vidyā and Avidyā",
@@ -3670,6 +3729,7 @@ export const verseSectionTitleTranslations: ContentMap = {
     mni: "Vidyā অমসুং Avidyā পুনশিল্লিবা",
     bho: "Vidyā आ Avidyā के संयोजन",
 
+    ks: "Vidyā ते Avidyā रलावुन",
   },
   "Worship of the Unmanifest": {
     en: "Worship of the Unmanifest",
@@ -3715,6 +3775,7 @@ export const verseSectionTitleTranslations: ContentMap = {
     mni: "অব্যক্ত পূজা",
     bho: "अव्यक्त के पूजा",
 
+    ks: "अव्यक्तच पूजा",
   },
   "Sambhūti and Asambhūti": {
     en: "Sambhūti and Asambhūti",
@@ -3760,6 +3821,7 @@ export const verseSectionTitleTranslations: ContentMap = {
     mni: "Sambhūti অমসুং Asambhūti",
     bho: "Sambhūti आ Asambhūti",
 
+    ks: "Sambhūti ते Asambhūti",
   },
   "Combining Sambhūti and Vināśa": {
     en: "Combining Sambhūti and Vināśa",
@@ -3805,6 +3867,7 @@ export const verseSectionTitleTranslations: ContentMap = {
     mni: "Sambhūti অমসুং Vināśa পুনশিল্লিবা",
     bho: "Sambhūti आ Vināśa के संयोजन",
 
+    ks: "Sambhūti ते Vināśa रलावुन",
   },
   "Prayer to the Sun - The Golden Disc": {
     en: "Prayer to the Sun - The Golden Disc",
@@ -3850,6 +3913,7 @@ export const verseSectionTitleTranslations: ContentMap = {
     mni: "সূর্য্যগী খুজেম্বা - সনগী লীরিং",
     bho: "सूरज से प्रार्थना - सुनहरा मंडल",
 
+    ks: "सूर्येच प्रार्थना - सोनॅट चक्र",
   },
   "Prayer to the Sun - O Pūṣan": {
     en: "Prayer to the Sun - O Pūṣan",
@@ -3895,6 +3959,7 @@ export const verseSectionTitleTranslations: ContentMap = {
     mni: "সূর্য্যগী খুজেম্বা - হৈ Pūṣan",
     bho: "सूरज से प्रार्थना - हे Pūṣan",
 
+    ks: "सूर्येच प्रार्थना - ऐ Pūṣan",
   },
   "Prayer to Agni - Lead Us": {
     en: "Prayer to Agni - Lead Us",
@@ -3940,6 +4005,7 @@ export const verseSectionTitleTranslations: ContentMap = {
     mni: "Agniগী খুজেম্বা - লম্বী তাকপীয়ু",
     bho: "Agni से प्रार्थना - हमनी के रास्ता देखावीं",
 
+    ks: "अग्नीस प्रार्थना - असि नीरिव",
   },
   "The Final Prayer - Om Krato": {
     en: "The Final Prayer - Om Krato",
@@ -3985,6 +4051,7 @@ export const verseSectionTitleTranslations: ContentMap = {
     mni: "অরোইবা খুজেম্বা - Om Krato",
     bho: "अंतिम प्रार्थना - Om Krato",
 
+    ks: "अखरी प्रार्थना - Om Krato",
   },
 };
 
