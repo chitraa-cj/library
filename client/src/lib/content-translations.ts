@@ -4067,6 +4067,7 @@ const langNameToCode: Record<string, string> = {
   french: "fr",
   spanish: "es",
   chinese: "zh",
+  mandarin: "zh",
   arabic: "ar",
   portuguese: "pt",
   nepali: "ne",
