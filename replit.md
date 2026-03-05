@@ -51,6 +51,17 @@ Key API endpoints:
 - `/api/login` - Begin login flow (Replit OIDC)
 - `/api/logout` - Begin logout flow
 
+### Strapi CMS Integration
+- **Client**: `server/strapi.ts` — complete Strapi REST API client supporting both Strapi v4 (attributes pattern) and v5 (flat pattern)
+- **Hybrid Storage**: `server/storage.ts` — `HybridStorage` class tries Strapi first, falls back to PostgreSQL database
+- **Activation**: Automatically active when both `STRAPI_URL` and `STRAPI_API_TOKEN` environment variables are set
+- **Connection check**: Strapi reachability is cached for 60 seconds; if unreachable, all queries silently fall back to DB
+- **Write operations**: Always go to local PostgreSQL (notes, word translation cache, etc.)
+- **Read operations**: Books, verses, translations, explanations, languages, word meanings — all try Strapi first
+- **Status endpoint**: `GET /api/strapi/status` — check if Strapi is connected and how many books are found
+- **Field mapping**: Handles both camelCase and snake_case field names from Strapi; maps `scholarName`→`authorName` for backward compat
+- **Pagination**: Auto-paginates Strapi collections (100 per page) to fetch all entries
+
 ### Data Model
 The database schema supports multi-language sacred texts:
 - **languages**: Language definitions with code, name, native name, and script

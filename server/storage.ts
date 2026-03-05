@@ -32,6 +32,23 @@ import {
   type InsertNote,
   type VerseWordMeaning,
 } from "@shared/schema";
+import {
+  isStrapiConfigured,
+  isStrapiReachable,
+  strapiGetAllBooks,
+  strapiGetBookById,
+  strapiGetBookBySlug,
+  strapiGetBookWithVerseMeta,
+  strapiGetVerseById,
+  strapiGetTranslationsByVerseId,
+  strapiGetExplanationsByVerseId,
+  strapiGetCommentaryOptionsByBookId,
+  strapiGetAllAuthors,
+  strapiGetAllLanguages,
+  strapiGetBookTitlesByBookId,
+  strapiGetWordMeaningsByVerseId,
+  strapiGetChapterVerses,
+} from "./strapi";
 
 export interface CommentaryOption {
   authorName: string;
@@ -357,4 +374,240 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+export class HybridStorage implements IStorage {
+  private db = new DatabaseStorage();
+  private _strapiAvailable: boolean | null = null;
+  private _lastStrapiCheck = 0;
+  private readonly STRAPI_CHECK_INTERVAL = 60000;
+  private _strapiToDbVerseIds = new Map<string, string>();
+
+  private cacheVerseIdMapping(strapiId: string, dbId: string) {
+    if (strapiId !== dbId) {
+      this._strapiToDbVerseIds.set(strapiId, dbId);
+    }
+  }
+
+  private resolveDbVerseId(id: string): string {
+    return this._strapiToDbVerseIds.get(id) || id;
+  }
+
+  private async useStrapiFor<T>(
+    strapiCall: () => Promise<T | null | undefined>,
+    dbFallback: () => Promise<T>,
+    label: string
+  ): Promise<T> {
+    if (await this.isStrapiAvailable()) {
+      try {
+        const result = await strapiCall();
+        if (result !== null && result !== undefined) {
+          return result;
+        }
+      } catch (err: any) {
+        console.warn(`[Strapi] ${label} failed, falling back to DB:`, err.message || err);
+      }
+    }
+    return dbFallback();
+  }
+
+  private async useStrapiForArray<T>(
+    strapiCall: () => Promise<T[]>,
+    dbFallback: () => Promise<T[]>,
+    label: string
+  ): Promise<T[]> {
+    if (await this.isStrapiAvailable()) {
+      try {
+        const result = await strapiCall();
+        if (result.length > 0) return result;
+      } catch (err: any) {
+        console.warn(`[Strapi] ${label} failed, falling back to DB:`, err.message || err);
+      }
+    }
+    return dbFallback();
+  }
+
+  private async isStrapiAvailable(): Promise<boolean> {
+    if (!isStrapiConfigured()) return false;
+    const now = Date.now();
+    if (this._strapiAvailable !== null && now - this._lastStrapiCheck < this.STRAPI_CHECK_INTERVAL) {
+      return this._strapiAvailable;
+    }
+    this._strapiAvailable = await isStrapiReachable();
+    this._lastStrapiCheck = now;
+    if (this._strapiAvailable) {
+      console.log("[Strapi] Connection active — using Strapi as primary source");
+    }
+    return this._strapiAvailable;
+  }
+
+  async getAllBooks(): Promise<Book[]> {
+    return this.useStrapiForArray(
+      () => strapiGetAllBooks(),
+      () => this.db.getAllBooks(),
+      "getAllBooks"
+    );
+  }
+
+  async getBookById(id: string): Promise<BookWithDetails | undefined> {
+    return this.useStrapiFor(
+      () => strapiGetBookById(id),
+      () => this.db.getBookById(id),
+      "getBookById"
+    );
+  }
+
+  async getBookWithVerseMeta(id: string): Promise<BookWithVerseMeta | undefined> {
+    return this.useStrapiFor(
+      () => strapiGetBookWithVerseMeta(id),
+      () => this.db.getBookWithVerseMeta(id),
+      "getBookWithVerseMeta"
+    );
+  }
+
+  async getBookBySlug(slug: string): Promise<Book | undefined> {
+    return this.useStrapiFor(
+      () => strapiGetBookBySlug(slug),
+      () => this.db.getBookBySlug(slug),
+      "getBookBySlug"
+    );
+  }
+
+  async createBook(book: InsertBook): Promise<Book> {
+    return this.db.createBook(book);
+  }
+
+  async updateBook(id: string, book: Partial<InsertBook>): Promise<Book | undefined> {
+    return this.db.updateBook(id, book);
+  }
+
+  async getVersesByBookId(bookId: string): Promise<VerseWithTranslations[]> {
+    return this.useStrapiForArray(
+      async () => {
+        const book = await strapiGetBookById(bookId);
+        return book?.verses ?? [];
+      },
+      () => this.db.getVersesByBookId(bookId),
+      "getVersesByBookId"
+    );
+  }
+
+  async getVerseById(id: string): Promise<VerseWithTranslations | undefined> {
+    return this.useStrapiFor(
+      () => strapiGetVerseById(id),
+      () => this.db.getVerseById(id),
+      "getVerseById"
+    );
+  }
+
+  async getChapterVerses(bookId: string, adhyayNumber: number): Promise<VerseWithTranslations[]> {
+    return this.useStrapiForArray(
+      () => strapiGetChapterVerses(bookId, adhyayNumber),
+      () => this.db.getChapterVerses(bookId, adhyayNumber),
+      "getChapterVerses"
+    );
+  }
+
+  async createVerse(verse: InsertVerse): Promise<Verse> {
+    return this.db.createVerse(verse);
+  }
+
+  async getTranslationsByVerseId(verseId: string): Promise<VerseTranslation[]> {
+    return this.useStrapiForArray(
+      () => strapiGetTranslationsByVerseId(verseId),
+      () => this.db.getTranslationsByVerseId(verseId),
+      "getTranslationsByVerseId"
+    );
+  }
+
+  async createTranslation(translation: InsertVerseTranslation): Promise<VerseTranslation> {
+    return this.db.createTranslation(translation);
+  }
+
+  async getExplanationsByVerseId(verseId: string): Promise<Explanation[]> {
+    return this.useStrapiForArray(
+      () => strapiGetExplanationsByVerseId(verseId),
+      () => this.db.getExplanationsByVerseId(verseId),
+      "getExplanationsByVerseId"
+    );
+  }
+
+  async createExplanation(explanation: InsertExplanation): Promise<Explanation> {
+    return this.db.createExplanation(explanation);
+  }
+
+  async getCommentaryOptionsByBookId(bookId: string): Promise<CommentaryOptions> {
+    return this.useStrapiFor(
+      () => strapiGetCommentaryOptionsByBookId(bookId),
+      () => this.db.getCommentaryOptionsByBookId(bookId),
+      "getCommentaryOptionsByBookId"
+    );
+  }
+
+  async getAllAuthors(): Promise<string[]> {
+    return this.useStrapiForArray(
+      () => strapiGetAllAuthors(),
+      () => this.db.getAllAuthors(),
+      "getAllAuthors"
+    );
+  }
+
+  async getAllLanguages(): Promise<Language[]> {
+    return this.useStrapiForArray(
+      () => strapiGetAllLanguages(),
+      () => this.db.getAllLanguages(),
+      "getAllLanguages"
+    );
+  }
+
+  async createLanguage(language: InsertLanguage): Promise<Language> {
+    return this.db.createLanguage(language);
+  }
+
+  async createBookTitle(bookTitle: InsertBookTitle): Promise<BookTitle> {
+    return this.db.createBookTitle(bookTitle);
+  }
+
+  async getBookTitlesByBookId(bookId: string): Promise<BookTitle[]> {
+    return this.useStrapiForArray(
+      () => strapiGetBookTitlesByBookId(bookId),
+      () => this.db.getBookTitlesByBookId(bookId),
+      "getBookTitlesByBookId"
+    );
+  }
+
+  async getCachedWordTranslation(word: string, sourceLanguage: string, targetLanguage: string): Promise<WordTranslation | undefined> {
+    return this.db.getCachedWordTranslation(word, sourceLanguage, targetLanguage);
+  }
+
+  async cacheWordTranslation(translation: InsertWordTranslation): Promise<WordTranslation> {
+    return this.db.cacheWordTranslation({
+      ...translation,
+      verseId: translation.verseId ? this.resolveDbVerseId(translation.verseId) : translation.verseId,
+    });
+  }
+
+  async getWordMeaningsByVerseId(verseId: string): Promise<VerseWordMeaning[]> {
+    return this.useStrapiForArray(
+      () => strapiGetWordMeaningsByVerseId(verseId),
+      () => this.db.getWordMeaningsByVerseId(verseId),
+      "getWordMeaningsByVerseId"
+    );
+  }
+
+  async getNotesByVerseAndUser(verseId: string, userId: string): Promise<Note[]> {
+    return this.db.getNotesByVerseAndUser(this.resolveDbVerseId(verseId), userId);
+  }
+
+  async createNote(note: InsertNote): Promise<Note> {
+    return this.db.createNote({ ...note, verseId: this.resolveDbVerseId(note.verseId) });
+  }
+
+  async updateNote(id: string, userId: string, content: string): Promise<Note | undefined> {
+    return this.db.updateNote(id, userId, content);
+  }
+
+  async deleteNote(id: string, userId: string): Promise<boolean> {
+    return this.db.deleteNote(id, userId);
+  }
+}
+
+export const storage = isStrapiConfigured() ? new HybridStorage() : new DatabaseStorage();
