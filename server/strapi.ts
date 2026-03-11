@@ -1,6 +1,5 @@
 import type {
   Book,
-  Verse,
   VerseTranslation,
   Explanation,
   BookTitle,
@@ -21,33 +20,17 @@ interface StrapiResponse<T> {
   meta?: { pagination?: { page: number; pageSize: number; pageCount: number; total: number } };
 }
 
-interface StrapiEntry {
-  id: number;
-  documentId?: string;
-  attributes?: Record<string, any>;
-  [key: string]: any;
+interface RichTextBlock {
+  type: string;
+  children: { text: string; type: string }[];
 }
 
-function flattenEntry(entry: StrapiEntry): Record<string, any> {
-  if (entry.attributes && typeof entry.attributes === "object") {
-    return { id: entry.id, documentId: entry.documentId, ...entry.attributes };
-  }
-  return entry;
-}
-
-function resolveRelation(field: any): any[] {
-  if (!field) return [];
-  if (Array.isArray(field)) return field.map(flattenEntry);
-  if (field.data && Array.isArray(field.data)) return field.data.map(flattenEntry);
-  if (field.data && typeof field.data === "object") return [flattenEntry(field.data)];
-  return [];
-}
-
-function resolveRelationSingle(field: any): Record<string, any> | null {
-  if (!field) return null;
-  if (field.data && typeof field.data === "object" && !Array.isArray(field.data)) return flattenEntry(field.data);
-  if (typeof field === "object" && !Array.isArray(field) && (field.id || field.documentId)) return flattenEntry(field as StrapiEntry);
-  return null;
+function richTextToString(blocks: RichTextBlock[] | null | undefined): string {
+  if (!blocks || !Array.isArray(blocks)) return "";
+  return blocks
+    .map((block) => block.children?.map((c) => c.text).join("") || "")
+    .join("\n")
+    .trim();
 }
 
 async function strapiFetch<T = any>(endpoint: string, params: Record<string, string> = {}): Promise<T> {
@@ -68,7 +51,7 @@ async function strapiFetch<T = any>(endpoint: string, params: Record<string, str
   return response.json();
 }
 
-async function strapiFetchAll<T = StrapiEntry>(endpoint: string, params: Record<string, string> = {}): Promise<T[]> {
+async function strapiFetchAll<T = any>(endpoint: string, params: Record<string, string> = {}): Promise<T[]> {
   const allItems: T[] = [];
   let page = 1;
   const pageSize = 100;
@@ -88,96 +71,156 @@ async function strapiFetchAll<T = StrapiEntry>(endpoint: string, params: Record<
   return allItems;
 }
 
-function strapiId(flat: Record<string, any>): string {
-  return flat.documentId || String(flat.id);
+function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .trim();
 }
 
-function getField(flat: Record<string, any>, camel: string, snake: string): any {
-  return flat[camel] ?? flat[snake] ?? null;
-}
-
-function mapBook(raw: StrapiEntry): Book {
-  const f = flattenEntry(raw);
-  const coverImg = f.coverImage || f.cover_image;
+function mapGranthaToBook(g: any): Book {
+  const docId = g.documentId || String(g.id);
   return {
-    id: strapiId(f),
-    slug: f.slug || "",
-    title: f.title || "",
-    author: f.author || null,
-    description: f.description || null,
-    category: f.category || "Uncategorized",
-    coverImage: typeof coverImg === "object" ? coverImg?.url || null : coverImg || null,
-    totalVerses: getField(f, "totalVerses", "total_verses") ?? 0,
+    id: docId,
+    slug: slugify(g.GranthaName || ""),
+    title: g.GranthaName || "",
+    author: g.BhashyamAuthor || null,
+    description: richTextToString(g.IntroductionToTextEnglish) || null,
+    category: g.GranthaType || "Uncategorized",
+    coverImage: null,
+    totalVerses: Array.isArray(g.chapters) ? g.chapters.length : 0,
   };
 }
 
-function mapVerse(raw: StrapiEntry | Record<string, any>, bookId: string): Verse {
-  const f = typeof (raw as StrapiEntry).attributes === "object" ? flattenEntry(raw as StrapiEntry) : raw;
+function mapChapterToVerse(ch: any, bookId: string, index: number): VerseWithTranslations {
+  const docId = ch.documentId || String(ch.id);
+  const verseNumber = ch.order ?? index;
+
+  const chapterTitle = ch.ChapterTitle || null;
+  let adhyayNumber: number | null = null;
+  let adhyayTitle: string | null = null;
+  const chapterMatch = chapterTitle?.match(/(?:Adhyaya|Chapter|अध्याय)\s*(\d+)/i);
+  if (chapterMatch) {
+    adhyayNumber = parseInt(chapterMatch[1], 10);
+    adhyayTitle = chapterTitle;
+  }
+
+  const translations: VerseTranslation[] = [];
+  const explanations: Explanation[] = [];
+
+  const shloka = ch.ShlokaManthraEntry;
+  if (shloka) {
+    const sanskritText = richTextToString(shloka.SanskritTextEntry);
+    if (sanskritText) {
+      translations.push({
+        id: `${docId}-sa`,
+        verseId: docId,
+        languageCode: "devanagari",
+        content: sanskritText,
+        isAiTranslated: false,
+      });
+    }
+
+    const englishText = richTextToString(shloka.EnglishTranslationText);
+    if (englishText) {
+      translations.push({
+        id: `${docId}-en`,
+        verseId: docId,
+        languageCode: "english",
+        content: englishText,
+        isAiTranslated: false,
+      });
+    }
+
+    const otherText = richTextToString(shloka.OtherLanguagesTranslation);
+    if (otherText && shloka.LanguageOfTranslation) {
+      translations.push({
+        id: `${docId}-other`,
+        verseId: docId,
+        languageCode: shloka.LanguageOfTranslation.toLowerCase(),
+        content: otherText,
+        isAiTranslated: false,
+      });
+    }
+  }
+
+  const bhashya = ch.BhashyamForShlokaManthra;
+  if (bhashya) {
+    const bhashyaSanskrit = richTextToString(bhashya.SanskritTextEntry);
+    if (bhashyaSanskrit) {
+      const bhashyamAuthor = ch.grantha?.BhashyamAuthor || "Sri Shankaracharya";
+      const bhashyamName = ch.grantha?.BhashyamName || "Shankara Bhashyam";
+      explanations.push({
+        id: `${docId}-bhashya-sa`,
+        verseId: docId,
+        authorName: bhashyamAuthor,
+        authorTitle: bhashyamName,
+        languageCode: "devanagari",
+        content: bhashyaSanskrit,
+        isAiTranslated: false,
+      });
+    }
+
+    const bhashyaEnglish = richTextToString(bhashya.EnglishTranslationText);
+    if (bhashyaEnglish) {
+      const bhashyamAuthor = ch.grantha?.BhashyamAuthor || "Sri Shankaracharya";
+      const bhashyamName = ch.grantha?.BhashyamName || "Shankara Bhashyam";
+      explanations.push({
+        id: `${docId}-bhashya-en`,
+        verseId: docId,
+        authorName: bhashyamAuthor,
+        authorTitle: bhashyamName,
+        languageCode: "english",
+        content: bhashyaEnglish,
+        isAiTranslated: false,
+      });
+    }
+
+    const bhashyaOther = richTextToString(bhashya.OtherLanguagesTranslation);
+    if (bhashyaOther && bhashya.LanguageOfTranslation) {
+      const bhashyamAuthor = ch.grantha?.BhashyamAuthor || "Sri Shankaracharya";
+      const bhashyamName = ch.grantha?.BhashyamName || "Shankara Bhashyam";
+      explanations.push({
+        id: `${docId}-bhashya-other`,
+        verseId: docId,
+        authorName: bhashyamAuthor,
+        authorTitle: bhashyamName,
+        languageCode: bhashya.LanguageOfTranslation.toLowerCase(),
+        content: bhashyaOther,
+        isAiTranslated: false,
+      });
+    }
+  }
+
+  if (Array.isArray(ch.Teekas)) {
+    for (const teeka of ch.Teekas) {
+      if (teeka.TeekaName) {
+        explanations.push({
+          id: `${docId}-teeka-${teeka.id || teeka.TeekaName}`,
+          verseId: docId,
+          authorName: teeka.TeekaAuthor || teeka.TeekaName,
+          authorTitle: teeka.TeekaName,
+          languageCode: "devanagari",
+          content: teeka.TeekaContent ? richTextToString(teeka.TeekaContent) : "",
+          isAiTranslated: false,
+        });
+      }
+    }
+  }
+
   return {
-    id: strapiId(f),
+    id: docId,
     bookId,
-    verseNumber: getField(f, "verseNumber", "verse_number") ?? 0,
-    sectionTitle: getField(f, "sectionTitle", "section_title"),
-    adhyayNumber: getField(f, "adhyayNumber", "adhyay_number"),
-    adhyayTitle: getField(f, "adhyayTitle", "adhyay_title"),
-    khandaNumber: getField(f, "khandaNumber", "khanda_number"),
-    khandaTitle: getField(f, "khandaTitle", "khanda_title"),
-  };
-}
-
-function mapTranslation(raw: StrapiEntry | Record<string, any>, verseId: string): VerseTranslation {
-  const f = typeof (raw as StrapiEntry).attributes === "object" ? flattenEntry(raw as StrapiEntry) : raw;
-  return {
-    id: strapiId(f),
-    verseId,
-    languageCode: getField(f, "languageCode", "language_code") ?? "",
-    content: f.content || "",
-    isAiTranslated: getField(f, "isAiTranslated", "is_ai_translated") ?? false,
-  };
-}
-
-function mapExplanation(raw: StrapiEntry | Record<string, any>, verseId: string): Explanation {
-  const f = typeof (raw as StrapiEntry).attributes === "object" ? flattenEntry(raw as StrapiEntry) : raw;
-  return {
-    id: strapiId(f),
-    verseId,
-    authorName: getField(f, "authorName", "author_name") ?? getField(f, "scholarName", "scholar_name") ?? "",
-    authorTitle: getField(f, "authorTitle", "author_title") ?? getField(f, "scholarTitle", "scholar_title") ?? null,
-    languageCode: getField(f, "languageCode", "language_code") ?? "",
-    content: f.content || "",
-    isAiTranslated: getField(f, "isAiTranslated", "is_ai_translated") ?? false,
-  };
-}
-
-function mapBookTitle(raw: StrapiEntry | Record<string, any>, bookId: string): BookTitle {
-  const f = typeof (raw as StrapiEntry).attributes === "object" ? flattenEntry(raw as StrapiEntry) : raw;
-  return {
-    id: strapiId(f),
-    bookId,
-    languageCode: getField(f, "languageCode", "language_code") ?? "",
-    title: f.title || "",
-  };
-}
-
-function mapLanguage(raw: StrapiEntry): Language {
-  const f = flattenEntry(raw);
-  return {
-    id: strapiId(f),
-    code: f.code || "",
-    name: f.name || "",
-    nativeName: getField(f, "nativeName", "native_name") ?? "",
-    script: f.script || "",
-  };
-}
-
-function mapWordMeaning(raw: StrapiEntry | Record<string, any>, verseId: string): VerseWordMeaning {
-  const f = typeof (raw as StrapiEntry).attributes === "object" ? flattenEntry(raw as StrapiEntry) : raw;
-  return {
-    id: strapiId(f),
-    verseId,
-    word: f.word || "",
-    meaning: f.meaning || "",
-    position: f.position ?? 0,
+    verseNumber,
+    sectionTitle: chapterTitle,
+    adhyayNumber,
+    adhyayTitle,
+    khandaNumber: null,
+    khandaTitle: null,
+    translations,
+    explanations,
   };
 }
 
@@ -188,7 +231,7 @@ export function isStrapiConfigured(): boolean {
 export async function isStrapiReachable(): Promise<boolean> {
   if (!isStrapiConfigured()) return false;
   try {
-    await strapiFetch("/books", { "pagination[pageSize]": "1" });
+    await strapiFetch("/granthas", { "pagination[pageSize]": "1" });
     return true;
   } catch {
     return false;
@@ -203,14 +246,14 @@ export async function testStrapiConnection(): Promise<{ connected: boolean; mess
     return { connected: false, message: "STRAPI_URL not configured" };
   }
   try {
-    const response = await fetch(`${STRAPI_URL}/api/books?pagination[pageSize]=1`, {
+    const response = await fetch(`${STRAPI_URL}/api/granthas?pagination[pageSize]=1`, {
       headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
       signal: AbortSignal.timeout(5000),
     });
     if (response.ok) {
       const data = await response.json();
       const count = data?.meta?.pagination?.total ?? data?.data?.length ?? "unknown";
-      return { connected: true, message: `Connected to Strapi. Books found: ${count}` };
+      return { connected: true, message: `Connected to Strapi. Granthas found: ${count}` };
     }
     return { connected: false, message: `Strapi returned status ${response.status}` };
   } catch (error: any) {
@@ -219,214 +262,227 @@ export async function testStrapiConnection(): Promise<{ connected: boolean; mess
 }
 
 export async function strapiGetAllBooks(): Promise<Book[]> {
-  const entries = await strapiFetchAll("/books", { populate: "*" });
-  return entries.map((e) => mapBook(e as StrapiEntry));
+  const granthas = await strapiFetchAll("/granthas", { "populate": "*" });
+  return granthas.map(mapGranthaToBook);
 }
 
 export async function strapiGetBookBySlug(slug: string): Promise<Book | undefined> {
-  const result = await strapiFetch<StrapiResponse<StrapiEntry[]>>("/books", {
-    "filters[slug][$eq]": slug,
-    populate: "*",
-  });
-  if (!result.data?.[0]) return undefined;
-  return mapBook(result.data[0]);
+  const granthas = await strapiFetchAll("/granthas", { "populate": "*" });
+  const match = granthas.find((g: any) => slugify(g.GranthaName || "") === slug);
+  return match ? mapGranthaToBook(match) : undefined;
 }
 
 export async function strapiGetBookById(id: string): Promise<BookWithDetails | undefined> {
   try {
-    const result = await strapiFetch<StrapiResponse<StrapiEntry>>(`/books/${id}`, {
-      "populate[verses][populate]": "*",
-      "populate[titles][populate]": "*",
-      "populate[book_titles][populate]": "*",
+    const result = await strapiFetch<StrapiResponse<any>>(`/granthas/${id}`, {
+      "populate[chapters][populate]": "*",
+      "populate[BhashyakaraIntroduction][populate]": "*",
     });
     if (!result.data) return undefined;
 
-    const bookFlat = flattenEntry(result.data);
-    const book = mapBook(result.data);
+    const grantha = result.data;
+    const book = mapGranthaToBook(grantha);
 
-    const titlesRaw = resolveRelation(bookFlat.titles || bookFlat.book_titles);
-    const titles = titlesRaw.map((t) => mapBookTitle(t, book.id));
-
-    const versesRaw = resolveRelation(bookFlat.verses);
-    const verses: VerseWithTranslations[] = versesRaw.map((v) => {
-      const verse = mapVerse(v, book.id);
-      const translationsRaw = resolveRelation(v.translations || v.verse_translations);
-      const explanationsRaw = resolveRelation(v.explanations);
-      return {
-        ...verse,
-        translations: translationsRaw.map((t) => mapTranslation(t, verse.id)),
-        explanations: explanationsRaw.map((e) => mapExplanation(e, verse.id)),
-      };
+    const chaptersData = Array.isArray(grantha.chapters) ? grantha.chapters : [];
+    const sortedChapters = [...chaptersData].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+    const verses: VerseWithTranslations[] = sortedChapters.map((ch: any, idx: number) => {
+      ch.grantha = grantha;
+      return mapChapterToVerse(ch, book.id, idx);
     });
 
-    return { ...book, titles, verses };
-  } catch {
+    const introVerse = mapIntroductionVerse(grantha, book.id);
+    if (introVerse) {
+      verses.unshift(introVerse);
+    }
+
+    return { ...book, titles: [], verses, totalVerses: verses.length };
+  } catch (err: any) {
+    console.warn("[Strapi] getBookById failed:", err.message);
     return undefined;
   }
 }
 
 export async function strapiGetBookWithVerseMeta(id: string): Promise<BookWithVerseMeta | undefined> {
   try {
-    const result = await strapiFetch<StrapiResponse<StrapiEntry>>(`/books/${id}`, {
-      "populate[verses][fields]": "verseNumber,sectionTitle,adhyayNumber,adhyayTitle,khandaNumber,khandaTitle",
-      "populate[titles]": "*",
-      "populate[book_titles]": "*",
+    const result = await strapiFetch<StrapiResponse<any>>(`/granthas/${id}`, {
+      "populate[chapters][fields]": "ChapterTitle,order,documentId",
+      "populate[BhashyakaraIntroduction]": "*",
     });
     if (!result.data) return undefined;
 
-    const bookFlat = flattenEntry(result.data);
-    const book = mapBook(result.data);
+    const grantha = result.data;
+    const book = mapGranthaToBook(grantha);
 
-    const titlesRaw = resolveRelation(bookFlat.titles || bookFlat.book_titles);
-    const titles = titlesRaw.map((t) => mapBookTitle(t, book.id));
+    const chaptersData = Array.isArray(grantha.chapters) ? grantha.chapters : [];
+    const sortedChapters = [...chaptersData].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
 
-    const versesRaw = resolveRelation(bookFlat.verses);
-    const verses: VerseMeta[] = versesRaw.map((v) => {
-      const mapped = mapVerse(v, book.id);
-      return {
-        id: mapped.id,
-        bookId: mapped.bookId,
-        verseNumber: mapped.verseNumber,
-        sectionTitle: mapped.sectionTitle,
-        adhyayNumber: mapped.adhyayNumber,
-        adhyayTitle: mapped.adhyayTitle,
-        khandaNumber: mapped.khandaNumber,
-        khandaTitle: mapped.khandaTitle,
-      };
-    });
+    const verses: VerseMeta[] = [];
 
-    return { ...book, titles, verses };
-  } catch {
+    if (grantha.BhashyakaraIntroduction) {
+      const introId = `${book.id}-intro`;
+      verses.push({
+        id: introId,
+        bookId: book.id,
+        verseNumber: 0,
+        sectionTitle: "Introduction",
+        adhyayNumber: null,
+        adhyayTitle: null,
+        khandaNumber: null,
+        khandaTitle: null,
+      });
+    }
+
+    for (let i = 0; i < sortedChapters.length; i++) {
+      const ch = sortedChapters[i];
+      const docId = ch.documentId || String(ch.id);
+      const chapterTitle = ch.ChapterTitle || null;
+      let adhyayNumber: number | null = null;
+      const chapterMatch = chapterTitle?.match(/(?:Adhyaya|Chapter|अध्याय)\s*(\d+)/i);
+      if (chapterMatch) adhyayNumber = parseInt(chapterMatch[1], 10);
+
+      verses.push({
+        id: docId,
+        bookId: book.id,
+        verseNumber: ch.order ?? (i + 1),
+        sectionTitle: chapterTitle,
+        adhyayNumber,
+        adhyayTitle: chapterTitle,
+        khandaNumber: null,
+        khandaTitle: null,
+      });
+    }
+
+    return { ...book, titles: [], verses, totalVerses: verses.length };
+  } catch (err: any) {
+    console.warn("[Strapi] getBookWithVerseMeta failed:", err.message);
     return undefined;
   }
 }
 
+function mapIntroductionVerse(grantha: any, bookId: string): VerseWithTranslations | null {
+  const intro = grantha.BhashyakaraIntroduction;
+  if (!intro) return null;
+
+  const introId = `${bookId}-intro`;
+  const translations: VerseTranslation[] = [];
+  const explanations: Explanation[] = [];
+
+  const sanskritText = richTextToString(intro.SanskritTextEntry);
+  if (sanskritText) {
+    explanations.push({
+      id: `${introId}-sa`,
+      verseId: introId,
+      authorName: grantha.BhashyamAuthor || "Sri Shankaracharya",
+      authorTitle: grantha.BhashyamName || "Shankara Bhashyam",
+      languageCode: "devanagari",
+      content: sanskritText,
+      isAiTranslated: false,
+    });
+  }
+
+  const englishText = richTextToString(intro.EnglishTranslationText);
+  if (englishText) {
+    explanations.push({
+      id: `${introId}-en`,
+      verseId: introId,
+      authorName: grantha.BhashyamAuthor || "Sri Shankaracharya",
+      authorTitle: grantha.BhashyamName || "Shankara Bhashyam",
+      languageCode: "english",
+      content: englishText,
+      isAiTranslated: false,
+    });
+  }
+
+  const otherText = richTextToString(intro.OtherLanguagesTranslation);
+  if (otherText && intro.LanguageOfTranslation) {
+    explanations.push({
+      id: `${introId}-other`,
+      verseId: introId,
+      authorName: grantha.BhashyamAuthor || "Sri Shankaracharya",
+      authorTitle: grantha.BhashyamName || "Shankara Bhashyam",
+      languageCode: intro.LanguageOfTranslation.toLowerCase(),
+      content: otherText,
+      isAiTranslated: false,
+    });
+  }
+
+  return {
+    id: introId,
+    bookId,
+    verseNumber: 0,
+    sectionTitle: "Introduction",
+    adhyayNumber: null,
+    adhyayTitle: null,
+    khandaNumber: null,
+    khandaTitle: null,
+    translations,
+    explanations,
+  };
+}
+
 export async function strapiGetVerseById(verseId: string): Promise<VerseWithTranslations | undefined> {
+  if (verseId.endsWith("-intro")) {
+    const bookId = verseId.replace("-intro", "");
+    const book = await strapiGetBookById(bookId);
+    return book?.verses.find((v) => v.id === verseId);
+  }
+
   try {
-    const result = await strapiFetch<StrapiResponse<StrapiEntry>>(`/verses/${verseId}`, {
-      populate: "*",
+    const result = await strapiFetch<StrapiResponse<any>>(`/chapters/${verseId}`, {
+      "populate": "*",
     });
     if (!result.data) return undefined;
 
-    const flat = flattenEntry(result.data);
-    const bookRef = resolveRelationSingle(flat.book);
-    const bookId = bookRef ? strapiId(bookRef) : (flat.bookId || flat.book_id || "");
-    const verse = mapVerse(flat, String(bookId));
-
-    const translationsRaw = resolveRelation(flat.translations || flat.verse_translations);
-    const explanationsRaw = resolveRelation(flat.explanations);
-
-    return {
-      ...verse,
-      translations: translationsRaw.map((t) => mapTranslation(t, verse.id)),
-      explanations: explanationsRaw.map((e) => mapExplanation(e, verse.id)),
-    };
+    const ch = result.data;
+    const granthaRef = ch.grantha;
+    const bookId = granthaRef?.documentId || granthaRef?.id || "";
+    ch.grantha = granthaRef;
+    return mapChapterToVerse(ch, String(bookId), ch.order ?? 0);
   } catch {
     return undefined;
   }
 }
 
 export async function strapiGetTranslationsByVerseId(verseId: string): Promise<VerseTranslation[]> {
-  try {
-    const entries = await strapiFetchAll("/verse-translations", {
-      "filters[verse][documentId][$eq]": verseId,
-      populate: "*",
-    });
-    return entries.map((t) => mapTranslation(flattenEntry(t as StrapiEntry), verseId));
-  } catch {
-    try {
-      const entries = await strapiFetchAll("/verse-translations", {
-        "filters[verse][id][$eq]": verseId,
-        populate: "*",
-      });
-      return entries.map((t) => mapTranslation(flattenEntry(t as StrapiEntry), verseId));
-    } catch {
-      return [];
-    }
-  }
+  const verse = await strapiGetVerseById(verseId);
+  return verse?.translations ?? [];
 }
 
 export async function strapiGetExplanationsByVerseId(verseId: string): Promise<Explanation[]> {
-  try {
-    const entries = await strapiFetchAll("/explanations", {
-      "filters[verse][documentId][$eq]": verseId,
-      populate: "*",
-    });
-    return entries.map((e) => mapExplanation(flattenEntry(e as StrapiEntry), verseId));
-  } catch {
-    try {
-      const entries = await strapiFetchAll("/explanations", {
-        "filters[verse][id][$eq]": verseId,
-        populate: "*",
-      });
-      return entries.map((e) => mapExplanation(flattenEntry(e as StrapiEntry), verseId));
-    } catch {
-      return [];
-    }
-  }
+  const verse = await strapiGetVerseById(verseId);
+  return verse?.explanations ?? [];
 }
 
 export async function strapiGetAllLanguages(): Promise<Language[]> {
-  try {
-    const entries = await strapiFetchAll("/languages");
-    return entries.map((e) => mapLanguage(e as StrapiEntry));
-  } catch {
-    return [];
-  }
+  return [];
 }
 
-export async function strapiGetBookTitlesByBookId(bookId: string): Promise<BookTitle[]> {
-  try {
-    const entries = await strapiFetchAll("/book-titles", {
-      "filters[book][documentId][$eq]": bookId,
-      populate: "*",
-    });
-    return entries.map((t) => mapBookTitle(flattenEntry(t as StrapiEntry), bookId));
-  } catch {
-    return [];
-  }
+export async function strapiGetBookTitlesByBookId(_bookId: string): Promise<BookTitle[]> {
+  return [];
 }
 
-export async function strapiGetWordMeaningsByVerseId(verseId: string): Promise<VerseWordMeaning[]> {
-  try {
-    const entries = await strapiFetchAll("/verse-word-meanings", {
-      "filters[verse][documentId][$eq]": verseId,
-      populate: "*",
-    });
-    return entries.map((e) => mapWordMeaning(flattenEntry(e as StrapiEntry), verseId));
-  } catch {
-    return [];
-  }
+export async function strapiGetWordMeaningsByVerseId(_verseId: string): Promise<VerseWordMeaning[]> {
+  return [];
 }
 
 export async function strapiGetCommentaryOptionsByBookId(bookId: string): Promise<CommentaryOptions | null> {
   try {
-    const entries = await strapiFetchAll("/explanations", {
-      "filters[verse][book][documentId][$eq]": bookId,
-      fields: "authorName,authorTitle,languageCode,author_name,author_title,language_code",
-    });
-
-    if (entries.length === 0) return null;
+    const book = await strapiGetBookById(bookId);
+    if (!book || book.verses.length === 0) return null;
 
     const authorMap = new Map<string, { authorTitle: string | null; languageCodes: Set<string> }>();
     const languageSet = new Set<string>();
 
-    for (const raw of entries) {
-      const f = flattenEntry(raw as StrapiEntry);
-      const authorName = getField(f, "authorName", "author_name") ?? getField(f, "scholarName", "scholar_name") ?? "";
-      const authorTitle = getField(f, "authorTitle", "author_title") ?? getField(f, "scholarTitle", "scholar_title") ?? null;
-      const langCode = getField(f, "languageCode", "language_code") ?? "";
-
-      languageSet.add(langCode);
-      if (!authorMap.has(authorName)) {
-        authorMap.set(authorName, { authorTitle, languageCodes: new Set([langCode]) });
-      } else {
-        authorMap.get(authorName)!.languageCodes.add(langCode);
+    for (const verse of book.verses) {
+      for (const exp of verse.explanations) {
+        languageSet.add(exp.languageCode);
+        if (!authorMap.has(exp.authorName)) {
+          authorMap.set(exp.authorName, { authorTitle: exp.authorTitle, languageCodes: new Set([exp.languageCode]) });
+        } else {
+          authorMap.get(exp.authorName)!.languageCodes.add(exp.languageCode);
+        }
       }
     }
-
-    const languages = await strapiGetAllLanguages();
-    const langNameMap = new Map(languages.map((l) => [l.code, l.name]));
 
     const authors: CommentaryOption[] = Array.from(authorMap.entries()).map(([name, data]) => ({
       authorName: name,
@@ -434,10 +490,7 @@ export async function strapiGetCommentaryOptionsByBookId(bookId: string): Promis
       languageCodes: Array.from(data.languageCodes),
     }));
 
-    const languagesResult = Array.from(languageSet).map((code) => ({
-      code,
-      name: langNameMap.get(code) || code,
-    }));
+    const languagesResult = Array.from(languageSet).map((code) => ({ code, name: code }));
 
     return { authors, languages: languagesResult };
   } catch {
@@ -446,39 +499,17 @@ export async function strapiGetCommentaryOptionsByBookId(bookId: string): Promis
 }
 
 export async function strapiGetChapterVerses(bookId: string, adhyayNumber: number): Promise<VerseWithTranslations[]> {
-  try {
-    const entries = await strapiFetchAll("/verses", {
-      "filters[book][documentId][$eq]": bookId,
-      "filters[adhyayNumber][$eq]": String(adhyayNumber),
-      populate: "*",
-      sort: "verseNumber:asc",
-    });
-
-    return entries.map((raw) => {
-      const f = flattenEntry(raw as StrapiEntry);
-      const verse = mapVerse(f, bookId);
-      const translationsRaw = resolveRelation(f.translations || f.verse_translations);
-      return {
-        ...verse,
-        translations: translationsRaw.map((t) => mapTranslation(t, verse.id)),
-        explanations: [],
-      };
-    });
-  } catch {
-    return [];
-  }
+  const book = await strapiGetBookById(bookId);
+  if (!book) return [];
+  return book.verses.filter((v) => v.adhyayNumber === adhyayNumber);
 }
 
 export async function strapiGetAllAuthors(): Promise<string[]> {
   try {
-    const entries = await strapiFetchAll("/explanations", {
-      fields: "authorName,author_name,scholarName,scholar_name",
-    });
+    const granthas = await strapiFetchAll("/granthas", { "fields": "BhashyamAuthor" });
     const authors = new Set<string>();
-    for (const raw of entries) {
-      const f = flattenEntry(raw as StrapiEntry);
-      const name = getField(f, "authorName", "author_name") ?? getField(f, "scholarName", "scholar_name");
-      if (name) authors.add(name);
+    for (const g of granthas as any[]) {
+      if (g.BhashyamAuthor) authors.add(g.BhashyamAuthor);
     }
     return Array.from(authors).sort();
   } catch {
