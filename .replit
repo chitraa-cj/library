@@ -44,7 +44,7 @@ outputType = "webview"
 [userenv]
 
 [userenv.shared]
-STRAPI_URL = "http://localhost:1337"
+STRAPI_URL = "https://admincms.xoidlabs.com"
 
 [agent]
 integrations = ["javascript_openai:1.0.0", "javascript_log_in_with_replit:2.0.0"]
