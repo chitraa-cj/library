@@ -151,7 +151,7 @@ interface BookReaderProps {
 
 function isShankaracharya(name: string): boolean {
   const lower = name.toLowerCase();
-  return lower.includes("shankaracharya") || lower.includes("sankara") || lower.includes("śaṅkara");
+  return lower.includes("shankaracharya") || lower.includes("shankarayacharya") || lower.includes("sankara") || lower.includes("śaṅkara");
 }
 
 function isTeekaAuthor(name: string): boolean {
