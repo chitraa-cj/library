@@ -22,10 +22,21 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
+  const VISIBLE_BOOK_SLUGS = new Set([
+    "aitareya-upanishad",
+    "isha-upanishad-shankaracharya-bhashyam",
+    "bhagavad-gita",
+    "katha-upanishad",
+  ]);
+
   app.get("/api/books", async (req, res) => {
     try {
       const books = await storage.getAllBooks();
-      res.json(books);
+      const filtered = books.filter(b => {
+        const slug = (b.slug || b.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')).trim();
+        return VISIBLE_BOOK_SLUGS.has(slug);
+      });
+      res.json(filtered);
     } catch (error) {
       console.error("Error fetching books:", error);
       res.status(500).json({ error: "Failed to fetch books" });
