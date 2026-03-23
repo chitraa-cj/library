@@ -22,14 +22,11 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
-  const VISIBLE_BOOK_SLUGS = new Set([
-    "aitareya-upanishad",
-    "isha-upanishad-shankaracharya-bhashyam",
-    "isha-upanishad",
-    "ishavasya-upanishad",
-    "bhagavad-gita",
-    "katha-upanishad",
-    "kathopanishad",
+  const ALLOWED_BOOK_IDS = new Set([
+    "ilox3o68ykdntxtzuf4q5zqi",
+    "l7e5ijk6v6m7ldplkj9yzpav",
+    "vbgnqomwgvmo6x863biqz81r",
+    "ngjdm2fcgp0ogp16jcey3vo1",
   ]);
 
   app.get("/api/books", async (req, res) => {
@@ -37,11 +34,13 @@ export async function registerRoutes(
       const books = await storage.getAllBooks();
       const seen = new Set<string>();
       const filtered = books.filter(b => {
-        const slug = (b.slug || b.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')).replace(/-+$/, '').trim();
-        if (!VISIBLE_BOOK_SLUGS.has(slug)) return false;
-        const key = slug.replace(/^ishavasya-/, 'isha-').replace(/-shankaracharya-bhashyam$/, '');
-        if (seen.has(key)) return false;
-        seen.add(key);
+        const isLocalDb = typeof b.id === 'number' || (typeof b.id === 'string' && b.id.includes('-') && b.id.length > 30);
+        const isAllowedStrapi = ALLOWED_BOOK_IDS.has(b.id as string);
+        if (!isLocalDb && !isAllowedStrapi) return false;
+        const slug = (b.slug || b.title.toLowerCase().replace(/\s+/g, '-')).replace(/-+$/, '').trim();
+        const dedup = slug.replace(/^ishavasya-/, 'isha-').replace(/-shankaracharya-bhashyam$/, '').replace(/-bhashya$/, '');
+        if (seen.has(dedup)) return false;
+        seen.add(dedup);
         return true;
       });
       res.json(filtered);

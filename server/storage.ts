@@ -440,11 +440,23 @@ export class HybridStorage implements IStorage {
   }
 
   async getAllBooks(): Promise<Book[]> {
-    return this.useStrapiForArray(
-      () => strapiGetAllBooks(),
-      () => this.db.getAllBooks(),
-      "getAllBooks"
-    );
+    const dbBooks = await this.db.getAllBooks();
+    if (!(await this.isStrapiAvailable())) return dbBooks;
+    try {
+      const strapiBooks = await strapiGetAllBooks();
+      const slugSet = new Set(strapiBooks.map(b => (b.slug || '').toLowerCase().replace(/-+$/, '').trim()));
+      const merged = [...strapiBooks];
+      for (const b of dbBooks) {
+        const dbSlug = (b.slug || '').toLowerCase().replace(/-+$/, '').trim();
+        if (!slugSet.has(dbSlug)) {
+          merged.push(b);
+        }
+      }
+      return merged;
+    } catch (err: any) {
+      console.warn(`[Strapi] getAllBooks failed, falling back to DB:`, err.message || err);
+      return dbBooks;
+    }
   }
 
   async getBookById(id: string): Promise<BookWithDetails | undefined> {
