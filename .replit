@@ -44,7 +44,6 @@ outputType = "webview"
 [userenv]
 
 [userenv.shared]
-STRAPI_URL = "http://13.60.173.218:1337"
 
 [agent]
 integrations = ["javascript_openai:1.0.0", "javascript_log_in_with_replit:2.0.0"]

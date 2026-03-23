@@ -22,7 +22,7 @@ interface StrapiResponse<T> {
 
 interface RichTextBlock {
   type: string;
-  children: { text: string; type: string }[];
+  children: { text: string; type: string; bold?: boolean }[];
 }
 
 function richTextToString(blocks: RichTextBlock[] | null | undefined): string {
@@ -44,7 +44,7 @@ async function strapiFetch<T = any>(endpoint: string, params: Record<string, str
     headers["Authorization"] = `Bearer ${STRAPI_API_TOKEN}`;
   }
 
-  const response = await fetch(url.toString(), { headers, signal: AbortSignal.timeout(10000) });
+  const response = await fetch(url.toString(), { headers, signal: AbortSignal.timeout(15000) });
   if (!response.ok) {
     throw new Error(`Strapi API error: ${response.status} ${response.statusText} for ${endpoint}`);
   }
@@ -80,147 +80,232 @@ function slugify(name: string): string {
     .trim();
 }
 
-function mapGranthaToBook(g: any): Book {
-  const docId = g.documentId || String(g.id);
+interface StrapiSection {
+  id: number;
+  documentId: string;
+  title: string;
+  type: string | null;
+  order: number | null;
+  parent?: { documentId: string } | null;
+  sub_sections?: StrapiSection[];
+  manthras?: any[];
+  titleTranslations?: any[];
+}
+
+function buildSectionTree(sections: StrapiSection[]): StrapiSection[] {
+  const byDocId = new Map<string, StrapiSection>();
+  for (const s of sections) byDocId.set(s.documentId, s);
+
+  const roots: StrapiSection[] = [];
+  for (const s of sections) {
+    if (!s.parent?.documentId) {
+      roots.push(s);
+    }
+  }
+  roots.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+  for (const root of roots) {
+    if (root.sub_sections) {
+      root.sub_sections.sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+    }
+  }
+
+  return roots;
+}
+
+function extractTranslationsFromTextAndTranslation(
+  tat: any,
+  verseId: string,
+  prefix: string,
+): VerseTranslation[] {
+  const translations: VerseTranslation[] = [];
+  if (!tat) return translations;
+
+  const sanskritText = richTextToString(tat.SanskritTextEntry);
+  if (sanskritText) {
+    translations.push({
+      id: `${verseId}-${prefix}-sa`,
+      verseId,
+      languageCode: "devanagari",
+      content: sanskritText,
+      isAiTranslated: false,
+    });
+  }
+
+  const englishText = richTextToString(tat.EnglishTranslationText);
+  if (englishText) {
+    translations.push({
+      id: `${verseId}-${prefix}-en`,
+      verseId,
+      languageCode: "english",
+      content: englishText,
+      isAiTranslated: false,
+    });
+  }
+
+  if (Array.isArray(tat.OtherTranslations)) {
+    for (let i = 0; i < tat.OtherTranslations.length; i++) {
+      const ot = tat.OtherTranslations[i];
+      const lang = ot.LanguageOfTranslation;
+      const text = richTextToString(ot.TranslationText);
+      if (lang && text) {
+        translations.push({
+          id: `${verseId}-${prefix}-${lang.toLowerCase()}-${i}`,
+          verseId,
+          languageCode: lang.toLowerCase(),
+          content: text,
+          isAiTranslated: ot.isAiTranslated ?? false,
+        });
+      }
+    }
+  }
+
+  return translations;
+}
+
+function extractExplanationsFromTextAndTranslation(
+  tat: any,
+  verseId: string,
+  authorName: string,
+  authorTitle: string | null,
+  prefix: string,
+): Explanation[] {
+  const explanations: Explanation[] = [];
+  if (!tat) return explanations;
+
+  const sanskritText = richTextToString(tat.SanskritTextEntry);
+  if (sanskritText) {
+    explanations.push({
+      id: `${verseId}-${prefix}-sa`,
+      verseId,
+      authorName,
+      authorTitle,
+      languageCode: "devanagari",
+      content: sanskritText,
+      isAiTranslated: false,
+    });
+  }
+
+  const englishText = richTextToString(tat.EnglishTranslationText);
+  if (englishText) {
+    explanations.push({
+      id: `${verseId}-${prefix}-en`,
+      verseId,
+      authorName,
+      authorTitle,
+      languageCode: "english",
+      content: englishText,
+      isAiTranslated: false,
+    });
+  }
+
+  if (Array.isArray(tat.OtherTranslations)) {
+    for (let i = 0; i < tat.OtherTranslations.length; i++) {
+      const ot = tat.OtherTranslations[i];
+      const lang = ot.LanguageOfTranslation;
+      const text = richTextToString(ot.TranslationText);
+      if (lang && text) {
+        explanations.push({
+          id: `${verseId}-${prefix}-${lang.toLowerCase()}-${i}`,
+          verseId,
+          authorName,
+          authorTitle,
+          languageCode: lang.toLowerCase(),
+          content: text,
+          isAiTranslated: ot.isAiTranslated ?? false,
+        });
+      }
+    }
+  }
+
+  return explanations;
+}
+
+function mapManthraToVerse(
+  m: any,
+  bookId: string,
+  globalIndex: number,
+  adhyayNumber: number | null,
+  adhyayTitle: string | null,
+  khandaNumber: number | null,
+  khandaTitle: string | null,
+  bhashyamAuthor: string,
+  bhashyamName: string | null,
+): VerseWithTranslations {
+  const verseId = m.documentId || String(m.id);
+  const verseNumber = globalIndex;
+
+  const translations = extractTranslationsFromTextAndTranslation(
+    m.ShlokaManthraEntry,
+    verseId,
+    "shloka",
+  );
+
+  const explanations = extractExplanationsFromTextAndTranslation(
+    m.BhashyamEntry,
+    verseId,
+    bhashyamAuthor,
+    bhashyamName,
+    "bhashya",
+  );
+
+  if (Array.isArray(m.Teekas)) {
+    for (const teekaEntry of m.Teekas) {
+      const teekaRef = teekaEntry.teeka;
+      const teekaName = teekaRef?.TeekaName || "Teeka";
+      const teekaAuthor = teekaRef?.TeekaAuthor || teekaName;
+      const teekaExplanations = extractExplanationsFromTextAndTranslation(
+        teekaEntry.TeekaEntry,
+        verseId,
+        teekaAuthor,
+        teekaName,
+        `teeka-${teekaRef?.documentId || teekaEntry.id || "unknown"}`,
+      );
+      explanations.push(...teekaExplanations);
+    }
+  }
+
+  const sectionTitle = m.ShlokaManthraNumber
+    ? `Mantra ${m.ShlokaManthraNumber}`
+    : `Mantra ${globalIndex}`;
+
   return {
-    id: docId,
-    slug: slugify(g.GranthaName || ""),
-    title: g.GranthaName || "",
-    author: g.BhashyamAuthor || null,
-    description: richTextToString(g.IntroductionToTextEnglish) || null,
-    category: g.GranthaType || "Uncategorized",
-    coverImage: null,
-    totalVerses: Array.isArray(g.chapters) ? g.chapters.length : 0,
+    id: verseId,
+    bookId,
+    verseNumber,
+    sectionTitle,
+    adhyayNumber,
+    adhyayTitle,
+    khandaNumber,
+    khandaTitle,
+    translations,
+    explanations,
   };
 }
 
-function mapChapterToVerse(ch: any, bookId: string, index: number): VerseWithTranslations {
-  const docId = ch.documentId || String(ch.id);
-  const verseNumber = ch.order ?? index;
-
-  const chapterTitle = ch.ChapterTitle || null;
-  let adhyayNumber: number | null = null;
-  let adhyayTitle: string | null = null;
-  const chapterMatch = chapterTitle?.match(/(?:Adhyaya|Chapter|अध्याय)\s*(\d+)/i);
-  if (chapterMatch) {
-    adhyayNumber = parseInt(chapterMatch[1], 10);
-    adhyayTitle = chapterTitle;
-  }
-
-  const translations: VerseTranslation[] = [];
-  const explanations: Explanation[] = [];
-
-  const shloka = ch.ShlokaManthraEntry;
-  if (shloka) {
-    const sanskritText = richTextToString(shloka.SanskritTextEntry);
-    if (sanskritText) {
-      translations.push({
-        id: `${docId}-sa`,
-        verseId: docId,
-        languageCode: "devanagari",
-        content: sanskritText,
-        isAiTranslated: false,
-      });
-    }
-
-    const englishText = richTextToString(shloka.EnglishTranslationText);
-    if (englishText) {
-      translations.push({
-        id: `${docId}-en`,
-        verseId: docId,
-        languageCode: "english",
-        content: englishText,
-        isAiTranslated: false,
-      });
-    }
-
-    const otherText = richTextToString(shloka.OtherLanguagesTranslation);
-    if (otherText && shloka.LanguageOfTranslation) {
-      translations.push({
-        id: `${docId}-other`,
-        verseId: docId,
-        languageCode: shloka.LanguageOfTranslation.toLowerCase(),
-        content: otherText,
-        isAiTranslated: false,
-      });
-    }
-  }
-
-  const bhashya = ch.BhashyamForShlokaManthra;
-  if (bhashya) {
-    const bhashyaSanskrit = richTextToString(bhashya.SanskritTextEntry);
-    if (bhashyaSanskrit) {
-      const bhashyamAuthor = ch.grantha?.BhashyamAuthor || "Sri Shankaracharya";
-      const bhashyamName = ch.grantha?.BhashyamName || "Shankara Bhashyam";
-      explanations.push({
-        id: `${docId}-bhashya-sa`,
-        verseId: docId,
-        authorName: bhashyamAuthor,
-        authorTitle: bhashyamName,
-        languageCode: "devanagari",
-        content: bhashyaSanskrit,
-        isAiTranslated: false,
-      });
-    }
-
-    const bhashyaEnglish = richTextToString(bhashya.EnglishTranslationText);
-    if (bhashyaEnglish) {
-      const bhashyamAuthor = ch.grantha?.BhashyamAuthor || "Sri Shankaracharya";
-      const bhashyamName = ch.grantha?.BhashyamName || "Shankara Bhashyam";
-      explanations.push({
-        id: `${docId}-bhashya-en`,
-        verseId: docId,
-        authorName: bhashyamAuthor,
-        authorTitle: bhashyamName,
-        languageCode: "english",
-        content: bhashyaEnglish,
-        isAiTranslated: false,
-      });
-    }
-
-    const bhashyaOther = richTextToString(bhashya.OtherLanguagesTranslation);
-    if (bhashyaOther && bhashya.LanguageOfTranslation) {
-      const bhashyamAuthor = ch.grantha?.BhashyamAuthor || "Sri Shankaracharya";
-      const bhashyamName = ch.grantha?.BhashyamName || "Shankara Bhashyam";
-      explanations.push({
-        id: `${docId}-bhashya-other`,
-        verseId: docId,
-        authorName: bhashyamAuthor,
-        authorTitle: bhashyamName,
-        languageCode: bhashya.LanguageOfTranslation.toLowerCase(),
-        content: bhashyaOther,
-        isAiTranslated: false,
-      });
-    }
-  }
-
-  if (Array.isArray(ch.Teekas)) {
-    for (const teeka of ch.Teekas) {
-      if (teeka.TeekaName) {
-        explanations.push({
-          id: `${docId}-teeka-${teeka.id || teeka.TeekaName}`,
-          verseId: docId,
-          authorName: teeka.TeekaAuthor || teeka.TeekaName,
-          authorTitle: teeka.TeekaName,
-          languageCode: "devanagari",
-          content: teeka.TeekaContent ? richTextToString(teeka.TeekaContent) : "",
-          isAiTranslated: false,
-        });
+function mapGranthaToBook(g: any): Book {
+  const docId = g.documentId || String(g.id);
+  let totalVerses = 0;
+  if (Array.isArray(g.sections)) {
+    for (const s of g.sections) {
+      totalVerses += s.manthras?.length || 0;
+      if (Array.isArray(s.sub_sections)) {
+        for (const ss of s.sub_sections) {
+          totalVerses += ss.manthras?.length || 0;
+        }
       }
     }
   }
 
   return {
     id: docId,
-    bookId,
-    verseNumber,
-    sectionTitle: chapterTitle,
-    adhyayNumber,
-    adhyayTitle,
-    khandaNumber: null,
-    khandaTitle: null,
-    translations,
-    explanations,
+    slug: g.slug || slugify(g.GranthaName || ""),
+    title: g.GranthaName || "",
+    author: g.BhashyamAuthor || null,
+    description: richTextToString(g.IntroductionToTextEnglish) || null,
+    category: g.GranthaType || "Uncategorized",
+    coverImage: g.coverImage?.url ? `${STRAPI_URL}${g.coverImage.url}` : null,
+    totalVerses,
   };
 }
 
@@ -248,7 +333,7 @@ export async function testStrapiConnection(): Promise<{ connected: boolean; mess
   try {
     const response = await fetch(`${STRAPI_URL}/api/granthas?pagination[pageSize]=1`, {
       headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(10000),
     });
     if (response.ok) {
       const data = await response.json();
@@ -262,37 +347,109 @@ export async function testStrapiConnection(): Promise<{ connected: boolean; mess
 }
 
 export async function strapiGetAllBooks(): Promise<Book[]> {
-  const granthas = await strapiFetchAll("/granthas", { "populate": "*" });
+  const granthas = await strapiFetchAll("/granthas", {
+    "populate[0]": "sections",
+    "populate[1]": "coverImage",
+    "populate[2]": "GranthaNameTranslations",
+  });
   return granthas.map(mapGranthaToBook);
 }
 
 export async function strapiGetBookBySlug(slug: string): Promise<Book | undefined> {
-  const granthas = await strapiFetchAll("/granthas", { "populate": "*" });
-  const match = granthas.find((g: any) => slugify(g.GranthaName || "") === slug);
+  const granthas = await strapiFetchAll("/granthas", {
+    "populate[0]": "sections",
+    "populate[1]": "coverImage",
+  });
+  const match = granthas.find((g: any) => {
+    const gSlug = g.slug || slugify(g.GranthaName || "");
+    return gSlug === slug;
+  });
   return match ? mapGranthaToBook(match) : undefined;
+}
+
+async function fetchSectionsForGrantha(granthaDocId: string): Promise<StrapiSection[]> {
+  return strapiFetchAll("/sections", {
+    "filters[grantha][documentId]": granthaDocId,
+    "populate[0]": "parent",
+    "populate[1]": "sub_sections",
+    "populate[2]": "manthras",
+    "populate[3]": "titleTranslations",
+    "sort": "order",
+  });
+}
+
+async function fetchManthrasForSection(sectionDocId: string): Promise<any[]> {
+  return strapiFetchAll("/manthras", {
+    "filters[Section][documentId]": sectionDocId,
+    "populate[0]": "Section",
+    "populate[1]": "ShlokaManthraEntry",
+    "populate[2]": "BhashyamEntry",
+    "populate[3]": "Teekas.teeka",
+    "populate[4]": "Teekas.TeekaEntry",
+    "populate[5]": "ShlokaManthraEntry.OtherTranslations",
+    "populate[6]": "BhashyamEntry.OtherTranslations",
+    "populate[7]": "Teekas.TeekaEntry.OtherTranslations",
+    "sort": "order",
+  });
 }
 
 export async function strapiGetBookById(id: string): Promise<BookWithDetails | undefined> {
   try {
     const result = await strapiFetch<StrapiResponse<any>>(`/granthas/${id}`, {
-      "populate[chapters][populate]": "*",
-      "populate[BhashyakaraIntroduction][populate]": "*",
+      "populate[0]": "sections",
+      "populate[1]": "teekas",
+      "populate[2]": "BhashyakaraIntroduction",
+      "populate[3]": "BhashyakaraIntroduction.OtherTranslations",
+      "populate[4]": "GranthaNameTranslations",
+      "populate[5]": "coverImage",
     });
     if (!result.data) return undefined;
 
     const grantha = result.data;
     const book = mapGranthaToBook(grantha);
+    const bhashyamAuthor = grantha.BhashyamAuthor || "Sri Shankaracharya";
+    const bhashyamName = grantha.BhashyamName || "Shankara Bhashyam";
 
-    const chaptersData = Array.isArray(grantha.chapters) ? grantha.chapters : [];
-    const sortedChapters = [...chaptersData].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
-    const verses: VerseWithTranslations[] = sortedChapters.map((ch: any, idx: number) => {
-      ch.grantha = grantha;
-      return mapChapterToVerse(ch, book.id, idx);
-    });
+    const allSections = await fetchSectionsForGrantha(grantha.documentId);
+    const sectionTree = buildSectionTree(allSections);
+
+    const verses: VerseWithTranslations[] = [];
+    let globalIndex = 0;
 
     const introVerse = mapIntroductionVerse(grantha, book.id);
     if (introVerse) {
-      verses.unshift(introVerse);
+      verses.push(introVerse);
+      globalIndex++;
+    }
+
+    for (const adhyay of sectionTree) {
+      const adhyayNum = adhyay.order ?? null;
+      const adhyayTitle = adhyay.title || null;
+
+      const khandas = (adhyay.sub_sections || []).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+      if (khandas.length > 0) {
+        for (const khanda of khandas) {
+          const khandaNum = khanda.order ?? null;
+          const khandaTitle = khanda.title || null;
+
+          const manthras = await fetchManthrasForSection(khanda.documentId);
+          for (const m of manthras) {
+            globalIndex++;
+            verses.push(
+              mapManthraToVerse(m, book.id, globalIndex, adhyayNum, adhyayTitle, khandaNum, khandaTitle, bhashyamAuthor, bhashyamName)
+            );
+          }
+        }
+      } else {
+        const manthras = await fetchManthrasForSection(adhyay.documentId);
+        for (const m of manthras) {
+          globalIndex++;
+          verses.push(
+            mapManthraToVerse(m, book.id, globalIndex, adhyayNum, adhyayTitle, null, null, bhashyamAuthor, bhashyamName)
+          );
+        }
+      }
     }
 
     return { ...book, titles: [], verses, totalVerses: verses.length };
@@ -305,23 +462,25 @@ export async function strapiGetBookById(id: string): Promise<BookWithDetails | u
 export async function strapiGetBookWithVerseMeta(id: string): Promise<BookWithVerseMeta | undefined> {
   try {
     const result = await strapiFetch<StrapiResponse<any>>(`/granthas/${id}`, {
-      "populate[chapters][fields]": "ChapterTitle,order,documentId",
-      "populate[BhashyakaraIntroduction]": "*",
+      "populate[0]": "sections",
+      "populate[1]": "BhashyakaraIntroduction",
+      "populate[2]": "GranthaNameTranslations",
+      "populate[3]": "coverImage",
     });
     if (!result.data) return undefined;
 
     const grantha = result.data;
     const book = mapGranthaToBook(grantha);
 
-    const chaptersData = Array.isArray(grantha.chapters) ? grantha.chapters : [];
-    const sortedChapters = [...chaptersData].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+    const allSections = await fetchSectionsForGrantha(grantha.documentId);
+    const sectionTree = buildSectionTree(allSections);
 
     const verses: VerseMeta[] = [];
+    let globalIndex = 0;
 
     if (grantha.BhashyakaraIntroduction) {
-      const introId = `${book.id}-intro`;
       verses.push({
-        id: introId,
+        id: `${book.id}-intro`,
         bookId: book.id,
         verseNumber: 0,
         sectionTitle: "Introduction",
@@ -332,24 +491,51 @@ export async function strapiGetBookWithVerseMeta(id: string): Promise<BookWithVe
       });
     }
 
-    for (let i = 0; i < sortedChapters.length; i++) {
-      const ch = sortedChapters[i];
-      const docId = ch.documentId || String(ch.id);
-      const chapterTitle = ch.ChapterTitle || null;
-      let adhyayNumber: number | null = null;
-      const chapterMatch = chapterTitle?.match(/(?:Adhyaya|Chapter|अध्याय)\s*(\d+)/i);
-      if (chapterMatch) adhyayNumber = parseInt(chapterMatch[1], 10);
+    for (const adhyay of sectionTree) {
+      const adhyayNum = adhyay.order ?? null;
+      const adhyayTitle = adhyay.title || null;
 
-      verses.push({
-        id: docId,
-        bookId: book.id,
-        verseNumber: ch.order ?? (i + 1),
-        sectionTitle: chapterTitle,
-        adhyayNumber,
-        adhyayTitle: chapterTitle,
-        khandaNumber: null,
-        khandaTitle: null,
-      });
+      const khandas = (adhyay.sub_sections || []).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+      if (khandas.length > 0) {
+        for (const khanda of khandas) {
+          const khandaNum = khanda.order ?? null;
+          const khandaTitle = khanda.title || null;
+          const manthraDocs = khanda.manthras || [];
+          const sortedManthras = [...manthraDocs].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+
+          for (const m of sortedManthras) {
+            globalIndex++;
+            verses.push({
+              id: m.documentId || String(m.id),
+              bookId: book.id,
+              verseNumber: globalIndex,
+              sectionTitle: m.ShlokaManthraNumber ? `Mantra ${m.ShlokaManthraNumber}` : `Mantra ${globalIndex}`,
+              adhyayNumber: adhyayNum,
+              adhyayTitle,
+              khandaNumber: khandaNum,
+              khandaTitle,
+            });
+          }
+        }
+      } else {
+        const manthraDocs = adhyay.manthras || [];
+        const sortedManthras = [...manthraDocs].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+
+        for (const m of sortedManthras) {
+          globalIndex++;
+          verses.push({
+            id: m.documentId || String(m.id),
+            bookId: book.id,
+            verseNumber: globalIndex,
+            sectionTitle: m.ShlokaManthraNumber ? `Mantra ${m.ShlokaManthraNumber}` : `Mantra ${globalIndex}`,
+            adhyayNumber: adhyayNum,
+            adhyayTitle,
+            khandaNumber: null,
+            khandaTitle: null,
+          });
+        }
+      }
     }
 
     return { ...book, titles: [], verses, totalVerses: verses.length };
@@ -364,47 +550,16 @@ function mapIntroductionVerse(grantha: any, bookId: string): VerseWithTranslatio
   if (!intro) return null;
 
   const introId = `${bookId}-intro`;
-  const translations: VerseTranslation[] = [];
-  const explanations: Explanation[] = [];
+  const bhashyamAuthor = grantha.BhashyamAuthor || "Sri Shankaracharya";
+  const bhashyamName = grantha.BhashyamName || "Shankara Bhashyam";
 
-  const sanskritText = richTextToString(intro.SanskritTextEntry);
-  if (sanskritText) {
-    explanations.push({
-      id: `${introId}-sa`,
-      verseId: introId,
-      authorName: grantha.BhashyamAuthor || "Sri Shankaracharya",
-      authorTitle: grantha.BhashyamName || "Shankara Bhashyam",
-      languageCode: "devanagari",
-      content: sanskritText,
-      isAiTranslated: false,
-    });
-  }
-
-  const englishText = richTextToString(intro.EnglishTranslationText);
-  if (englishText) {
-    explanations.push({
-      id: `${introId}-en`,
-      verseId: introId,
-      authorName: grantha.BhashyamAuthor || "Sri Shankaracharya",
-      authorTitle: grantha.BhashyamName || "Shankara Bhashyam",
-      languageCode: "english",
-      content: englishText,
-      isAiTranslated: false,
-    });
-  }
-
-  const otherText = richTextToString(intro.OtherLanguagesTranslation);
-  if (otherText && intro.LanguageOfTranslation) {
-    explanations.push({
-      id: `${introId}-other`,
-      verseId: introId,
-      authorName: grantha.BhashyamAuthor || "Sri Shankaracharya",
-      authorTitle: grantha.BhashyamName || "Shankara Bhashyam",
-      languageCode: intro.LanguageOfTranslation.toLowerCase(),
-      content: otherText,
-      isAiTranslated: false,
-    });
-  }
+  const explanations = extractExplanationsFromTextAndTranslation(
+    intro,
+    introId,
+    bhashyamAuthor,
+    bhashyamName,
+    "intro",
+  );
 
   return {
     id: introId,
@@ -415,7 +570,7 @@ function mapIntroductionVerse(grantha: any, bookId: string): VerseWithTranslatio
     adhyayTitle: null,
     khandaNumber: null,
     khandaTitle: null,
-    translations,
+    translations: [],
     explanations,
   };
 }
@@ -428,17 +583,54 @@ export async function strapiGetVerseById(verseId: string): Promise<VerseWithTran
   }
 
   try {
-    const result = await strapiFetch<StrapiResponse<any>>(`/chapters/${verseId}`, {
-      "populate": "*",
+    const result = await strapiFetch<StrapiResponse<any>>(`/manthras/${verseId}`, {
+      "populate[0]": "Section",
+      "populate[1]": "ShlokaManthraEntry",
+      "populate[2]": "BhashyamEntry",
+      "populate[3]": "Teekas.teeka",
+      "populate[4]": "Teekas.TeekaEntry",
+      "populate[5]": "ShlokaManthraEntry.OtherTranslations",
+      "populate[6]": "BhashyamEntry.OtherTranslations",
+      "populate[7]": "Teekas.TeekaEntry.OtherTranslations",
+      "populate[8]": "Section.grantha",
+      "populate[9]": "Section.parent",
     });
     if (!result.data) return undefined;
 
-    const ch = result.data;
-    const granthaRef = ch.grantha;
-    const bookId = granthaRef?.documentId || granthaRef?.id || "";
-    ch.grantha = granthaRef;
-    return mapChapterToVerse(ch, String(bookId), ch.order ?? 0);
-  } catch {
+    const m = result.data;
+    const section = m.Section;
+    const grantha = section?.grantha;
+    const bookId = grantha?.documentId || "";
+    const bhashyamAuthor = grantha?.BhashyamAuthor || "Sri Shankaracharya";
+    const bhashyamName = grantha?.BhashyamName || "Shankara Bhashyam";
+
+    let adhyayNumber: number | null = null;
+    let adhyayTitle: string | null = null;
+    let khandaNumber: number | null = null;
+    let khandaTitle: string | null = null;
+
+    if (section) {
+      if (section.type === "adhyay") {
+        adhyayNumber = section.order ?? null;
+        adhyayTitle = section.title || null;
+      } else if (section.type === "khanda" || section.type === "valli") {
+        khandaNumber = section.order ?? null;
+        khandaTitle = section.title || null;
+        if (section.parent) {
+          adhyayNumber = section.parent.order ?? null;
+          adhyayTitle = section.parent.title || null;
+        }
+      }
+    }
+
+    return mapManthraToVerse(
+      m, bookId, m.order ?? 0,
+      adhyayNumber, adhyayTitle,
+      khandaNumber, khandaTitle,
+      bhashyamAuthor, bhashyamName,
+    );
+  } catch (err: any) {
+    console.warn("[Strapi] getVerseById failed:", err.message);
     return undefined;
   }
 }
@@ -506,7 +698,7 @@ export async function strapiGetChapterVerses(bookId: string, adhyayNumber: numbe
 
 export async function strapiGetAllAuthors(): Promise<string[]> {
   try {
-    const granthas = await strapiFetchAll("/granthas", { "fields": "BhashyamAuthor" });
+    const granthas = await strapiFetchAll("/granthas", { "fields[0]": "BhashyamAuthor" });
     const authors = new Set<string>();
     for (const g of granthas as any[]) {
       if (g.BhashyamAuthor) authors.add(g.BhashyamAuthor);
