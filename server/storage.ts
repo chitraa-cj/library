@@ -444,11 +444,11 @@ export class HybridStorage implements IStorage {
     if (!(await this.isStrapiAvailable())) return dbBooks;
     try {
       const strapiBooks = await strapiGetAllBooks();
-      const slugSet = new Set(strapiBooks.map(b => (b.slug || '').toLowerCase().replace(/-+$/, '').trim()));
-      const merged = [...strapiBooks];
-      for (const b of dbBooks) {
-        const dbSlug = (b.slug || '').toLowerCase().replace(/-+$/, '').trim();
-        if (!slugSet.has(dbSlug)) {
+      const dbSlugSet = new Set(dbBooks.map(b => (b.slug || '').toLowerCase().replace(/-+$/, '').replace(/-bhashya$/, '').trim()));
+      const merged = [...dbBooks];
+      for (const b of strapiBooks) {
+        const sSlug = (b.slug || '').toLowerCase().replace(/-+$/, '').trim();
+        if (!dbSlugSet.has(sSlug)) {
           merged.push(b);
         }
       }

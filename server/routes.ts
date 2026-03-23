@@ -22,28 +22,17 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
-  const ALLOWED_BOOK_IDS = new Set([
+  const STRAPI_ONLY_IDS = new Set([
     "ilox3o68ykdntxtzuf4q5zqi",
-    "l7e5ijk6v6m7ldplkj9yzpav",
-    "vbgnqomwgvmo6x863biqz81r",
-    "ngjdm2fcgp0ogp16jcey3vo1",
   ]);
 
   app.get("/api/books", async (req, res) => {
     try {
       const books = await storage.getAllBooks();
-      const seen = new Set<string>();
-      const filtered = books.filter(b => {
-        const isLocalDb = typeof b.id === 'number' || (typeof b.id === 'string' && b.id.includes('-') && b.id.length > 30);
-        const isAllowedStrapi = ALLOWED_BOOK_IDS.has(b.id as string);
-        if (!isLocalDb && !isAllowedStrapi) return false;
-        const slug = (b.slug || b.title.toLowerCase().replace(/\s+/g, '-')).replace(/-+$/, '').trim();
-        const dedup = slug.replace(/^ishavasya-/, 'isha-').replace(/-shankaracharya-bhashyam$/, '').replace(/-bhashya$/, '');
-        if (seen.has(dedup)) return false;
-        seen.add(dedup);
-        return true;
-      });
-      res.json(filtered);
+      const isLocalDb = (b: any) => typeof b.id === 'string' && b.id.includes('-') && b.id.length > 30;
+      const localBooks = books.filter(b => isLocalDb(b));
+      const strapiAllowed = books.filter(b => !isLocalDb(b) && STRAPI_ONLY_IDS.has(b.id as string));
+      res.json([...localBooks, ...strapiAllowed]);
     } catch (error) {
       console.error("Error fetching books:", error);
       res.status(500).json({ error: "Failed to fetch books" });
