@@ -105,8 +105,11 @@ function buildSectionTree(sections: StrapiSection[]): StrapiSection[] {
   roots.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
   for (const root of roots) {
-    if (root.sub_sections) {
-      root.sub_sections.sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+    if (root.sub_sections && root.sub_sections.length > 0) {
+      root.sub_sections = root.sub_sections.map((ss: any) => {
+        const fullSection = byDocId.get(ss.documentId);
+        return fullSection || ss;
+      }).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
     }
   }
 
