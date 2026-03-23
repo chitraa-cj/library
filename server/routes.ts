@@ -25,16 +25,24 @@ export async function registerRoutes(
   const VISIBLE_BOOK_SLUGS = new Set([
     "aitareya-upanishad",
     "isha-upanishad-shankaracharya-bhashyam",
+    "isha-upanishad",
+    "ishavasya-upanishad",
     "bhagavad-gita",
     "katha-upanishad",
+    "kathopanishad",
   ]);
 
   app.get("/api/books", async (req, res) => {
     try {
       const books = await storage.getAllBooks();
+      const seen = new Set<string>();
       const filtered = books.filter(b => {
-        const slug = (b.slug || b.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')).trim();
-        return VISIBLE_BOOK_SLUGS.has(slug);
+        const slug = (b.slug || b.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')).replace(/-+$/, '').trim();
+        if (!VISIBLE_BOOK_SLUGS.has(slug)) return false;
+        const key = slug.replace(/^ishavasya-/, 'isha-').replace(/-shankaracharya-bhashyam$/, '');
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
       });
       res.json(filtered);
     } catch (error) {
