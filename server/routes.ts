@@ -9,6 +9,7 @@ import { authStorage } from "./replit_integrations/auth/storage";
 import { z } from "zod";
 import multer from "multer";
 import { translateTextChunked, translateImage, translatePdf, transliterateTextChunked, translateBhashyam } from "./gemini";
+import { startTranslationJob, getTranslationProgress, getAllTranslationJobs, STRAPI_LANGUAGES, SKIP_TRANSLATE } from "./strapi-translate";
 
 function getUserId(req: any): string {
   if (req.session?.emailUserId) {
@@ -399,6 +400,42 @@ export async function registerRoutes(
       console.error("Gemini image translation error:", error);
       res.status(500).json({ error: error.message || "Image translation failed" });
     }
+  });
+
+  app.post("/api/translate/grantha/:granthaId", async (req, res) => {
+    try {
+      const { granthaId } = req.params;
+      const { languages } = req.body || {};
+      const targetLangs = Array.isArray(languages) && languages.length > 0
+        ? languages.filter((l: string) => !SKIP_TRANSLATE.has(l))
+        : undefined;
+
+      const progress = await startTranslationJob(granthaId, targetLangs);
+      res.json(progress);
+    } catch (error: any) {
+      console.error("Translation job start error:", error);
+      res.status(500).json({ error: error.message || "Failed to start translation job" });
+    }
+  });
+
+  app.get("/api/translate/grantha/:granthaId/status", async (req, res) => {
+    const progress = getTranslationProgress(req.params.granthaId);
+    if (!progress) {
+      return res.status(404).json({ error: "No translation job found for this grantha" });
+    }
+    res.json(progress);
+  });
+
+  app.get("/api/translate/jobs", async (_req, res) => {
+    res.json(getAllTranslationJobs());
+  });
+
+  app.get("/api/translate/languages", async (_req, res) => {
+    res.json({
+      all: STRAPI_LANGUAGES,
+      skipped: Array.from(SKIP_TRANSLATE),
+      translatable: STRAPI_LANGUAGES.filter(l => !SKIP_TRANSLATE.has(l)),
+    });
   });
 
   return httpServer;
