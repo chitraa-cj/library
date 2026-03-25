@@ -344,7 +344,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
   }, [drillSubCategoryId, drillCategory]);
 
   const drillBreadcrumb = useMemo(() => {
-    const crumbs: { label: string; onClick: () => void }[] = [];
+    const crumbs: { label: string; onClick: (() => void) | null }[] = [];
     crumbs.push({
       label: (t as any)("allCategories") || "All Categories",
       onClick: () => { setDrillCategoryId(null); setDrillSubCategoryId(null); setSearchQuery(""); },
@@ -352,28 +352,13 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
     if (drillCategory) {
       crumbs.push({
         label: resolveLabel(drillCategory, t),
-        onClick: () => { setDrillSubCategoryId(null); setSearchQuery(""); },
+        onClick: drillSubCategory ? () => { setDrillSubCategoryId(null); setSearchQuery(""); } : null,
       });
     }
     if (drillSubCategory) {
       crumbs.push({
         label: resolveLabel(drillSubCategory, t),
-        onClick: () => {
-          setExpandedBooks(new Set());
-        },
-      });
-    }
-    if (selectedBookObj && drillSubCategory) {
-      crumbs.push({
-        label: tc(selectedBookObj.title, bookTitleTranslations),
-        onClick: () => {
-          setExpandedBooks(prev => {
-            const next = new Set(prev);
-            if (next.has(selectedBookObj.id)) next.delete(selectedBookObj.id);
-            else next.add(selectedBookObj.id);
-            return next;
-          });
-        },
+        onClick: null,
       });
     }
     return crumbs;
@@ -808,12 +793,13 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
       <div className="flex items-center gap-1 text-[10px] text-muted-foreground px-2 py-1.5 flex-wrap border-b border-border/30 mb-1" data-testid="sidebar-breadcrumb">
         {drillBreadcrumb.map((crumb, idx) => {
           const isLast = idx === drillBreadcrumb.length - 1;
+          const isClickable = !isLast && crumb.onClick != null;
           return (
             <span key={idx} className="flex items-center gap-1">
               {idx > 0 && <ChevronRight className="h-2.5 w-2.5 shrink-0 text-muted-foreground/40" />}
               <span
-                className={`${isLast ? 'text-primary font-medium cursor-pointer' : 'hover:text-foreground cursor-pointer underline-offset-2 hover:underline'} truncate max-w-[140px]`}
-                onClick={() => crumb.onClick()}
+                className={`${isLast ? 'text-primary font-medium' : isClickable ? 'hover:text-foreground cursor-pointer underline-offset-2 hover:underline' : 'text-muted-foreground'} truncate max-w-[140px]`}
+                onClick={() => crumb.onClick?.()}
                 title={crumb.label}
               >
                 {crumb.label}
