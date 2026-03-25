@@ -431,12 +431,49 @@ export async function startTranslationJob(granthaDocId: string, targetLanguages?
   return progress;
 }
 
+const translationQueue: { granthaDocId: string; targetLanguages?: string[] }[] = [];
+let queueRunning = false;
+
+async function processQueue() {
+  if (queueRunning) return;
+  queueRunning = true;
+  while (translationQueue.length > 0) {
+    const job = translationQueue.shift()!;
+    const existing = progressMap.get(job.granthaDocId);
+    if (existing && existing.status === "running") {
+      while (progressMap.get(job.granthaDocId)?.status === "running") {
+        await new Promise(r => setTimeout(r, 5000));
+      }
+      continue;
+    }
+    const progress = await startTranslationJob(job.granthaDocId, job.targetLanguages);
+    while (progress.status === "running") {
+      await new Promise(r => setTimeout(r, 5000));
+    }
+  }
+  queueRunning = false;
+}
+
+export function queueTranslationJob(granthaDocId: string, targetLanguages?: string[]) {
+  translationQueue.push({ granthaDocId, targetLanguages });
+  console.log(`[Translation] Queued "${granthaDocId}" (queue size: ${translationQueue.length})`);
+  processQueue();
+}
+
 export function getTranslationProgress(granthaDocId: string): TranslationProgress | null {
   return progressMap.get(granthaDocId) || null;
 }
 
 export function getAllTranslationJobs(): TranslationProgress[] {
   return Array.from(progressMap.values());
+}
+
+export function getQueueStatus(): { queue: string[]; running: string | null } {
+  const running = Array.from(progressMap.entries()).find(([_, p]) => p.status === "running");
+  return {
+    queue: translationQueue.map(j => j.granthaDocId),
+    running: running ? running[0] : null,
+  };
 }
 
 export { STRAPI_LANGUAGES, SKIP_TRANSLATE };

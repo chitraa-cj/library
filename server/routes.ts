@@ -9,7 +9,7 @@ import { authStorage } from "./replit_integrations/auth/storage";
 import { z } from "zod";
 import multer from "multer";
 import { translateTextChunked, translateImage, translatePdf, transliterateTextChunked, translateBhashyam } from "./gemini";
-import { startTranslationJob, getTranslationProgress, getAllTranslationJobs, STRAPI_LANGUAGES, SKIP_TRANSLATE } from "./strapi-translate";
+import { startTranslationJob, getTranslationProgress, getAllTranslationJobs, queueTranslationJob, getQueueStatus, STRAPI_LANGUAGES, SKIP_TRANSLATE } from "./strapi-translate";
 
 function getUserId(req: any): string {
   if (req.session?.emailUserId) {
@@ -25,6 +25,7 @@ export async function registerRoutes(
   
   const STRAPI_ONLY_IDS = new Set([
     "ilox3o68ykdntxtzuf4q5zqi",
+    "xmkwqad2p77yr1ej3jeqj82j",
   ]);
 
   app.get("/api/books", async (req, res) => {
@@ -428,6 +429,25 @@ export async function registerRoutes(
 
   app.get("/api/translate/jobs", async (_req, res) => {
     res.json(getAllTranslationJobs());
+  });
+
+  app.post("/api/translate/queue", async (req, res) => {
+    try {
+      const { granthaIds } = req.body || {};
+      if (!Array.isArray(granthaIds) || granthaIds.length === 0) {
+        return res.status(400).json({ error: "granthaIds array required" });
+      }
+      for (const id of granthaIds) {
+        queueTranslationJob(id);
+      }
+      res.json({ queued: granthaIds, queueStatus: getQueueStatus() });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/translate/queue/status", async (_req, res) => {
+    res.json(getQueueStatus());
   });
 
   app.get("/api/translate/languages", async (_req, res) => {
