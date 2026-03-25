@@ -790,7 +790,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
               <BookOpen className={`h-3.5 w-3.5 shrink-0 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
             )}
             <span className="font-serif text-xs leading-snug flex-1 min-w-0">{tc(book.title, bookTitleTranslations)}</span>
-            {book.totalVerses && book.totalVerses > 0 && (
+            {book.totalVerses != null && book.totalVerses > 0 && (
               <Badge variant={isSelected ? "default" : "secondary"} className="text-[9px] font-medium px-1 h-4 shrink-0">
                 {book.totalVerses}
               </Badge>
