@@ -328,6 +328,48 @@ async function retryWithBackoff<T>(fn: () => Promise<T>, maxRetries = 3): Promis
   throw new Error("Max retries exceeded");
 }
 
+async function translateIntroduction(
+  granthaDocId: string,
+  targetLanguages: string[],
+  progress: TranslationProgress
+): Promise<number> {
+  const granthaRes = await strapiFetchJSON<any>(`/granthas/${granthaDocId}`, {
+    "populate[0]": "BhashyakaraIntroduction",
+    "populate[1]": "BhashyakaraIntroduction.OtherTranslations",
+  });
+  const intro = granthaRes.data?.BhashyakaraIntroduction;
+  if (!intro) return 0;
+
+  const english = richTextToString(intro.EnglishTranslationText);
+  const sanskrit = richTextToString(intro.SanskritTextEntry);
+  const source = english || sanskrit;
+  if (!source) return 0;
+
+  progress.currentManthra = "Introduction";
+  console.log(`[Translation] Processing Introduction`);
+
+  const result = await translateComponent(
+    source, english ? "English" : "Sanskrit",
+    intro.OtherTranslations || [],
+    targetLanguages, "Introduction", progress
+  );
+
+  if (result.added > 0) {
+    const entry: any = { ...intro };
+    delete entry.id;
+    entry.OtherTranslations = result.newOTs.map(ot => ({
+      LanguageOfTranslation: ot.LanguageOfTranslation,
+      TranslationText: ot.TranslationText,
+    }));
+    await strapiPut(`/granthas/${granthaDocId}`, { data: { BhashyakaraIntroduction: entry } });
+    console.log(`[Translation]   Added ${result.added} introduction translations`);
+  } else {
+    console.log(`[Translation]   Introduction already translated (skipped)`);
+  }
+
+  return result.added;
+}
+
 export async function startTranslationJob(granthaDocId: string, targetLanguages?: string[]): Promise<TranslationProgress> {
   const existing = progressMap.get(granthaDocId);
   if (existing && existing.status === "running") {
@@ -357,6 +399,9 @@ export async function startTranslationJob(granthaDocId: string, targetLanguages?
   (async () => {
     try {
       console.log(`[Translation] Starting translation of "${granthaName}" into ${langs.length} languages`);
+
+      await translateIntroduction(granthaDocId, langs, progress);
+
       const manthras = await fetchAllManthrasForGrantha(granthaDocId);
       progress.totalManthras = manthras.length;
       console.log(`[Translation] Found ${manthras.length} manthras`);
