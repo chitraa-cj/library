@@ -192,6 +192,53 @@ async function translateComponent(
   return { newOTs, added };
 }
 
+function buildManthraUpdateBody(
+  manthra: any,
+  shlokaOTs: OtherTranslation[] | null,
+  bhashyamOTs: OtherTranslation[] | null,
+  updatedTeekas: any[] | null
+): any {
+  const updateBody: any = { data: {} };
+
+  if (shlokaOTs && manthra.ShlokaManthraEntry) {
+    const entry = { ...manthra.ShlokaManthraEntry };
+    delete entry.id;
+    entry.OtherTranslations = shlokaOTs.map(ot => ({
+      LanguageOfTranslation: ot.LanguageOfTranslation,
+      TranslationText: ot.TranslationText,
+    }));
+    updateBody.data.ShlokaManthraEntry = entry;
+  }
+
+  if (bhashyamOTs && manthra.BhashyamEntry) {
+    const entry = { ...manthra.BhashyamEntry };
+    delete entry.id;
+    entry.OtherTranslations = bhashyamOTs.map(ot => ({
+      LanguageOfTranslation: ot.LanguageOfTranslation,
+      TranslationText: ot.TranslationText,
+    }));
+    updateBody.data.BhashyamEntry = entry;
+  }
+
+  if (updatedTeekas) {
+    updateBody.data.Teekas = updatedTeekas.map(t => {
+      if (t.TeekaEntry && t.teeka) {
+        return { teeka: t.teeka, TeekaEntry: t.TeekaEntry };
+      }
+      const clean: any = {};
+      if (t.teeka?.documentId) clean.teeka = t.teeka.documentId;
+      if (t.TeekaEntry) {
+        const entry = { ...t.TeekaEntry };
+        delete entry.id;
+        clean.TeekaEntry = entry;
+      }
+      return clean;
+    });
+  }
+
+  return updateBody;
+}
+
 async function translateAndStoreManthra(
   manthra: any,
   targetLanguages: string[],
@@ -217,78 +264,94 @@ async function translateAndStoreManthra(
     targetLanguages, `Bhashyam ${manthra.ShlokaManthraNumber}`, progress
   );
 
+  if (shlokaResult.added > 0 || bhashyamResult.added > 0) {
+    const updateBody = buildManthraUpdateBody(
+      manthra,
+      shlokaResult.added > 0 ? shlokaResult.newOTs : null,
+      bhashyamResult.added > 0 ? bhashyamResult.newOTs : null,
+      null
+    );
+    await strapiPut(`/manthras/${manthra.documentId}`, updateBody);
+    console.log(`[Translation]   Saved shloka+bhashyam for ${manthra.ShlokaManthraNumber}`);
+  }
+
   let teekaAdded = 0;
   const teekas = manthra.Teekas || [];
-  const updatedTeekas: any[] = [];
 
   for (let ti = 0; ti < teekas.length; ti++) {
     const teeka = teekas[ti];
     const teekaEntry = teeka.TeekaEntry;
-    if (!teekaEntry) {
-      updatedTeekas.push(teeka);
-      continue;
-    }
+    if (!teekaEntry) continue;
 
     const teekaName = teeka.teeka?.TeekaName || `Teeka ${ti + 1}`;
     const teekaEnglish = richTextToString(teekaEntry.EnglishTranslationText);
     const teekaSanskrit = richTextToString(teekaEntry.SanskritTextEntry);
     const sourceForTeeka = teekaEnglish || teekaSanskrit;
 
-    const teekaResult = await translateComponent(
-      sourceForTeeka, teekaEnglish ? "English" : "Sanskrit",
-      teekaEntry.OtherTranslations || [],
-      targetLanguages, `${teekaName} ${manthra.ShlokaManthraNumber}`, progress
-    );
+    const existingLangs = getExistingLanguages(teekaEntry.OtherTranslations || []);
+    const newOTs = [...(teekaEntry.OtherTranslations || [])];
+    let batchAdded = 0;
+    const SAVE_EVERY = 3;
 
-    teekaAdded += teekaResult.added;
+    for (const lang of targetLanguages) {
+      progress.currentLanguage = lang;
+      if (existingLangs.has(lang)) {
+        progress.skippedExisting++;
+        continue;
+      }
+      if (!sourceForTeeka) continue;
+      try {
+        const translated = await retryWithBackoff(() => translateTextChunked(sourceForTeeka, lang, teekaEnglish ? "English" : "Sanskrit"));
+        newOTs.push({
+          LanguageOfTranslation: lang,
+          TranslationText: stringToRichText(translated),
+        });
+        existingLangs.add(lang);
+        batchAdded++;
+        teekaAdded++;
 
-    if (teekaResult.added > 0) {
+        if (batchAdded % SAVE_EVERY === 0) {
+          const updatedEntry = { ...teekaEntry };
+          delete updatedEntry.id;
+          updatedEntry.OtherTranslations = newOTs.map(ot => ({
+            LanguageOfTranslation: ot.LanguageOfTranslation,
+            TranslationText: ot.TranslationText,
+          }));
+          const updatedTeeka: any = { TeekaEntry: updatedEntry };
+          if (teeka.teeka?.documentId) updatedTeeka.teeka = teeka.teeka.documentId;
+
+          const allTeekas = teekas.map((t: any, idx: number) => {
+            if (idx === ti) return updatedTeeka;
+            const clean: any = {};
+            if (t.teeka?.documentId) clean.teeka = t.teeka.documentId;
+            if (t.TeekaEntry) {
+              const entry = { ...t.TeekaEntry };
+              delete entry.id;
+              clean.TeekaEntry = entry;
+            }
+            return clean;
+          });
+          await strapiPut(`/manthras/${manthra.documentId}`, { data: { Teekas: allTeekas } });
+          console.log(`[Translation]   Incremental save: ${batchAdded} teeka translations for ${manthra.ShlokaManthraNumber}`);
+        }
+      } catch (err: any) {
+        progress.errors.push(`${teekaName} ${manthra.ShlokaManthraNumber} → ${lang}: ${err.message}`);
+      }
+      await delay(1500);
+    }
+
+    if (batchAdded > 0 && batchAdded % SAVE_EVERY !== 0) {
       const updatedEntry = { ...teekaEntry };
       delete updatedEntry.id;
-      updatedEntry.OtherTranslations = teekaResult.newOTs.map(ot => ({
+      updatedEntry.OtherTranslations = newOTs.map(ot => ({
         LanguageOfTranslation: ot.LanguageOfTranslation,
         TranslationText: ot.TranslationText,
       }));
       const updatedTeeka: any = { TeekaEntry: updatedEntry };
-      if (teeka.teeka?.documentId) {
-        updatedTeeka.teeka = teeka.teeka.documentId;
-      }
-      updatedTeekas.push(updatedTeeka);
-    } else {
-      updatedTeekas.push(teeka);
-    }
-  }
+      if (teeka.teeka?.documentId) updatedTeeka.teeka = teeka.teeka.documentId;
 
-  const needsUpdate = shlokaResult.added > 0 || bhashyamResult.added > 0 || teekaAdded > 0;
-
-  if (needsUpdate) {
-    const updateBody: any = { data: {} };
-
-    if (shlokaResult.added > 0 && manthra.ShlokaManthraEntry) {
-      const entry = { ...manthra.ShlokaManthraEntry };
-      delete entry.id;
-      entry.OtherTranslations = shlokaResult.newOTs.map(ot => ({
-        LanguageOfTranslation: ot.LanguageOfTranslation,
-        TranslationText: ot.TranslationText,
-      }));
-      updateBody.data.ShlokaManthraEntry = entry;
-    }
-
-    if (bhashyamResult.added > 0 && manthra.BhashyamEntry) {
-      const entry = { ...manthra.BhashyamEntry };
-      delete entry.id;
-      entry.OtherTranslations = bhashyamResult.newOTs.map(ot => ({
-        LanguageOfTranslation: ot.LanguageOfTranslation,
-        TranslationText: ot.TranslationText,
-      }));
-      updateBody.data.BhashyamEntry = entry;
-    }
-
-    if (teekaAdded > 0) {
-      updateBody.data.Teekas = updatedTeekas.map(t => {
-        if (t.TeekaEntry && t.teeka) {
-          return { teeka: t.teeka, TeekaEntry: t.TeekaEntry };
-        }
+      const allTeekas = teekas.map((t: any, idx: number) => {
+        if (idx === ti) return updatedTeeka;
         const clean: any = {};
         if (t.teeka?.documentId) clean.teeka = t.teeka.documentId;
         if (t.TeekaEntry) {
@@ -298,9 +361,9 @@ async function translateAndStoreManthra(
         }
         return clean;
       });
+      await strapiPut(`/manthras/${manthra.documentId}`, { data: { Teekas: allTeekas } });
+      console.log(`[Translation]   Final teeka save: ${batchAdded} translations for ${manthra.ShlokaManthraNumber}`);
     }
-
-    await strapiPut(`/manthras/${manthra.documentId}`, updateBody);
   }
 
   return { shlokaAdded: shlokaResult.added, bhashyamAdded: bhashyamResult.added, teekaAdded };
@@ -348,26 +411,48 @@ async function translateIntroduction(
   progress.currentManthra = "Introduction";
   console.log(`[Translation] Processing Introduction`);
 
-  const result = await translateComponent(
-    source, english ? "English" : "Sanskrit",
-    intro.OtherTranslations || [],
-    targetLanguages, "Introduction", progress
-  );
+  const existingLangs = getExistingLanguages(intro.OtherTranslations || []);
+  const newOTs = [...(intro.OtherTranslations || [])];
+  let added = 0;
+  const SAVE_EVERY = 3;
 
-  if (result.added > 0) {
+  for (const lang of targetLanguages) {
+    progress.currentLanguage = lang;
+    if (existingLangs.has(lang)) {
+      progress.skippedExisting++;
+      continue;
+    }
+    if (!source) continue;
+    try {
+      const translated = await retryWithBackoff(() => translateTextChunked(source, lang, english ? "English" : "Sanskrit"));
+      newOTs.push({ LanguageOfTranslation: lang, TranslationText: stringToRichText(translated) });
+      existingLangs.add(lang);
+      added++;
+
+      if (added % SAVE_EVERY === 0) {
+        const entry: any = { ...intro };
+        delete entry.id;
+        entry.OtherTranslations = newOTs.map(ot => ({ LanguageOfTranslation: ot.LanguageOfTranslation, TranslationText: ot.TranslationText }));
+        await strapiPut(`/granthas/${granthaDocId}`, { data: { BhashyakaraIntroduction: entry } });
+        console.log(`[Translation]   Incremental intro save: ${added} translations`);
+      }
+    } catch (err: any) {
+      progress.errors.push(`Introduction → ${lang}: ${err.message}`);
+    }
+    await delay(1500);
+  }
+
+  if (added > 0 && added % SAVE_EVERY !== 0) {
     const entry: any = { ...intro };
     delete entry.id;
-    entry.OtherTranslations = result.newOTs.map(ot => ({
-      LanguageOfTranslation: ot.LanguageOfTranslation,
-      TranslationText: ot.TranslationText,
-    }));
+    entry.OtherTranslations = newOTs.map(ot => ({ LanguageOfTranslation: ot.LanguageOfTranslation, TranslationText: ot.TranslationText }));
     await strapiPut(`/granthas/${granthaDocId}`, { data: { BhashyakaraIntroduction: entry } });
-    console.log(`[Translation]   Added ${result.added} introduction translations`);
-  } else {
+    console.log(`[Translation]   Added ${added} introduction translations`);
+  } else if (added === 0) {
     console.log(`[Translation]   Introduction already translated (skipped)`);
   }
 
-  return result.added;
+  return added;
 }
 
 export async function startTranslationJob(granthaDocId: string, targetLanguages?: string[]): Promise<TranslationProgress> {
