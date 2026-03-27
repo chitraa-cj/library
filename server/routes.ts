@@ -26,6 +26,7 @@ export async function registerRoutes(
   const STRAPI_ONLY_IDS = new Set([
     "ilox3o68ykdntxtzuf4q5zqi",
     "xmkwqad2p77yr1ej3jeqj82j",
+    "mb9wnew0jta2wqvfp9z1oebo",
   ]);
 
   app.get("/api/books", async (req, res) => {
