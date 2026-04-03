@@ -9,7 +9,7 @@ import { authStorage } from "./replit_integrations/auth/storage";
 import { z } from "zod";
 import multer from "multer";
 import { translateTextChunked, translateImage, translatePdf, transliterateTextChunked, translateBhashyam } from "./gemini";
-import { startTranslationJob, getTranslationProgress, getAllTranslationJobs, queueTranslationJob, getQueueStatus, STRAPI_LANGUAGES, SKIP_TRANSLATE } from "./strapi-translate";
+import { startTranslationJob, getTranslationProgress, getAllTranslationJobs, queueTranslationJob, getQueueStatus, cancelTranslationJob, STRAPI_LANGUAGES, SKIP_TRANSLATE } from "./strapi-translate";
 import { queueTransliteration, getTransliterationProgress, transliterateSanskrit, ALL_LANGUAGES as TRANSLIT_LANGUAGES } from "./strapi-transliterate";
 
 function getUserId(req: any): string {
@@ -451,6 +451,19 @@ export async function registerRoutes(
 
   app.get("/api/translate/queue/status", async (_req, res) => {
     res.json(getQueueStatus());
+  });
+
+  app.post("/api/translate/cancel", async (req, res) => {
+    try {
+      const { granthaId } = req.body || {};
+      if (!granthaId) {
+        return res.status(400).json({ error: "granthaId required" });
+      }
+      const cancelled = cancelTranslationJob(granthaId);
+      res.json({ cancelled, granthaId });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   });
 
   app.get("/api/translate/languages", async (_req, res) => {

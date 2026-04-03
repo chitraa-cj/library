@@ -492,6 +492,13 @@ export async function startTranslationJob(granthaDocId: string, targetLanguages?
       console.log(`[Translation] Found ${manthras.length} manthras`);
 
       for (let i = 0; i < manthras.length; i++) {
+        if (cancelledJobs.has(granthaDocId)) {
+          console.log(`[Translation] Job cancelled for "${granthaName}" at manthra ${i + 1}/${manthras.length}`);
+          progress.status = "cancelled" as any;
+          progress.completedAt = new Date().toISOString();
+          cancelledJobs.delete(granthaDocId);
+          return;
+        }
         const manthra = manthras[i];
         progress.currentManthra = manthra.ShlokaManthraNumber || `#${i + 1}`;
         progress.processedManthras = i;
@@ -516,6 +523,7 @@ export async function startTranslationJob(granthaDocId: string, targetLanguages?
   return progress;
 }
 
+const cancelledJobs = new Set<string>();
 const translationQueue: { granthaDocId: string; targetLanguages?: string[] }[] = [];
 let queueRunning = false;
 
@@ -559,6 +567,24 @@ export function getQueueStatus(): { queue: string[]; running: string | null } {
     queue: translationQueue.map(j => j.granthaDocId),
     running: running ? running[0] : null,
   };
+}
+
+export function cancelTranslationJob(granthaDocId: string): boolean {
+  const progress = progressMap.get(granthaDocId);
+  if (progress && progress.status === "running") {
+    cancelledJobs.add(granthaDocId);
+    const idx = translationQueue.findIndex(j => j.granthaDocId === granthaDocId);
+    if (idx >= 0) translationQueue.splice(idx, 1);
+    console.log(`[Translation] Cancel requested for "${progress.granthaName}"`);
+    return true;
+  }
+  const idx = translationQueue.findIndex(j => j.granthaDocId === granthaDocId);
+  if (idx >= 0) {
+    translationQueue.splice(idx, 1);
+    console.log(`[Translation] Removed "${granthaDocId}" from queue`);
+    return true;
+  }
+  return false;
 }
 
 export { STRAPI_LANGUAGES, SKIP_TRANSLATE };
