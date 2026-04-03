@@ -580,21 +580,23 @@ export function BookReader({
     return filtered;
   }, [currentVerseDetails, effectiveLang]);
 
-  const iastTransliteration = useMemo(() => {
-    if (!currentVerseDetails) return null;
+  const verseTransliteration = useMemo(() => {
+    if (!currentVerseDetails || !effectiveLang) return null;
+    const devanagariLangs = ["devanagari", "sa", "sanskrit", "hindi", "hi", "marathi", "mr", "konkani", "kok"];
+    if (devanagariLangs.includes(effectiveLang)) return null;
+
+    const transliterations = (currentVerseDetails as any).transliterations;
+    if (transliterations && Array.isArray(transliterations)) {
+      const matchCodes = LANG_ALIASES[effectiveLang] || [effectiveLang];
+      const match = transliterations.find((tr: any) => matchCodes.includes(tr.languageCode));
+      if (match?.content) return match.content;
+    }
+
     if ((currentVerseDetails as any).iastTransliteration) {
       return (currentVerseDetails as any).iastTransliteration;
     }
-    return null;
-  }, [currentVerseDetails]);
 
-  const nativeScriptTransliteration = useMemo(() => {
-    if (!currentVerseDetails || !effectiveLang) return null;
-    const transliterations = (currentVerseDetails as any).transliterations;
-    if (!transliterations || !Array.isArray(transliterations)) return null;
-    const matchCodes = LANG_ALIASES[effectiveLang] || [effectiveLang];
-    const match = transliterations.find((tr: any) => matchCodes.includes(tr.languageCode));
-    return match?.content || null;
+    return null;
   }, [currentVerseDetails, effectiveLang]);
 
   const commentaryContext = useMemo(() => {
@@ -1425,21 +1427,12 @@ export function BookReader({
                   />
                 </div>
 
-                {iastTransliteration && (
+                {verseTransliteration && (
                   <div
                     className="font-serif text-sm sm:text-base leading-relaxed sm:leading-loose text-center text-primary/70 italic whitespace-pre-line"
-                    data-testid={`text-iast-${currentVerse.verseNumber}`}
-                  >
-                    {iastTransliteration}
-                  </div>
-                )}
-
-                {nativeScriptTransliteration && (
-                  <div
-                    className="font-serif text-sm sm:text-base leading-relaxed sm:leading-loose text-center text-primary/60 whitespace-pre-line"
                     data-testid={`text-transliteration-${currentVerse.verseNumber}`}
                   >
-                    {nativeScriptTransliteration}
+                    {verseTransliteration}
                   </div>
                 )}
 
