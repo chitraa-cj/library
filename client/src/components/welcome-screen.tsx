@@ -230,11 +230,12 @@ interface LibraryCatalogProps {
   books: Book[];
   onSelectBook: (bookId: string) => void;
   onSelectCategory?: (categoryId: string) => void;
+  onSelectSubCategory?: (categoryId: string, subCategoryId: string) => void;
   onGoBack: () => void;
   languageCode?: string | null;
 }
 
-export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onGoBack, languageCode }: LibraryCatalogProps) {
+export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSelectSubCategory, onGoBack, languageCode }: LibraryCatalogProps) {
   const { t } = useTranslation(languageCode ?? null);
   const welcomeLang = languageCode || "en";
   const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, welcomeLang);
@@ -313,7 +314,15 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onGo
                         <button
                           key={sub.id}
                           className={`w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md text-left text-xs transition-colors ${hasSubBooks ? "hover-elevate active-elevate-2 text-primary font-medium" : "text-muted-foreground/50 cursor-default"}`}
-                          onClick={() => hasSubBooks && onSelectCategory?.(cat.id)}
+                          onClick={() => {
+                            if (hasSubBooks) {
+                              if (onSelectSubCategory) {
+                                onSelectSubCategory(cat.id, sub.id);
+                              } else {
+                                onSelectCategory?.(cat.id);
+                              }
+                            }
+                          }}
                           data-testid={`button-subcat-${sub.id}`}
                         >
                           {hasSubBooks ? (
@@ -367,11 +376,12 @@ interface CategoryDetailViewProps {
   categoryId: string;
   books: Book[];
   onSelectBook: (bookId: string) => void;
+  onSelectSubCategory?: (categoryId: string, subCategoryId: string) => void;
   onGoBack: () => void;
   languageCode?: string | null;
 }
 
-export function CategoryDetailView({ categoryId, books, onSelectBook, onGoBack, languageCode }: CategoryDetailViewProps) {
+export function CategoryDetailView({ categoryId, books, onSelectBook, onSelectSubCategory, onGoBack, languageCode }: CategoryDetailViewProps) {
   const category = CATALOG_TREE.find(c => c.id === categoryId);
   if (!category) return null;
   const { t } = useTranslation(languageCode ?? null);
@@ -394,26 +404,19 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onGoBack, 
     }
   }
 
-  const renderBookList = (bookList: Book[]) => (
-    <div className="space-y-0.5 pl-2">
-      {bookList.map(book => (
-        <button
-          key={book.id}
-          className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left hover-elevate active-elevate-2 transition-colors group"
-          onClick={() => onSelectBook(book.id)}
-          data-testid={`button-catbook-${book.slug}`}
-        >
-          <BookOpen className="h-3.5 w-3.5 shrink-0 text-primary/60" />
-          <span className="text-sm font-serif font-medium text-foreground group-hover:text-primary transition-colors truncate">
-            {tc(book.title, bookTitleTranslations)}
-          </span>
-          <span className="text-[10px] text-muted-foreground ml-auto shrink-0">
-            {book.totalVerses ?? 0} {t("verses")}
-          </span>
-        </button>
-      ))}
-    </div>
-  );
+  const subCategoryIcons: Record<string, typeof ScrollText> = {
+    "pt-shankara-upanishad": ScrollText,
+    "pt-shankara-gita": BookOpen,
+    "pt-shankara-brahmasutra": BookMarked,
+    "pt-other-upanishad": ScrollText,
+    "pt-other-gita": BookOpen,
+    "pt-other-brahmasutra": BookMarked,
+    "pg-independent": Feather,
+    "pg-other-gitas": BookOpen,
+    "pg-bhakthi": Heart,
+    "pg-other-languages": Library,
+    "pg-modern": BookMarked,
+  };
 
   return (
     <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-gradient-to-b from-primary/10 via-background to-accent/10 relative overflow-y-auto">
@@ -444,48 +447,197 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onGoBack, 
         </div>
 
         {category.children ? (
-          <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="subcategory-grid">
             {category.children.map(sub => {
               const subBooks = booksBySubCategory[sub.id] ?? [];
               const hasBooks = subBooks.length > 0;
+              const IconComp = subCategoryIcons[sub.id] || FolderOpen;
 
               return (
-                <div key={sub.id} className="space-y-2" data-testid={`section-subcat-${sub.id}`}>
-                  <div className="flex items-center gap-2">
-                    {hasBooks ? (
-                      <FolderOpen className="h-4 w-4 text-primary/70 shrink-0" />
-                    ) : (
-                      <Lock className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
-                    )}
-                    <h2 className={`font-serif text-sm sm:text-base font-semibold ${hasBooks ? 'text-foreground' : 'text-muted-foreground/50'}`}>
+                <Card
+                  key={sub.id}
+                  className={`p-0 overflow-hidden border-border/50 flex flex-col transition-all ${
+                    hasBooks ? "bg-card/80 cursor-pointer hover:shadow-md hover:border-primary/30" : "bg-muted/30 opacity-60"
+                  }`}
+                  data-testid={`card-subcat-${sub.id}`}
+                  onClick={() => {
+                    if (hasBooks && onSelectSubCategory) {
+                      onSelectSubCategory(categoryId, sub.id);
+                    }
+                  }}
+                >
+                  <div className={`flex flex-col items-center justify-center py-5 px-4 border-b border-border/30 ${
+                    hasBooks ? "bg-gradient-to-b from-primary/[0.08] to-transparent" : "bg-muted/20"
+                  }`}>
+                    <div className={`p-3 rounded-full mb-3 ${hasBooks ? "bg-primary/10" : "bg-muted/30"}`}>
+                      {hasBooks ? (
+                        <IconComp className="h-7 w-7 text-primary" />
+                      ) : (
+                        <Lock className="h-6 w-6 text-muted-foreground/40" />
+                      )}
+                    </div>
+                    <h3 className={`font-serif text-sm font-semibold text-center leading-tight ${
+                      hasBooks ? "text-foreground" : "text-muted-foreground/50"
+                    }`}>
                       {getTranslatedLabel(sub, t)}
-                    </h2>
+                    </h3>
                     {hasBooks && (
-                      <Badge variant="secondary" className="text-[10px]">
+                      <Badge variant="secondary" className="text-[9px] mt-2">
                         {subBooks.length} {subBooks.length === 1 ? t("textSingular") : t("textPlural")}
                       </Badge>
                     )}
-                    <div className="h-px flex-1 bg-border/50"></div>
+                    {!hasBooks && (
+                      <span className="text-[10px] text-muted-foreground/40 italic mt-2">{t("comingSoon")}</span>
+                    )}
                   </div>
 
-                  {hasBooks ? renderBookList(subBooks) : (
-                    <div className="py-3 px-4 text-center">
-                      <p className="text-xs text-muted-foreground/50 italic">{t("comingSoon")}...</p>
+                  {hasBooks && (
+                    <div className="px-3 py-2.5 space-y-0.5">
+                      {subBooks.map(book => (
+                        <div
+                          key={book.id}
+                          className="flex items-center gap-1.5 px-2 py-1.5 text-xs"
+                        >
+                          <BookOpen className="h-3 w-3 shrink-0 text-primary/50" />
+                          <span className="font-serif text-[11px] text-foreground/80 truncate">{tc(book.title, bookTitleTranslations)}</span>
+                        </div>
+                      ))}
                     </div>
                   )}
-                </div>
+                </Card>
               );
             })}
           </div>
         ) : (
           <div>
             {booksBySubCategory[category.id]?.length > 0 ? (
-              renderBookList(booksBySubCategory[category.id])
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {booksBySubCategory[category.id].map(book => (
+                  <Card
+                    key={book.id}
+                    className="p-0 overflow-hidden border-border/50 bg-card/80 cursor-pointer hover:shadow-md hover:border-primary/30 transition-all"
+                    onClick={() => onSelectBook(book.id)}
+                    data-testid={`card-book-${book.slug}`}
+                  >
+                    <div className="flex flex-col items-center justify-center py-6 px-4 bg-gradient-to-b from-primary/[0.08] to-transparent">
+                      <div className="p-3 rounded-full bg-primary/10 mb-3">
+                        <BookOpen className="h-7 w-7 text-primary" />
+                      </div>
+                      <h3 className="font-serif text-sm font-semibold text-foreground text-center leading-tight">
+                        {tc(book.title, bookTitleTranslations)}
+                      </h3>
+                      {book.author && (
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          {tc(book.author, bookAuthorTranslations)}
+                        </p>
+                      )}
+                      <Badge variant="secondary" className="text-[9px] mt-2">
+                        {book.totalVerses ?? 0} {t("verses")}
+                      </Badge>
+                    </div>
+                  </Card>
+                ))}
+              </div>
             ) : (
               <div className="py-8 text-center">
                 <p className="text-sm text-muted-foreground/60 italic">{t("comingSoon")}...</p>
               </div>
             )}
+          </div>
+        )}
+
+        <div className="text-center pb-4">
+          <div className="text-primary/25 text-xs tracking-widest font-serif">
+            ॥ सर्वं खल्विदं ब्रह्म ॥
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface SubCategoryDetailViewProps {
+  categoryId: string;
+  subCategoryId: string;
+  books: Book[];
+  onSelectBook: (bookId: string) => void;
+  onGoBack: () => void;
+  languageCode?: string | null;
+}
+
+export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSelectBook, onGoBack, languageCode }: SubCategoryDetailViewProps) {
+  const category = CATALOG_TREE.find(c => c.id === categoryId);
+  const subCategory = category?.children?.find(s => s.id === subCategoryId);
+  if (!category || !subCategory) return null;
+
+  const { t } = useTranslation(languageCode ?? null);
+  const lang = languageCode || "en";
+  const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, lang);
+
+  const subBooks = books.filter(b => matchesCategory(subCategory.categoryMatch, subCategory.categoryAltMatch, b.category));
+
+  return (
+    <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-gradient-to-b from-primary/10 via-background to-accent/10 relative overflow-y-auto">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
+        <div className="absolute top-16 left-12 text-[14rem] text-primary/[0.02] font-serif">ॐ</div>
+        <div className="absolute bottom-24 right-16 text-[10rem] text-primary/[0.02] font-serif rotate-12">ॐ</div>
+      </div>
+
+      <div className="max-w-4xl w-full relative z-10 py-4 sm:py-8 space-y-6 sm:space-y-8">
+        <div className="space-y-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onGoBack}
+            className="gap-1.5 text-xs text-muted-foreground"
+            data-testid="button-subcat-back"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            {getTranslatedLabel(category, t)}
+          </Button>
+          <div className="flex items-center gap-3">
+            <ScrollText className="h-6 w-6 text-primary shrink-0" />
+            <h1 className="font-serif text-lg sm:text-2xl font-semibold text-primary" data-testid="text-subcat-title">
+              {getTranslatedLabel(subCategory, t)}
+            </h1>
+            <Badge variant="secondary" className="text-xs">
+              {subBooks.length} {subBooks.length === 1 ? t("textSingular") : t("textPlural")}
+            </Badge>
+          </div>
+          <div className="h-px bg-primary/15"></div>
+        </div>
+
+        {subBooks.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" data-testid="subcat-books-grid">
+            {subBooks.map(book => (
+              <Card
+                key={book.id}
+                className="p-0 overflow-hidden border-border/50 bg-card/80 cursor-pointer hover:shadow-md hover:border-primary/30 transition-all group"
+                onClick={() => onSelectBook(book.id)}
+                data-testid={`card-book-${book.slug || book.id}`}
+              >
+                <div className="flex flex-col items-center justify-center py-6 sm:py-8 px-4 bg-gradient-to-b from-primary/[0.08] to-transparent">
+                  <div className="p-4 rounded-full bg-primary/10 mb-4 group-hover:bg-primary/15 transition-colors">
+                    <BookOpen className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="font-serif text-sm sm:text-base font-semibold text-foreground text-center leading-tight group-hover:text-primary transition-colors">
+                    {tc(book.title, bookTitleTranslations)}
+                  </h3>
+                  {book.author && (
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-1.5 text-center">
+                      {tc(book.author, bookAuthorTranslations)}
+                    </p>
+                  )}
+                  <Badge variant="secondary" className="text-[9px] mt-3">
+                    {book.totalVerses ?? 0} {t("verses")}
+                  </Badge>
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="py-8 text-center">
+            <p className="text-sm text-muted-foreground/60 italic">{t("comingSoon")}...</p>
           </div>
         )}
 

@@ -133,6 +133,7 @@ interface AppSidebarProps {
   onSelectChapter?: (adhyayNumber: number) => void;
   onSelectPart?: (adhyayNumber: number, khandaNumber: number) => void;
   onSelectCategory?: (categoryId: string) => void;
+  onSelectSubCategory?: (categoryId: string, subCategoryId: string) => void;
   onShowCoverPage?: () => void;
   selectedVerseNumber?: number;
   chapterViewAdhyay?: number | null;
@@ -221,7 +222,7 @@ function buildHierarchy(verses: Verse[], t?: (key: string) => string): AdhyayGro
 
 export { CATALOG_TREE, type CatalogCategory, type CatalogSubCategory };
 
-export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSelectChapter, onSelectPart, onSelectCategory, onShowCoverPage, selectedVerseNumber, chapterViewAdhyay, chapterViewKhanda, onGoHome, onGoBack, languageCode }: AppSidebarProps) {
+export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSelectChapter, onSelectPart, onSelectCategory, onSelectSubCategory, onShowCoverPage, selectedVerseNumber, chapterViewAdhyay, chapterViewKhanda, onGoHome, onGoBack, languageCode }: AppSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [drillCategoryId, setDrillCategoryId] = useState<string | null>(null);
   const [drillSubCategoryId, setDrillSubCategoryId] = useState<string | null>(null);
@@ -880,6 +881,8 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                             if (hasBooks) {
                               if (subBooks.length === 1) {
                                 handleBookSelect(subBooks[0].id);
+                              } else if (onSelectSubCategory) {
+                                onSelectSubCategory(cat.id, sub.id);
                               } else {
                                 const next = new Set(expandedSubCategories);
                                 if (next.has(sub.id)) next.delete(sub.id);

@@ -7,7 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { ThemeProvider, useTheme } from "@/components/theme-provider";
 import { AppSidebar } from "@/components/app-sidebar";
-import { WelcomeScreen, LibraryCatalogView, CategoryDetailView } from "@/components/welcome-screen";
+import { WelcomeScreen, LibraryCatalogView, CategoryDetailView, SubCategoryDetailView } from "@/components/welcome-screen";
 import { BookReader } from "@/components/book-reader";
 import { TranslationPanel } from "@/components/translation-panel";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -83,6 +83,7 @@ function HomePageContent() {
   const [chapterViewAdhyay, setChapterViewAdhyay] = useState<number | null>(null);
   const [chapterViewKhanda, setChapterViewKhanda] = useState<number | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string | null>(null);
   const [showLibraryCatalog, setShowLibraryCatalog] = useState(false);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(() => {
     return typeof window !== 'undefined' && window.innerWidth < 1024;
@@ -338,6 +339,7 @@ function HomePageContent() {
     setChapterViewAdhyay(null);
     setChapterViewKhanda(null);
     setSelectedCategoryId(null);
+    setSelectedSubCategoryId(null);
     const slug = getBookSlug(bookId);
     if (slug) {
       setLocation(`/${slug}`);
@@ -355,6 +357,7 @@ function HomePageContent() {
     setVerseBreadcrumb(null);
     setShowLibraryCatalog(false);
     setSelectedCategoryId(null);
+    setSelectedSubCategoryId(null);
     setLocation("/");
   };
 
@@ -436,6 +439,13 @@ function HomePageContent() {
           languageCode={selectedCommentaryLanguage}
           onSelectCategory={(categoryId) => {
             setSelectedCategoryId(categoryId);
+            setSelectedSubCategoryId(null);
+            setSelectedBookId(null);
+            setShowLibraryCatalog(false);
+          }}
+          onSelectSubCategory={(categoryId, subCategoryId) => {
+            setSelectedCategoryId(categoryId);
+            setSelectedSubCategoryId(subCategoryId);
             setSelectedBookId(null);
             setShowLibraryCatalog(false);
           }}
@@ -688,11 +698,25 @@ function HomePageContent() {
                   onPendingNoteTextConsumed={() => setPendingNoteText(null)}
                 />
               </>
+            ) : selectedCategoryId && selectedSubCategoryId ? (
+              <SubCategoryDetailView
+                categoryId={selectedCategoryId}
+                subCategoryId={selectedSubCategoryId}
+                books={allBooks || []}
+                onSelectBook={handleBookSelect}
+                onGoBack={() => {
+                  setSelectedSubCategoryId(null);
+                }}
+                languageCode={selectedCommentaryLanguage}
+              />
             ) : selectedCategoryId ? (
               <CategoryDetailView
                 categoryId={selectedCategoryId}
                 books={allBooks || []}
                 onSelectBook={handleBookSelect}
+                onSelectSubCategory={(catId, subCatId) => {
+                  setSelectedSubCategoryId(subCatId);
+                }}
                 onGoBack={() => {
                   setSelectedCategoryId(null);
                   setShowLibraryCatalog(true);
@@ -705,6 +729,10 @@ function HomePageContent() {
                 onSelectBook={handleBookSelect}
                 onSelectCategory={(categoryId) => {
                   setSelectedCategoryId(categoryId);
+                }}
+                onSelectSubCategory={(categoryId, subCategoryId) => {
+                  setSelectedCategoryId(categoryId);
+                  setSelectedSubCategoryId(subCategoryId);
                 }}
                 onGoBack={() => setShowLibraryCatalog(false)}
                 languageCode={selectedCommentaryLanguage}
