@@ -322,7 +322,7 @@ function HomePageContent() {
   }, [allBooks]);
 
   const handleVerseSelect = (verseId: string, content: string) => {
-    setSelectedVerseId(verseId);
+    setSelectedVerseId(verseId || null);
     setSelectedContent(content);
   };
 

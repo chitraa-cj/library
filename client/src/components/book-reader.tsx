@@ -534,10 +534,10 @@ export function BookReader({
   }, [chapterViewAdhyay, navigateToVerse, verses]);
 
   useEffect(() => {
-    if (onVerseChange && currentVerse && !showCoverPage) {
+    if (onVerseChange && currentVerse && !showCoverPage && !isCurrentVerseIntro) {
       onVerseChange(currentVerse.verseNumber);
     }
-  }, [currentPage, currentVerse, onVerseChange, showCoverPage]);
+  }, [currentPage, currentVerse, onVerseChange, showCoverPage, isCurrentVerseIntro]);
 
   useEffect(() => {
     if (onBreadcrumbChange && currentVerse && !showCoverPage && book) {
@@ -604,6 +604,10 @@ export function BookReader({
   }, [selectedAuthor, effectiveLang, currentVerseDetails]);
 
   useEffect(() => {
+    if (isCurrentVerseIntro) {
+      onVerseSelect("", "");
+      return;
+    }
     if (currentVerse && currentVerseDetails) {
       const langCode = effectiveLang || "devanagari";
       if (langCode === "devanagari" || langCode === "sa") {
@@ -622,7 +626,7 @@ export function BookReader({
       }
       onVerseSelect(currentVerse.id, content);
     }
-  }, [currentVerse, currentVerseDetails, effectiveLang]);
+  }, [currentVerse, currentVerseDetails, effectiveLang, isCurrentVerseIntro]);
 
   const tocHierarchy = useMemo(() => buildTOCHierarchy(verses, t as any), [verses, t]);
 
