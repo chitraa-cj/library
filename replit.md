@@ -60,7 +60,7 @@ Supports multi-language sacred texts and user data:
 -   **IAST**: Stored in Strapi's `ShlokaManthraEntry.IASTTransliteration` field via `server/strapi-transliterate.ts`.
 -   **Indic scripts**: Computed on-the-fly from Devanagari using `@indic-transliteration/sanscript` (Kannada, Telugu, Tamil, Malayalam, Bengali, Gujarati, Odia, Punjabi, Assamese, Sinhala, Burmese, Thai, Tibetan, Cyrillic).
 -   **API**: `POST /api/transliterate/queue` (queue IAST generation), `GET /api/transliterate/progress`, `POST /api/transliterate/preview` (on-the-fly preview).
--   **Status**: IAST completed for Aitareya (33), Prashna (68), Kena (35) Upanishads.
+-   **Status**: IAST completed for Aitareya (33), Prashna (68), Kena (35), Mandukya (234) Upanishads.
 
 ### Build System
 -   **Development**: Vite dev server.

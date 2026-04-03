@@ -28,6 +28,7 @@ export async function registerRoutes(
     "ilox3o68ykdntxtzuf4q5zqi",
     "xmkwqad2p77yr1ej3jeqj82j",
     "mb9wnew0jta2wqvfp9z1oebo",
+    "sdhg4ecqcn6k4fi6hqfca8oe",
   ]);
 
   app.get("/api/books", async (req, res) => {
