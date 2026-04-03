@@ -1,6 +1,7 @@
 import type {
   Book,
   VerseTranslation,
+  VerseTransliteration,
   Explanation,
   BookTitle,
   Language,
@@ -10,6 +11,7 @@ import type {
   VerseMeta,
   VerseWordMeaning,
 } from "@shared/schema";
+import { transliterateSanskrit, LANGUAGE_TO_SCHEME } from "./strapi-transliterate";
 import type { CommentaryOptions, CommentaryOption } from "./storage";
 
 const STRAPI_URL = process.env.STRAPI_URL || "";
@@ -116,13 +118,25 @@ function buildSectionTree(sections: StrapiSection[]): StrapiSection[] {
   return roots;
 }
 
+function isTransliteration(text: string, sanskritText: string, lang: string): boolean {
+  if (!sanskritText || !text) return false;
+  const scheme = LANGUAGE_TO_SCHEME[lang];
+  if (!scheme || scheme === "devanagari" || scheme === "iast") return false;
+  const expected = transliterateSanskrit(sanskritText, lang);
+  if (!expected) return false;
+  const normalize = (s: string) => s.replace(/\s+/g, " ").trim();
+  return normalize(text) === normalize(expected);
+}
+
 function extractTranslationsFromTextAndTranslation(
   tat: any,
   verseId: string,
   prefix: string,
-): VerseTranslation[] {
+): { translations: VerseTranslation[]; iastTransliteration?: string; transliterations: VerseTransliteration[] } {
   const translations: VerseTranslation[] = [];
-  if (!tat) return translations;
+  const transliterations: VerseTransliteration[] = [];
+  let iastTransliteration: string | undefined;
+  if (!tat) return { translations, transliterations };
 
   const sanskritText = richTextToString(tat.SanskritTextEntry);
   if (sanskritText) {
@@ -133,6 +147,11 @@ function extractTranslationsFromTextAndTranslation(
       content: sanskritText,
       isAiTranslated: false,
     });
+  }
+
+  const iastText = richTextToString(tat.IASTTransliteration);
+  if (iastText) {
+    iastTransliteration = iastText;
   }
 
   const englishText = richTextToString(tat.EnglishTranslationText);
@@ -152,18 +171,25 @@ function extractTranslationsFromTextAndTranslation(
       const lang = ot.LanguageOfTranslation;
       const text = richTextToString(ot.TranslationText);
       if (lang && text) {
-        translations.push({
-          id: `${verseId}-${prefix}-${lang.toLowerCase()}-${i}`,
-          verseId,
-          languageCode: lang.toLowerCase(),
-          content: text,
-          isAiTranslated: ot.isAiTranslated ?? false,
-        });
+        if (isTransliteration(text, sanskritText, lang)) {
+          transliterations.push({
+            languageCode: lang.toLowerCase(),
+            content: text,
+          });
+        } else {
+          translations.push({
+            id: `${verseId}-${prefix}-${lang.toLowerCase()}-${i}`,
+            verseId,
+            languageCode: lang.toLowerCase(),
+            content: text,
+            isAiTranslated: ot.isAiTranslated ?? false,
+          });
+        }
       }
     }
   }
 
-  return translations;
+  return { translations, iastTransliteration, transliterations };
 }
 
 function extractExplanationsFromTextAndTranslation(
@@ -238,7 +264,7 @@ function mapManthraToVerse(
   const verseId = m.documentId || String(m.id);
   const verseNumber = globalIndex;
 
-  const translations = extractTranslationsFromTextAndTranslation(
+  const { translations, iastTransliteration, transliterations } = extractTranslationsFromTextAndTranslation(
     m.ShlokaManthraEntry,
     verseId,
     "shloka",
@@ -283,6 +309,8 @@ function mapManthraToVerse(
     khandaTitle,
     translations,
     explanations,
+    iastTransliteration,
+    transliterations: transliterations.length > 0 ? transliterations : undefined,
   };
 }
 

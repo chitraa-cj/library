@@ -83,9 +83,16 @@ export type Explanation = typeof explanations.$inferSelect;
 export type InsertBookTitle = z.infer<typeof insertBookTitleSchema>;
 export type BookTitle = typeof bookTitles.$inferSelect;
 
+export interface VerseTransliteration {
+  languageCode: string;
+  content: string;
+}
+
 export interface VerseWithTranslations extends Verse {
   translations: VerseTranslation[];
   explanations: Explanation[];
+  iastTransliteration?: string;
+  transliterations?: VerseTransliteration[];
 }
 
 export interface BookWithDetails extends Book {

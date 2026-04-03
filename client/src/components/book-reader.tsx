@@ -581,18 +581,20 @@ export function BookReader({
   }, [currentVerseDetails, effectiveLang]);
 
   const iastTransliteration = useMemo(() => {
-    if (!currentVerseDetails?.translations) return null;
-    const nonIndicLangs = ["english", "en", "devanagari", "sa", "kannada", "kn", "telugu", "te", "tamil", "ta"];
-    if (!effectiveLang || nonIndicLangs.includes(effectiveLang)) return null;
-    const enTr = currentVerseDetails.translations.find(
-      (t: VerseTranslation) => t.languageCode === "english" || t.languageCode === "en"
-    );
-    if (!enTr) return null;
-    const content = enTr.content.trim();
-    if (!content.includes("||")) return null;
-    const parts = content.split(/\n\n/);
-    const iastParts = parts.filter(p => /\|\|/.test(p));
-    return iastParts.length > 0 ? iastParts.join("\n") : null;
+    if (!currentVerseDetails) return null;
+    if ((currentVerseDetails as any).iastTransliteration) {
+      return (currentVerseDetails as any).iastTransliteration;
+    }
+    return null;
+  }, [currentVerseDetails]);
+
+  const nativeScriptTransliteration = useMemo(() => {
+    if (!currentVerseDetails || !effectiveLang) return null;
+    const transliterations = (currentVerseDetails as any).transliterations;
+    if (!transliterations || !Array.isArray(transliterations)) return null;
+    const matchCodes = LANG_ALIASES[effectiveLang] || [effectiveLang];
+    const match = transliterations.find((tr: any) => matchCodes.includes(tr.languageCode));
+    return match?.content || null;
   }, [currentVerseDetails, effectiveLang]);
 
   const commentaryContext = useMemo(() => {
@@ -1429,6 +1431,15 @@ export function BookReader({
                     data-testid={`text-iast-${currentVerse.verseNumber}`}
                   >
                     {iastTransliteration}
+                  </div>
+                )}
+
+                {nativeScriptTransliteration && (
+                  <div
+                    className="font-serif text-sm sm:text-base leading-relaxed sm:leading-loose text-center text-primary/60 whitespace-pre-line"
+                    data-testid={`text-transliteration-${currentVerse.verseNumber}`}
+                  >
+                    {nativeScriptTransliteration}
                   </div>
                 )}
 
