@@ -10,6 +10,7 @@ import { z } from "zod";
 import multer from "multer";
 import { translateTextChunked, translateImage, translatePdf, transliterateTextChunked, translateBhashyam } from "./gemini";
 import { startTranslationJob, getTranslationProgress, getAllTranslationJobs, queueTranslationJob, getQueueStatus, STRAPI_LANGUAGES, SKIP_TRANSLATE } from "./strapi-translate";
+import { queueTransliteration, getTransliterationProgress, transliterateSanskrit, ALL_LANGUAGES as TRANSLIT_LANGUAGES } from "./strapi-transliterate";
 
 function getUserId(req: any): string {
   if (req.session?.emailUserId) {
@@ -457,6 +458,36 @@ export async function registerRoutes(
       skipped: Array.from(SKIP_TRANSLATE),
       translatable: STRAPI_LANGUAGES.filter(l => !SKIP_TRANSLATE.has(l)),
     });
+  });
+
+  app.post("/api/transliterate/queue", async (req, res) => {
+    try {
+      const { granthaIds } = req.body || {};
+      if (!Array.isArray(granthaIds) || granthaIds.length === 0) {
+        return res.status(400).json({ error: "granthaIds array required" });
+      }
+      const result = queueTransliteration(granthaIds);
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/transliterate/progress", async (_req, res) => {
+    res.json(getTransliterationProgress());
+  });
+
+  app.post("/api/transliterate/preview", async (req, res) => {
+    try {
+      const { text, language } = req.body || {};
+      if (!text || !language) {
+        return res.status(400).json({ error: "text and language required" });
+      }
+      const result = transliterateSanskrit(text, language);
+      res.json({ original: text, language, transliteration: result });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   });
 
   return httpServer;
