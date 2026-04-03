@@ -70,6 +70,11 @@ const LANGUAGE_TO_SCHEME: Record<string, string> = {
   Egyptian_Arabic: "iast",
 };
 
+const NATIVE_SCRIPT_LANGUAGES = new Set([
+  "Kannada", "Telugu", "Tamil", "Malayalam", "Gujarati", "Bengali",
+  "Odia", "Punjabi", "Assamese", "Sinhala", "Burmese", "Thai", "Tibetan",
+]);
+
 const SKIP_LANGUAGES = new Set(["Sanskrit"]);
 
 const ALL_LANGUAGES = Object.keys(LANGUAGE_TO_SCHEME);
@@ -104,7 +109,7 @@ async function strapiPut(endpoint: string, body: any): Promise<any> {
   });
   if (!response.ok) {
     const text = await response.text().catch(() => "");
-    throw new Error(`Strapi PUT error: ${response.status} for ${endpoint}: ${text.substring(0, 200)}`);
+    throw new Error(`Strapi PUT error: ${response.status} for ${endpoint}: ${text.substring(0, 300)}`);
   }
   return response.json();
 }
@@ -229,35 +234,73 @@ async function transliterateGrantha(granthaDocId: string): Promise<void> {
       progress.currentVerse = manthra.ShlokaManthraNumber || `verse ${i + 1}`;
       console.log(`[Translit] Processing ${progress.currentVerse} (${i + 1}/${manthras.length})`);
 
-      const existingIast = richTextToString(manthra.ShlokaManthraEntry?.IASTTransliteration);
-
-      if (existingIast) {
-        console.log(`[Translit] ${progress.currentVerse}: IAST already exists, skipping`);
-        progress.completed++;
-        progress.skippedCount++;
-        continue;
-      }
-
-      const iast = transliterateText(sanskritText, "iast");
-      if (!iast) {
-        console.log(`[Translit] ${progress.currentVerse}: IAST transliteration failed`);
-        progress.completed++;
-        progress.skippedCount++;
-        continue;
-      }
-
       try {
-        const updateData: any = {
-          ShlokaManthraEntry: {
-            ...manthra.ShlokaManthraEntry,
-            IASTTransliteration: stringToRichText(iast),
-          },
-        };
-        delete updateData.ShlokaManthraEntry.OtherTranslations;
+        let needsSave = false;
+        const updateSME: any = { ...manthra.ShlokaManthraEntry };
 
-        await strapiPut(`/manthras/${manthra.documentId}`, { data: updateData });
-        console.log(`[Translit] Saved IAST for ${progress.currentVerse}`);
-        progress.savedCount++;
+        const existingIast = richTextToString(manthra.ShlokaManthraEntry?.IASTTransliteration);
+        if (!existingIast) {
+          const iast = transliterateText(sanskritText, "iast");
+          if (iast) {
+            updateSME.IASTTransliteration = stringToRichText(iast);
+            needsSave = true;
+          }
+        }
+
+        const refetchResult = await strapiFetchJSON<any>(`/manthras/${manthra.documentId}`, {
+          "populate[0]": "ShlokaManthraEntry.OtherTranslations",
+        });
+        const currentOTs: any[] = refetchResult.data?.ShlokaManthraEntry?.OtherTranslations || [];
+
+        const existingLangTexts = new Map<string, Set<string>>();
+        for (const ot of currentOTs) {
+          const lang = ot.LanguageOfTranslation;
+          if (!existingLangTexts.has(lang)) existingLangTexts.set(lang, new Set());
+          const text = richTextToString(ot.TranslationText);
+          existingLangTexts.get(lang)!.add(text);
+        }
+
+        const cleanOTs = currentOTs.map((ot: any) => ({
+          TranslationText: ot.TranslationText,
+          LanguageOfTranslation: ot.LanguageOfTranslation,
+          isAiTranslated: ot.isAiTranslated,
+        }));
+
+        let addedTranslits = 0;
+        for (const lang of NATIVE_SCRIPT_LANGUAGES) {
+          const scheme = LANGUAGE_TO_SCHEME[lang];
+          if (!scheme || scheme === "devanagari") continue;
+
+          const transliterated = transliterateText(sanskritText, scheme);
+          if (!transliterated || transliterated === sanskritText) continue;
+
+          const existingTexts = existingLangTexts.get(lang);
+          if (existingTexts && existingTexts.has(transliterated)) continue;
+
+          cleanOTs.push({
+            TranslationText: stringToRichText(transliterated),
+            LanguageOfTranslation: lang,
+            isAiTranslated: false,
+          });
+          addedTranslits++;
+        }
+
+        if (addedTranslits > 0) {
+          updateSME.OtherTranslations = cleanOTs;
+          needsSave = true;
+        } else {
+          delete updateSME.OtherTranslations;
+        }
+
+        if (needsSave) {
+          const updateData: any = { ShlokaManthraEntry: updateSME };
+          await strapiPut(`/manthras/${manthra.documentId}`, { data: updateData });
+          console.log(`[Translit] Saved ${progress.currentVerse}: IAST=${!existingIast ? 'new' : 'exists'}, scripts=${addedTranslits}`);
+          progress.savedCount++;
+        } else {
+          console.log(`[Translit] ${progress.currentVerse}: all transliterations already exist`);
+          progress.skippedCount++;
+        }
       } catch (e) {
         const errMsg = `Failed to save ${progress.currentVerse}: ${(e as Error).message}`;
         console.error(`[Translit] ${errMsg}`);
