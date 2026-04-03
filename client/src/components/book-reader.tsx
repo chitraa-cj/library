@@ -426,6 +426,19 @@ export function BookReader({
   const verses = book?.verses || [];
   const currentVerseMeta = verses[currentPage] || null;
 
+  const introVerse = useMemo(() => {
+    return verses.find(v => v.verseNumber === 0 && v.sectionTitle?.toLowerCase().trim() === "introduction") || null;
+  }, [verses]);
+
+  const hasIntro = !!introVerse;
+
+  const isCurrentVerseIntro = currentVerseMeta?.verseNumber === 0 && currentVerseMeta?.sectionTitle?.toLowerCase().trim() === "introduction";
+
+  const { data: introExplanations } = useQuery<Explanation[]>({
+    queryKey: ["/api/verses", introVerse?.id, "explanations"],
+    enabled: !!introVerse?.id,
+  });
+
   const { data: currentVerseDetails, isLoading: isVerseLoading } = useQuery<VerseWithTranslations>({
     queryKey: ["/api/verses", currentVerseMeta?.id],
     enabled: !!currentVerseMeta?.id && chapterViewAdhyay == null,
@@ -483,6 +496,16 @@ export function BookReader({
     const idx = khandaVerses.findIndex((v: VerseMeta) => v.id === currentVerse.id);
     return `${currentVerse.adhyayNumber}.${currentVerse.khandaNumber}.${idx >= 0 ? idx + 1 : 1}`;
   }, [currentVerse, verses]);
+
+  const introTextForLang = useMemo(() => {
+    if (!introExplanations || introExplanations.length === 0) return null;
+    const langToUse = effectiveLang || "english";
+    const matchCodes = LANG_ALIASES[langToUse] || [langToUse];
+    const match = introExplanations.find(e => matchCodes.includes(e.languageCode));
+    if (match) return match.content;
+    const devanagari = introExplanations.find(e => e.languageCode === "devanagari" || e.languageCode === "sa");
+    return devanagari?.content || introExplanations[0]?.content || null;
+  }, [introExplanations, effectiveLang]);
 
   useEffect(() => {
     setLocalLanguage(selectedCommentaryLanguage);
@@ -740,8 +763,26 @@ export function BookReader({
               )}
 
               <div className="flex items-center justify-center mb-3">
-                <span className="text-xs text-muted-foreground">{verses.length} {t("verses")}</span>
+                <span className="text-xs text-muted-foreground">{hasIntro ? verses.length - 1 : verses.length} {t("verses")}</span>
               </div>
+
+              {hasIntro && (
+                <Button
+                  variant="outline"
+                  className="w-full gap-2 mb-2"
+                  onClick={() => {
+                    const introPageIdx = verses.findIndex(v => v.verseNumber === 0 && v.sectionTitle?.toLowerCase().trim() === "introduction");
+                    if (introPageIdx >= 0) {
+                      setCurrentPage(introPageIdx);
+                      setShowCoverPage(false);
+                    }
+                  }}
+                  data-testid="button-read-introduction"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  {t("readIntroduction")}
+                </Button>
+              )}
 
               <Button
                 className="w-full gap-2"
@@ -749,7 +790,8 @@ export function BookReader({
                   if (tocHierarchy.groups.length > 0) {
                     onSelectChapter?.(tocHierarchy.groups[0].adhyayNumber);
                   } else {
-                    setCurrentPage(0);
+                    const firstNonIntroIdx = verses.findIndex(v => v.verseNumber !== 0 || v.sectionTitle?.toLowerCase().trim() !== "introduction");
+                    setCurrentPage(firstNonIntroIdx >= 0 ? firstNonIntroIdx : 0);
                     setShowCoverPage(false);
                   }
                 }}
@@ -768,6 +810,26 @@ export function BookReader({
                 </div>
 
                 <div className="space-y-1" data-testid="toc-list">
+                  {hasIntro && (
+                    <div className="flex items-center w-full rounded-lg hover-elevate active-elevate-2 transition-colors">
+                      <button
+                        className="flex items-center gap-2 flex-1 min-w-0 py-2.5 px-3 text-left"
+                        onClick={() => {
+                          const introPageIdx = verses.findIndex(v => v.verseNumber === 0 && v.sectionTitle?.toLowerCase().trim() === "introduction");
+                          if (introPageIdx >= 0) {
+                            setCurrentPage(introPageIdx);
+                            setShowCoverPage(false);
+                          }
+                        }}
+                        data-testid="toc-introduction"
+                      >
+                        <Badge variant="outline" className="font-mono text-[10px] sm:text-[11px] px-1.5 h-5 shrink-0 border-primary/30 text-primary">
+                          ✦
+                        </Badge>
+                        <span className="text-sm sm:text-base font-medium truncate">{t("introduction")}</span>
+                      </button>
+                    </div>
+                  )}
                   {tocHierarchy.groups.map(adhyay => {
                     const isExpanded = expandedTOCAdhyays.has(adhyay.adhyayNumber);
                     return (
@@ -1131,6 +1193,125 @@ export function BookReader({
         <div className="text-center space-y-4">
           <BookOpen className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mx-auto" />
           <p className="text-muted-foreground">{t("noVersesAvailable")}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isCurrentVerseIntro && book) {
+    const introSanskrit = introExplanations?.find(e => e.languageCode === "devanagari" || e.languageCode === "sa")?.content;
+    const startReadingFromIntro = () => {
+      if (tocHierarchy.groups.length > 0) {
+        onSelectChapter?.(tocHierarchy.groups[0].adhyayNumber);
+      } else {
+        const firstNonIntroIdx = verses.findIndex(v => v.verseNumber !== 0 || v.sectionTitle?.toLowerCase().trim() !== "introduction");
+        if (firstNonIntroIdx >= 0) {
+          setCurrentPage(firstNonIntroIdx);
+        }
+      }
+    };
+    return (
+      <div className="flex-1 flex flex-col min-w-0 focus:outline-none" tabIndex={0} onKeyDown={handleKeyDown}>
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-2xl xl:max-w-3xl mx-auto px-4 sm:px-8 py-6 sm:py-10">
+            <div className="text-center mb-6 sm:mb-8">
+              <Badge variant="secondary" className="mb-2 text-[10px] sm:text-xs">
+                {tc(book.title, bookTitleTranslations)}
+              </Badge>
+              <h1 className="font-serif text-xl sm:text-2xl font-bold text-foreground tracking-tight" data-testid="text-intro-title">
+                {t("introduction")}
+              </h1>
+              <div className="mt-3 flex items-center justify-center gap-4">
+                <div className="h-px flex-1 max-w-[60px] bg-primary/20"></div>
+                <span className="text-primary/30 text-sm">✦</span>
+                <div className="h-px flex-1 max-w-[60px] bg-primary/20"></div>
+              </div>
+            </div>
+
+            {commentaryOptions && commentaryOptions.languages.length > 1 && (
+              <div className="flex items-center justify-end gap-2 mb-4" data-testid="intro-language-selector">
+                <Globe className="h-3 w-3 text-muted-foreground shrink-0" />
+                <Select
+                  value={effectiveLang || "english"}
+                  onValueChange={(val) => setLocalLanguage(val)}
+                >
+                  <SelectTrigger className="h-7 w-auto min-w-[70px] max-w-[120px] text-[11px] border-none bg-transparent shadow-none focus:ring-0 px-1" data-testid="select-intro-language">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {commentaryOptions.languages.map((lang) => {
+                      const normCode = lang.code === "hi" ? "hindi" : lang.code === "en" ? "english" : lang.code;
+                      return (
+                        <SelectItem key={normCode} value={normCode} data-testid={`option-intro-lang-${normCode}`}>
+                          {lang.name}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {introSanskrit && effectiveLang !== "devanagari" && effectiveLang !== "sa" && (
+              <div className="mb-6 sm:mb-8 p-4 sm:p-6 rounded-lg bg-primary/5 border border-primary/10">
+                <div className="font-serif text-sm sm:text-base leading-relaxed sm:leading-loose text-foreground/90 whitespace-pre-line" data-testid="text-intro-sanskrit">
+                  {introSanskrit}
+                </div>
+              </div>
+            )}
+
+            <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none" data-testid="text-intro-content">
+              {introTextForLang ? (
+                <div className="font-serif text-sm sm:text-base leading-relaxed sm:leading-loose text-foreground/80 whitespace-pre-line">
+                  {introTextForLang}
+                </div>
+              ) : (
+                <div className="space-y-3 py-4">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6" />
+                  <Skeleton className="h-4 w-4/5" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              )}
+            </div>
+
+            <div className="mt-8 sm:mt-10 flex items-center justify-center">
+              <Button
+                className="gap-2"
+                onClick={startReadingFromIntro}
+                data-testid="button-start-reading-from-intro"
+              >
+                <BookOpen className="h-4 w-4" />
+                {t("startReading")}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-border/50 px-4 sm:px-8 py-2 shrink-0">
+          <div className="max-w-2xl xl:max-w-3xl mx-auto flex items-center justify-between">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowCoverPage(true)}
+              className="gap-1.5 text-xs"
+              data-testid="button-back-to-cover"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+              {t("tableOfContents")}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={startReadingFromIntro}
+              className="gap-1.5 text-xs"
+              data-testid="button-continue-to-verses"
+            >
+              {t("startReading")}
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         </div>
       </div>
     );

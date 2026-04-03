@@ -18,7 +18,7 @@ Preferred communication style: Simple, everyday language.
 - **Styling**: Tailwind CSS with custom CSS variables for theming (light/dark mode)
 - **Layout**: Sidebar-based with three main panels:
     1.  **AppSidebar**: Book navigation and search, supporting hierarchical structures (Adhyay > Khanda > Verse).
-    2.  **BookReader**: Main content area for verses and commentary selection.
+    2.  **BookReader**: Main content area for verses and commentary selection. Includes introduction page support for books with `BhashyakaraIntroduction` data from Strapi (rendered as verse 0 with `sectionTitle: "Introduction"`).
     3.  **TranslationPanel**: Displays translations and scholarly explanations.
 - **Header**: Breadcrumb navigation showing current book position.
 
