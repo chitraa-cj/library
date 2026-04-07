@@ -293,7 +293,37 @@ async function transliterateGrantha(granthaDocId: string): Promise<void> {
         }
 
         if (needsSave) {
+          const freshResult = await strapiFetchJSON<any>(`/manthras/${manthra.documentId}`, {
+            "populate[0]": "BhashyamEntry.OtherTranslations",
+            "populate[1]": "Teekas.teeka",
+            "populate[2]": "Teekas.TeekaEntry",
+            "populate[3]": "Teekas.TeekaEntry.OtherTranslations",
+          });
+          const freshData = freshResult.data;
           const updateData: any = { ShlokaManthraEntry: updateSME };
+          if (freshData?.BhashyamEntry) {
+            const bEntry = { ...freshData.BhashyamEntry };
+            delete bEntry.id;
+            updateData.BhashyamEntry = bEntry;
+          }
+          if (freshData?.Teekas && freshData.Teekas.length > 0) {
+            updateData.Teekas = freshData.Teekas.map((t: any) => {
+              const clean: any = {};
+              if (t.teeka?.documentId) clean.teeka = t.teeka.documentId;
+              if (t.TeekaEntry) {
+                const entry = { ...t.TeekaEntry };
+                delete entry.id;
+                if (entry.OtherTranslations) {
+                  entry.OtherTranslations = entry.OtherTranslations.map((ot: any) => ({
+                    LanguageOfTranslation: ot.LanguageOfTranslation,
+                    TranslationText: ot.TranslationText,
+                  }));
+                }
+                clean.TeekaEntry = entry;
+              }
+              return clean;
+            });
+          }
           await strapiPut(`/manthras/${manthra.documentId}`, { data: updateData });
           console.log(`[Translit] Saved ${progress.currentVerse}: IAST=${!existingIast ? 'new' : 'exists'}, scripts=${addedTranslits}`);
           progress.savedCount++;

@@ -192,51 +192,83 @@ async function translateComponent(
   return { newOTs, added };
 }
 
-function buildManthraUpdateBody(
-  manthra: any,
-  shlokaOTs: OtherTranslation[] | null,
-  bhashyamOTs: OtherTranslation[] | null,
-  updatedTeekas: any[] | null
-): any {
-  const updateBody: any = { data: {} };
+async function refetchManthra(docId: string): Promise<any> {
+  const result = await strapiFetchJSON<any>(`/manthras/${docId}`, {
+    "populate[0]": "ShlokaManthraEntry.OtherTranslations",
+    "populate[1]": "BhashyamEntry.OtherTranslations",
+    "populate[2]": "Teekas.teeka",
+    "populate[3]": "Teekas.TeekaEntry",
+    "populate[4]": "Teekas.TeekaEntry.OtherTranslations",
+  });
+  return result.data;
+}
 
-  if (shlokaOTs && manthra.ShlokaManthraEntry) {
-    const entry = { ...manthra.ShlokaManthraEntry };
-    delete entry.id;
-    entry.OtherTranslations = shlokaOTs.map(ot => ({
-      LanguageOfTranslation: ot.LanguageOfTranslation,
-      TranslationText: ot.TranslationText,
-    }));
-    updateBody.data.ShlokaManthraEntry = entry;
-  }
+function cleanEntry(entry: any): any {
+  if (!entry) return null;
+  const clean = { ...entry };
+  delete clean.id;
+  return clean;
+}
 
-  if (bhashyamOTs && manthra.BhashyamEntry) {
-    const entry = { ...manthra.BhashyamEntry };
-    delete entry.id;
-    entry.OtherTranslations = bhashyamOTs.map(ot => ({
-      LanguageOfTranslation: ot.LanguageOfTranslation,
-      TranslationText: ot.TranslationText,
-    }));
-    updateBody.data.BhashyamEntry = entry;
-  }
-
-  if (updatedTeekas) {
-    updateBody.data.Teekas = updatedTeekas.map(t => {
-      if (t.TeekaEntry && t.teeka) {
-        return { teeka: t.teeka, TeekaEntry: t.TeekaEntry };
+function cleanTeekas(teekas: any[]): any[] {
+  return (teekas || []).map((t: any) => {
+    const clean: any = {};
+    if (t.teeka?.documentId) clean.teeka = t.teeka.documentId;
+    if (t.TeekaEntry) {
+      clean.TeekaEntry = cleanEntry(t.TeekaEntry);
+      if (clean.TeekaEntry?.OtherTranslations) {
+        clean.TeekaEntry.OtherTranslations = clean.TeekaEntry.OtherTranslations.map((ot: any) => ({
+          LanguageOfTranslation: ot.LanguageOfTranslation,
+          TranslationText: ot.TranslationText,
+        }));
       }
-      const clean: any = {};
-      if (t.teeka?.documentId) clean.teeka = t.teeka.documentId;
-      if (t.TeekaEntry) {
-        const entry = { ...t.TeekaEntry };
-        delete entry.id;
-        clean.TeekaEntry = entry;
-      }
-      return clean;
-    });
+    }
+    return clean;
+  });
+}
+
+async function safeSaveManthra(
+  docId: string,
+  updates: {
+    shlokaOTs?: OtherTranslation[];
+    bhashyamOTs?: OtherTranslation[];
+    teekas?: any[];
+  }
+): Promise<void> {
+  const fresh = await refetchManthra(docId);
+  if (!fresh) throw new Error(`Could not refetch manthra ${docId}`);
+
+  const data: any = {};
+
+  const shlokaEntry = cleanEntry(fresh.ShlokaManthraEntry);
+  if (shlokaEntry) {
+    if (updates.shlokaOTs) {
+      shlokaEntry.OtherTranslations = updates.shlokaOTs.map(ot => ({
+        LanguageOfTranslation: ot.LanguageOfTranslation,
+        TranslationText: ot.TranslationText,
+      }));
+    }
+    data.ShlokaManthraEntry = shlokaEntry;
   }
 
-  return updateBody;
+  const bhashyamEntry = cleanEntry(fresh.BhashyamEntry);
+  if (bhashyamEntry) {
+    if (updates.bhashyamOTs) {
+      bhashyamEntry.OtherTranslations = updates.bhashyamOTs.map(ot => ({
+        LanguageOfTranslation: ot.LanguageOfTranslation,
+        TranslationText: ot.TranslationText,
+      }));
+    }
+    data.BhashyamEntry = bhashyamEntry;
+  }
+
+  if (updates.teekas) {
+    data.Teekas = updates.teekas;
+  } else {
+    data.Teekas = cleanTeekas(fresh.Teekas);
+  }
+
+  await strapiPut(`/manthras/${docId}`, { data });
 }
 
 async function translateAndStoreManthra(
@@ -265,23 +297,10 @@ async function translateAndStoreManthra(
   );
 
   if (shlokaResult.added > 0 || bhashyamResult.added > 0) {
-    const existingTeekas = (manthra.Teekas || []).map((t: any) => {
-      const clean: any = {};
-      if (t.teeka?.documentId) clean.teeka = t.teeka.documentId;
-      if (t.TeekaEntry) {
-        const entry = { ...t.TeekaEntry };
-        delete entry.id;
-        clean.TeekaEntry = entry;
-      }
-      return clean;
+    await safeSaveManthra(manthra.documentId, {
+      shlokaOTs: shlokaResult.added > 0 ? shlokaResult.newOTs : undefined,
+      bhashyamOTs: bhashyamResult.added > 0 ? bhashyamResult.newOTs : undefined,
     });
-    const updateBody = buildManthraUpdateBody(
-      manthra,
-      shlokaResult.added > 0 ? shlokaResult.newOTs : null,
-      bhashyamResult.added > 0 ? bhashyamResult.newOTs : null,
-      existingTeekas.length > 0 ? existingTeekas : null
-    );
-    await strapiPut(`/manthras/${manthra.documentId}`, updateBody);
     console.log(`[Translation]   Saved shloka+bhashyam for ${manthra.ShlokaManthraNumber}`);
   }
 
@@ -321,27 +340,18 @@ async function translateAndStoreManthra(
         teekaAdded++;
 
         if (batchAdded % SAVE_EVERY === 0) {
-          const updatedEntry = { ...teekaEntry };
-          delete updatedEntry.id;
-          updatedEntry.OtherTranslations = newOTs.map(ot => ({
-            LanguageOfTranslation: ot.LanguageOfTranslation,
-            TranslationText: ot.TranslationText,
-          }));
-          const updatedTeeka: any = { TeekaEntry: updatedEntry };
-          if (teeka.teeka?.documentId) updatedTeeka.teeka = teeka.teeka.documentId;
-
-          const allTeekas = teekas.map((t: any, idx: number) => {
-            if (idx === ti) return updatedTeeka;
-            const clean: any = {};
-            if (t.teeka?.documentId) clean.teeka = t.teeka.documentId;
-            if (t.TeekaEntry) {
-              const entry = { ...t.TeekaEntry };
-              delete entry.id;
-              clean.TeekaEntry = entry;
+          const freshManthra = await refetchManthra(manthra.documentId);
+          if (freshManthra) {
+            const freshTeekas = cleanTeekas(freshManthra.Teekas);
+            if (freshTeekas[ti]) {
+              freshTeekas[ti].TeekaEntry = cleanEntry(teekaEntry);
+              freshTeekas[ti].TeekaEntry.OtherTranslations = newOTs.map(ot => ({
+                LanguageOfTranslation: ot.LanguageOfTranslation,
+                TranslationText: ot.TranslationText,
+              }));
             }
-            return clean;
-          });
-          await strapiPut(`/manthras/${manthra.documentId}`, { data: { Teekas: allTeekas } });
+            await safeSaveManthra(manthra.documentId, { teekas: freshTeekas });
+          }
           console.log(`[Translation]   Incremental save: ${batchAdded} teeka translations for ${manthra.ShlokaManthraNumber}`);
         }
       } catch (err: any) {
@@ -351,27 +361,18 @@ async function translateAndStoreManthra(
     }
 
     if (batchAdded > 0 && batchAdded % SAVE_EVERY !== 0) {
-      const updatedEntry = { ...teekaEntry };
-      delete updatedEntry.id;
-      updatedEntry.OtherTranslations = newOTs.map(ot => ({
-        LanguageOfTranslation: ot.LanguageOfTranslation,
-        TranslationText: ot.TranslationText,
-      }));
-      const updatedTeeka: any = { TeekaEntry: updatedEntry };
-      if (teeka.teeka?.documentId) updatedTeeka.teeka = teeka.teeka.documentId;
-
-      const allTeekas = teekas.map((t: any, idx: number) => {
-        if (idx === ti) return updatedTeeka;
-        const clean: any = {};
-        if (t.teeka?.documentId) clean.teeka = t.teeka.documentId;
-        if (t.TeekaEntry) {
-          const entry = { ...t.TeekaEntry };
-          delete entry.id;
-          clean.TeekaEntry = entry;
+      const freshManthra = await refetchManthra(manthra.documentId);
+      if (freshManthra) {
+        const freshTeekas = cleanTeekas(freshManthra.Teekas);
+        if (freshTeekas[ti]) {
+          freshTeekas[ti].TeekaEntry = cleanEntry(teekaEntry);
+          freshTeekas[ti].TeekaEntry.OtherTranslations = newOTs.map(ot => ({
+            LanguageOfTranslation: ot.LanguageOfTranslation,
+            TranslationText: ot.TranslationText,
+          }));
         }
-        return clean;
-      });
-      await strapiPut(`/manthras/${manthra.documentId}`, { data: { Teekas: allTeekas } });
+        await safeSaveManthra(manthra.documentId, { teekas: freshTeekas });
+      }
       console.log(`[Translation]   Final teeka save: ${batchAdded} translations for ${manthra.ShlokaManthraNumber}`);
     }
   }
