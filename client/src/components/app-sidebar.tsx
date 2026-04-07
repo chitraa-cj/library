@@ -521,6 +521,8 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
   const renderVerseTree = (book: Book, verses: Verse[]) => {
     if (verses.length === 0) return null;
 
+    const introVerse = verses.find(v => v.verseNumber === 0 && (v.sectionTitle?.toLowerCase().trim() === "introduction" || v.sectionTitle?.toLowerCase().trim() === "sambandha bhashyam"));
+
     if (hasHierarchy) {
       const isTwoLevel = hierarchyType === "two-level";
 
@@ -528,6 +530,20 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
 
       return (
         <div className="pl-3 mt-1 space-y-0.5">
+          {introVerse && (
+            <button
+              className={`flex items-center gap-1.5 w-full text-left text-xs py-1.5 px-2 rounded-md transition-colors ${
+                selectedVerseNumber === 0
+                  ? "bg-primary/10 text-primary font-medium"
+                  : "text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30"
+              }`}
+              onClick={() => handleVerseSelect(book.id, 0)}
+              data-testid="sidebar-sambandha-bhashyam"
+            >
+              <BookOpen className="h-3 w-3 shrink-0" />
+              <span className="truncate">{t("introduction")}</span>
+            </button>
+          )}
           {displayHierarchy.map((adhyay) => {
             const adhyayKey = `${book.id}-a${adhyay.adhyayNumber}`;
             const isAdhyayOpen = expandedAdhyays.has(adhyayKey) || !!searchQuery.trim();
