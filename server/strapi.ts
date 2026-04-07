@@ -323,19 +323,29 @@ function mapGranthaToBook(g: any): Book & { bhashyamName?: string; teekasList?: 
       if (Array.isArray(s.sub_sections)) {
         for (const ss of s.sub_sections) {
           subSectionIds.add(ss.documentId || String(ss.id));
+          if (Array.isArray(ss.sub_sections)) {
+            for (const sss of ss.sub_sections) {
+              subSectionIds.add(sss.documentId || String(sss.id));
+            }
+          }
         }
       }
     }
+    const countManthras = (section: any): number => {
+      const subs = section.sub_sections;
+      if (Array.isArray(subs) && subs.length > 0) {
+        let sum = 0;
+        for (const sub of subs) {
+          sum += countManthras(sub);
+        }
+        return sum;
+      }
+      return section.manthras?.length || 0;
+    };
     for (const s of g.sections) {
       const sId = s.documentId || String(s.id);
       if (subSectionIds.has(sId)) continue;
-      if (Array.isArray(s.sub_sections) && s.sub_sections.length > 0) {
-        for (const ss of s.sub_sections) {
-          totalVerses += ss.manthras?.length || 0;
-        }
-      } else {
-        totalVerses += s.manthras?.length || 0;
-      }
+      totalVerses += countManthras(s);
     }
   }
 
@@ -406,9 +416,10 @@ export async function strapiGetAllBooks(): Promise<(Book & { bhashyamName?: stri
   const granthas = await strapiFetchAll("/granthas", {
     "populate[0]": "sections.manthras",
     "populate[1]": "sections.sub_sections.manthras",
-    "populate[2]": "coverImage",
-    "populate[3]": "GranthaNameTranslations",
-    "populate[4]": "teekas",
+    "populate[2]": "sections.sub_sections.sub_sections.manthras",
+    "populate[3]": "coverImage",
+    "populate[4]": "GranthaNameTranslations",
+    "populate[5]": "teekas",
   });
   return granthas.map(mapGranthaToBook);
 }
