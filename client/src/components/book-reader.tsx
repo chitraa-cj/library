@@ -426,13 +426,18 @@ export function BookReader({
   const verses = book?.verses || [];
   const currentVerseMeta = verses[currentPage] || null;
 
+  const isIntroSection = (title?: string | null) => {
+    const t = title?.toLowerCase().trim();
+    return t === "introduction" || t === "sambandha bhashyam";
+  };
+
   const introVerse = useMemo(() => {
-    return verses.find(v => v.verseNumber === 0 && v.sectionTitle?.toLowerCase().trim() === "introduction") || null;
+    return verses.find(v => v.verseNumber === 0 && isIntroSection(v.sectionTitle)) || null;
   }, [verses]);
 
   const hasIntro = !!introVerse;
 
-  const isCurrentVerseIntro = currentVerseMeta?.verseNumber === 0 && currentVerseMeta?.sectionTitle?.toLowerCase().trim() === "introduction";
+  const isCurrentVerseIntro = currentVerseMeta?.verseNumber === 0 && isIntroSection(currentVerseMeta?.sectionTitle);
 
   const { data: introExplanations } = useQuery<Explanation[]>({
     queryKey: ["/api/verses", introVerse?.id, "explanations"],
@@ -779,7 +784,7 @@ export function BookReader({
                   variant="outline"
                   className="w-full gap-2 mb-2"
                   onClick={() => {
-                    const introPageIdx = verses.findIndex(v => v.verseNumber === 0 && v.sectionTitle?.toLowerCase().trim() === "introduction");
+                    const introPageIdx = verses.findIndex(v => v.verseNumber === 0 && isIntroSection(v.sectionTitle));
                     if (introPageIdx >= 0) {
                       setCurrentPage(introPageIdx);
                       setShowCoverPage(false);
@@ -927,7 +932,7 @@ export function BookReader({
                       <button
                         className="flex items-center gap-2 flex-1 min-w-0 py-2.5 px-3 text-left"
                         onClick={() => {
-                          const introPageIdx = verses.findIndex(v => v.verseNumber === 0 && v.sectionTitle?.toLowerCase().trim() === "introduction");
+                          const introPageIdx = verses.findIndex(v => v.verseNumber === 0 && isIntroSection(v.sectionTitle));
                           if (introPageIdx >= 0) {
                             setCurrentPage(introPageIdx);
                             setShowCoverPage(false);
