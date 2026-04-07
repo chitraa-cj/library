@@ -920,17 +920,19 @@ export function BookReader({
             )}
 
             {tocHierarchy.groups.length > 0 && (
-              <div className="mt-4 sm:mt-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <List className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                  <h2 className="font-serif text-base sm:text-lg font-semibold" data-testid="text-toc-heading">{t("tableOfContents")}</h2>
-                </div>
+              <div className="mt-5 sm:mt-6">
+                <div className="rounded-xl border border-border/60 bg-card/60 dark:bg-card/40 overflow-hidden shadow-sm">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-border/40 bg-muted/30">
+                    <h2 className="font-serif text-sm sm:text-base font-semibold text-foreground" data-testid="text-toc-heading">{t("tableOfContents")}</h2>
+                    <span className="text-xs text-muted-foreground">
+                      {tocHierarchy.groups.length} {tocHierarchy.groups.length === 1 ? t("chapter") : t("chapters")}
+                    </span>
+                  </div>
 
-                <div className="space-y-1" data-testid="toc-list">
-                  {hasIntro && (
-                    <div className="flex items-center w-full rounded-lg hover-elevate active-elevate-2 transition-colors">
+                  <div className="divide-y divide-border/30" data-testid="toc-list">
+                    {hasIntro && (
                       <button
-                        className="flex items-center gap-2 flex-1 min-w-0 py-2.5 px-3 text-left"
+                        className="flex items-center gap-3 w-full px-4 py-3 text-left hover:bg-primary/5 transition-colors group"
                         onClick={() => {
                           const introPageIdx = verses.findIndex(v => v.verseNumber === 0 && isIntroSection(v.sectionTitle));
                           if (introPageIdx >= 0) {
@@ -940,113 +942,131 @@ export function BookReader({
                         }}
                         data-testid="toc-introduction"
                       >
-                        <Badge variant="outline" className="font-mono text-[10px] sm:text-[11px] px-1.5 h-5 shrink-0 border-primary/30 text-primary">
-                          ✦
-                        </Badge>
-                        <span className="text-sm sm:text-base font-medium truncate">{t("introduction")}</span>
-                      </button>
-                    </div>
-                  )}
-                  {tocHierarchy.groups.map(adhyay => {
-                    const isExpanded = expandedTOCAdhyays.has(adhyay.adhyayNumber);
-                    return (
-                      <div key={adhyay.adhyayNumber}>
-                        <div className="flex items-center w-full rounded-lg hover-elevate active-elevate-2 transition-colors">
-                          <button
-                            className="shrink-0 px-2 py-2.5"
-                            onClick={() => toggleTOCAdhyay(adhyay.adhyayNumber)}
-                            data-testid={`toc-toggle-adhyay-${adhyay.adhyayNumber}`}
-                          >
-                            <ChevronRight className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`} />
-                          </button>
-                          <button
-                            className="flex items-center gap-2 flex-1 min-w-0 py-2.5 pr-3 text-left"
-                            onClick={() => {
-                              onSelectChapter?.(adhyay.adhyayNumber);
-                            }}
-                            data-testid={`toc-adhyay-${adhyay.adhyayNumber}`}
-                          >
-                            <Badge variant="outline" className="font-mono text-[10px] sm:text-[11px] px-1.5 h-5 shrink-0 border-primary/30 text-primary">
-                              {t("chapter")} {adhyay.adhyayNumber}
-                            </Badge>
-                            <span className="text-sm sm:text-base font-medium truncate">{tc(adhyay.adhyayTitle, chapterTitleTranslations)}</span>
-                          </button>
+                        <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                          <span className="text-xs font-semibold text-primary">✦</span>
                         </div>
-
-                        {isExpanded && (
-                          <div className="ml-5 sm:ml-6 pl-3 border-l border-primary/10 space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                            {tocHierarchy.type === "three-level" ? (
-                              adhyay.khandas.map(khanda => {
-                                const khandaKey = `${adhyay.adhyayNumber}-${khanda.khandaNumber}`;
-                                const isKhandaExpanded = expandedTOCKhandas.has(khandaKey);
-                                return (
-                                  <div key={khandaKey}>
-                                    <div className="flex items-center w-full rounded-lg hover-elevate active-elevate-2 transition-colors">
-                                      <button
-                                        className="shrink-0 px-2 py-2"
-                                        onClick={() => toggleTOCKhanda(khandaKey)}
-                                        data-testid={`toc-toggle-khanda-${adhyay.adhyayNumber}-${khanda.khandaNumber}`}
-                                      >
-                                        <ChevronRight className={`h-3 w-3 text-muted-foreground transition-transform duration-200 ${isKhandaExpanded ? "rotate-90" : ""}`} />
-                                      </button>
-                                      <button
-                                        className="flex items-center gap-2 flex-1 min-w-0 py-2 pr-2 text-left"
-                                        onClick={() => {
-                                          onSelectPart?.(adhyay.adhyayNumber, khanda.khandaNumber);
-                                        }}
-                                        data-testid={`toc-khanda-${adhyay.adhyayNumber}-${khanda.khandaNumber}`}
-                                      >
-                                        <Badge variant="outline" className="font-mono text-[10px] px-1.5 h-4.5 shrink-0 border-muted-foreground/30">
-                                          {t("part")} {adhyay.adhyayNumber}.{khanda.khandaNumber}
-                                        </Badge>
-                                        <span className="text-xs sm:text-sm text-muted-foreground truncate">{tc(khanda.khandaTitle, sectionTitleTranslations)}</span>
-                                      </button>
-                                    </div>
-
-                                    {isKhandaExpanded && (
-                                      <div className="ml-4 pl-3 border-l border-border/50 space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                                        {khanda.verses.map((v, idx) => (
-                                          <button
-                                            key={v.id}
-                                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left hover-elevate active-elevate-2 transition-colors"
-                                            onClick={() => handleTOCVerseClick(v.verseNumber)}
-                                            data-testid={`toc-verse-${v.verseNumber}`}
-                                          >
-                                            <span className="font-mono text-[10px] text-muted-foreground shrink-0 w-14">
-                                              {t("sloka")} {adhyay.adhyayNumber}.{khanda.khandaNumber}.{idx + 1}
-                                            </span>
-                                            <span className="text-xs text-muted-foreground truncate">
-                                              {tc(v.sectionTitle, verseSectionTitleTranslations) || `${t("mantra")} ${idx + 1}`}
-                                            </span>
-                                          </button>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })
-                            ) : (
-                              adhyay.verses.map((v, idx) => (
-                                <button
-                                  key={v.id}
-                                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left hover-elevate active-elevate-2 transition-colors"
-                                  onClick={() => handleTOCVerseClick(v.verseNumber)}
-                                  data-testid={`toc-verse-${v.verseNumber}`}
-                                >
-                                  <span className="font-mono text-[10px] text-muted-foreground shrink-0 w-10">
-                                    {t("sloka")} {adhyay.adhyayNumber}.{idx + 1}
-                                  </span>
-                                  <span className="text-xs sm:text-sm text-muted-foreground truncate">
-                                    {tc(v.sectionTitle, verseSectionTitleTranslations) || `${t("verse")} ${idx + 1}`}
-                                  </span>
-                                </button>
-                              ))
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-semibold text-primary block truncate">{t("introduction")}</span>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-primary/50 shrink-0 group-hover:text-primary transition-colors" />
+                      </button>
+                    )}
+                    {tocHierarchy.groups.map((adhyay, index) => {
+                      const isExpanded = expandedTOCAdhyays.has(adhyay.adhyayNumber);
+                      const totalVerses = tocHierarchy.type === "three-level"
+                        ? adhyay.khandas.reduce((sum, k) => sum + k.verses.length, 0)
+                        : adhyay.verses.length;
+                      return (
+                        <div key={adhyay.adhyayNumber}>
+                          <div className="flex items-center w-full hover:bg-primary/5 transition-colors group">
+                            <button
+                              className="flex items-center gap-3 flex-1 min-w-0 px-4 py-3 text-left"
+                              onClick={() => {
+                                onSelectChapter?.(adhyay.adhyayNumber);
+                              }}
+                              data-testid={`toc-adhyay-${adhyay.adhyayNumber}`}
+                            >
+                              <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                                <span className="text-xs font-semibold text-primary">{adhyay.adhyayNumber}</span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <span className="text-sm font-semibold text-foreground block truncate">{tc(adhyay.adhyayTitle, chapterTitleTranslations)}</span>
+                                <span className="text-[11px] text-muted-foreground">{totalVerses} {t("verses")}</span>
+                              </div>
+                            </button>
+                            {(tocHierarchy.type === "three-level" || adhyay.verses.length > 0) && (
+                              <button
+                                className="shrink-0 px-3 py-3 self-stretch flex items-center"
+                                onClick={() => toggleTOCAdhyay(adhyay.adhyayNumber)}
+                                data-testid={`toc-toggle-adhyay-${adhyay.adhyayNumber}`}
+                              >
+                                <ChevronRight className={`h-4 w-4 text-primary/50 group-hover:text-primary transition-all duration-200 ${isExpanded ? "rotate-90" : ""}`} />
+                              </button>
                             )}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
+
+                          {isExpanded && (
+                            <div className="bg-muted/20 dark:bg-muted/10 border-t border-border/20 animate-in fade-in slide-in-from-top-1 duration-150">
+                              {tocHierarchy.type === "three-level" ? (
+                                <div className="divide-y divide-border/20">
+                                  {adhyay.khandas.map(khanda => {
+                                    const khandaKey = `${adhyay.adhyayNumber}-${khanda.khandaNumber}`;
+                                    const isKhandaExpanded = expandedTOCKhandas.has(khandaKey);
+                                    return (
+                                      <div key={khandaKey}>
+                                        <div className="flex items-center w-full hover:bg-primary/5 transition-colors group/khanda">
+                                          <button
+                                            className="flex items-center gap-3 flex-1 min-w-0 pl-8 pr-4 py-2.5 text-left"
+                                            onClick={() => {
+                                              onSelectPart?.(adhyay.adhyayNumber, khanda.khandaNumber);
+                                            }}
+                                            data-testid={`toc-khanda-${adhyay.adhyayNumber}-${khanda.khandaNumber}`}
+                                          >
+                                            <div className="w-6 h-6 rounded-full bg-muted-foreground/10 flex items-center justify-center shrink-0">
+                                              <span className="text-[10px] font-medium text-muted-foreground">{adhyay.adhyayNumber}.{khanda.khandaNumber}</span>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                              <span className="text-xs sm:text-sm text-foreground/80 block truncate">{tc(khanda.khandaTitle, sectionTitleTranslations)}</span>
+                                              <span className="text-[10px] text-muted-foreground">{khanda.verses.length} {t("verses")}</span>
+                                            </div>
+                                          </button>
+                                          <button
+                                            className="shrink-0 px-3 py-2.5 self-stretch flex items-center"
+                                            onClick={() => toggleTOCKhanda(khandaKey)}
+                                            data-testid={`toc-toggle-khanda-${adhyay.adhyayNumber}-${khanda.khandaNumber}`}
+                                          >
+                                            <ChevronRight className={`h-3.5 w-3.5 text-muted-foreground/50 group-hover/khanda:text-primary transition-all duration-200 ${isKhandaExpanded ? "rotate-90" : ""}`} />
+                                          </button>
+                                        </div>
+
+                                        {isKhandaExpanded && (
+                                          <div className="bg-muted/15 dark:bg-muted/5 divide-y divide-border/10 animate-in fade-in slide-in-from-top-1 duration-150">
+                                            {khanda.verses.map((v, idx) => (
+                                              <button
+                                                key={v.id}
+                                                className="w-full flex items-center gap-3 pl-14 pr-4 py-2 text-left hover:bg-primary/5 transition-colors"
+                                                onClick={() => handleTOCVerseClick(v.verseNumber)}
+                                                data-testid={`toc-verse-${v.verseNumber}`}
+                                              >
+                                                <span className="font-mono text-[10px] text-muted-foreground/70 shrink-0 w-12">
+                                                  {adhyay.adhyayNumber}.{khanda.khandaNumber}.{idx + 1}
+                                                </span>
+                                                <span className="text-xs text-muted-foreground truncate">
+                                                  {tc(v.sectionTitle, verseSectionTitleTranslations) || `${t("mantra")} ${idx + 1}`}
+                                                </span>
+                                              </button>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <div className="divide-y divide-border/20">
+                                  {adhyay.verses.map((v, idx) => (
+                                    <button
+                                      key={v.id}
+                                      className="w-full flex items-center gap-3 pl-8 pr-4 py-2 text-left hover:bg-primary/5 transition-colors"
+                                      onClick={() => handleTOCVerseClick(v.verseNumber)}
+                                      data-testid={`toc-verse-${v.verseNumber}`}
+                                    >
+                                      <span className="font-mono text-[10px] text-muted-foreground/70 shrink-0 w-10">
+                                        {adhyay.adhyayNumber}.{idx + 1}
+                                      </span>
+                                      <span className="text-xs sm:text-sm text-muted-foreground truncate">
+                                        {tc(v.sectionTitle, verseSectionTitleTranslations) || `${t("verse")} ${idx + 1}`}
+                                      </span>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             )}
