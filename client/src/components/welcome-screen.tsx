@@ -41,6 +41,8 @@ interface Book {
   category: string;
   coverImage: string | null;
   totalVerses: number | null;
+  bhashyamName?: string;
+  teekasList?: { name: string; author: string }[];
 }
 
 interface WelcomeScreenProps {
@@ -535,6 +537,30 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onSelectSu
                         {book.totalVerses ?? 0} {t("verses")}
                       </Badge>
                     </div>
+                    {(book.bhashyamName || (book.teekasList && book.teekasList.length > 0)) && (
+                      <div className="px-4 py-3 border-t border-border/30 space-y-1.5" data-testid={`book-commentary-info-${book.slug || book.id}`}>
+                        {book.bhashyamName && (
+                          <div className="flex items-start gap-1.5">
+                            <Feather className="h-3 w-3 shrink-0 text-primary/50 mt-0.5" />
+                            <span className="text-[10px] text-muted-foreground leading-tight">
+                              {book.bhashyamName}
+                            </span>
+                          </div>
+                        )}
+                        {book.teekasList && book.teekasList.length > 0 && (
+                          <div className="flex items-start gap-1.5">
+                            <ScrollText className="h-3 w-3 shrink-0 text-primary/50 mt-0.5" />
+                            <div className="flex flex-wrap gap-1">
+                              {book.teekasList.map((teeka, i) => (
+                                <span key={i} className="text-[10px] text-muted-foreground leading-tight">
+                                  {teeka.name}{teeka.author ? ` — ${teeka.author}` : ""}{i < book.teekasList!.length - 1 ? "," : ""}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </Card>
                 ))}
               </div>
@@ -632,6 +658,30 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
                     {book.totalVerses ?? 0} {t("verses")}
                   </Badge>
                 </div>
+                {(book.bhashyamName || (book.teekasList && book.teekasList.length > 0)) && (
+                  <div className="px-4 py-3 border-t border-border/30 space-y-1.5" data-testid={`book-commentary-info-${book.slug || book.id}`}>
+                    {book.bhashyamName && (
+                      <div className="flex items-start gap-1.5">
+                        <Feather className="h-3 w-3 shrink-0 text-primary/50 mt-0.5" />
+                        <span className="text-[10px] text-muted-foreground leading-tight">
+                          {book.bhashyamName}
+                        </span>
+                      </div>
+                    )}
+                    {book.teekasList && book.teekasList.length > 0 && (
+                      <div className="flex items-start gap-1.5">
+                        <ScrollText className="h-3 w-3 shrink-0 text-primary/50 mt-0.5" />
+                        <div className="flex flex-wrap gap-1">
+                          {book.teekasList.map((teeka, i) => (
+                            <span key={i} className="text-[10px] text-muted-foreground leading-tight">
+                              {teeka.name}{teeka.author ? ` — ${teeka.author}` : ""}{i < book.teekasList!.length - 1 ? "," : ""}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </Card>
             ))}
           </div>

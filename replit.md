@@ -41,6 +41,10 @@ Preferred communication style: Simple, everyday language.
 -   Read operations prioritize Strapi; falls back to PostgreSQL if Strapi is unreachable.
 -   Write operations (notes, word translation cache) always target PostgreSQL.
 
+### Book Listing Enhancements
+-   Book cards on the library catalog page show **Bhashyam name** (commentary title, e.g. "Shankara Bhashyam") and **Teeka names** (sub-commentary titles with authors, e.g. "Anandagiri Teeka — Anandagiri") fetched from Strapi's grantha-level `teekas` relation.
+-   Data flows: `strapiGetAllBooks` → `mapGranthaToBook` adds `bhashyamName` and `teekasList` → API returns them → `welcome-screen.tsx` renders in `SubCategoryDetailView` and `CategoryDetailView`.
+
 ### Data Model
 Supports multi-language sacred texts and user data:
 -   `languages`: Definitions (code, name, script).

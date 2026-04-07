@@ -314,7 +314,7 @@ function mapManthraToVerse(
   };
 }
 
-function mapGranthaToBook(g: any): Book {
+function mapGranthaToBook(g: any): Book & { bhashyamName?: string; teekasList?: { name: string; author: string }[] } {
   const docId = g.documentId || String(g.id);
   let totalVerses = 0;
   if (Array.isArray(g.sections)) {
@@ -339,6 +339,18 @@ function mapGranthaToBook(g: any): Book {
     }
   }
 
+  const teekasList: { name: string; author: string }[] = [];
+  if (Array.isArray(g.teekas)) {
+    for (const t of g.teekas) {
+      if (t.TeekaName) {
+        teekasList.push({
+          name: t.TeekaName,
+          author: t.TeekaAuthor || "",
+        });
+      }
+    }
+  }
+
   return {
     id: docId,
     slug: g.slug || slugify(g.GranthaName || ""),
@@ -348,6 +360,8 @@ function mapGranthaToBook(g: any): Book {
     category: g.GranthaType || "Uncategorized",
     coverImage: g.coverImage?.url ? `${STRAPI_URL}${g.coverImage.url}` : null,
     totalVerses,
+    bhashyamName: g.BhashyamName || undefined,
+    teekasList: teekasList.length > 0 ? teekasList : undefined,
   };
 }
 
@@ -388,12 +402,13 @@ export async function testStrapiConnection(): Promise<{ connected: boolean; mess
   }
 }
 
-export async function strapiGetAllBooks(): Promise<Book[]> {
+export async function strapiGetAllBooks(): Promise<(Book & { bhashyamName?: string; teekasList?: { name: string; author: string }[] })[]> {
   const granthas = await strapiFetchAll("/granthas", {
     "populate[0]": "sections.manthras",
     "populate[1]": "sections.sub_sections.manthras",
     "populate[2]": "coverImage",
     "populate[3]": "GranthaNameTranslations",
+    "populate[4]": "teekas",
   });
   return granthas.map(mapGranthaToBook);
 }
