@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareText, StickyNote, List, Globe, Languages, Sparkles } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareText, StickyNote, List, Globe, Languages, Sparkles, Feather, ScrollText, Check } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoPopup } from "@/components/video-popup";
 import { WordTooltip } from "@/components/word-tooltip";
@@ -809,6 +809,110 @@ export function BookReader({
                 {t("startReading")}
               </Button>
             </div>
+
+            {commentaryOptions && commentaryOptions.authors.length > 1 && (
+              <div className="mt-4 sm:mt-5" data-testid="cover-commentary-selection">
+                <div className="flex items-center gap-2 mb-3">
+                  <Feather className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  <h2 className="font-serif text-base sm:text-lg font-semibold">{t("commentaryAndScholars")}</h2>
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">{t("selectCommentaryHint")}</p>
+                <div className="space-y-1" data-testid="cover-commentary-list">
+                  {(() => {
+                    const bhashyaAuthors = commentaryOptions.authors.filter(a => isBhashyaAuthor(a.authorName));
+                    const teekaAuthors = commentaryOptions.authors.filter(a => isTeekaAuthor(a.authorName));
+                    const otherAuthors = commentaryOptions.authors.filter(a => !isBhashyaAuthor(a.authorName) && !isTeekaAuthor(a.authorName));
+                    const isSelected = (name: string) => selectedAuthor === name;
+                    const renderAuthorButton = (author: CommentaryOption) => (
+                      <button
+                        key={author.authorName}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                          isSelected(author.authorName)
+                            ? "bg-primary/10 border border-primary/30"
+                            : "hover-elevate active-elevate-2 border border-transparent"
+                        }`}
+                        onClick={() => {
+                          handleAuthorChange(author.authorName);
+                        }}
+                        data-testid={`cover-author-${author.authorName.replace(/\s+/g, '-').toLowerCase()}`}
+                      >
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
+                          isSelected(author.authorName) ? "bg-primary text-primary-foreground" : "bg-muted"
+                        }`}>
+                          {isSelected(author.authorName) ? (
+                            <Check className="h-3 w-3" />
+                          ) : (
+                            <User className="h-3 w-3 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <span className={`text-sm font-medium ${isSelected(author.authorName) ? "text-primary" : "text-foreground"}`}>
+                            {tc(author.authorName, bookAuthorTranslations)}
+                          </span>
+                          {author.authorTitle && (
+                            <span className="text-[10px] text-muted-foreground ml-1.5">
+                              ({author.authorTitle})
+                            </span>
+                          )}
+                        </div>
+                        <Badge variant="outline" className="text-[9px] shrink-0">
+                          {author.languageCodes.length} {author.languageCodes.length === 1 ? t("lang") : t("langs")}
+                        </Badge>
+                      </button>
+                    );
+                    return (
+                      <>
+                        {bhashyaAuthors.length > 0 && (
+                          <div className="mb-2">
+                            <div className="flex items-center gap-1.5 mb-1 px-1">
+                              <Feather className="h-3 w-3 text-primary/60" />
+                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{t("bhashyam")}</span>
+                            </div>
+                            {bhashyaAuthors.map(renderAuthorButton)}
+                          </div>
+                        )}
+                        {teekaAuthors.length > 0 && (
+                          <div className="mb-2">
+                            <div className="flex items-center gap-1.5 mb-1 px-1">
+                              <ScrollText className="h-3 w-3 text-primary/60" />
+                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{t("teeka")}</span>
+                            </div>
+                            {teekaAuthors.map(renderAuthorButton)}
+                          </div>
+                        )}
+                        {otherAuthors.length > 0 && (
+                          <div className="mb-2">
+                            <div className="flex items-center gap-1.5 mb-1 px-1">
+                              <User className="h-3 w-3 text-primary/60" />
+                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{t("otherCommentators")}</span>
+                            </div>
+                            {otherAuthors.map(renderAuthorButton)}
+                          </div>
+                        )}
+                        <button
+                          className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                            isShowingAll
+                              ? "bg-primary/10 border border-primary/30"
+                              : "hover-elevate active-elevate-2 border border-transparent"
+                          }`}
+                          onClick={() => handleAuthorChange("__all__")}
+                          data-testid="cover-author-all"
+                        >
+                          <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
+                            isShowingAll ? "bg-primary text-primary-foreground" : "bg-muted"
+                          }`}>
+                            {isShowingAll ? <Check className="h-3 w-3" /> : <User className="h-3 w-3 text-muted-foreground" />}
+                          </div>
+                          <span className={`text-sm font-medium ${isShowingAll ? "text-primary" : "text-foreground"}`}>
+                            {t("showAllCommentaries")}
+                          </span>
+                        </button>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
 
             {tocHierarchy.groups.length > 0 && (
               <div className="mt-4 sm:mt-5">
