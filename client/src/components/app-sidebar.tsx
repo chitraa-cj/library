@@ -799,7 +799,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
             )}
           </button>
         </div>
-        {isExpanded && isSelected && renderVerseTree(book, verses)}
+        {isExpanded && isSelected && !isCollapsed && renderVerseTree(book, verses)}
       </div>
     );
   };
