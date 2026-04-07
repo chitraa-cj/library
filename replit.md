@@ -40,6 +40,8 @@ Preferred communication style: Simple, everyday language.
 -   Activates if `STRAPI_URL` and `STRAPI_API_TOKEN` environment variables are set.
 -   Read operations prioritize Strapi; falls back to PostgreSQL if Strapi is unreachable.
 -   Write operations (notes, word translation cache) always target PostgreSQL.
+-   **All Strapi granthas are now shown** — no whitelist. Duplicates (Isha, Katha, Gita that exist in both local DB and Strapi) are handled by excluding Strapi duplicates via `LOCAL_STRAPI_DUPLICATES` in `routes.ts`.
+-   Categories auto-mapped from `GranthaType`: `"Upanishad"` → Upanishad subcategory, `"Bhagavad Gita"/"Gita"` → Bhagavad Gita, `"Brahma Sutra"` → Brahma Sutra, `"Prakarana Grantha"` → Independent Advaita Works.
 
 ### Book Listing Enhancements
 -   Book cards on the library catalog page show **Bhashyam name** (commentary title, e.g. "Shankara Bhashyam") and **Teeka names** (sub-commentary titles with authors, e.g. "Anandagiri Teeka — Anandagiri") fetched from Strapi's grantha-level `teekas` relation.

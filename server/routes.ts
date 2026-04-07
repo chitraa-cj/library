@@ -26,21 +26,19 @@ export async function registerRoutes(
   
   setTimeout(() => restoreQueueFromFile(), 5000);
 
-  const STRAPI_ONLY_IDS = new Set([
-    "ilox3o68ykdntxtzuf4q5zqi",
-    "xmkwqad2p77yr1ej3jeqj82j",
-    "mb9wnew0jta2wqvfp9z1oebo",
-    "sdhg4ecqcn6k4fi6hqfca8oe",
-    "qcbxoj6pwo01pgnr0hxloiun",
-  ]);
+  const LOCAL_STRAPI_DUPLICATES: Record<string, string> = {
+    "ngjdm2fcgp0ogp16jcey3vo1": "isha-upanishad-bhashya",
+    "t2d3crlf4ptuadp73lziogy5": "katha-upanishad-bhashya",
+    "b7zir6h4z5v2ng6uofnvhmp3": "bhagavad-gita",
+  };
 
   app.get("/api/books", async (req, res) => {
     try {
       const books = await storage.getAllBooks();
       const isLocalDb = (b: any) => typeof b.id === 'string' && b.id.includes('-') && b.id.length > 30;
       const localBooks = books.filter(b => isLocalDb(b));
-      const strapiAllowed = books.filter(b => !isLocalDb(b) && STRAPI_ONLY_IDS.has(b.id as string));
-      res.json([...localBooks, ...strapiAllowed]);
+      const strapiBooks = books.filter(b => !isLocalDb(b) && !LOCAL_STRAPI_DUPLICATES[b.id as string]);
+      res.json([...localBooks, ...strapiBooks]);
     } catch (error) {
       console.error("Error fetching books:", error);
       res.status(500).json({ error: "Failed to fetch books" });

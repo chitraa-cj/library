@@ -39,8 +39,8 @@ const CATALOG_TREE: CatalogCategory[] = [
     labelKey: "prasthanaThrayaShankaracharyaBhashya",
     children: [
       { id: "pt-shankara-upanishad", label: "Upanishad", labelKey: "upanishad", categoryMatch: "Upanishad", categoryAltMatch: "Upanishad Bhashya" },
-      { id: "pt-shankara-gita", label: "Bhagavad Gita", labelKey: "bhagavadGita", categoryMatch: "Gita" },
-      { id: "pt-shankara-brahmasutra", label: "Brahma Sutra", labelKey: "brahmaSutra" },
+      { id: "pt-shankara-gita", label: "Bhagavad Gita", labelKey: "bhagavadGita", categoryMatch: "Gita", categoryAltMatch: "Bhagavad Gita" },
+      { id: "pt-shankara-brahmasutra", label: "Brahma Sutra", labelKey: "brahmaSutra", categoryMatch: "Brahma Sutra" },
     ],
   },
   {
@@ -68,7 +68,7 @@ const CATALOG_TREE: CatalogCategory[] = [
     label: "Prakarana Granthas",
     labelKey: "prakaranaGranthas",
     children: [
-      { id: "pg-independent", label: "Independent Advaita Works", labelKey: "independentAdvaitaWorks" },
+      { id: "pg-independent", label: "Independent Advaita Works", labelKey: "independentAdvaitaWorks", categoryMatch: "Prakarana Grantha" },
       { id: "pg-other-gitas", label: "Other Gitas", labelKey: "otherGitas" },
       { id: "pg-bhakthi", label: "Bhakthi Granthas", labelKey: "bhakthiGranthas" },
       { id: "pg-other-languages", label: "Advaita in Other Languages", labelKey: "advaitaInOtherLanguages" },
