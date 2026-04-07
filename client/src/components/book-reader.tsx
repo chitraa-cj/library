@@ -1322,10 +1322,34 @@ export function BookReader({
         }
       }
     };
+    const introCommentaryContext = introSanskrit || "";
     return (
       <div className="flex-1 flex flex-col min-w-0 focus:outline-none" tabIndex={0} onKeyDown={handleKeyDown}>
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-2xl xl:max-w-3xl mx-auto px-4 sm:px-8 py-6 sm:py-10">
+          <div
+            className="max-w-2xl xl:max-w-3xl mx-auto px-4 sm:px-8 py-6 sm:py-10"
+            onMouseUp={handleTextSelect}
+            onTouchEnd={handleTextSelect}
+          >
+            {selectionPopup && onAddNoteWithText && (
+              <div
+                className="fixed z-50 animate-in fade-in slide-in-from-bottom-1 duration-150"
+                style={{ left: `${selectionPopup.x}px`, top: `${selectionPopup.y}px`, transform: "translate(-50%, -100%)" }}
+                data-testid="selection-popup-intro"
+              >
+                <Button
+                  size="sm"
+                  variant="default"
+                  className="gap-1.5 text-xs shadow-lg"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={handleAddNoteFromSelection}
+                  data-testid="button-annotate-selection-intro"
+                >
+                  <StickyNote className="h-3 w-3" />
+                  Add Note
+                </Button>
+              </div>
+            )}
             <div className="text-center mb-6 sm:mb-8">
               <Badge variant="secondary" className="mb-2 text-[10px] sm:text-xs">
                 {tc(book.title, bookTitleTranslations)}
@@ -1366,16 +1390,28 @@ export function BookReader({
 
             {introSanskrit && effectiveLang !== "devanagari" && effectiveLang !== "sa" && (
               <div className="mb-6 sm:mb-8 p-4 sm:p-6 rounded-lg bg-primary/5 border border-primary/10">
-                <div className="font-serif text-sm sm:text-base leading-relaxed sm:leading-loose text-foreground/90 whitespace-pre-line" data-testid="text-intro-sanskrit">
-                  {introSanskrit}
+                <div className="font-serif text-sm sm:text-base leading-relaxed sm:leading-loose text-foreground/90" data-testid="text-intro-sanskrit">
+                  <WordTooltip
+                    content={introSanskrit}
+                    commentaryContent={introCommentaryContext}
+                    sourceLanguage="devanagari"
+                    verseId={introVerse?.id || `${book.id}-intro`}
+                    globalLanguage={lang}
+                  />
                 </div>
               </div>
             )}
 
             <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none" data-testid="text-intro-content">
               {introTextForLang ? (
-                <div className="font-serif text-sm sm:text-base leading-relaxed sm:leading-loose text-foreground/80 whitespace-pre-line">
-                  {introTextForLang}
+                <div className="font-serif text-sm sm:text-base leading-relaxed sm:leading-loose text-foreground/80">
+                  <WordTooltip
+                    content={introTextForLang}
+                    commentaryContent={introCommentaryContext}
+                    sourceLanguage={effectiveLang || "english"}
+                    verseId={introVerse?.id || `${book.id}-intro`}
+                    globalLanguage={lang}
+                  />
                 </div>
               ) : (
                 <div className="space-y-3 py-4">
