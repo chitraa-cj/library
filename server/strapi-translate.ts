@@ -265,11 +265,21 @@ async function translateAndStoreManthra(
   );
 
   if (shlokaResult.added > 0 || bhashyamResult.added > 0) {
+    const existingTeekas = (manthra.Teekas || []).map((t: any) => {
+      const clean: any = {};
+      if (t.teeka?.documentId) clean.teeka = t.teeka.documentId;
+      if (t.TeekaEntry) {
+        const entry = { ...t.TeekaEntry };
+        delete entry.id;
+        clean.TeekaEntry = entry;
+      }
+      return clean;
+    });
     const updateBody = buildManthraUpdateBody(
       manthra,
       shlokaResult.added > 0 ? shlokaResult.newOTs : null,
       bhashyamResult.added > 0 ? bhashyamResult.newOTs : null,
-      null
+      existingTeekas.length > 0 ? existingTeekas : null
     );
     await strapiPut(`/manthras/${manthra.documentId}`, updateBody);
     console.log(`[Translation]   Saved shloka+bhashyam for ${manthra.ShlokaManthraNumber}`);
