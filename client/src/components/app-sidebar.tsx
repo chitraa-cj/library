@@ -1229,7 +1229,27 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
             </div>
           ) : (
             <div className="p-2 space-y-1">
-              {selectedBookId ? (
+              {selectedBookId && selectedBookObj && selectedBookData?.verses ? (
+                <>
+                  <button
+                    onClick={() => {
+                      onShowCoverPage?.();
+                      if (isMobile) setOpenMobile(false);
+                    }}
+                    className="flex items-center gap-2 w-full text-left text-xs py-2.5 px-2 rounded-md bg-primary/15 text-primary font-semibold mb-1"
+                    data-testid="sidebar-current-book"
+                  >
+                    <BookOpen className="h-3.5 w-3.5 shrink-0" />
+                    <span className="font-serif text-xs leading-snug flex-1 min-w-0 truncate">{tc(selectedBookObj.title, bookTitleTranslations)}</span>
+                    {selectedBookObj.totalVerses != null && selectedBookObj.totalVerses > 0 && (
+                      <Badge variant="default" className="text-[9px] font-medium px-1 h-4 shrink-0">
+                        {selectedBookObj.totalVerses}
+                      </Badge>
+                    )}
+                  </button>
+                  {renderVerseTree(selectedBookObj, selectedBookData.verses)}
+                </>
+              ) : selectedBookId ? (
                 <>
                   {renderDrillBreadcrumb()}
                   {!drillCategoryId && renderCategoryList()}
