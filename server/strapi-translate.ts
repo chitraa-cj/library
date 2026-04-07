@@ -537,12 +537,72 @@ export async function startTranslationJob(granthaDocId: string, targetLanguages?
 const cancelledJobs = new Set<string>();
 const translationQueue: { granthaDocId: string; targetLanguages?: string[] }[] = [];
 let queueRunning = false;
+let currentlyRunningId: string | null = null;
+
+const QUEUE_FILE = ".local/translation-queue.json";
+
+function saveQueueToFile() {
+  try {
+    const state = {
+      queue: translationQueue.map(j => ({ granthaDocId: j.granthaDocId, targetLanguages: j.targetLanguages })),
+      running: currentlyRunningId ? { granthaDocId: currentlyRunningId } : null,
+      savedAt: new Date().toISOString(),
+    };
+    import("fs").then(fs => {
+      import("path").then(path => {
+        const dir = path.dirname(QUEUE_FILE);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(QUEUE_FILE, JSON.stringify(state, null, 2));
+      });
+    });
+  } catch (e: any) {
+    console.error("[Translation] Failed to save queue file:", e.message);
+  }
+}
+
+function clearQueueFile() {
+  try {
+    import("fs").then(fs => {
+      if (fs.existsSync(QUEUE_FILE)) fs.unlinkSync(QUEUE_FILE);
+    });
+  } catch {}
+}
+
+export async function restoreQueueFromFile() {
+  try {
+    const fs = await import("fs");
+    if (!fs.existsSync(QUEUE_FILE)) return;
+    const state = JSON.parse(fs.readFileSync(QUEUE_FILE, "utf-8"));
+    const jobs: { granthaDocId: string; targetLanguages?: string[] }[] = [];
+    if (state.running?.granthaDocId) {
+      jobs.push({ granthaDocId: state.running.granthaDocId });
+    }
+    for (const j of (state.queue || [])) {
+      if (!jobs.some(x => x.granthaDocId === j.granthaDocId)) {
+        jobs.push({ granthaDocId: j.granthaDocId, targetLanguages: j.targetLanguages });
+      }
+    }
+    if (jobs.length > 0) {
+      console.log(`[Translation] Restoring ${jobs.length} job(s) from saved queue: ${jobs.map(j => j.granthaDocId).join(", ")}`);
+      for (const j of jobs) {
+        translationQueue.push(j);
+      }
+      processQueue();
+    } else {
+      clearQueueFile();
+    }
+  } catch (e: any) {
+    console.error("[Translation] Failed to restore queue:", e.message);
+  }
+}
 
 async function processQueue() {
   if (queueRunning) return;
   queueRunning = true;
   while (translationQueue.length > 0) {
     const job = translationQueue.shift()!;
+    currentlyRunningId = job.granthaDocId;
+    saveQueueToFile();
     const existing = progressMap.get(job.granthaDocId);
     if (existing && existing.status === "running") {
       while (progressMap.get(job.granthaDocId)?.status === "running") {
@@ -554,13 +614,17 @@ async function processQueue() {
     while (progress.status === "running") {
       await new Promise(r => setTimeout(r, 5000));
     }
+    currentlyRunningId = null;
   }
   queueRunning = false;
+  currentlyRunningId = null;
+  clearQueueFile();
 }
 
 export function queueTranslationJob(granthaDocId: string, targetLanguages?: string[]) {
   translationQueue.push({ granthaDocId, targetLanguages });
   console.log(`[Translation] Queued "${granthaDocId}" (queue size: ${translationQueue.length})`);
+  saveQueueToFile();
   processQueue();
 }
 

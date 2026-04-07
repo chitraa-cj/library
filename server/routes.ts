@@ -9,7 +9,7 @@ import { authStorage } from "./replit_integrations/auth/storage";
 import { z } from "zod";
 import multer from "multer";
 import { translateTextChunked, translateImage, translatePdf, transliterateTextChunked, translateBhashyam } from "./gemini";
-import { startTranslationJob, getTranslationProgress, getAllTranslationJobs, queueTranslationJob, getQueueStatus, cancelTranslationJob, STRAPI_LANGUAGES, SKIP_TRANSLATE } from "./strapi-translate";
+import { startTranslationJob, getTranslationProgress, getAllTranslationJobs, queueTranslationJob, getQueueStatus, cancelTranslationJob, restoreQueueFromFile, STRAPI_LANGUAGES, SKIP_TRANSLATE } from "./strapi-translate";
 import { queueTransliteration, getTransliterationProgress, transliterateSanskrit, ALL_LANGUAGES as TRANSLIT_LANGUAGES } from "./strapi-transliterate";
 
 function getUserId(req: any): string {
@@ -24,6 +24,8 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
+  setTimeout(() => restoreQueueFromFile(), 5000);
+
   const STRAPI_ONLY_IDS = new Set([
     "ilox3o68ykdntxtzuf4q5zqi",
     "xmkwqad2p77yr1ej3jeqj82j",
