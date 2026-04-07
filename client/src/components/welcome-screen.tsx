@@ -280,7 +280,7 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
             return (
               <Card
                 key={cat.id}
-                className="p-0 overflow-visible border-border/50 bg-card/80 flex flex-col"
+                className="p-0 overflow-visible border-border/50 bg-card/80 flex flex-col hover:shadow-lg hover:border-primary/30 hover:-translate-y-1 hover:scale-[1.02] transition-all"
                 data-testid={`card-category-${cat.id}`}
               >
                 <div
@@ -459,7 +459,7 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onSelectSu
                 <Card
                   key={sub.id}
                   className={`p-0 overflow-hidden border-border/50 flex flex-col transition-all ${
-                    hasBooks ? "bg-card/80 cursor-pointer hover:shadow-md hover:border-primary/30" : "bg-muted/30 opacity-60"
+                    hasBooks ? "bg-card/80 cursor-pointer hover:shadow-lg hover:border-primary/30 hover:-translate-y-1 hover:scale-[1.02]" : "bg-muted/30 opacity-60"
                   }`}
                   data-testid={`card-subcat-${sub.id}`}
                   onClick={() => {
@@ -517,7 +517,7 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onSelectSu
                 {booksBySubCategory[category.id].map(book => (
                   <Card
                     key={book.id}
-                    className="p-0 overflow-hidden border-border/50 bg-card/80 cursor-pointer hover:shadow-md hover:border-primary/30 transition-all"
+                    className="p-0 overflow-hidden border-border/50 bg-card/80 cursor-pointer hover:shadow-lg hover:border-primary/30 hover:-translate-y-1 hover:scale-[1.02] transition-all"
                     onClick={() => onSelectBook(book.id)}
                     data-testid={`card-book-${book.slug}`}
                   >
@@ -638,7 +638,7 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
             {subBooks.map(book => (
               <Card
                 key={book.id}
-                className="p-0 overflow-hidden border-border/50 bg-card/80 cursor-pointer hover:shadow-md hover:border-primary/30 transition-all group"
+                className="p-0 overflow-hidden border-border/50 bg-card/80 cursor-pointer hover:shadow-lg hover:border-primary/30 hover:-translate-y-1 hover:scale-[1.02] transition-all group"
                 onClick={() => onSelectBook(book.id)}
                 data-testid={`card-book-${book.slug || book.id}`}
               >
