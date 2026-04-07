@@ -106,13 +106,20 @@ function buildSectionTree(sections: StrapiSection[]): StrapiSection[] {
   }
   roots.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
-  for (const root of roots) {
-    if (root.sub_sections && root.sub_sections.length > 0) {
-      root.sub_sections = root.sub_sections.map((ss: any) => {
+  const resolveSubSections = (section: StrapiSection) => {
+    if (section.sub_sections && section.sub_sections.length > 0) {
+      section.sub_sections = section.sub_sections.map((ss: any) => {
         const fullSection = byDocId.get(ss.documentId);
         return fullSection || ss;
       }).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+      for (const sub of section.sub_sections) {
+        resolveSubSections(sub as StrapiSection);
+      }
     }
+  };
+
+  for (const root of roots) {
+    resolveSubSections(root);
   }
 
   return roots;
@@ -491,24 +498,40 @@ export async function strapiGetBookById(id: string): Promise<BookWithDetails | u
       globalIndex++;
     }
 
+    async function fetchVersesFromLeafSections(
+      section: any,
+      adhyayNum: number | null,
+      adhyayTitle: string | null,
+      khandaNum: number | null,
+      khandaTitle: string | null,
+    ) {
+      const subs = (section.sub_sections || []).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+      if (subs.length > 0) {
+        for (const sub of subs) {
+          await fetchVersesFromLeafSections(sub, adhyayNum, adhyayTitle, khandaNum || sub.order, khandaTitle || sub.title);
+        }
+      } else {
+        const manthras = await fetchManthrasForSection(section.documentId);
+        for (const m of manthras) {
+          globalIndex++;
+          verses.push(
+            mapManthraToVerse(m, book.id, globalIndex, adhyayNum, adhyayTitle, khandaNum, khandaTitle, bhashyamAuthor, bhashyamName)
+          );
+        }
+      }
+    }
+
     for (const adhyay of sectionTree) {
       const adhyayNum = adhyay.order ?? null;
       const adhyayTitle = adhyay.title || null;
 
-      const khandas = (adhyay.sub_sections || []).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      const khandas = (adhyay.sub_sections || []).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
 
       if (khandas.length > 0) {
         for (const khanda of khandas) {
           const khandaNum = khanda.order ?? null;
           const khandaTitle = khanda.title || null;
-
-          const manthras = await fetchManthrasForSection(khanda.documentId);
-          for (const m of manthras) {
-            globalIndex++;
-            verses.push(
-              mapManthraToVerse(m, book.id, globalIndex, adhyayNum, adhyayTitle, khandaNum, khandaTitle, bhashyamAuthor, bhashyamName)
-            );
-          }
+          await fetchVersesFromLeafSections(khanda, adhyayNum, adhyayTitle, khandaNum, khandaTitle);
         }
       } else {
         const manthras = await fetchManthrasForSection(adhyay.documentId);
@@ -560,32 +583,48 @@ export async function strapiGetBookWithVerseMeta(id: string): Promise<BookWithVe
       });
     }
 
+    function collectVersesFromLeafSections(
+      section: any,
+      adhyayNum: number | null,
+      adhyayTitle: string | null,
+      khandaNum: number | null,
+      khandaTitle: string | null,
+    ) {
+      const subs = (section.sub_sections || []).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+      if (subs.length > 0) {
+        for (const sub of subs) {
+          collectVersesFromLeafSections(sub, adhyayNum, adhyayTitle, khandaNum || sub.order, khandaTitle || sub.title);
+        }
+      } else {
+        const manthraDocs = section.manthras || [];
+        const sortedManthras = [...manthraDocs].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+        for (const m of sortedManthras) {
+          globalIndex++;
+          verses.push({
+            id: m.documentId || String(m.id),
+            bookId: book.id,
+            verseNumber: globalIndex,
+            sectionTitle: m.ShlokaManthraNumber ? `Mantra ${m.ShlokaManthraNumber}` : `Mantra ${globalIndex}`,
+            adhyayNumber: adhyayNum,
+            adhyayTitle,
+            khandaNumber: khandaNum,
+            khandaTitle,
+          });
+        }
+      }
+    }
+
     for (const adhyay of sectionTree) {
       const adhyayNum = adhyay.order ?? null;
       const adhyayTitle = adhyay.title || null;
 
-      const khandas = (adhyay.sub_sections || []).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      const khandas = (adhyay.sub_sections || []).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
 
       if (khandas.length > 0) {
         for (const khanda of khandas) {
           const khandaNum = khanda.order ?? null;
           const khandaTitle = khanda.title || null;
-          const manthraDocs = khanda.manthras || [];
-          const sortedManthras = [...manthraDocs].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
-
-          for (const m of sortedManthras) {
-            globalIndex++;
-            verses.push({
-              id: m.documentId || String(m.id),
-              bookId: book.id,
-              verseNumber: globalIndex,
-              sectionTitle: m.ShlokaManthraNumber ? `Mantra ${m.ShlokaManthraNumber}` : `Mantra ${globalIndex}`,
-              adhyayNumber: adhyayNum,
-              adhyayTitle,
-              khandaNumber: khandaNum,
-              khandaTitle,
-            });
-          }
+          collectVersesFromLeafSections(khanda, adhyayNum, adhyayTitle, khandaNum, khandaTitle);
         }
       } else {
         const manthraDocs = adhyay.manthras || [];
