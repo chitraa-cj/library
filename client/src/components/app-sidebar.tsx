@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, BookOpen, Loader2, ChevronRight, ChevronDown, Home, Library, FolderOpen, Folder, Lock, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Search, BookOpen, Loader2, ChevronRight, ChevronDown, ChevronLeft, Home, Library, FolderOpen, Folder, Lock, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -1231,6 +1231,27 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
             <div className="p-2 space-y-1">
               {selectedBookId && selectedBookObj && selectedBookData?.verses ? (
                 <>
+                  <button
+                    onClick={() => {
+                      onGoBack?.();
+                      if (isMobile) setOpenMobile(false);
+                    }}
+                    className="flex items-center gap-1.5 w-full text-left text-[11px] py-1.5 px-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/30 transition-colors mb-0.5"
+                    data-testid="sidebar-back-to-list"
+                  >
+                    <ChevronLeft className="h-3 w-3 shrink-0" />
+                    <span className="truncate">
+                      {(() => {
+                        if (!selectedBookPath) return t("allCategories");
+                        const cat = CATALOG_TREE.find(c => c.id === selectedBookPath.categoryId);
+                        if (selectedBookPath.subCategoryId && cat?.children) {
+                          const sub = cat.children.find(s => s.id === selectedBookPath.subCategoryId);
+                          return sub ? resolveLabel(sub, t as any) : resolveLabel(cat, t as any);
+                        }
+                        return cat ? resolveLabel(cat, t as any) : t("allCategories");
+                      })()}
+                    </span>
+                  </button>
                   <button
                     onClick={() => {
                       onShowCoverPage?.();
