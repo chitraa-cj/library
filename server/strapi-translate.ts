@@ -227,46 +227,58 @@ function cleanTeekas(teekas: any[]): any[] {
   });
 }
 
-async function safeSaveManthra(
+async function safeSaveShlokaOnly(
   docId: string,
-  updates: {
-    shlokaOTs?: OtherTranslation[];
-    bhashyamOTs?: OtherTranslation[];
-    teekas?: any[];
-  }
+  newTranslations: OtherTranslation[]
 ): Promise<void> {
   const fresh = await refetchManthra(docId);
   if (!fresh) throw new Error(`Could not refetch manthra ${docId}`);
+  const entry = cleanEntry(fresh.ShlokaManthraEntry);
+  if (!entry) return;
+  const existingLangs = new Set((entry.OtherTranslations || []).map((ot: any) => ot.LanguageOfTranslation));
+  const toAdd = newTranslations.filter(ot => !existingLangs.has(ot.LanguageOfTranslation));
+  entry.OtherTranslations = [
+    ...(entry.OtherTranslations || []).map((ot: any) => ({ LanguageOfTranslation: ot.LanguageOfTranslation, TranslationText: ot.TranslationText })),
+    ...toAdd.map(ot => ({ LanguageOfTranslation: ot.LanguageOfTranslation, TranslationText: ot.TranslationText })),
+  ];
+  await strapiPut(`/manthras/${docId}`, { data: { ShlokaManthraEntry: entry } });
+}
 
-  const data: any = {};
+async function safeSaveBhashyamOnly(
+  docId: string,
+  newTranslations: OtherTranslation[]
+): Promise<void> {
+  const fresh = await refetchManthra(docId);
+  if (!fresh) throw new Error(`Could not refetch manthra ${docId}`);
+  const entry = cleanEntry(fresh.BhashyamEntry);
+  if (!entry) return;
+  const existingLangs = new Set((entry.OtherTranslations || []).map((ot: any) => ot.LanguageOfTranslation));
+  const toAdd = newTranslations.filter(ot => !existingLangs.has(ot.LanguageOfTranslation));
+  entry.OtherTranslations = [
+    ...(entry.OtherTranslations || []).map((ot: any) => ({ LanguageOfTranslation: ot.LanguageOfTranslation, TranslationText: ot.TranslationText })),
+    ...toAdd.map(ot => ({ LanguageOfTranslation: ot.LanguageOfTranslation, TranslationText: ot.TranslationText })),
+  ];
+  await strapiPut(`/manthras/${docId}`, { data: { BhashyamEntry: entry } });
+}
 
-  if (updates.shlokaOTs) {
-    const shlokaEntry = cleanEntry(fresh.ShlokaManthraEntry);
-    if (shlokaEntry) {
-      shlokaEntry.OtherTranslations = updates.shlokaOTs.map(ot => ({
-        LanguageOfTranslation: ot.LanguageOfTranslation,
-        TranslationText: ot.TranslationText,
-      }));
-      data.ShlokaManthraEntry = shlokaEntry;
-    }
-  }
-
-  if (updates.bhashyamOTs) {
-    const bhashyamEntry = cleanEntry(fresh.BhashyamEntry);
-    if (bhashyamEntry) {
-      bhashyamEntry.OtherTranslations = updates.bhashyamOTs.map(ot => ({
-        LanguageOfTranslation: ot.LanguageOfTranslation,
-        TranslationText: ot.TranslationText,
-      }));
-      data.BhashyamEntry = bhashyamEntry;
-    }
-  }
-
-  if (updates.teekas) {
-    data.Teekas = updates.teekas;
-  }
-
-  await strapiPut(`/manthras/${docId}`, { data });
+async function safeSaveTeekaOnly(
+  docId: string,
+  teekaIndex: number,
+  newTranslations: OtherTranslation[]
+): Promise<void> {
+  const fresh = await refetchManthra(docId);
+  if (!fresh) throw new Error(`Could not refetch manthra ${docId}`);
+  const freshTeekas = cleanTeekas(fresh.Teekas);
+  if (!freshTeekas[teekaIndex]?.TeekaEntry) return;
+  const entry = freshTeekas[teekaIndex].TeekaEntry;
+  const existingLangs = new Set((entry.OtherTranslations || []).map((ot: any) => ot.LanguageOfTranslation));
+  const toAdd = newTranslations.filter(ot => !existingLangs.has(ot.LanguageOfTranslation));
+  entry.OtherTranslations = [
+    ...(entry.OtherTranslations || []).map((ot: any) => ({ LanguageOfTranslation: ot.LanguageOfTranslation, TranslationText: ot.TranslationText })),
+    ...toAdd.map(ot => ({ LanguageOfTranslation: ot.LanguageOfTranslation, TranslationText: ot.TranslationText })),
+  ];
+  freshTeekas[teekaIndex].TeekaEntry = entry;
+  await strapiPut(`/manthras/${docId}`, { data: { Teekas: freshTeekas } });
 }
 
 async function translateAndStoreManthra(
@@ -282,131 +294,96 @@ async function translateAndStoreManthra(
   const sourceForShloka = shlokaEnglish || shlokaText;
   const sourceForBhashyam = bhashyamEnglish || bhashyamSanskrit;
 
-  const SHLOKA_BATCH = 5;
+  const BATCH_SIZE = 3;
+
+  let shlokaAdded = 0;
   {
     const existingShlokaLangs = getExistingLanguages(manthra.ShlokaManthraEntry?.OtherTranslations || []);
-    const shlokaOTs = [...(manthra.ShlokaManthraEntry?.OtherTranslations || [])];
-    let shlokaBatch = 0;
+    let pendingBatch: OtherTranslation[] = [];
     for (const lang of targetLanguages) {
       progress.currentLanguage = lang;
       if (existingShlokaLangs.has(lang)) { progress.skippedExisting++; continue; }
       if (!sourceForShloka) continue;
       try {
         const translated = await retryWithBackoff(() => translateTextChunked(sourceForShloka, lang, shlokaEnglish ? "English" : "Sanskrit"));
-        shlokaOTs.push({ LanguageOfTranslation: lang, TranslationText: stringToRichText(translated) });
+        pendingBatch.push({ LanguageOfTranslation: lang, TranslationText: stringToRichText(translated) });
         existingShlokaLangs.add(lang);
-        shlokaBatch++;
-        if (shlokaBatch % SHLOKA_BATCH === 0) {
-          await safeSaveManthra(manthra.documentId, { shlokaOTs });
-          console.log(`[Translation]   Shloka batch save (${shlokaBatch}) for ${manthra.ShlokaManthraNumber}`);
+        shlokaAdded++;
+        if (pendingBatch.length >= BATCH_SIZE) {
+          await safeSaveShlokaOnly(manthra.documentId, pendingBatch);
+          console.log(`[Translation]   Shloka batch save (${shlokaAdded}) for ${manthra.ShlokaManthraNumber}`);
+          pendingBatch = [];
         }
       } catch (err: any) { progress.errors.push(`Shloka ${manthra.ShlokaManthraNumber} → ${lang}: ${err.message}`); }
       await delay(1500);
     }
-    if (shlokaBatch > 0 && shlokaBatch % SHLOKA_BATCH !== 0) {
-      await safeSaveManthra(manthra.documentId, { shlokaOTs });
-      console.log(`[Translation]   Shloka final save (${shlokaBatch}) for ${manthra.ShlokaManthraNumber}`);
+    if (pendingBatch.length > 0) {
+      await safeSaveShlokaOnly(manthra.documentId, pendingBatch);
+      console.log(`[Translation]   Shloka final save (${shlokaAdded}) for ${manthra.ShlokaManthraNumber}`);
     }
-    var shlokaAdded = shlokaBatch;
   }
 
+  let bhashyamAdded = 0;
   {
     const existingBhashyamLangs = getExistingLanguages(manthra.BhashyamEntry?.OtherTranslations || []);
-    const bhashyamOTs = [...(manthra.BhashyamEntry?.OtherTranslations || [])];
-    let bhashyamBatch = 0;
+    let pendingBatch: OtherTranslation[] = [];
     for (const lang of targetLanguages) {
       progress.currentLanguage = lang;
       if (existingBhashyamLangs.has(lang)) { progress.skippedExisting++; continue; }
       if (!sourceForBhashyam) continue;
       try {
         const translated = await retryWithBackoff(() => translateTextChunked(sourceForBhashyam, lang, bhashyamEnglish ? "English" : "Sanskrit"));
-        bhashyamOTs.push({ LanguageOfTranslation: lang, TranslationText: stringToRichText(translated) });
+        pendingBatch.push({ LanguageOfTranslation: lang, TranslationText: stringToRichText(translated) });
         existingBhashyamLangs.add(lang);
-        bhashyamBatch++;
-        if (bhashyamBatch % SHLOKA_BATCH === 0) {
-          await safeSaveManthra(manthra.documentId, { bhashyamOTs });
-          console.log(`[Translation]   Bhashyam batch save (${bhashyamBatch}) for ${manthra.ShlokaManthraNumber}`);
+        bhashyamAdded++;
+        if (pendingBatch.length >= BATCH_SIZE) {
+          await safeSaveBhashyamOnly(manthra.documentId, pendingBatch);
+          console.log(`[Translation]   Bhashyam batch save (${bhashyamAdded}) for ${manthra.ShlokaManthraNumber}`);
+          pendingBatch = [];
         }
       } catch (err: any) { progress.errors.push(`Bhashyam ${manthra.ShlokaManthraNumber} → ${lang}: ${err.message}`); }
       await delay(1500);
     }
-    if (bhashyamBatch > 0 && bhashyamBatch % SHLOKA_BATCH !== 0) {
-      await safeSaveManthra(manthra.documentId, { bhashyamOTs });
-      console.log(`[Translation]   Bhashyam final save (${bhashyamBatch}) for ${manthra.ShlokaManthraNumber}`);
+    if (pendingBatch.length > 0) {
+      await safeSaveBhashyamOnly(manthra.documentId, pendingBatch);
+      console.log(`[Translation]   Bhashyam final save (${bhashyamAdded}) for ${manthra.ShlokaManthraNumber}`);
     }
-    var bhashyamAdded = bhashyamBatch;
   }
 
   let teekaAdded = 0;
   const teekas = manthra.Teekas || [];
-
   for (let ti = 0; ti < teekas.length; ti++) {
     const teeka = teekas[ti];
     const teekaEntry = teeka.TeekaEntry;
     if (!teekaEntry) continue;
-
     const teekaName = teeka.teeka?.TeekaName || `Teeka ${ti + 1}`;
     const teekaEnglish = richTextToString(teekaEntry.EnglishTranslationText);
     const teekaSanskrit = richTextToString(teekaEntry.SanskritTextEntry);
     const sourceForTeeka = teekaEnglish || teekaSanskrit;
-
     const existingLangs = getExistingLanguages(teekaEntry.OtherTranslations || []);
-    const newOTs = [...(teekaEntry.OtherTranslations || [])];
+    let pendingBatch: OtherTranslation[] = [];
     let batchAdded = 0;
-    const SAVE_EVERY = 3;
-
     for (const lang of targetLanguages) {
       progress.currentLanguage = lang;
-      if (existingLangs.has(lang)) {
-        progress.skippedExisting++;
-        continue;
-      }
+      if (existingLangs.has(lang)) { progress.skippedExisting++; continue; }
       if (!sourceForTeeka) continue;
       try {
         const translated = await retryWithBackoff(() => translateTextChunked(sourceForTeeka, lang, teekaEnglish ? "English" : "Sanskrit"));
-        newOTs.push({
-          LanguageOfTranslation: lang,
-          TranslationText: stringToRichText(translated),
-        });
+        pendingBatch.push({ LanguageOfTranslation: lang, TranslationText: stringToRichText(translated) });
         existingLangs.add(lang);
         batchAdded++;
         teekaAdded++;
-
-        if (batchAdded % SAVE_EVERY === 0) {
-          const freshManthra = await refetchManthra(manthra.documentId);
-          if (freshManthra) {
-            const freshTeekas = cleanTeekas(freshManthra.Teekas);
-            if (freshTeekas[ti]) {
-              freshTeekas[ti].TeekaEntry = cleanEntry(teekaEntry);
-              freshTeekas[ti].TeekaEntry.OtherTranslations = newOTs.map(ot => ({
-                LanguageOfTranslation: ot.LanguageOfTranslation,
-                TranslationText: ot.TranslationText,
-              }));
-            }
-            await safeSaveManthra(manthra.documentId, { teekas: freshTeekas });
-          }
-          console.log(`[Translation]   Incremental save: ${batchAdded} teeka translations for ${manthra.ShlokaManthraNumber}`);
+        if (pendingBatch.length >= BATCH_SIZE) {
+          await safeSaveTeekaOnly(manthra.documentId, ti, pendingBatch);
+          console.log(`[Translation]   Teeka batch save (${batchAdded}) for ${manthra.ShlokaManthraNumber}`);
+          pendingBatch = [];
         }
-      } catch (err: any) {
-        progress.errors.push(`${teekaName} ${manthra.ShlokaManthraNumber} → ${lang}: ${err.message}`);
-      }
+      } catch (err: any) { progress.errors.push(`${teekaName} ${manthra.ShlokaManthraNumber} → ${lang}: ${err.message}`); }
       await delay(1500);
     }
-
-    if (batchAdded > 0 && batchAdded % SAVE_EVERY !== 0) {
-      const freshManthra = await refetchManthra(manthra.documentId);
-      if (freshManthra) {
-        const freshTeekas = cleanTeekas(freshManthra.Teekas);
-        if (freshTeekas[ti]) {
-          freshTeekas[ti].TeekaEntry = cleanEntry(teekaEntry);
-          freshTeekas[ti].TeekaEntry.OtherTranslations = newOTs.map(ot => ({
-            LanguageOfTranslation: ot.LanguageOfTranslation,
-            TranslationText: ot.TranslationText,
-          }));
-        }
-        await safeSaveManthra(manthra.documentId, { teekas: freshTeekas });
-      }
-      console.log(`[Translation]   Final teeka save: ${batchAdded} translations for ${manthra.ShlokaManthraNumber}`);
+    if (pendingBatch.length > 0) {
+      await safeSaveTeekaOnly(manthra.documentId, ti, pendingBatch);
+      console.log(`[Translation]   Teeka final save (${batchAdded}) for ${manthra.ShlokaManthraNumber}`);
     }
   }
 
