@@ -284,24 +284,59 @@ async function translateAndStoreManthra(
   const sourceForShloka = shlokaEnglish || shlokaText;
   const sourceForBhashyam = bhashyamEnglish || bhashyamSanskrit;
 
-  const shlokaResult = await translateComponent(
-    sourceForShloka, shlokaEnglish ? "English" : "Sanskrit",
-    manthra.ShlokaManthraEntry?.OtherTranslations || [],
-    targetLanguages, `Shloka ${manthra.ShlokaManthraNumber}`, progress
-  );
+  const SHLOKA_BATCH = 5;
+  {
+    const existingShlokaLangs = getExistingLanguages(manthra.ShlokaManthraEntry?.OtherTranslations || []);
+    const shlokaOTs = [...(manthra.ShlokaManthraEntry?.OtherTranslations || [])];
+    let shlokaBatch = 0;
+    for (const lang of targetLanguages) {
+      progress.currentLanguage = lang;
+      if (existingShlokaLangs.has(lang)) { progress.skippedExisting++; continue; }
+      if (!sourceForShloka) continue;
+      try {
+        const translated = await retryWithBackoff(() => translateTextChunked(sourceForShloka, lang, shlokaEnglish ? "English" : "Sanskrit"));
+        shlokaOTs.push({ LanguageOfTranslation: lang, TranslationText: stringToRichText(translated) });
+        existingShlokaLangs.add(lang);
+        shlokaBatch++;
+        if (shlokaBatch % SHLOKA_BATCH === 0) {
+          await safeSaveManthra(manthra.documentId, { shlokaOTs });
+          console.log(`[Translation]   Shloka batch save (${shlokaBatch}) for ${manthra.ShlokaManthraNumber}`);
+        }
+      } catch (err: any) { progress.errors.push(`Shloka ${manthra.ShlokaManthraNumber} → ${lang}: ${err.message}`); }
+      await delay(1500);
+    }
+    if (shlokaBatch > 0 && shlokaBatch % SHLOKA_BATCH !== 0) {
+      await safeSaveManthra(manthra.documentId, { shlokaOTs });
+      console.log(`[Translation]   Shloka final save (${shlokaBatch}) for ${manthra.ShlokaManthraNumber}`);
+    }
+    var shlokaAdded = shlokaBatch;
+  }
 
-  const bhashyamResult = await translateComponent(
-    sourceForBhashyam, bhashyamEnglish ? "English" : "Sanskrit",
-    manthra.BhashyamEntry?.OtherTranslations || [],
-    targetLanguages, `Bhashyam ${manthra.ShlokaManthraNumber}`, progress
-  );
-
-  if (shlokaResult.added > 0 || bhashyamResult.added > 0) {
-    await safeSaveManthra(manthra.documentId, {
-      shlokaOTs: shlokaResult.added > 0 ? shlokaResult.newOTs : undefined,
-      bhashyamOTs: bhashyamResult.added > 0 ? bhashyamResult.newOTs : undefined,
-    });
-    console.log(`[Translation]   Saved shloka+bhashyam for ${manthra.ShlokaManthraNumber}`);
+  {
+    const existingBhashyamLangs = getExistingLanguages(manthra.BhashyamEntry?.OtherTranslations || []);
+    const bhashyamOTs = [...(manthra.BhashyamEntry?.OtherTranslations || [])];
+    let bhashyamBatch = 0;
+    for (const lang of targetLanguages) {
+      progress.currentLanguage = lang;
+      if (existingBhashyamLangs.has(lang)) { progress.skippedExisting++; continue; }
+      if (!sourceForBhashyam) continue;
+      try {
+        const translated = await retryWithBackoff(() => translateTextChunked(sourceForBhashyam, lang, bhashyamEnglish ? "English" : "Sanskrit"));
+        bhashyamOTs.push({ LanguageOfTranslation: lang, TranslationText: stringToRichText(translated) });
+        existingBhashyamLangs.add(lang);
+        bhashyamBatch++;
+        if (bhashyamBatch % SHLOKA_BATCH === 0) {
+          await safeSaveManthra(manthra.documentId, { bhashyamOTs });
+          console.log(`[Translation]   Bhashyam batch save (${bhashyamBatch}) for ${manthra.ShlokaManthraNumber}`);
+        }
+      } catch (err: any) { progress.errors.push(`Bhashyam ${manthra.ShlokaManthraNumber} → ${lang}: ${err.message}`); }
+      await delay(1500);
+    }
+    if (bhashyamBatch > 0 && bhashyamBatch % SHLOKA_BATCH !== 0) {
+      await safeSaveManthra(manthra.documentId, { bhashyamOTs });
+      console.log(`[Translation]   Bhashyam final save (${bhashyamBatch}) for ${manthra.ShlokaManthraNumber}`);
+    }
+    var bhashyamAdded = bhashyamBatch;
   }
 
   let teekaAdded = 0;
@@ -377,7 +412,7 @@ async function translateAndStoreManthra(
     }
   }
 
-  return { shlokaAdded: shlokaResult.added, bhashyamAdded: bhashyamResult.added, teekaAdded };
+  return { shlokaAdded, bhashyamAdded, teekaAdded };
 }
 
 function delay(ms: number): Promise<void> {
