@@ -210,6 +210,13 @@ function cleanEntry(entry: any): any {
   return clean;
 }
 
+function cleanOTs(ots: any[]): any[] {
+  return (ots || []).map((ot: any) => ({
+    LanguageOfTranslation: ot.LanguageOfTranslation,
+    TranslationText: ot.TranslationText,
+  }));
+}
+
 function cleanTeekas(teekas: any[]): any[] {
   return (teekas || []).map((t: any) => {
     const clean: any = {};
@@ -217,14 +224,30 @@ function cleanTeekas(teekas: any[]): any[] {
     if (t.TeekaEntry) {
       clean.TeekaEntry = cleanEntry(t.TeekaEntry);
       if (clean.TeekaEntry?.OtherTranslations) {
-        clean.TeekaEntry.OtherTranslations = clean.TeekaEntry.OtherTranslations.map((ot: any) => ({
-          LanguageOfTranslation: ot.LanguageOfTranslation,
-          TranslationText: ot.TranslationText,
-        }));
+        clean.TeekaEntry.OtherTranslations = cleanOTs(clean.TeekaEntry.OtherTranslations);
       }
     }
     return clean;
   });
+}
+
+function buildFullManthraData(fresh: any, overrides: {
+  shlokaEntry?: any;
+  bhashyamEntry?: any;
+  teekas?: any[];
+}): any {
+  const shloka = overrides.shlokaEntry ?? cleanEntry(fresh.ShlokaManthraEntry);
+  const bhashyam = overrides.bhashyamEntry ?? cleanEntry(fresh.BhashyamEntry);
+  const teekas = overrides.teekas ?? cleanTeekas(fresh.Teekas);
+
+  if (shloka?.OtherTranslations) shloka.OtherTranslations = cleanOTs(shloka.OtherTranslations);
+  if (bhashyam?.OtherTranslations) bhashyam.OtherTranslations = cleanOTs(bhashyam.OtherTranslations);
+
+  const data: any = {};
+  if (shloka) data.ShlokaManthraEntry = shloka;
+  if (bhashyam) data.BhashyamEntry = bhashyam;
+  if (teekas && teekas.length > 0) data.Teekas = teekas;
+  return data;
 }
 
 async function safeSaveShlokaOnly(
@@ -238,10 +261,11 @@ async function safeSaveShlokaOnly(
   const existingLangs = new Set((entry.OtherTranslations || []).map((ot: any) => ot.LanguageOfTranslation));
   const toAdd = newTranslations.filter(ot => !existingLangs.has(ot.LanguageOfTranslation));
   entry.OtherTranslations = [
-    ...(entry.OtherTranslations || []).map((ot: any) => ({ LanguageOfTranslation: ot.LanguageOfTranslation, TranslationText: ot.TranslationText })),
+    ...cleanOTs(entry.OtherTranslations || []),
     ...toAdd.map(ot => ({ LanguageOfTranslation: ot.LanguageOfTranslation, TranslationText: ot.TranslationText })),
   ];
-  await strapiPut(`/manthras/${docId}`, { data: { ShlokaManthraEntry: entry } });
+  const fullData = buildFullManthraData(fresh, { shlokaEntry: entry });
+  await strapiPut(`/manthras/${docId}`, { data: fullData });
 }
 
 async function safeSaveBhashyamOnly(
@@ -255,10 +279,11 @@ async function safeSaveBhashyamOnly(
   const existingLangs = new Set((entry.OtherTranslations || []).map((ot: any) => ot.LanguageOfTranslation));
   const toAdd = newTranslations.filter(ot => !existingLangs.has(ot.LanguageOfTranslation));
   entry.OtherTranslations = [
-    ...(entry.OtherTranslations || []).map((ot: any) => ({ LanguageOfTranslation: ot.LanguageOfTranslation, TranslationText: ot.TranslationText })),
+    ...cleanOTs(entry.OtherTranslations || []),
     ...toAdd.map(ot => ({ LanguageOfTranslation: ot.LanguageOfTranslation, TranslationText: ot.TranslationText })),
   ];
-  await strapiPut(`/manthras/${docId}`, { data: { BhashyamEntry: entry } });
+  const fullData = buildFullManthraData(fresh, { bhashyamEntry: entry });
+  await strapiPut(`/manthras/${docId}`, { data: fullData });
 }
 
 async function safeSaveTeekaOnly(
@@ -274,11 +299,12 @@ async function safeSaveTeekaOnly(
   const existingLangs = new Set((entry.OtherTranslations || []).map((ot: any) => ot.LanguageOfTranslation));
   const toAdd = newTranslations.filter(ot => !existingLangs.has(ot.LanguageOfTranslation));
   entry.OtherTranslations = [
-    ...(entry.OtherTranslations || []).map((ot: any) => ({ LanguageOfTranslation: ot.LanguageOfTranslation, TranslationText: ot.TranslationText })),
+    ...cleanOTs(entry.OtherTranslations || []),
     ...toAdd.map(ot => ({ LanguageOfTranslation: ot.LanguageOfTranslation, TranslationText: ot.TranslationText })),
   ];
   freshTeekas[teekaIndex].TeekaEntry = entry;
-  await strapiPut(`/manthras/${docId}`, { data: { Teekas: freshTeekas } });
+  const fullData = buildFullManthraData(fresh, { teekas: freshTeekas });
+  await strapiPut(`/manthras/${docId}`, { data: fullData });
 }
 
 async function translateAndStoreManthra(
@@ -412,16 +438,37 @@ async function retryWithBackoff<T>(fn: () => Promise<T>, maxRetries = 3): Promis
   throw new Error("Max retries exceeded");
 }
 
+async function safeRefetchIntro(granthaDocId: string): Promise<any> {
+  const res = await strapiFetchJSON<any>(`/granthas/${granthaDocId}`, {
+    "populate[0]": "BhashyakaraIntroduction",
+    "populate[1]": "BhashyakaraIntroduction.OtherTranslations",
+  });
+  return res.data?.BhashyakaraIntroduction;
+}
+
+async function safeSaveIntro(
+  granthaDocId: string,
+  newTranslations: OtherTranslation[]
+): Promise<void> {
+  const freshIntro = await safeRefetchIntro(granthaDocId);
+  if (!freshIntro) return;
+  const entry: any = { ...freshIntro };
+  delete entry.id;
+  const existingLangs = new Set((entry.OtherTranslations || []).map((ot: any) => ot.LanguageOfTranslation));
+  const toAdd = newTranslations.filter(ot => !existingLangs.has(ot.LanguageOfTranslation));
+  entry.OtherTranslations = [
+    ...cleanOTs(entry.OtherTranslations || []),
+    ...toAdd.map(ot => ({ LanguageOfTranslation: ot.LanguageOfTranslation, TranslationText: ot.TranslationText })),
+  ];
+  await strapiPut(`/granthas/${granthaDocId}`, { data: { BhashyakaraIntroduction: entry } });
+}
+
 async function translateIntroduction(
   granthaDocId: string,
   targetLanguages: string[],
   progress: TranslationProgress
 ): Promise<number> {
-  const granthaRes = await strapiFetchJSON<any>(`/granthas/${granthaDocId}`, {
-    "populate[0]": "BhashyakaraIntroduction",
-    "populate[1]": "BhashyakaraIntroduction.OtherTranslations",
-  });
-  const intro = granthaRes.data?.BhashyakaraIntroduction;
+  const intro = await safeRefetchIntro(granthaDocId);
   if (!intro) return 0;
 
   const english = richTextToString(intro.EnglishTranslationText);
@@ -433,9 +480,9 @@ async function translateIntroduction(
   console.log(`[Translation] Processing Introduction`);
 
   const existingLangs = getExistingLanguages(intro.OtherTranslations || []);
-  const newOTs = [...(intro.OtherTranslations || [])];
   let added = 0;
-  const SAVE_EVERY = 3;
+  const BATCH_SIZE = 3;
+  let pendingBatch: OtherTranslation[] = [];
 
   for (const lang of targetLanguages) {
     progress.currentLanguage = lang;
@@ -446,16 +493,14 @@ async function translateIntroduction(
     if (!source) continue;
     try {
       const translated = await retryWithBackoff(() => translateTextChunked(source, lang, english ? "English" : "Sanskrit"));
-      newOTs.push({ LanguageOfTranslation: lang, TranslationText: stringToRichText(translated) });
+      pendingBatch.push({ LanguageOfTranslation: lang, TranslationText: stringToRichText(translated) });
       existingLangs.add(lang);
       added++;
 
-      if (added % SAVE_EVERY === 0) {
-        const entry: any = { ...intro };
-        delete entry.id;
-        entry.OtherTranslations = newOTs.map(ot => ({ LanguageOfTranslation: ot.LanguageOfTranslation, TranslationText: ot.TranslationText }));
-        await strapiPut(`/granthas/${granthaDocId}`, { data: { BhashyakaraIntroduction: entry } });
-        console.log(`[Translation]   Incremental intro save: ${added} translations`);
+      if (pendingBatch.length >= BATCH_SIZE) {
+        await safeSaveIntro(granthaDocId, pendingBatch);
+        console.log(`[Translation]   Intro batch save (${added} total)`);
+        pendingBatch = [];
       }
     } catch (err: any) {
       progress.errors.push(`Introduction → ${lang}: ${err.message}`);
@@ -463,12 +508,9 @@ async function translateIntroduction(
     await delay(1500);
   }
 
-  if (added > 0 && added % SAVE_EVERY !== 0) {
-    const entry: any = { ...intro };
-    delete entry.id;
-    entry.OtherTranslations = newOTs.map(ot => ({ LanguageOfTranslation: ot.LanguageOfTranslation, TranslationText: ot.TranslationText }));
-    await strapiPut(`/granthas/${granthaDocId}`, { data: { BhashyakaraIntroduction: entry } });
-    console.log(`[Translation]   Added ${added} introduction translations`);
+  if (pendingBatch.length > 0) {
+    await safeSaveIntro(granthaDocId, pendingBatch);
+    console.log(`[Translation]   Intro final save (${added} total)`);
   } else if (added === 0) {
     console.log(`[Translation]   Introduction already translated (skipped)`);
   }
