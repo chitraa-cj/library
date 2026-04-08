@@ -240,32 +240,30 @@ async function safeSaveManthra(
 
   const data: any = {};
 
-  const shlokaEntry = cleanEntry(fresh.ShlokaManthraEntry);
-  if (shlokaEntry) {
-    if (updates.shlokaOTs) {
+  if (updates.shlokaOTs) {
+    const shlokaEntry = cleanEntry(fresh.ShlokaManthraEntry);
+    if (shlokaEntry) {
       shlokaEntry.OtherTranslations = updates.shlokaOTs.map(ot => ({
         LanguageOfTranslation: ot.LanguageOfTranslation,
         TranslationText: ot.TranslationText,
       }));
+      data.ShlokaManthraEntry = shlokaEntry;
     }
-    data.ShlokaManthraEntry = shlokaEntry;
   }
 
-  const bhashyamEntry = cleanEntry(fresh.BhashyamEntry);
-  if (bhashyamEntry) {
-    if (updates.bhashyamOTs) {
+  if (updates.bhashyamOTs) {
+    const bhashyamEntry = cleanEntry(fresh.BhashyamEntry);
+    if (bhashyamEntry) {
       bhashyamEntry.OtherTranslations = updates.bhashyamOTs.map(ot => ({
         LanguageOfTranslation: ot.LanguageOfTranslation,
         TranslationText: ot.TranslationText,
       }));
+      data.BhashyamEntry = bhashyamEntry;
     }
-    data.BhashyamEntry = bhashyamEntry;
   }
 
   if (updates.teekas) {
     data.Teekas = updates.teekas;
-  } else {
-    data.Teekas = cleanTeekas(fresh.Teekas);
   }
 
   await strapiPut(`/manthras/${docId}`, { data });
