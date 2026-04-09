@@ -1,4 +1,4 @@
-import { BookOpen, Library, FolderOpen, Lock, ArrowLeft, ChevronRight, ScrollText, Feather, Users, Heart, BookMarked, Music, Sparkles, Globe, Search, Languages, ArrowRight } from "lucide-react";
+import { BookOpen, Library, FolderOpen, Lock, ArrowLeft, ChevronRight, ScrollText, Feather, Users, Heart, BookMarked, Music } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -71,264 +71,133 @@ function getBooksForCategory(books: Book[], cat: CatalogCategory): Book[] {
 
 export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, languageCode }: WelcomeScreenProps) {
   const { t } = useTranslation(languageCode ?? null);
-  const lang = languageCode || "en";
-  const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, lang);
-
-  const totalBooks = books.length;
-  const totalVerses = books.reduce((sum, b) => sum + (b.totalVerses || 0), 0);
-
   return (
-    <div className="flex-1 flex flex-col items-center bg-background relative overflow-y-auto">
+    <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-background relative overflow-y-auto">
       <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
-        <div className="absolute top-8 left-8 text-[18rem] text-primary/[0.02] dark:text-primary/[0.03] font-serif leading-none">ॐ</div>
-        <div className="absolute bottom-16 right-12 text-[12rem] text-primary/[0.015] dark:text-primary/[0.025] font-serif rotate-12 leading-none">ॐ</div>
-        <div className="absolute top-[40%] right-[20%] text-[8rem] text-primary/[0.01] dark:text-primary/[0.02] font-serif -rotate-6 leading-none">श्री</div>
+        <div className="absolute top-16 left-12 text-[14rem] text-primary/[0.015] dark:text-primary/[0.02] font-serif">ॐ</div>
+        <div className="absolute bottom-24 right-16 text-[10rem] text-primary/[0.015] dark:text-primary/[0.02] font-serif rotate-12">ॐ</div>
+        <div className="absolute top-1/2 right-1/3 text-[7rem] text-primary/[0.01] dark:text-primary/[0.015] font-serif -rotate-6">श्री</div>
       </div>
 
-      <div className="w-full relative z-10">
-        <div className="relative w-full py-12 sm:py-16 lg:py-20 px-4 sm:px-6">
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.04] via-primary/[0.02] to-transparent dark:from-primary/[0.08] dark:via-primary/[0.04]"></div>
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent"></div>
-
-          <div className="max-w-4xl mx-auto relative text-center space-y-5">
-            <div className="relative inline-block">
-              <div className="absolute -inset-6 bg-primary/5 dark:bg-primary/15 rounded-full blur-2xl"></div>
-              <img
-                src="https://oneness.org.in/assets/img/favicon.png"
-                alt="Advaita Vaaridhi"
-                className="h-20 sm:h-24 w-20 sm:w-24 object-contain mx-auto relative drop-shadow-sm"
-                data-testid="img-logo"
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-center gap-3 sm:gap-4">
-                <span className="text-2xl sm:text-3xl text-primary/40 font-serif">ॐ</span>
-                <h1 className="font-serif text-2xl sm:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-primary leading-tight" data-testid="heading-main-title">
-                  {t("advaitaVedantaDigitalLibrary")}
-                </h1>
-                <span className="text-2xl sm:text-3xl text-primary/40 font-serif">ॐ</span>
-              </div>
-              <p className="text-[10px] sm:text-xs uppercase tracking-[0.3em] text-primary/60 mt-2 font-medium">
-                {t("eternalEchoOfNonDuality")}
-              </p>
-            </div>
-
-            <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              {t("welcomeDescription")}
-            </p>
-
-            <div className="flex flex-wrap items-center justify-center gap-6 pt-1">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <div className="p-1.5 rounded-md bg-primary/10">
-                  <BookOpen className="h-3.5 w-3.5 text-primary" />
-                </div>
-                <span className="font-semibold text-foreground">{totalBooks}</span>
-                <span>{t("textPlural")}</span>
-              </div>
-              <div className="w-px h-4 bg-border"></div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <div className="p-1.5 rounded-md bg-primary/10">
-                  <ScrollText className="h-3.5 w-3.5 text-primary" />
-                </div>
-                <span className="font-semibold text-foreground">{totalVerses.toLocaleString()}+</span>
-                <span>{t("verses")}</span>
-              </div>
-              <div className="w-px h-4 bg-border"></div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <div className="p-1.5 rounded-md bg-primary/10">
-                  <Languages className="h-3.5 w-3.5 text-primary" />
-                </div>
-                <span className="font-semibold text-foreground">53</span>
-                <span>{t("languages") || "Languages"}</span>
-              </div>
-            </div>
-
-            <div className="pt-2">
-              <Button
-                variant="default"
-                size="lg"
-                onClick={onBrowseLibrary}
-                className="gap-2.5 font-serif text-base px-8 shadow-md hover:shadow-lg transition-shadow"
-                data-testid="button-browse-library"
-              >
-                <Library className="h-4.5 w-4.5" />
-                {t("browseTheLibrary")}
-                <ArrowRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
+      <div className="max-w-4xl w-full relative z-10 py-4 sm:py-8 space-y-6 sm:space-y-8">
+        <div className="text-center space-y-3">
+          <div className="relative inline-block">
+            <div className="absolute -inset-4 bg-primary/5 dark:bg-primary/15 rounded-full blur-xl"></div>
+            <img
+              src="https://oneness.org.in/assets/img/favicon.png"
+              alt="Advaita Vaaridhi"
+              className="h-16 sm:h-20 w-16 sm:w-20 object-contain mx-auto relative"
+            />
           </div>
+          <div className="flex items-center justify-center gap-2 sm:gap-3">
+            <span className="text-xl sm:text-2xl text-primary/50 font-serif">ॐ</span>
+            <h1 className="font-serif text-xl sm:text-3xl font-semibold tracking-tight text-primary">
+              {t("advaitaVedantaDigitalLibrary")}
+            </h1>
+            <span className="text-xl sm:text-2xl text-primary/50 font-serif">ॐ</span>
+          </div>
+          <p className="text-[10px] sm:text-xs uppercase tracking-[0.25em] text-muted-foreground">
+            {t("eternalEchoOfNonDuality")}
+          </p>
+          <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl mx-auto leading-relaxed mt-2">
+            {t("welcomeDescription")}
+          </p>
         </div>
 
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10 sm:space-y-14">
-          <div className="space-y-5">
-            <div className="text-center space-y-1.5">
-              <h2 className="font-serif text-lg sm:text-xl font-semibold text-foreground" data-testid="heading-explore-collections">
-                {t("treasuryOfWisdom")}
-              </h2>
-              <p className="text-xs sm:text-sm text-muted-foreground max-w-xl mx-auto">
-                {t("treasuryIntro")}
-              </p>
-            </div>
+        <div className="flex justify-center">
+          <Button
+            variant="default"
+            onClick={onBrowseLibrary}
+            className="gap-2 font-serif"
+            data-testid="button-browse-library"
+          >
+            <Library className="h-4 w-4" />
+            {t("browseTheLibrary")}
+          </Button>
+        </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
-              {CATALOG_TREE.map(cat => {
-                const catBooks = getBooksForCategory(books, cat);
-                const IconComponent = categoryIcons[cat.id] || Library;
-                const catImage = categoryImages[cat.id];
-
-                return (
-                  <Card
-                    key={cat.id}
-                    className="group p-0 overflow-hidden border-border/60 bg-card hover:border-primary/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer rounded-xl"
-                    onClick={onBrowseLibrary}
-                    data-testid={`card-category-preview-${cat.id}`}
-                  >
-                    {catImage && (
-                      <div className="relative h-32 sm:h-36 overflow-hidden">
-                        <img
-                          src={catImage}
-                          alt={cat.label}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent"></div>
-                        <div className="absolute bottom-3 left-4 right-4">
-                          <div className="flex items-center gap-2">
-                            <div className="p-1.5 rounded-md bg-primary/90 shadow-sm">
-                              <IconComponent className="h-3.5 w-3.5 text-primary-foreground" />
-                            </div>
-                            <h3 className="font-serif text-base sm:text-lg font-bold text-foreground leading-tight drop-shadow-sm">
-                              {getTranslatedLabel(cat, t)}
-                            </h3>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {!catImage && (
-                      <div className="px-5 pt-5 pb-3">
-                        <div className="flex items-center gap-2">
-                          <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
-                            <IconComponent className="h-5 w-5 text-primary" />
-                          </div>
-                          <h3 className="font-serif text-base sm:text-lg font-bold text-foreground leading-tight">
-                            {getTranslatedLabel(cat, t)}
-                          </h3>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="px-4 sm:px-5 pb-4 pt-2">
-                      {cat.subtitle && (
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-primary/70 font-medium mb-2">
-                          {getTranslatedSubtitle(cat, t)}
-                        </p>
-                      )}
-                      {cat.description && (
-                        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                          {getTranslatedDescription(cat, t)}
-                        </p>
-                      )}
-                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/40">
-                        {catBooks.length > 0 && (
-                          <Badge variant="secondary" className="text-[10px]">
-                            {catBooks.length} {catBooks.length === 1 ? t("textSingular") : t("textPlural")}
-                          </Badge>
-                        )}
-                        <span className="text-[10px] text-primary font-medium uppercase tracking-wider flex items-center gap-1 ml-auto group-hover:gap-2 transition-all">
-                          {t("explore") || "Explore"}
-                          <ChevronRight className="h-3 w-3" />
-                        </span>
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="space-y-5">
+        <div className="space-y-6 sm:space-y-8">
+          <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <div className="h-px flex-1 bg-gradient-to-r from-transparent to-primary/15"></div>
-              <Sparkles className="h-4 w-4 text-primary/40" />
-              <div className="h-px flex-1 bg-gradient-to-l from-transparent to-primary/15"></div>
+              <BookMarked className="h-5 w-5 text-primary shrink-0" />
+              <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground">{t("treasuryOfWisdom")}</h2>
+              <div className="h-px flex-1 bg-primary/15"></div>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                { icon: ScrollText, labelKey: "authenticTranscriptionsLabel", descKey: "authenticTranscriptionsDesc" },
-                { icon: Globe, labelKey: "multiLanguageSupportLabel" || "scholarlySearchLabel", descKey: "multiLanguageSupportDesc" || "scholarlySearchDesc" },
-                { icon: Search, labelKey: "scholarlySearchLabel", descKey: "scholarlySearchDesc" },
-                { icon: BookMarked, labelKey: "manuscriptPreservationLabel", descKey: "manuscriptPreservationDesc" },
-              ].map((feature, i) => (
-                <div
-                  key={i}
-                  className="group p-4 sm:p-5 rounded-xl border border-border/40 bg-card/50 hover:bg-card hover:border-primary/20 hover:shadow-md transition-all duration-200"
-                  data-testid={`card-feature-${i}`}
-                >
-                  <div className="p-2 rounded-lg bg-primary/8 dark:bg-primary/15 border border-primary/10 w-fit mb-3 group-hover:bg-primary/12 transition-colors">
-                    <feature.icon className="h-4 w-4 text-primary" />
-                  </div>
-                  <h3 className="text-sm font-semibold text-foreground mb-1.5">
-                    {t(feature.labelKey)}
-                  </h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
-                    {t(feature.descKey)}
-                  </p>
-                </div>
-              ))}
+            <div className="text-xs sm:text-sm text-muted-foreground leading-relaxed space-y-2 pl-8">
+              <p>{t("treasuryIntro")}</p>
+              <ul className="list-disc pl-4 space-y-1">
+                <li><span className="text-foreground font-medium">{t("prasthanatriyaBhashyasLabel")}</span> {t("prasthanatriyaBhashyasDesc")}</li>
+                <li><span className="text-foreground font-medium">{t("prakaranaGranthasLabel")}</span> {t("prakaranaGranthasDesc")}</li>
+                <li><span className="text-foreground font-medium">{t("scholasticTraditionLabel")}</span> {t("scholasticTraditionDesc")}</li>
+                <li><span className="text-foreground font-medium">{t("regionalLuminariesLabel")}</span> {t("regionalLuminariesDesc")}</li>
+              </ul>
             </div>
           </div>
 
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <Heart className="h-4.5 w-4.5 text-primary/60 shrink-0" />
+              <Heart className="h-5 w-5 text-primary shrink-0" />
               <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground">{t("ourVisionSanskritikEkta")}</h2>
-              <div className="h-px flex-1 bg-primary/10"></div>
+              <div className="h-px flex-1 bg-primary/15"></div>
             </div>
-            <div className="pl-7 sm:pl-8">
-              <p className="text-sm text-muted-foreground leading-relaxed max-w-3xl">
-                {t("visionDescription")}
-              </p>
+            <div className="text-xs sm:text-sm text-muted-foreground leading-relaxed pl-8">
+              <p>{t("visionDescription")}</p>
             </div>
-            <blockquote className="text-center font-serif text-sm sm:text-base text-primary/60 italic py-3">
+            <blockquote className="text-center font-serif text-sm sm:text-base text-primary/70 italic py-2">
               {t("brahmanQuote")}
             </blockquote>
           </div>
 
-          {books.some(b => bookVideoConfig[b.slug]) && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-center gap-2">
-                <div className="h-px w-10 bg-primary/20"></div>
-                <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider" data-testid="heading-explanatory-videos">
-                  {t("watchIntroduction")}
-                </h2>
-                <div className="h-px w-10 bg-primary/20"></div>
-              </div>
-              {books.filter(b => bookVideoConfig[b.slug]).map(b => (
-                <VideoInline
-                  key={b.slug}
-                  videoId={bookVideoConfig[b.slug].videoId}
-                  title={bookVideoConfig[b.slug].videoTitle}
-                  className="max-w-xl mx-auto rounded-xl overflow-hidden border border-primary/20 shadow-sm"
-                />
-              ))}
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Library className="h-5 w-5 text-primary shrink-0" />
+              <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground">{t("featuresOfDigitalLibrary")}</h2>
+              <div className="h-px flex-1 bg-primary/15"></div>
             </div>
-          )}
+            <div className="text-xs sm:text-sm text-muted-foreground leading-relaxed space-y-1 pl-8">
+              <ul className="list-disc pl-4 space-y-1">
+                <li><span className="text-foreground font-medium">{t("authenticTranscriptionsLabel")}</span> {t("authenticTranscriptionsDesc")}</li>
+                <li><span className="text-foreground font-medium">{t("manuscriptPreservationLabel")}</span> {t("manuscriptPreservationDesc")}</li>
+                <li><span className="text-foreground font-medium">{t("scholarlySearchLabel")}</span> {t("scholarlySearchDesc")}</li>
+              </ul>
+            </div>
+          </div>
 
-          <div className="text-center space-y-3 pb-6">
-            <blockquote className="font-serif text-xs sm:text-sm text-primary/50 italic">
-              {t("saVidyaQuote")}
-            </blockquote>
-            <p className="text-xs text-muted-foreground/60">
-              {t("invitationText")}
-            </p>
-            <p className="text-[10px] text-muted-foreground/40 italic">
-              {t("managedByNyas")}
-            </p>
-            <div className="text-primary/20 text-xs tracking-widest font-serif pt-2">
-              ॥ सर्वं खल्विदं ब्रह्म ॥
+          <blockquote className="text-center font-serif text-xs sm:text-sm text-primary/60 italic py-2">
+            {t("saVidyaQuote")}
+          </blockquote>
+
+          <p className="text-xs text-center text-muted-foreground/70">
+            {t("invitationText")}
+          </p>
+          <p className="text-[10px] text-center text-muted-foreground/50 italic">
+            {t("managedByNyas")}
+          </p>
+        </div>
+
+        {books.some(b => bookVideoConfig[b.slug]) && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-center gap-2">
+              <div className="h-px w-8 bg-primary/30"></div>
+              <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider" data-testid="heading-explanatory-videos">
+                {t("watchIntroduction")}
+              </h2>
+              <div className="h-px w-8 bg-primary/30"></div>
             </div>
+            {books.filter(b => bookVideoConfig[b.slug]).map(b => (
+              <VideoInline
+                key={b.slug}
+                videoId={bookVideoConfig[b.slug].videoId}
+                title={bookVideoConfig[b.slug].videoTitle}
+                className="max-w-xl mx-auto rounded-xl overflow-hidden border border-primary/20"
+              />
+            ))}
+          </div>
+        )}
+
+        <div className="text-center pb-4">
+          <div className="text-primary/25 text-xs tracking-widest font-serif">
+            ॥ सर्वं खल्विदं ब्रह्म ॥
           </div>
         </div>
       </div>
