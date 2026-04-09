@@ -840,110 +840,6 @@ export function BookReader({
               </Button>
             </div>
 
-            {commentaryOptions && commentaryOptions.authors.length > 1 && (
-              <div className="mt-4 sm:mt-5" data-testid="cover-commentary-selection">
-                <div className="flex items-center gap-2 mb-3">
-                  <Feather className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                  <h2 className="font-serif text-base sm:text-lg font-semibold">{t("commentaryAndScholars")}</h2>
-                </div>
-                <p className="text-xs text-muted-foreground mb-3">{t("selectCommentaryHint")}</p>
-                <div className="space-y-1" data-testid="cover-commentary-list">
-                  {(() => {
-                    const bhashyaAuthors = commentaryOptions.authors.filter(a => isBhashyaAuthor(a.authorName));
-                    const teekaAuthors = commentaryOptions.authors.filter(a => isTeekaAuthor(a.authorName));
-                    const otherAuthors = commentaryOptions.authors.filter(a => !isBhashyaAuthor(a.authorName) && !isTeekaAuthor(a.authorName));
-                    const isSelected = (name: string) => selectedAuthor === name;
-                    const renderAuthorButton = (author: CommentaryOption) => (
-                      <button
-                        key={author.authorName}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left transition-colors ${
-                          isSelected(author.authorName)
-                            ? "bg-primary/10 border border-primary/30"
-                            : "hover-elevate active-elevate-2 border border-transparent"
-                        }`}
-                        onClick={() => {
-                          handleAuthorChange(author.authorName);
-                        }}
-                        data-testid={`cover-author-${author.authorName.replace(/\s+/g, '-').toLowerCase()}`}
-                      >
-                        <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
-                          isSelected(author.authorName) ? "bg-primary text-primary-foreground" : "bg-muted"
-                        }`}>
-                          {isSelected(author.authorName) ? (
-                            <Check className="h-3 w-3" />
-                          ) : (
-                            <User className="h-3 w-3 text-muted-foreground" />
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <span className={`text-sm font-medium ${isSelected(author.authorName) ? "text-primary" : "text-foreground"}`}>
-                            {tc(author.authorName, bookAuthorTranslations)}
-                          </span>
-                          {author.authorTitle && (
-                            <span className="text-[10px] text-muted-foreground ml-1.5">
-                              ({author.authorTitle})
-                            </span>
-                          )}
-                        </div>
-                        <Badge variant="outline" className="text-[9px] shrink-0">
-                          {author.languageCodes.length} {author.languageCodes.length === 1 ? t("lang") : t("langs")}
-                        </Badge>
-                      </button>
-                    );
-                    return (
-                      <>
-                        {bhashyaAuthors.length > 0 && (
-                          <div className="mb-2">
-                            <div className="flex items-center gap-1.5 mb-1 px-1">
-                              <Feather className="h-3 w-3 text-primary/60" />
-                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{t("bhashyam")}</span>
-                            </div>
-                            {bhashyaAuthors.map(renderAuthorButton)}
-                          </div>
-                        )}
-                        {teekaAuthors.length > 0 && (
-                          <div className="mb-2">
-                            <div className="flex items-center gap-1.5 mb-1 px-1">
-                              <ScrollText className="h-3 w-3 text-primary/60" />
-                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{t("teeka")}</span>
-                            </div>
-                            {teekaAuthors.map(renderAuthorButton)}
-                          </div>
-                        )}
-                        {otherAuthors.length > 0 && (
-                          <div className="mb-2">
-                            <div className="flex items-center gap-1.5 mb-1 px-1">
-                              <User className="h-3 w-3 text-primary/60" />
-                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{t("otherCommentators")}</span>
-                            </div>
-                            {otherAuthors.map(renderAuthorButton)}
-                          </div>
-                        )}
-                        <button
-                          className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left transition-colors ${
-                            isShowingAll
-                              ? "bg-primary/10 border border-primary/30"
-                              : "hover-elevate active-elevate-2 border border-transparent"
-                          }`}
-                          onClick={() => handleAuthorChange("__all__")}
-                          data-testid="cover-author-all"
-                        >
-                          <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
-                            isShowingAll ? "bg-primary text-primary-foreground" : "bg-muted"
-                          }`}>
-                            {isShowingAll ? <Check className="h-3 w-3" /> : <User className="h-3 w-3 text-muted-foreground" />}
-                          </div>
-                          <span className={`text-sm font-medium ${isShowingAll ? "text-primary" : "text-foreground"}`}>
-                            {t("showAllCommentaries")}
-                          </span>
-                        </button>
-                      </>
-                    );
-                  })()}
-                </div>
-              </div>
-            )}
-
             {tocHierarchy.groups.length > 0 && (
               <div className="mt-5 sm:mt-6">
                 <div className="rounded-xl border border-border/60 bg-card/60 dark:bg-card/40 overflow-hidden shadow-sm">
@@ -954,10 +850,10 @@ export function BookReader({
                     </span>
                   </div>
 
-                  <div className="divide-y divide-border/30" data-testid="toc-list">
+                  <div className="p-3 space-y-2" data-testid="toc-list">
                     {hasIntro && (
                       <button
-                        className="flex items-center gap-3 w-full px-4 py-3 text-left hover:bg-primary/5 transition-colors group"
+                        className="flex items-center gap-3 w-full px-4 py-3 text-left rounded-lg border border-border/40 bg-card hover:bg-primary/5 transition-colors group"
                         onClick={() => {
                           const introPageIdx = verses.findIndex(v => v.verseNumber === 0 && isIntroSection(v.sectionTitle));
                           if (introPageIdx >= 0) {
@@ -982,7 +878,7 @@ export function BookReader({
                         ? adhyay.khandas.reduce((sum, k) => sum + k.verses.length, 0)
                         : adhyay.verses.length;
                       return (
-                        <div key={adhyay.adhyayNumber}>
+                        <div key={adhyay.adhyayNumber} className="rounded-lg border border-border/40 bg-card overflow-hidden">
                           <div className="flex items-center w-full hover:bg-primary/5 transition-colors group">
                             <button
                               className="flex items-center gap-3 flex-1 min-w-0 px-4 py-3 text-left"
@@ -1013,15 +909,15 @@ export function BookReader({
                           {isExpanded && (
                             <div className="bg-muted/20 dark:bg-muted/10 border-t border-border/20 animate-in fade-in slide-in-from-top-1 duration-150">
                               {tocHierarchy.type === "three-level" ? (
-                                <div className="divide-y divide-border/20">
+                                <div className="p-2 space-y-1.5">
                                   {adhyay.khandas.map(khanda => {
                                     const khandaKey = `${adhyay.adhyayNumber}-${khanda.khandaNumber}`;
                                     const isKhandaExpanded = expandedTOCKhandas.has(khandaKey);
                                     return (
-                                      <div key={khandaKey}>
+                                      <div key={khandaKey} className="rounded-md border border-border/30 bg-card/80 overflow-hidden">
                                         <div className="flex items-center w-full hover:bg-primary/5 transition-colors group/khanda">
                                           <button
-                                            className="flex items-center gap-3 flex-1 min-w-0 pl-8 pr-4 py-2.5 text-left"
+                                            className="flex items-center gap-3 flex-1 min-w-0 pl-4 pr-4 py-2.5 text-left"
                                             onClick={() => {
                                               onSelectPart?.(adhyay.adhyayNumber, khanda.khandaNumber);
                                             }}
@@ -1045,11 +941,11 @@ export function BookReader({
                                         </div>
 
                                         {isKhandaExpanded && (
-                                          <div className="bg-muted/15 dark:bg-muted/5 divide-y divide-border/10 animate-in fade-in slide-in-from-top-1 duration-150">
+                                          <div className="bg-muted/15 dark:bg-muted/5 border-t border-border/10 p-1.5 space-y-1 animate-in fade-in slide-in-from-top-1 duration-150">
                                             {khanda.verses.map((v, idx) => (
                                               <button
                                                 key={v.id}
-                                                className="w-full flex items-center gap-3 pl-14 pr-4 py-2 text-left hover:bg-primary/5 transition-colors"
+                                                className="w-full flex items-center gap-3 pl-6 pr-4 py-2 text-left rounded-md hover:bg-primary/5 transition-colors border border-transparent hover:border-border/30"
                                                 onClick={() => handleTOCVerseClick(v.verseNumber)}
                                                 data-testid={`toc-verse-${v.verseNumber}`}
                                               >
@@ -1068,11 +964,11 @@ export function BookReader({
                                   })}
                                 </div>
                               ) : (
-                                <div className="divide-y divide-border/20">
+                                <div className="p-2 space-y-1">
                                   {adhyay.verses.map((v, idx) => (
                                     <button
                                       key={v.id}
-                                      className="w-full flex items-center gap-3 pl-8 pr-4 py-2 text-left hover:bg-primary/5 transition-colors"
+                                      className="w-full flex items-center gap-3 pl-4 pr-4 py-2 text-left rounded-md hover:bg-primary/5 transition-colors border border-transparent hover:border-border/30"
                                       onClick={() => handleTOCVerseClick(v.verseNumber)}
                                       data-testid={`toc-verse-${v.verseNumber}`}
                                     >
@@ -1092,6 +988,123 @@ export function BookReader({
                       );
                     })}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {commentaryOptions && commentaryOptions.authors.length > 1 && (
+              <div className="mt-5 sm:mt-6" data-testid="cover-commentary-selection">
+                <div className="flex items-center gap-2 mb-3">
+                  <Feather className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  <h2 className="font-serif text-base sm:text-lg font-semibold">{t("commentaryAndScholars")}</h2>
+                </div>
+                <p className="text-xs text-muted-foreground mb-4">{t("selectCommentaryHint")}</p>
+                <div data-testid="cover-commentary-list">
+                  {(() => {
+                    const bhashyaAuthors = commentaryOptions.authors.filter(a => isBhashyaAuthor(a.authorName));
+                    const teekaAuthors = commentaryOptions.authors.filter(a => isTeekaAuthor(a.authorName));
+                    const otherAuthors = commentaryOptions.authors.filter(a => !isBhashyaAuthor(a.authorName) && !isTeekaAuthor(a.authorName));
+                    const isSelected = (name: string) => selectedAuthor === name;
+                    const renderAuthorCard = (author: CommentaryOption) => (
+                      <button
+                        key={author.authorName}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors w-full ${
+                          isSelected(author.authorName)
+                            ? "bg-primary/10 border border-primary/30"
+                            : "bg-card border border-border/50 hover:border-primary/30 hover:bg-primary/5"
+                        }`}
+                        onClick={() => {
+                          handleAuthorChange(author.authorName);
+                        }}
+                        data-testid={`cover-author-${author.authorName.replace(/\s+/g, '-').toLowerCase()}`}
+                      >
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
+                          isSelected(author.authorName) ? "bg-primary text-primary-foreground" : "bg-muted"
+                        }`}>
+                          {isSelected(author.authorName) ? (
+                            <Check className="h-3.5 w-3.5" />
+                          ) : (
+                            <User className="h-3.5 w-3.5 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <span className={`text-sm font-medium ${isSelected(author.authorName) ? "text-primary" : "text-foreground"}`}>
+                            {tc(author.authorName, bookAuthorTranslations)}
+                          </span>
+                          {author.authorTitle && (
+                            <span className="text-[10px] text-muted-foreground ml-1.5">
+                              ({author.authorTitle})
+                            </span>
+                          )}
+                        </div>
+                        <Badge variant="outline" className="text-[9px] shrink-0">
+                          {author.languageCodes.length} {author.languageCodes.length === 1 ? t("lang") : t("langs")}
+                        </Badge>
+                      </button>
+                    );
+
+                    const hasBothColumns = bhashyaAuthors.length > 0 && teekaAuthors.length > 0;
+
+                    return (
+                      <div className="space-y-4">
+                        <div className={hasBothColumns ? "grid grid-cols-1 md:grid-cols-2 gap-4" : ""}>
+                          {bhashyaAuthors.length > 0 && (
+                            <div className="rounded-xl border border-border/60 bg-card/60 dark:bg-card/40 overflow-hidden">
+                              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/40 bg-muted/30">
+                                <Feather className="h-3.5 w-3.5 text-primary/70" />
+                                <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{t("bhashyam")}</span>
+                              </div>
+                              <div className="p-2 space-y-2">
+                                {bhashyaAuthors.map(renderAuthorCard)}
+                              </div>
+                            </div>
+                          )}
+                          {teekaAuthors.length > 0 && (
+                            <div className="rounded-xl border border-border/60 bg-card/60 dark:bg-card/40 overflow-hidden">
+                              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/40 bg-muted/30">
+                                <ScrollText className="h-3.5 w-3.5 text-primary/70" />
+                                <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{t("teeka")}</span>
+                              </div>
+                              <div className="p-2 space-y-2">
+                                {teekaAuthors.map(renderAuthorCard)}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {otherAuthors.length > 0 && (
+                          <div className="rounded-xl border border-border/60 bg-card/60 dark:bg-card/40 overflow-hidden">
+                            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/40 bg-muted/30">
+                              <User className="h-3.5 w-3.5 text-primary/70" />
+                              <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">{t("otherCommentators")}</span>
+                            </div>
+                            <div className="p-2 space-y-2">
+                              {otherAuthors.map(renderAuthorCard)}
+                            </div>
+                          </div>
+                        )}
+
+                        <button
+                          className={`flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors w-full ${
+                            isShowingAll
+                              ? "bg-primary/10 border border-primary/30"
+                              : "bg-card border border-border/50 hover:border-primary/30 hover:bg-primary/5"
+                          }`}
+                          onClick={() => handleAuthorChange("__all__")}
+                          data-testid="cover-author-all"
+                        >
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
+                            isShowingAll ? "bg-primary text-primary-foreground" : "bg-muted"
+                          }`}>
+                            {isShowingAll ? <Check className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5 text-muted-foreground" />}
+                          </div>
+                          <span className={`text-sm font-medium ${isShowingAll ? "text-primary" : "text-foreground"}`}>
+                            {t("showAllCommentaries")}
+                          </span>
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             )}
