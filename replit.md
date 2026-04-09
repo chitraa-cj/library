@@ -18,7 +18,14 @@ Preferred communication style: Simple, everyday language.
 - **Styling**: Tailwind CSS with custom CSS variables for theming (light/dark mode)
 - **Layout**: Sidebar-based with three main panels:
     1.  **AppSidebar**: Book navigation and search, supporting hierarchical structures (Adhyay > Khanda > Verse).
-    2.  **BookReader**: Main content area for verses and commentary selection. Includes introduction page support for books with `BhashyakaraIntroduction` data from Strapi (rendered as verse 0 with `sectionTitle: "Introduction"`).
+    2.  **BookReader**: Main content area with redesigned verse page layout:
+        - **Verse card**: Sanskrit text in bordered card with transliteration below.
+        - **Meaning section**: Labeled translation section below the verse.
+        - **Bhashya tabs**: Author tabs (Shankar Bhashya, etc.) as clickable tab buttons.
+        - **Read Tīkās toggle**: Reveals teeka panel alongside bhashya.
+        - **Side-by-side layout**: Bhashya content card (left) + Teeka card with author dropdown (right) on large screens.
+        - **Language selector**: Per-page language override at top-right.
+        - Introduction page support for books with `BhashyakaraIntroduction` data from Strapi.
     3.  **TranslationPanel**: Displays translations and scholarly explanations.
 - **Header**: Breadcrumb navigation showing current book position.
 

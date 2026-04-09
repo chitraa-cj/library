@@ -366,6 +366,9 @@ export function BookReader({
   const [showCoverPage, setShowCoverPage] = useState(true);
   const [expandedTOCAdhyays, setExpandedTOCAdhyays] = useState<Set<number>>(new Set());
   const [expandedTOCKhandas, setExpandedTOCKhandas] = useState<Set<string>>(new Set());
+  const [showTeekas, setShowTeekas] = useState(false);
+  const [selectedBhashyaAuthor, setSelectedBhashyaAuthor] = useState<string | null>(null);
+  const [selectedTeekaAuthor, setSelectedTeekaAuthor] = useState<string | null>(null);
 
   const handleTextSelect = useCallback(() => {
     const selection = window.getSelection();
@@ -1490,6 +1493,28 @@ export function BookReader({
     );
   }
 
+  const bhashyaAuthors = useMemo(() => {
+    if (!commentaryOptions) return [];
+    return commentaryOptions.authors.filter(a => isBhashyaAuthor(a.authorName));
+  }, [commentaryOptions]);
+
+  const teekaAuthors = useMemo(() => {
+    if (!commentaryOptions) return [];
+    return commentaryOptions.authors.filter(a => isTeekaAuthor(a.authorName));
+  }, [commentaryOptions]);
+
+  useEffect(() => {
+    if (bhashyaAuthors.length > 0 && !selectedBhashyaAuthor) {
+      setSelectedBhashyaAuthor(bhashyaAuthors[0].authorName);
+    }
+  }, [bhashyaAuthors, selectedBhashyaAuthor]);
+
+  useEffect(() => {
+    if (teekaAuthors.length > 0 && !selectedTeekaAuthor) {
+      setSelectedTeekaAuthor(teekaAuthors[0].authorName);
+    }
+  }, [teekaAuthors, selectedTeekaAuthor]);
+
   return (
     <div 
       className="flex-1 flex flex-col min-w-0 focus:outline-none" 
@@ -1497,7 +1522,7 @@ export function BookReader({
       onKeyDown={handleKeyDown}
     >
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6">
           {selectionPopup && onAddNoteWithText && (
             <div
               className="fixed z-50 animate-in fade-in slide-in-from-bottom-1 duration-150"
@@ -1517,7 +1542,7 @@ export function BookReader({
               </Button>
             </div>
           )}
-          <div className="max-w-2xl xl:max-w-3xl w-full mx-auto">
+          <div className="max-w-4xl xl:max-w-5xl w-full mx-auto">
             {isVerseLoading || !currentVerseDetails ? (
               <div className="space-y-4 py-8">
                 <Skeleton className="h-6 w-32 mx-auto" />
@@ -1531,54 +1556,31 @@ export function BookReader({
               onMouseUp={handleTextSelect}
               onTouchEnd={handleTextSelect}
             >
-              {commentaryOptions && (commentaryOptions.languages.length > 1 || availableAuthors.length > 0) && (
-                <div className="flex items-center justify-end gap-2 mb-2" data-testid="book-language-selector">
-                  {availableAuthors.length > 0 && (
-                    <div className="flex items-center gap-1">
-                      <User className="h-3 w-3 text-muted-foreground shrink-0" />
-                      <Select
-                        value={selectedAuthor || availableAuthors[0]?.authorName || ""}
-                        onValueChange={handleAuthorChange}
-                      >
-                        <SelectTrigger className="h-7 w-auto min-w-[70px] max-w-[140px] text-[11px] border-none bg-transparent shadow-none focus:ring-0 px-1" data-testid="select-book-author">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableAuthors.map((author) => (
-                            <SelectItem key={author.authorName} value={author.authorName} data-testid={`option-book-author-${author.authorName}`}>
-                              {tc(author.authorName, bookAuthorTranslations)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                  {commentaryOptions.languages.length > 1 && (
-                    <div className="flex items-center gap-1">
-                      <Globe className="h-3 w-3 text-muted-foreground shrink-0" />
-                      <Select
-                        value={effectiveLang || "english"}
-                        onValueChange={(val) => setLocalLanguage(val)}
-                      >
-                        <SelectTrigger className="h-7 w-auto min-w-[70px] max-w-[120px] text-[11px] border-none bg-transparent shadow-none focus:ring-0 px-1" data-testid="select-book-language">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {commentaryOptions.languages.map((lang) => {
-                            const normCode = lang.code === "hi" ? "hindi" : lang.code === "en" ? "english" : lang.code;
-                            return (
-                              <SelectItem key={normCode} value={normCode} data-testid={`option-book-lang-${normCode}`}>
-                                {lang.name}
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
+              {commentaryOptions && commentaryOptions.languages.length > 1 && (
+                <div className="flex items-center justify-end gap-2 mb-3" data-testid="book-language-selector">
+                  <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <Select
+                    value={effectiveLang || "english"}
+                    onValueChange={(val) => setLocalLanguage(val)}
+                  >
+                    <SelectTrigger className="h-8 w-auto min-w-[100px] max-w-[160px] text-xs border border-border/50 bg-card/50 shadow-none focus:ring-1 focus:ring-primary/30 px-2 rounded-md" data-testid="select-book-language">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {commentaryOptions.languages.map((lang) => {
+                        const normCode = lang.code === "hi" ? "hindi" : lang.code === "en" ? "english" : lang.code;
+                        return (
+                          <SelectItem key={normCode} value={normCode} data-testid={`option-book-lang-${normCode}`}>
+                            {lang.name}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
-              <div className="space-y-2 sm:space-y-3">
+
+              <div className="rounded-xl border border-primary/20 bg-primary/5 dark:bg-primary/10 p-4 sm:p-6 mb-4" data-testid="verse-card">
                 <div 
                   className="font-serif text-lg sm:text-xl leading-relaxed sm:leading-loose text-center"
                   data-testid={`text-original-${currentVerse.verseNumber}`}
@@ -1594,98 +1596,162 @@ export function BookReader({
 
                 {verseTransliteration && (
                   <div
-                    className="font-serif text-sm sm:text-base leading-relaxed sm:leading-loose text-center text-primary/70 italic whitespace-pre-line"
+                    className="font-serif text-sm sm:text-base leading-relaxed sm:leading-loose text-center text-primary/60 dark:text-primary/50 italic whitespace-pre-line mt-3 pt-3 border-t border-primary/10"
                     data-testid={`text-transliteration-${currentVerse.verseNumber}`}
                   >
                     {verseTransliteration}
                   </div>
                 )}
+              </div>
 
-                {availableTranslations.length > 0 && (
-                  <div className="pt-2 sm:pt-2">
-                    {availableTranslations.map((translation: VerseTranslation, idx: number) => (
-                      <div key={translation.id} className={idx > 0 ? "mt-3 pt-3 border-t border-border/30" : ""}>
-                        <div 
-                          className="text-sm sm:text-base leading-relaxed text-center text-muted-foreground"
-                          data-testid={`text-translation-${translation.languageCode}-${currentVerse.verseNumber}`}
-                        >
-                          <WordTooltip
-                            content={translation.content}
-                            commentaryContent={commentaryContext}
-                            sourceLanguage={translation.languageCode}
-                            verseId={currentVerse.id}
-                            globalLanguage={lang}
-                          />
-                        </div>
-                      </div>
-                    ))}
+              {availableTranslations.length > 0 && (
+                <div className="mb-5" data-testid="meaning-section">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs uppercase tracking-widest font-bold text-primary">{t("meaning") || "MEANING"}</span>
+                    <div className="h-px flex-1 bg-primary/15"></div>
                   </div>
-                )}
-
-                {hasCommentaryOptions && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-center gap-2" data-testid="commentary-mode-toggle">
-                      <Button
-                        variant={commentaryMode === "bhashyam" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => { setCommentaryMode("bhashyam"); setCommentaryExpanded(true); }}
-                        className="text-xs rounded-full toggle-elevate"
-                        data-testid="button-mode-bhashyam"
+                  {availableTranslations.map((translation: VerseTranslation, idx: number) => (
+                    <div key={translation.id} className={idx > 0 ? "mt-3 pt-3 border-t border-border/20" : ""}>
+                      <div 
+                        className="text-sm sm:text-base leading-relaxed text-foreground/80 font-serif"
+                        data-testid={`text-translation-${translation.languageCode}-${currentVerse.verseNumber}`}
                       >
-                        {t("bhashyam")}
-                      </Button>
-                      <Button
-                        variant={commentaryMode === "teeka" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => { setCommentaryMode("teeka"); setCommentaryExpanded(true); }}
-                        className="text-xs rounded-full toggle-elevate"
-                        data-testid="button-mode-teeka"
-                      >
-                        {t("teeka")}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setCommentaryExpanded(!commentaryExpanded)}
-                        data-testid="button-toggle-commentary"
-                      >
-                        <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${commentaryExpanded ? "rotate-180" : ""}`} />
-                      </Button>
+                        <WordTooltip
+                          content={translation.content}
+                          commentaryContent={commentaryContext}
+                          sourceLanguage={translation.languageCode}
+                          verseId={currentVerse.id}
+                          globalLanguage={lang}
+                        />
+                      </div>
                     </div>
+                  ))}
+                </div>
+              )}
 
-                    {commentaryExpanded && effectiveLang && (
-                      <div className="pt-2 border-t border-border/30 animate-in fade-in slide-in-from-top-2 duration-200">
-                        {commentaryMode === "bhashyam" ? (
+              {hasCommentaryOptions && (
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-2" data-testid="bhashya-tabs-row">
+                    {bhashyaAuthors.map((author) => (
+                      <button
+                        key={author.authorName}
+                        className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                          selectedBhashyaAuthor === author.authorName
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "bg-card border border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/30"
+                        }`}
+                        onClick={() => {
+                          setSelectedBhashyaAuthor(author.authorName);
+                          handleAuthorChange(author.authorName);
+                          setCommentaryMode("bhashyam");
+                          setCommentaryExpanded(true);
+                        }}
+                        data-testid={`tab-bhashya-${author.authorName.replace(/\s+/g, '-').toLowerCase()}`}
+                      >
+                        {tc(author.authorName, bookAuthorTranslations)}
+                      </button>
+                    ))}
+
+                    {teekaAuthors.length > 0 && (
+                      <button
+                        className={`ml-auto px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 ${
+                          showTeekas
+                            ? "bg-primary/15 border border-primary/30 text-primary"
+                            : "bg-card border border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/30"
+                        }`}
+                        onClick={() => setShowTeekas(!showTeekas)}
+                        data-testid="button-toggle-teekas"
+                      >
+                        <ScrollText className="h-3.5 w-3.5" />
+                        {showTeekas ? t("hideTeekas") || "Hide Tīkās" : t("readTeekas") || "Read Tīkās"}
+                      </button>
+                    )}
+                  </div>
+
+                  <div className={`grid gap-4 ${showTeekas && teekaAuthors.length > 0 ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"}`}>
+                    <div className="rounded-xl border border-border/60 bg-card/80 dark:bg-card/50 overflow-hidden shadow-sm" data-testid="bhashya-content-card">
+                      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/40 bg-muted/30">
+                        <Feather className="h-3.5 w-3.5 text-primary/70" />
+                        <span className="text-xs font-bold uppercase tracking-wider text-foreground/80">
+                          {selectedBhashyaAuthor 
+                            ? `${tc(selectedBhashyaAuthor, bookAuthorTranslations)}`
+                            : t("bhashyam")}
+                        </span>
+                      </div>
+                      <div className="p-4">
+                        {commentaryExpanded && effectiveLang && (
                           <VerseExplanation 
                             verseId={currentVerse.id} 
                             languageCode={effectiveLang}
-                            authorName={isShowingAll ? null : selectedAuthor}
-                            showAll={isShowingAll}
+                            authorName={selectedBhashyaAuthor}
+                            showAll={false}
                             filterFn={isBhashyaAuthor}
                             mode="bhashyam"
                           />
-                        ) : (
-                          <VerseExplanation 
-                            verseId={currentVerse.id} 
-                            languageCode={effectiveLang}
-                            authorName={null}
-                            showAll={true}
-                            filterFn={isTeekaAuthor}
-                            mode="teeka"
-                          />
                         )}
+                      </div>
+                    </div>
+
+                    {showTeekas && teekaAuthors.length > 0 && (
+                      <div className="rounded-xl border border-border/60 bg-card/80 dark:bg-card/50 overflow-hidden shadow-sm" data-testid="teeka-content-card">
+                        <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/40 bg-muted/30">
+                          <div className="flex items-center gap-2">
+                            <ScrollText className="h-3.5 w-3.5 text-primary/70" />
+                            <span className="text-xs font-bold uppercase tracking-wider text-foreground/80">
+                              {t("teeka")}
+                            </span>
+                          </div>
+                          {teekaAuthors.length > 1 && (
+                            <Select
+                              value={selectedTeekaAuthor || teekaAuthors[0]?.authorName || ""}
+                              onValueChange={setSelectedTeekaAuthor}
+                            >
+                              <SelectTrigger className="h-7 w-auto min-w-[120px] max-w-[200px] text-[11px] border border-border/50 bg-background/60 shadow-none focus:ring-1 focus:ring-primary/30 px-2 rounded-md" data-testid="select-teeka-author">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {teekaAuthors.map((author) => (
+                                  <SelectItem key={author.authorName} value={author.authorName} data-testid={`option-teeka-${author.authorName.replace(/\s+/g, '-').toLowerCase()}`}>
+                                    {tc(author.authorName, bookAuthorTranslations)}
+                                    {author.authorTitle && (
+                                      <span className="text-muted-foreground ml-1">— {author.authorTitle}</span>
+                                    )}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                          {teekaAuthors.length === 1 && (
+                            <span className="text-[11px] text-muted-foreground">
+                              {tc(teekaAuthors[0].authorName, bookAuthorTranslations)}
+                              {teekaAuthors[0].authorTitle && ` — ${teekaAuthors[0].authorTitle}`}
+                            </span>
+                          )}
+                        </div>
+                        <div className="p-4">
+                          {effectiveLang && (
+                            <VerseExplanation 
+                              verseId={currentVerse.id} 
+                              languageCode={effectiveLang}
+                              authorName={selectedTeekaAuthor}
+                              showAll={false}
+                              filterFn={isTeekaAuthor}
+                              mode="teeka"
+                            />
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
             )}
           </div>
         </div>
 
         <div className="shrink-0 border-t border-border/50 px-4 sm:px-8 py-2 sm:py-3">
-          <div className="max-w-2xl xl:max-w-3xl mx-auto flex items-center justify-between gap-2">
+          <div className="max-w-4xl xl:max-w-5xl mx-auto flex items-center justify-between gap-2">
             <Button
               variant="ghost"
               size="sm"
@@ -1718,7 +1784,7 @@ export function BookReader({
 
         {book?.slug && bookMediaConfig[book.slug]?.videoId && (
           <div className="border-t border-border px-3 sm:px-8 py-2 bg-background/80">
-            <div className="max-w-2xl xl:max-w-3xl mx-auto flex items-center justify-center">
+            <div className="max-w-4xl xl:max-w-5xl mx-auto flex items-center justify-center">
               <VideoPopup 
                 videoId={bookMediaConfig[book.slug].videoId!}
                 title={bookMediaConfig[book.slug].videoTitle || t("introductionVideo")}
