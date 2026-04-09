@@ -113,6 +113,7 @@ interface CommentaryOption {
   authorName: string;
   authorTitle: string | null;
   languageCodes: string[];
+  commentaryType?: "bhashya" | "teeka";
 }
 
 interface CommentaryOptions {
@@ -154,13 +155,29 @@ function isShankaracharya(name: string): boolean {
   return lower.includes("shankaracharya") || lower.includes("shankarayacharya") || lower.includes("sankara") || lower.includes("śaṅkara");
 }
 
-function isTeekaAuthor(name: string): boolean {
+function isTeekaAuthorByName(name: string): boolean {
   const lower = name.toLowerCase();
   return lower.includes("anandagiri") || lower.includes("ānandagiri");
 }
 
-function isBhashyaAuthor(name: string): boolean {
+function isBhashyaAuthorByName(name: string): boolean {
   return isShankaracharya(name);
+}
+
+function isTeekaAuthor(nameOrOption: string | CommentaryOption): boolean {
+  if (typeof nameOrOption === "string") {
+    return isTeekaAuthorByName(nameOrOption);
+  }
+  if (nameOrOption.commentaryType) return nameOrOption.commentaryType === "teeka";
+  return isTeekaAuthorByName(nameOrOption.authorName);
+}
+
+function isBhashyaAuthor(nameOrOption: string | CommentaryOption): boolean {
+  if (typeof nameOrOption === "string") {
+    return isBhashyaAuthorByName(nameOrOption);
+  }
+  if (nameOrOption.commentaryType) return nameOrOption.commentaryType === "bhashya";
+  return isBhashyaAuthorByName(nameOrOption.authorName);
 }
 
 function EnglishTranslationToggle({ englishContent }: { englishContent: string }) {
@@ -199,7 +216,7 @@ function VerseExplanation({
   languageCode: string;
   authorName: string | null;
   showAll: boolean;
-  filterFn?: (authorName: string) => boolean;
+  filterFn?: (explanation: any) => boolean;
   mode?: "bhashyam" | "teeka";
 }) {
   const { t, locale } = useTranslation(languageCode);
@@ -215,7 +232,7 @@ function VerseExplanation({
 
   let allForLanguage = explanations?.filter(e => langMatches(e.languageCode, languageCode)) || [];
   if (filterFn) {
-    const filtered = allForLanguage.filter(e => filterFn(e.authorName));
+    const filtered = allForLanguage.filter(e => filterFn(e));
     allForLanguage = filtered;
   }
 
@@ -480,9 +497,9 @@ export function BookReader({
       authors = authors.filter(a => a.languageCodes.some(c => matchCodes.includes(c)));
     }
     if (commentaryMode === "bhashyam") {
-      authors = authors.filter(a => isBhashyaAuthor(a.authorName));
+      authors = authors.filter(a => isBhashyaAuthor(a));
     } else if (commentaryMode === "teeka") {
-      authors = authors.filter(a => isTeekaAuthor(a.authorName));
+      authors = authors.filter(a => isTeekaAuthor(a));
     }
     return authors;
   }, [commentaryOptions, effectiveLang, commentaryMode]);
@@ -671,12 +688,12 @@ export function BookReader({
 
   const bhashyaAuthors = useMemo(() => {
     if (!commentaryOptions) return [];
-    return commentaryOptions.authors.filter(a => isBhashyaAuthor(a.authorName));
+    return commentaryOptions.authors.filter(a => isBhashyaAuthor(a));
   }, [commentaryOptions]);
 
   const teekaAuthors = useMemo(() => {
     if (!commentaryOptions) return [];
-    return commentaryOptions.authors.filter(a => isTeekaAuthor(a.authorName));
+    return commentaryOptions.authors.filter(a => isTeekaAuthor(a));
   }, [commentaryOptions]);
 
   useEffect(() => {
@@ -1001,9 +1018,9 @@ export function BookReader({
                 <p className="text-xs text-muted-foreground mb-4">{t("selectCommentaryHint")}</p>
                 <div data-testid="cover-commentary-list">
                   {(() => {
-                    const bhashyaAuthors = commentaryOptions.authors.filter(a => isBhashyaAuthor(a.authorName));
-                    const teekaAuthors = commentaryOptions.authors.filter(a => isTeekaAuthor(a.authorName));
-                    const otherAuthors = commentaryOptions.authors.filter(a => !isBhashyaAuthor(a.authorName) && !isTeekaAuthor(a.authorName));
+                    const bhashyaAuthors = commentaryOptions.authors.filter(a => isBhashyaAuthor(a));
+                    const teekaAuthors = commentaryOptions.authors.filter(a => isTeekaAuthor(a));
+                    const otherAuthors = commentaryOptions.authors.filter(a => !isBhashyaAuthor(a) && !isTeekaAuthor(a));
                     const isSelected = (name: string) => selectedAuthor === name;
                     const renderAuthorCard = (author: CommentaryOption) => (
                       <button
@@ -1698,7 +1715,7 @@ export function BookReader({
                             languageCode={effectiveLang}
                             authorName={selectedBhashyaAuthor}
                             showAll={false}
-                            filterFn={isBhashyaAuthor}
+                            filterFn={(e: any) => e.commentaryType ? e.commentaryType === "bhashya" : isBhashyaAuthorByName(e.authorName)}
                             mode="bhashyam"
                           />
                         )}
@@ -1748,7 +1765,7 @@ export function BookReader({
                               languageCode={effectiveLang}
                               authorName={selectedTeekaAuthor}
                               showAll={false}
-                              filterFn={isTeekaAuthor}
+                              filterFn={(e: any) => e.commentaryType ? e.commentaryType === "teeka" : isTeekaAuthorByName(e.authorName)}
                               mode="teeka"
                             />
                           )}

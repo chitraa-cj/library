@@ -209,6 +209,8 @@ function extractExplanationsFromTextAndTranslation(
   const explanations: Explanation[] = [];
   if (!tat) return explanations;
 
+  const commentaryType = (prefix === "bhashya" || prefix === "intro") ? "bhashya" : "teeka";
+
   const sanskritText = richTextToString(tat.SanskritTextEntry);
   if (sanskritText) {
     explanations.push({
@@ -219,7 +221,8 @@ function extractExplanationsFromTextAndTranslation(
       languageCode: "devanagari",
       content: sanskritText,
       isAiTranslated: false,
-    });
+      commentaryType,
+    } as any);
   }
 
   const englishText = richTextToString(tat.EnglishTranslationText);
@@ -232,7 +235,8 @@ function extractExplanationsFromTextAndTranslation(
       languageCode: "english",
       content: englishText,
       isAiTranslated: false,
-    });
+      commentaryType,
+    } as any);
   }
 
   if (Array.isArray(tat.OtherTranslations)) {
@@ -249,7 +253,8 @@ function extractExplanationsFromTextAndTranslation(
           languageCode: lang.toLowerCase(),
           content: text,
           isAiTranslated: ot.isAiTranslated ?? false,
-        });
+          commentaryType,
+        } as any);
       }
     }
   }
@@ -770,16 +775,27 @@ export async function strapiGetCommentaryOptionsByBookId(bookId: string): Promis
     const book = await strapiGetBookById(bookId);
     if (!book || book.verses.length === 0) return null;
 
-    const authorMap = new Map<string, { authorTitle: string | null; languageCodes: Set<string> }>();
+    const authorMap = new Map<string, { authorTitle: string | null; languageCodes: Set<string>; commentaryType?: "bhashya" | "teeka" }>();
     const languageSet = new Set<string>();
 
     for (const verse of book.verses) {
       for (const exp of verse.explanations) {
+        const expAny = exp as any;
         languageSet.add(exp.languageCode);
         if (!authorMap.has(exp.authorName)) {
-          authorMap.set(exp.authorName, { authorTitle: exp.authorTitle, languageCodes: new Set([exp.languageCode]) });
+          authorMap.set(exp.authorName, {
+            authorTitle: exp.authorTitle,
+            languageCodes: new Set([exp.languageCode]),
+            commentaryType: expAny.commentaryType || undefined,
+          });
         } else {
-          authorMap.get(exp.authorName)!.languageCodes.add(exp.languageCode);
+          const existing = authorMap.get(exp.authorName)!;
+          existing.languageCodes.add(exp.languageCode);
+          if (expAny.commentaryType === "bhashya") {
+            existing.commentaryType = "bhashya";
+          } else if (!existing.commentaryType && expAny.commentaryType) {
+            existing.commentaryType = expAny.commentaryType;
+          }
         }
       }
     }
@@ -788,6 +804,7 @@ export async function strapiGetCommentaryOptionsByBookId(bookId: string): Promis
       authorName: name,
       authorTitle: data.authorTitle,
       languageCodes: Array.from(data.languageCodes),
+      commentaryType: data.commentaryType,
     }));
 
     const languagesResult = Array.from(languageSet).map((code) => ({ code, name: code }));

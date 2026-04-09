@@ -54,6 +54,7 @@ export interface CommentaryOption {
   authorName: string;
   authorTitle: string | null;
   languageCodes: string[];
+  commentaryType?: "bhashya" | "teeka";
 }
 
 export interface CommentaryOptions {

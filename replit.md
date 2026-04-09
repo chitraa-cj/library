@@ -61,7 +61,7 @@ Supports multi-language sacred texts and user data:
 -   `languages`: Definitions (code, name, script).
 -   `books`, `bookTitles`: Sacred text metadata and localized titles.
 -   `verses`, `verseTranslations`: Verse content and translations.
--   `explanations`: Scholar commentaries.
+-   `explanations`: Scholar commentaries. Strapi-sourced explanations include a virtual `commentaryType` field (`"bhashya"` or `"teeka"`) for proper classification; DB-sourced explanations fall back to author name matching.
 -   `wordTranslations`: Cached AI-generated word translations.
 -   `notes`: User-specific notes.
 -   `users`: User accounts with authentication details and preferences.
