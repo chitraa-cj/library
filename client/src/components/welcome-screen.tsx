@@ -1,4 +1,4 @@
-import { BookOpen, Library, FolderOpen, Lock, ArrowLeft, ChevronRight, ScrollText, Feather, Users, Heart, BookMarked, Music } from "lucide-react";
+import { BookOpen, Library, FolderOpen, Lock, ArrowLeft, ChevronRight, ScrollText, Feather, Heart, BookMarked } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,29 +7,20 @@ import { CATALOG_TREE, type CatalogCategory } from "@/components/app-sidebar";
 import { useTranslation } from "@/lib/translations";
 import { translateContent, bookTitleTranslations, bookAuthorTranslations, bookCategoryTranslations, bookDescriptionTranslations } from "@/lib/content-translations";
 
-import catImgPrasthana from "@assets/image_1770803826016.png";
-import catImgOtherShankara from "@assets/image_1770803832568.png";
-import catImgOtherAcharyas from "@assets/image_1770803844485.png";
-import catImgBhakthi from "@assets/image_1770803838315.png";
-import catImgPrakarana from "@assets/image_1770803849999.png";
-import catImgShlokas from "@assets/image_1770803820218.png";
+import catImgUpanishad from "@assets/image_1770803826016.png";
+import catImgGita from "@assets/image_1770803844485.png";
+import catImgBrahmaSutra from "@assets/image_1770803849999.png";
 
 const categoryImages: Record<string, string> = {
-  "prasthana-shankaracharya": catImgPrasthana,
-  "other-shankara-works": catImgOtherShankara,
-  "prasthana-other-acharyas": catImgOtherAcharyas,
-  "bhakthi-stotras": catImgBhakthi,
-  "prakarana-granthas": catImgPrakarana,
-  "shlokas-stotras": catImgShlokas,
+  "upanishad": catImgUpanishad,
+  "bhagavad-gita": catImgGita,
+  "brahma-sutra": catImgBrahmaSutra,
 };
 
 const categoryIcons: Record<string, typeof ScrollText> = {
-  "prasthana-shankaracharya": ScrollText,
-  "other-shankara-works": Feather,
-  "prasthana-other-acharyas": Users,
-  "bhakthi-stotras": Heart,
-  "prakarana-granthas": BookMarked,
-  "shlokas-stotras": Music,
+  "upanishad": ScrollText,
+  "bhagavad-gita": BookOpen,
+  "brahma-sutra": BookMarked,
 };
 
 interface Book {
@@ -65,17 +56,17 @@ function getBooksForSubCategory(books: Book[], categoryMatch?: string, categoryA
 }
 
 function getBooksForCategory(books: Book[], cat: CatalogCategory): Book[] {
-  if (cat.categoryMatch) {
-    return books.filter(b => b.category === cat.categoryMatch);
-  }
   if (cat.children) {
     const matched: Book[] = [];
     for (const sub of cat.children) {
       matched.push(...getBooksForSubCategory(books, sub.categoryMatch, sub.categoryAltMatch));
     }
+    if (cat.categoryMatch || (cat as any).categoryAltMatch) {
+      matched.push(...books.filter(b => matchesCategory(cat.categoryMatch, (cat as any).categoryAltMatch, b.category) && !matched.some(m => m.id === b.id)));
+    }
     return matched;
   }
-  return [];
+  return books.filter(b => matchesCategory(cat.categoryMatch, (cat as any).categoryAltMatch, b.category));
 }
 
 export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, languageCode }: WelcomeScreenProps) {
@@ -400,24 +391,16 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onSelectSu
         }
       }
     }
-    if (category.categoryMatch && book.category === category.categoryMatch) {
+    if (matchesCategory(category.categoryMatch, (category as any).categoryAltMatch, book.category)) {
       if (!booksBySubCategory[category.id]) booksBySubCategory[category.id] = [];
       booksBySubCategory[category.id].push(book);
     }
   }
 
   const subCategoryIcons: Record<string, typeof ScrollText> = {
-    "pt-shankara-upanishad": ScrollText,
-    "pt-shankara-gita": BookOpen,
-    "pt-shankara-brahmasutra": BookMarked,
-    "pt-other-upanishad": ScrollText,
-    "pt-other-gita": BookOpen,
-    "pt-other-brahmasutra": BookMarked,
-    "pg-independent": Feather,
-    "pg-other-gitas": BookOpen,
-    "pg-bhakthi": Heart,
-    "pg-other-languages": Library,
-    "pg-modern": BookMarked,
+    "upanishad": ScrollText,
+    "bhagavad-gita": BookOpen,
+    "brahma-sutra": BookMarked,
   };
 
   return (
