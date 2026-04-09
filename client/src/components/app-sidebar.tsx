@@ -1097,7 +1097,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className={`border-b border-primary/30 bg-gradient-to-b from-primary/20 via-primary/10 to-transparent ${isCollapsed ? 'p-2' : 'p-4'}`}>
+      <SidebarHeader className={`border-b border-border bg-primary/[0.03] dark:bg-primary/10 ${isCollapsed ? 'p-2' : 'p-4'}`}>
         {isCollapsed ? (
           <div className="flex flex-col items-center gap-2">
             <img

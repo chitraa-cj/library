@@ -72,17 +72,17 @@ function getBooksForCategory(books: Book[], cat: CatalogCategory): Book[] {
 export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, languageCode }: WelcomeScreenProps) {
   const { t } = useTranslation(languageCode ?? null);
   return (
-    <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-gradient-to-b from-primary/10 via-background to-accent/10 relative overflow-y-auto">
+    <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-background relative overflow-y-auto">
       <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
-        <div className="absolute top-16 left-12 text-[14rem] text-primary/[0.02] font-serif">ॐ</div>
-        <div className="absolute bottom-24 right-16 text-[10rem] text-primary/[0.02] font-serif rotate-12">ॐ</div>
-        <div className="absolute top-1/2 right-1/3 text-[7rem] text-primary/[0.015] font-serif -rotate-6">श्री</div>
+        <div className="absolute top-16 left-12 text-[14rem] text-primary/[0.015] dark:text-primary/[0.02] font-serif">ॐ</div>
+        <div className="absolute bottom-24 right-16 text-[10rem] text-primary/[0.015] dark:text-primary/[0.02] font-serif rotate-12">ॐ</div>
+        <div className="absolute top-1/2 right-1/3 text-[7rem] text-primary/[0.01] dark:text-primary/[0.015] font-serif -rotate-6">श्री</div>
       </div>
 
       <div className="max-w-4xl w-full relative z-10 py-4 sm:py-8 space-y-6 sm:space-y-8">
         <div className="text-center space-y-3">
           <div className="relative inline-block">
-            <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 rounded-full blur-xl"></div>
+            <div className="absolute -inset-4 bg-primary/5 dark:bg-primary/15 rounded-full blur-xl"></div>
             <img
               src="https://oneness.org.in/assets/img/favicon.png"
               alt="Advaita Vaaridhi"
@@ -250,11 +250,10 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
   const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, welcomeLang);
 
   return (
-    <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-gradient-to-b from-primary/10 via-background to-accent/10 relative overflow-y-auto">
+    <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-background relative overflow-y-auto">
       <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
-        <div className="absolute top-16 left-12 text-[14rem] text-primary/[0.02] font-serif">ॐ</div>
-        <div className="absolute bottom-24 right-16 text-[10rem] text-primary/[0.02] font-serif rotate-12">ॐ</div>
-        <div className="absolute top-1/2 right-1/3 text-[7rem] text-primary/[0.015] font-serif -rotate-6">श्री</div>
+        <div className="absolute top-16 left-12 text-[14rem] text-primary/[0.015] dark:text-primary/[0.02] font-serif">ॐ</div>
+        <div className="absolute bottom-24 right-16 text-[10rem] text-primary/[0.015] dark:text-primary/[0.02] font-serif rotate-12">ॐ</div>
       </div>
 
       <div className="max-w-4xl w-full relative z-10 py-4 sm:py-8 space-y-6 sm:space-y-8">
@@ -274,7 +273,7 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
             <h1 className="font-serif text-lg sm:text-2xl font-semibold text-primary" data-testid="heading-browse-library">
               {t("browseTheLibrary")}
             </h1>
-            <div className="h-px flex-1 bg-primary/15"></div>
+            <div className="h-px flex-1 bg-border"></div>
           </div>
         </div>
 
@@ -435,10 +434,10 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onSelectSu
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-gradient-to-b from-primary/10 via-background to-accent/10 relative overflow-y-auto">
+    <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-background relative overflow-y-auto">
       <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
-        <div className="absolute top-16 left-12 text-[14rem] text-primary/[0.02] font-serif">ॐ</div>
-        <div className="absolute bottom-24 right-16 text-[10rem] text-primary/[0.02] font-serif rotate-12">ॐ</div>
+        <div className="absolute top-16 left-12 text-[14rem] text-primary/[0.015] dark:text-primary/[0.02] font-serif">ॐ</div>
+        <div className="absolute bottom-24 right-16 text-[10rem] text-primary/[0.015] dark:text-primary/[0.02] font-serif rotate-12">ॐ</div>
       </div>
 
       <div className="max-w-4xl w-full relative z-10 py-4 sm:py-8 space-y-6 sm:space-y-8">
@@ -483,7 +482,7 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onSelectSu
                   }}
                 >
                   <div className={`flex flex-col items-center justify-center py-5 px-4 border-b border-border/30 ${
-                    hasBooks ? "bg-gradient-to-b from-primary/[0.08] to-transparent" : "bg-muted/20"
+                    hasBooks ? "bg-primary/[0.03] dark:bg-primary/[0.08]" : "bg-muted/20"
                   }`}>
                     <div className={`p-3 rounded-full mb-3 ${hasBooks ? "bg-primary/10" : "bg-muted/30"}`}>
                       {hasBooks ? (
@@ -535,7 +534,7 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onSelectSu
                     onClick={() => onSelectBook(book.id)}
                     data-testid={`card-book-${book.slug}`}
                   >
-                    <div className="flex flex-col items-center justify-center py-6 px-4 bg-gradient-to-b from-primary/[0.08] to-transparent">
+                    <div className="flex flex-col items-center justify-center py-6 px-4 bg-primary/[0.02] dark:bg-primary/[0.08]">
                       <div className="p-3 rounded-full bg-primary/10 mb-3">
                         <BookOpen className="h-7 w-7 text-primary" />
                       </div>
@@ -617,10 +616,10 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
   const subBooks = books.filter(b => matchesCategory(subCategory.categoryMatch, subCategory.categoryAltMatch, b.category));
 
   return (
-    <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-gradient-to-b from-primary/10 via-background to-accent/10 relative overflow-y-auto">
+    <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-background relative overflow-y-auto">
       <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
-        <div className="absolute top-16 left-12 text-[14rem] text-primary/[0.02] font-serif">ॐ</div>
-        <div className="absolute bottom-24 right-16 text-[10rem] text-primary/[0.02] font-serif rotate-12">ॐ</div>
+        <div className="absolute top-16 left-12 text-[14rem] text-primary/[0.015] dark:text-primary/[0.02] font-serif">ॐ</div>
+        <div className="absolute bottom-24 right-16 text-[10rem] text-primary/[0.015] dark:text-primary/[0.02] font-serif rotate-12">ॐ</div>
       </div>
 
       <div className="max-w-4xl w-full relative z-10 py-4 sm:py-8 space-y-6 sm:space-y-8">
@@ -656,7 +655,7 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
                 onClick={() => onSelectBook(book.id)}
                 data-testid={`card-book-${book.slug || book.id}`}
               >
-                <div className="flex flex-col items-center justify-center py-6 sm:py-8 px-4 bg-gradient-to-b from-primary/[0.08] to-transparent">
+                <div className="flex flex-col items-center justify-center py-6 sm:py-8 px-4 bg-primary/[0.02] dark:bg-primary/[0.08]">
                   <div className="p-4 rounded-full bg-primary/10 mb-4 group-hover:bg-primary/15 transition-colors">
                     <BookOpen className="h-8 w-8 text-primary" />
                   </div>
