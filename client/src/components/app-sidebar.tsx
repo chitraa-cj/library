@@ -28,40 +28,24 @@ interface CatalogCategory {
   id: string;
   label: string;
   labelKey?: string;
+  subtitle?: string;
+  subtitleKey?: string;
   children?: CatalogSubCategory[];
   categoryMatch?: string;
 }
 
 const CATALOG_TREE: CatalogCategory[] = [
   {
-    id: "prasthana-shankaracharya",
-    label: "Prasthana Thraya - Shankaracharya Bhashya",
-    labelKey: "prasthanaThrayaShankaracharyaBhashya",
+    id: "prasthana-thraya",
+    label: "Prasthana Thraya",
+    labelKey: "prasthanaThraya",
+    subtitle: "Prasthana Thraya - Shankaracharya Bhashya",
+    subtitleKey: "prasthanaThrayaShankaracharyaBhashya",
     children: [
-      { id: "pt-shankara-upanishad", label: "Upanishad", labelKey: "upanishad", categoryMatch: "Upanishad", categoryAltMatch: "Upanishad Bhashya" },
-      { id: "pt-shankara-gita", label: "Bhagavad Gita", labelKey: "bhagavadGita", categoryMatch: "Gita", categoryAltMatch: "Bhagavad Gita" },
-      { id: "pt-shankara-brahmasutra", label: "Brahma Sutra", labelKey: "brahmaSutra", categoryMatch: "Brahma Sutra" },
+      { id: "pt-upanishad", label: "Upanishad", labelKey: "upanishad", categoryMatch: "Upanishad", categoryAltMatch: "Upanishad Bhashya" },
+      { id: "pt-gita", label: "Bhagavad Gita", labelKey: "bhagavadGita", categoryMatch: "Gita", categoryAltMatch: "Bhagavad Gita" },
+      { id: "pt-brahmasutra", label: "Brahma Sutra", labelKey: "brahmaSutra", categoryMatch: "Brahma Sutra" },
     ],
-  },
-  {
-    id: "other-shankara-works",
-    label: "Other Independent Works of Shankaracharya",
-    labelKey: "otherIndependentWorksShankaracharya",
-  },
-  {
-    id: "prasthana-other-acharyas",
-    label: "Prasthana Thraya - Other Advaita Acharyas",
-    labelKey: "prasthanaThrayaOtherAdvaitaAcharyas",
-    children: [
-      { id: "pt-other-upanishad", label: "Upanishad", labelKey: "upanishad" },
-      { id: "pt-other-gita", label: "Bhagavad Gita", labelKey: "bhagavadGita" },
-      { id: "pt-other-brahmasutra", label: "Brahma Sutra", labelKey: "brahmaSutra" },
-    ],
-  },
-  {
-    id: "bhakthi-stotras",
-    label: "Bhakthi Stotras of Shankaracharya",
-    labelKey: "bhakthiStotrasShankaracharya",
   },
   {
     id: "prakarana-granthas",
@@ -72,13 +56,18 @@ const CATALOG_TREE: CatalogCategory[] = [
       { id: "pg-other-gitas", label: "Other Gitas", labelKey: "otherGitas" },
       { id: "pg-bhakthi", label: "Bhakthi Granthas", labelKey: "bhakthiGranthas" },
       { id: "pg-other-languages", label: "Advaita in Other Languages", labelKey: "advaitaInOtherLanguages" },
-      { id: "pg-modern", label: "Modern Advaita Works", labelKey: "modernAdvaitaWorks" },
     ],
   },
   {
-    id: "shlokas-stotras",
-    label: "Shlokas, Sthuthis and Stotras based on Advaita",
-    labelKey: "shlokasStothrasAdvaita",
+    id: "other-texts",
+    label: "Other Texts",
+    labelKey: "otherTexts",
+    children: [
+      { id: "ot-shankara-works", label: "Other Independent Works of Shankaracharya", labelKey: "otherIndependentWorksShankaracharya" },
+      { id: "ot-other-acharyas", label: "Prasthana Thraya - Other Advaita Acharyas", labelKey: "prasthanaThrayaOtherAdvaitaAcharyas" },
+      { id: "ot-bhakthi-stotras", label: "Bhakthi Stotras of Shankaracharya", labelKey: "bhakthiStotrasShankaracharya" },
+      { id: "ot-shlokas-stotras", label: "Shlokas, Sthuthis and Stotras based on Advaita", labelKey: "shlokasStothrasAdvaita" },
+    ],
   },
 ];
 

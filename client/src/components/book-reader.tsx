@@ -669,6 +669,28 @@ export function BookReader({
     }
   }, [chapterViewAdhyay, chapterViewKhanda, book, onBreadcrumbChange, tocHierarchy, lang]);
 
+  const bhashyaAuthors = useMemo(() => {
+    if (!commentaryOptions) return [];
+    return commentaryOptions.authors.filter(a => isBhashyaAuthor(a.authorName));
+  }, [commentaryOptions]);
+
+  const teekaAuthors = useMemo(() => {
+    if (!commentaryOptions) return [];
+    return commentaryOptions.authors.filter(a => isTeekaAuthor(a.authorName));
+  }, [commentaryOptions]);
+
+  useEffect(() => {
+    if (bhashyaAuthors.length > 0 && !selectedBhashyaAuthor) {
+      setSelectedBhashyaAuthor(bhashyaAuthors[0].authorName);
+    }
+  }, [bhashyaAuthors, selectedBhashyaAuthor]);
+
+  useEffect(() => {
+    if (teekaAuthors.length > 0 && !selectedTeekaAuthor) {
+      setSelectedTeekaAuthor(teekaAuthors[0].authorName);
+    }
+  }, [teekaAuthors, selectedTeekaAuthor]);
+
   if (isLoading) {
     return (
       <div className="flex-1 p-4 sm:p-8">
@@ -1492,28 +1514,6 @@ export function BookReader({
       </div>
     );
   }
-
-  const bhashyaAuthors = useMemo(() => {
-    if (!commentaryOptions) return [];
-    return commentaryOptions.authors.filter(a => isBhashyaAuthor(a.authorName));
-  }, [commentaryOptions]);
-
-  const teekaAuthors = useMemo(() => {
-    if (!commentaryOptions) return [];
-    return commentaryOptions.authors.filter(a => isTeekaAuthor(a.authorName));
-  }, [commentaryOptions]);
-
-  useEffect(() => {
-    if (bhashyaAuthors.length > 0 && !selectedBhashyaAuthor) {
-      setSelectedBhashyaAuthor(bhashyaAuthors[0].authorName);
-    }
-  }, [bhashyaAuthors, selectedBhashyaAuthor]);
-
-  useEffect(() => {
-    if (teekaAuthors.length > 0 && !selectedTeekaAuthor) {
-      setSelectedTeekaAuthor(teekaAuthors[0].authorName);
-    }
-  }, [teekaAuthors, selectedTeekaAuthor]);
 
   return (
     <div 

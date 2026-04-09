@@ -8,28 +8,19 @@ import { useTranslation } from "@/lib/translations";
 import { translateContent, bookTitleTranslations, bookAuthorTranslations, bookCategoryTranslations, bookDescriptionTranslations } from "@/lib/content-translations";
 
 import catImgPrasthana from "@assets/image_1770803826016.png";
-import catImgOtherShankara from "@assets/image_1770803832568.png";
-import catImgOtherAcharyas from "@assets/image_1770803844485.png";
-import catImgBhakthi from "@assets/image_1770803838315.png";
 import catImgPrakarana from "@assets/image_1770803849999.png";
 import catImgShlokas from "@assets/image_1770803820218.png";
 
 const categoryImages: Record<string, string> = {
-  "prasthana-shankaracharya": catImgPrasthana,
-  "other-shankara-works": catImgOtherShankara,
-  "prasthana-other-acharyas": catImgOtherAcharyas,
-  "bhakthi-stotras": catImgBhakthi,
+  "prasthana-thraya": catImgPrasthana,
   "prakarana-granthas": catImgPrakarana,
-  "shlokas-stotras": catImgShlokas,
+  "other-texts": catImgShlokas,
 };
 
 const categoryIcons: Record<string, typeof ScrollText> = {
-  "prasthana-shankaracharya": ScrollText,
-  "other-shankara-works": Feather,
-  "prasthana-other-acharyas": Users,
-  "bhakthi-stotras": Heart,
+  "prasthana-thraya": ScrollText,
   "prakarana-granthas": BookMarked,
-  "shlokas-stotras": Music,
+  "other-texts": Library,
 };
 
 interface Book {
@@ -228,6 +219,14 @@ function getTranslatedLabel(item: { label: string; labelKey?: string }, t: (key:
   return item.label;
 }
 
+function getTranslatedSubtitle(item: { subtitle?: string; subtitleKey?: string }, t: (key: any) => string): string {
+  if (item.subtitleKey) {
+    const translated = t(item.subtitleKey);
+    if (translated !== item.subtitleKey) return translated;
+  }
+  return item.subtitle || "";
+}
+
 interface LibraryCatalogProps {
   books: Book[];
   onSelectBook: (bookId: string) => void;
@@ -271,7 +270,7 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4" data-testid="catalog-tree">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4" data-testid="catalog-tree">
           {CATALOG_TREE.map(cat => {
             const catBooks = getBooksForCategory(books, cat);
             const catImage = categoryImages[cat.id];
@@ -300,6 +299,11 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
                   <h3 className="font-serif text-xs sm:text-sm font-semibold text-foreground text-center leading-tight px-1">
                     {getTranslatedLabel(cat, t)}
                   </h3>
+                  {cat.subtitle && (
+                    <p className="text-[9px] sm:text-[10px] text-muted-foreground text-center mt-1 px-1">
+                      {getTranslatedSubtitle(cat, t)}
+                    </p>
+                  )}
                   {catBooks.length > 0 && (
                     <Badge variant="secondary" className="text-[9px] mt-2">
                       {catBooks.length} {catBooks.length === 1 ? t("textSingular") : t("textPlural")}
@@ -407,17 +411,17 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onSelectSu
   }
 
   const subCategoryIcons: Record<string, typeof ScrollText> = {
-    "pt-shankara-upanishad": ScrollText,
-    "pt-shankara-gita": BookOpen,
-    "pt-shankara-brahmasutra": BookMarked,
-    "pt-other-upanishad": ScrollText,
-    "pt-other-gita": BookOpen,
-    "pt-other-brahmasutra": BookMarked,
+    "pt-upanishad": ScrollText,
+    "pt-gita": BookOpen,
+    "pt-brahmasutra": BookMarked,
     "pg-independent": Feather,
     "pg-other-gitas": BookOpen,
     "pg-bhakthi": Heart,
     "pg-other-languages": Library,
-    "pg-modern": BookMarked,
+    "ot-shankara-works": Feather,
+    "ot-other-acharyas": Users,
+    "ot-bhakthi-stotras": Heart,
+    "ot-shlokas-stotras": Music,
   };
 
   return (
