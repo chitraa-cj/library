@@ -772,7 +772,7 @@ function HomePage() {
   } as React.CSSProperties;
 
   return (
-    <SidebarProvider style={sidebarStyle}>
+    <SidebarProvider defaultOpen={false} style={sidebarStyle}>
       <HomePageContent />
     </SidebarProvider>
   );
