@@ -30,30 +30,55 @@ interface CatalogCategory {
   labelKey?: string;
   children?: CatalogSubCategory[];
   categoryMatch?: string;
-  categoryAltMatch?: string;
 }
 
 const CATALOG_TREE: CatalogCategory[] = [
   {
-    id: "upanishad",
-    label: "Upanishad",
-    labelKey: "upanishad",
-    categoryMatch: "Upanishad",
-    categoryAltMatch: "Upanishad Bhashya",
+    id: "prasthana-shankaracharya",
+    label: "Prasthana Thraya - Shankaracharya Bhashya",
+    labelKey: "prasthanaThrayaShankaracharyaBhashya",
+    children: [
+      { id: "pt-shankara-upanishad", label: "Upanishad", labelKey: "upanishad", categoryMatch: "Upanishad", categoryAltMatch: "Upanishad Bhashya" },
+      { id: "pt-shankara-gita", label: "Bhagavad Gita", labelKey: "bhagavadGita", categoryMatch: "Gita", categoryAltMatch: "Bhagavad Gita" },
+      { id: "pt-shankara-brahmasutra", label: "Brahma Sutra", labelKey: "brahmaSutra", categoryMatch: "Brahma Sutra" },
+    ],
   },
   {
-    id: "bhagavad-gita",
-    label: "Bhagavad Gita",
-    labelKey: "bhagavadGita",
-    categoryMatch: "Gita",
-    categoryAltMatch: "Bhagavad Gita",
+    id: "other-shankara-works",
+    label: "Other Independent Works of Shankaracharya",
+    labelKey: "otherIndependentWorksShankaracharya",
   },
   {
-    id: "brahma-sutra",
-    label: "Brahma Sutra",
-    labelKey: "brahmaSutra",
-    categoryMatch: "Brahma Sutra",
-    categoryAltMatch: "Prakarana Grantha",
+    id: "prasthana-other-acharyas",
+    label: "Prasthana Thraya - Other Advaita Acharyas",
+    labelKey: "prasthanaThrayaOtherAdvaitaAcharyas",
+    children: [
+      { id: "pt-other-upanishad", label: "Upanishad", labelKey: "upanishad" },
+      { id: "pt-other-gita", label: "Bhagavad Gita", labelKey: "bhagavadGita" },
+      { id: "pt-other-brahmasutra", label: "Brahma Sutra", labelKey: "brahmaSutra" },
+    ],
+  },
+  {
+    id: "bhakthi-stotras",
+    label: "Bhakthi Stotras of Shankaracharya",
+    labelKey: "bhakthiStotrasShankaracharya",
+  },
+  {
+    id: "prakarana-granthas",
+    label: "Prakarana Granthas",
+    labelKey: "prakaranaGranthas",
+    children: [
+      { id: "pg-independent", label: "Independent Advaita Works", labelKey: "independentAdvaitaWorks", categoryMatch: "Prakarana Grantha" },
+      { id: "pg-other-gitas", label: "Other Gitas", labelKey: "otherGitas" },
+      { id: "pg-bhakthi", label: "Bhakthi Granthas", labelKey: "bhakthiGranthas" },
+      { id: "pg-other-languages", label: "Advaita in Other Languages", labelKey: "advaitaInOtherLanguages" },
+      { id: "pg-modern", label: "Modern Advaita Works", labelKey: "modernAdvaitaWorks" },
+    ],
+  },
+  {
+    id: "shlokas-stotras",
+    label: "Shlokas, Sthuthis and Stotras based on Advaita",
+    labelKey: "shlokasStothrasAdvaita",
   },
 ];
 
@@ -72,7 +97,7 @@ function findBookPath(book: Book): { categoryId: string; subCategoryId: string |
         }
       }
     }
-    if (matchesCategory(cat.categoryMatch, cat.categoryAltMatch, book.category)) {
+    if (cat.categoryMatch && book.category === cat.categoryMatch) {
       return { categoryId: cat.id, subCategoryId: null };
     }
   }
@@ -462,12 +487,11 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
   }, [searchQuery, drillCategory, booksBySubCategory, fuzzyMatch, t]);
 
   const filteredBooks = useMemo(() => {
-    const catId = drillSubCategoryId || drillCategoryId;
-    if (!catId) return [];
-    const catBooks = booksBySubCategory[catId] ?? [];
-    if (!searchQuery.trim()) return catBooks;
+    if (!drillSubCategoryId) return [];
+    const subBooks = booksBySubCategory[drillSubCategoryId] ?? [];
+    if (!searchQuery.trim()) return subBooks;
     const q = searchQuery.trim();
-    return catBooks.filter(b => {
+    return subBooks.filter(b => {
       if (fuzzyMatch(b.title, q)) return true;
       if (b.id === selectedBookId && hierarchy.length > 0) {
         return hierarchy.some(adhyay =>
@@ -477,7 +501,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
       }
       return false;
     });
-  }, [searchQuery, drillSubCategoryId, drillCategoryId, booksBySubCategory, selectedBookId, hierarchy, fuzzyMatch]);
+  }, [searchQuery, drillSubCategoryId, booksBySubCategory, selectedBookId, hierarchy, fuzzyMatch]);
 
   const filteredHierarchy = useMemo(() => {
     if (!searchQuery.trim() || hierarchy.length === 0) return hierarchy;
@@ -1009,13 +1033,12 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
   const renderSubCategoryList = () => {
     if (!drillCategory?.children) {
       const directBooks = booksBySubCategory[drillCategory?.id ?? ""] ?? [];
-      const displayBooks = searchQuery.trim() ? filteredBooks : directBooks;
-      if (displayBooks.length > 0) {
-        return <div className="space-y-0.5">{displayBooks.map(book => renderBookItem(book))}</div>;
+      if (directBooks.length > 0) {
+        return <div className="space-y-0.5">{directBooks.map(book => renderBookItem(book))}</div>;
       }
       return (
         <div className="py-4 px-2 text-xs text-muted-foreground/60 italic text-center">
-          {searchQuery.trim() ? "No matches found" : `${t("comingSoon")}...`}
+          {t("comingSoon")}...
         </div>
       );
     }
@@ -1059,9 +1082,8 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
   };
 
   const renderBookList = () => {
-    const catId = drillSubCategoryId || drillCategoryId;
-    if (!catId) return null;
-    const displayBooks = searchQuery.trim() ? filteredBooks : (booksBySubCategory[catId] ?? []);
+    if (!drillSubCategoryId) return null;
+    const displayBooks = searchQuery.trim() ? filteredBooks : (booksBySubCategory[drillSubCategoryId] ?? []);
     if (displayBooks.length === 0) {
       return (
         <div className="py-4 px-2 text-xs text-muted-foreground/60 italic text-center">
