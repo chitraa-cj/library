@@ -509,6 +509,13 @@ function HomePageContent() {
                       onClick: selectedSubCategoryId || selectedBookId ? () => {
                         setSelectedSubCategoryId(null);
                         setSelectedBookId(null);
+                        setSelectedVerseId(null);
+                        setSelectedContent("");
+                        setShowTranslationPanel(false);
+                        setSelectedAuthor(null);
+                        setNavigateToVerse(null);
+                        setCurrentVerseNumber(1);
+                        setVerseBreadcrumb(null);
                       } : undefined,
                     });
                   }
@@ -517,12 +524,21 @@ function HomePageContent() {
                     if (sub) {
                       crumbs.push({
                         label: sub.labelKey ? t(sub.labelKey) !== sub.labelKey ? t(sub.labelKey) : sub.label : sub.label,
-                        onClick: selectedBookId ? () => { setSelectedBookId(null); } : undefined,
+                        onClick: selectedBookId ? () => {
+                          setSelectedBookId(null);
+                          setSelectedVerseId(null);
+                          setSelectedContent("");
+                          setShowTranslationPanel(false);
+                          setSelectedAuthor(null);
+                          setNavigateToVerse(null);
+                          setCurrentVerseNumber(1);
+                          setVerseBreadcrumb(null);
+                        } : undefined,
                       });
                     }
                   }
                 } else if (showLibraryCatalog) {
-                  crumbs.push({ label: t("browseTheLibrary") });
+                  crumbs.push({ label: t("browseTheLibrary"), onClick: handleGoHome });
                 }
 
                 if (selectedBookId) {
@@ -534,12 +550,40 @@ function HomePageContent() {
                       if (cat) {
                         crumbs.push({
                           label: cat.labelKey ? t(cat.labelKey) !== cat.labelKey ? t(cat.labelKey) : cat.label : cat.label,
+                          onClick: () => {
+                            setSelectedBookId(null);
+                            setSelectedVerseId(null);
+                            setSelectedContent("");
+                            setShowTranslationPanel(false);
+                            setSelectedAuthor(null);
+                            setNavigateToVerse(null);
+                            setCurrentVerseNumber(1);
+                            setVerseBreadcrumb(null);
+                            setSelectedCategoryId(bookPath.categoryId);
+                            setSelectedSubCategoryId(null);
+                            setShowLibraryCatalog(false);
+                            setLocation("/");
+                          },
                         });
                         if (bookPath.subCategoryId && cat.children) {
                           const sub = cat.children.find(s => s.id === bookPath.subCategoryId);
                           if (sub) {
                             crumbs.push({
                               label: sub.labelKey ? t(sub.labelKey) !== sub.labelKey ? t(sub.labelKey) : sub.label : sub.label,
+                              onClick: () => {
+                                setSelectedBookId(null);
+                                setSelectedVerseId(null);
+                                setSelectedContent("");
+                                setShowTranslationPanel(false);
+                                setSelectedAuthor(null);
+                                setNavigateToVerse(null);
+                                setCurrentVerseNumber(1);
+                                setVerseBreadcrumb(null);
+                                setSelectedCategoryId(bookPath.categoryId);
+                                setSelectedSubCategoryId(bookPath.subCategoryId);
+                                setShowLibraryCatalog(false);
+                                setLocation("/");
+                              },
                             });
                           }
                         }
