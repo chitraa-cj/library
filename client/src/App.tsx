@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { PreferencesDialog } from "@/components/preferences-dialog";
+import { ThemeToggle } from "@/components/theme-toggle";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import TranslatePage from "@/pages/translate-page";
@@ -606,6 +607,7 @@ function HomePageContent() {
                   </PopoverContent>
                 </Popover>
               </div>
+              <ThemeToggle />
               {!authLoading && (
                 isLoggedIn && user ? (
                   <div className="flex items-center gap-2">
