@@ -1198,24 +1198,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : isCollapsed ? (
-            <div className="flex flex-col items-center gap-1 py-2">
-              {books.map(book => (
-                <Tooltip key={book.id}>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant={selectedBookId === book.id ? "default" : "ghost"}
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => handleBookSelect(book.id)}
-                      data-testid={`button-book-${book.id}`}
-                    >
-                      <BookOpen className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right">{tc(book.title, bookTitleTranslations)}</TooltipContent>
-                </Tooltip>
-              ))}
-            </div>
+            <div className="py-2" />
           ) : (
             <div className="p-2 space-y-1">
               {selectedBookId && selectedBookObj && selectedBookData?.verses ? (
