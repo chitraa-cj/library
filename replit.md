@@ -27,7 +27,9 @@ Preferred communication style: Simple, everyday language.
         - **Language selector**: Per-page language override at top-right.
         - Introduction page support for books with `BhashyakaraIntroduction` data from Strapi.
     3.  **TranslationPanel**: Displays translations and scholarly explanations.
-- **Header**: Breadcrumb navigation showing current book position.
+- **Header**: Clean horizontal nav bar with logo left, smart breadcrumb trail center (Home > Category > Subcategory > Book > Chapter > Verse), and icon controls (language, theme, auth) on right.
+- **Category/Subcategory Pages**: Two-panel layout — left panel shows category overview + scripture tree, right panel shows book cards with title, author, description, and "OPEN TEXT" action.
+- **Sidebar "Scripture Tree" mode**: When a book is selected, sidebar header changes to show book category and "Scripture Tree" label; back button returns to the book's category context.
 
 ### Backend
 - **Framework**: Express.js 5 (ESM modules)

@@ -221,7 +221,7 @@ function buildHierarchy(verses: Verse[], t?: (key: string) => string): AdhyayGro
   return sorted;
 }
 
-export { CATALOG_TREE, type CatalogCategory, type CatalogSubCategory };
+export { CATALOG_TREE, type CatalogCategory, type CatalogSubCategory, findBookPath, matchesCategory };
 
 export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSelectChapter, onSelectPart, onSelectCategory, onSelectSubCategory, onShowCoverPage, selectedVerseNumber, chapterViewAdhyay, chapterViewKhanda, onGoHome, onGoBack, languageCode }: AppSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -1140,38 +1140,33 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
         ) : (
           <>
             <div className="flex items-center justify-between gap-2 mb-3">
-              <div className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer" onClick={onGoHome}>
-                <div className="relative">
-                  <div className="absolute -inset-1 bg-primary/20 rounded-full blur-md"></div>
+              {selectedBookId ? (
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
+                    {selectedBookData?.book?.category || ""}
+                  </span>
+                  <span className="font-serif font-semibold text-sm text-foreground">
+                    {t("scriptureTree")}
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer" onClick={onGoHome}>
                   <img
                     src="https://oneness.org.in/assets/img/favicon.png"
                     alt="Ekatma Dham"
-                    className="h-10 w-10 object-contain relative"
+                    className="h-8 w-8 object-contain"
                   />
-                </div>
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-primary/50">ॐ</span>
-                    <span className="font-serif font-bold text-base text-primary">{t("ekatmaDham")}</span>
+                  <div className="flex flex-col">
+                    <span className="font-serif font-bold text-sm text-primary">{t("ekatmaDham")}</span>
+                    <span className="text-[10px] text-muted-foreground tracking-widest uppercase">{t("abodeOfOneness")}</span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground tracking-widest uppercase">{t("abodeOfOneness")}</span>
                 </div>
-              </div>
+              )}
               <div className="flex items-center gap-1 shrink-0">
-                {onGoHome && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={onGoHome}
-                    title="Go to home"
-                    data-testid="button-go-home"
-                  >
-                    <Home className="h-4 w-4" />
-                  </Button>
-                )}
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="h-7 w-7"
                   onClick={toggleSidebar}
                   title={t("collapseSidebar")}
                   data-testid="button-collapse-sidebar"

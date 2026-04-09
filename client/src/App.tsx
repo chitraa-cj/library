@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { ThemeProvider, useTheme } from "@/components/theme-provider";
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppSidebar, CATALOG_TREE, findBookPath } from "@/components/app-sidebar";
 import { WelcomeScreen, LibraryCatalogView, CategoryDetailView, SubCategoryDetailView } from "@/components/welcome-screen";
 import { BookReader } from "@/components/book-reader";
 import { TranslationPanel } from "@/components/translation-panel";
@@ -455,190 +455,222 @@ function HomePageContent() {
           chapterViewAdhyay={chapterViewAdhyay}
           chapterViewKhanda={chapterViewKhanda}
           onGoHome={handleGoHome}
-          onGoBack={selectedBookId ? handleGoHome : undefined}
+          onGoBack={selectedBookId ? () => {
+            const book = allBooks?.find(b => b.id === selectedBookId);
+            setSelectedBookId(null);
+            setSelectedVerseId(null);
+            setSelectedContent("");
+            setShowTranslationPanel(false);
+            setSelectedAuthor(null);
+            setNavigateToVerse(null);
+            setCurrentVerseNumber(1);
+            setVerseBreadcrumb(null);
+            if (book) {
+              const path = findBookPath(book);
+              if (path) {
+                setSelectedCategoryId(path.categoryId);
+                setSelectedSubCategoryId(path.subCategoryId);
+                setShowLibraryCatalog(false);
+                setLocation("/");
+                return;
+              }
+            }
+            setShowLibraryCatalog(false);
+            setSelectedCategoryId(null);
+            setSelectedSubCategoryId(null);
+            setLocation("/");
+          } : undefined}
         />
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-          <header className="border-b border-primary/25 bg-gradient-to-r from-primary/15 via-primary/8 to-accent/5 backdrop-blur-sm sticky top-0 z-10 shrink-0">
-            <div className="flex items-center justify-between gap-4 px-3 sm:px-4 py-2 sm:py-3">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              {selectedBookId && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    window.history.back();
-                  }}
-                  title="Go back"
-                  data-testid="button-go-back"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                </Button>
-              )}
-              {selectedBookId && verseBreadcrumb ? (
-                <div className="flex items-center gap-2 min-w-0">
-                  <img
-                    src="https://oneness.org.in/assets/img/favicon.png"
-                    alt="Advaita Vaaridhi"
-                    className="h-6 w-6 object-contain shrink-0 cursor-pointer"
-                    onClick={handleShowCoverPage}
-                    data-testid="breadcrumb-logo"
-                  />
-                {verseBreadcrumb.numericLabel && (
-                  <span className="shrink-0 text-[10px] font-mono text-primary/70 bg-primary/10 px-1.5 py-0.5 rounded" data-testid="breadcrumb-numeric-label">
-                    {verseBreadcrumb.numericLabel}
-                  </span>
-                )}
-                <nav className="flex items-center gap-1 min-w-0 flex-wrap" data-testid="breadcrumb-nav" aria-label="Current verse position">
-                  {(() => {
-                    const items: { label: string; onClick?: () => void }[] = [];
+          <header className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-10 shrink-0">
+            <div className="flex items-center h-12 px-3 sm:px-4">
+            <div className="flex items-center gap-2 shrink-0 cursor-pointer" onClick={handleGoHome} data-testid="header-logo">
+              <img
+                src="https://oneness.org.in/assets/img/favicon.png"
+                alt="Advaita Vaaridhi"
+                className="h-6 w-6 object-contain"
+              />
+              <span className="hidden sm:inline font-serif text-sm font-bold text-primary whitespace-nowrap">
+                {t("advaitaVaaridhi")}
+              </span>
+            </div>
+
+            <nav className="flex items-center gap-1 mx-4 min-w-0 flex-1 overflow-x-auto" data-testid="breadcrumb-nav" aria-label="Navigation">
+              {(() => {
+                const crumbs: { label: string; onClick?: () => void }[] = [];
+
+                crumbs.push({ label: t("home"), onClick: handleGoHome });
+
+                if (selectedCategoryId) {
+                  const cat = CATALOG_TREE.find(c => c.id === selectedCategoryId);
+                  if (cat) {
+                    crumbs.push({
+                      label: cat.labelKey ? t(cat.labelKey) !== cat.labelKey ? t(cat.labelKey) : cat.label : cat.label,
+                      onClick: selectedSubCategoryId || selectedBookId ? () => {
+                        setSelectedSubCategoryId(null);
+                        setSelectedBookId(null);
+                      } : undefined,
+                    });
+                  }
+                  if (selectedSubCategoryId) {
+                    const sub = cat?.children?.find(s => s.id === selectedSubCategoryId);
+                    if (sub) {
+                      crumbs.push({
+                        label: sub.labelKey ? t(sub.labelKey) !== sub.labelKey ? t(sub.labelKey) : sub.label : sub.label,
+                        onClick: selectedBookId ? () => { setSelectedBookId(null); } : undefined,
+                      });
+                    }
+                  }
+                } else if (showLibraryCatalog) {
+                  crumbs.push({ label: t("browseTheLibrary") });
+                }
+
+                if (selectedBookId) {
+                  const selectedBook = allBooks?.find(b => b.id === selectedBookId);
+                  if (!selectedCategoryId && selectedBook) {
+                    const bookPath = findBookPath(selectedBook);
+                    if (bookPath) {
+                      const cat = CATALOG_TREE.find(c => c.id === bookPath.categoryId);
+                      if (cat) {
+                        crumbs.push({
+                          label: cat.labelKey ? t(cat.labelKey) !== cat.labelKey ? t(cat.labelKey) : cat.label : cat.label,
+                        });
+                        if (bookPath.subCategoryId && cat.children) {
+                          const sub = cat.children.find(s => s.id === bookPath.subCategoryId);
+                          if (sub) {
+                            crumbs.push({
+                              label: sub.labelKey ? t(sub.labelKey) !== sub.labelKey ? t(sub.labelKey) : sub.label : sub.label,
+                            });
+                          }
+                        }
+                      }
+                    }
+                  }
+
+                  const bookTitle = verseBreadcrumb?.bookTitle || selectedBook?.title || "";
+                  if (bookTitle) {
+                    crumbs.push({
+                      label: bookTitle,
+                      onClick: verseBreadcrumb ? handleShowCoverPage : undefined,
+                    });
+                  }
+
+                  if (verseBreadcrumb) {
                     if (verseBreadcrumb.adhyayTitle && verseBreadcrumb.adhyayNumber != null) {
-                      items.push({
+                      crumbs.push({
                         label: verseBreadcrumb.adhyayTitle,
                         onClick: () => handleSelectChapter(verseBreadcrumb.adhyayNumber!),
                       });
                     }
                     if (verseBreadcrumb.khandaTitle && verseBreadcrumb.khandaTitle !== verseBreadcrumb.adhyayTitle && verseBreadcrumb.adhyayNumber != null && verseBreadcrumb.khandaNumber != null) {
-                      items.push({
+                      crumbs.push({
                         label: verseBreadcrumb.khandaTitle,
                         onClick: () => handleSelectPart(verseBreadcrumb.adhyayNumber!, verseBreadcrumb.khandaNumber!),
                       });
                     }
-                    if (verseBreadcrumb.verseLabel && !items.some(i => i.label === verseBreadcrumb.verseLabel)) {
-                      items.push({ label: verseBreadcrumb.verseLabel });
+                    if (verseBreadcrumb.verseLabel) {
+                      crumbs.push({ label: verseBreadcrumb.verseLabel });
                     }
-                    return items.map((item, idx) => (
-                      <span key={idx} className="flex items-center gap-1">
-                        {idx > 0 && <ChevronRight className="h-3 w-3 text-muted-foreground/50 shrink-0" />}
-                        {item.onClick ? (
-                          <button
-                            onClick={item.onClick}
-                            className="truncate text-xs max-w-[120px] sm:max-w-[160px] text-muted-foreground hover:text-primary cursor-pointer transition-colors bg-transparent border-none p-0"
-                            title={item.label}
-                            data-testid={`breadcrumb-part-${idx}`}
-                          >
-                            {item.label}
-                          </button>
-                        ) : (
-                          <span
-                            className="truncate text-xs max-w-[120px] sm:max-w-[160px] text-foreground/80 font-medium"
-                            title={item.label}
-                            data-testid={`breadcrumb-part-${idx}`}
-                          >
-                            {item.label}
-                          </span>
-                        )}
+                  }
+                }
+
+                return crumbs.map((crumb, idx) => (
+                  <span key={idx} className="flex items-center gap-1 shrink-0">
+                    {idx > 0 && <ChevronRight className="h-3 w-3 text-muted-foreground/40 shrink-0" />}
+                    {crumb.onClick ? (
+                      <button
+                        onClick={crumb.onClick}
+                        className="text-xs text-muted-foreground hover:text-primary cursor-pointer transition-colors bg-transparent border-none p-0 whitespace-nowrap"
+                        data-testid={`breadcrumb-part-${idx}`}
+                      >
+                        {crumb.label}
+                      </button>
+                    ) : (
+                      <span
+                        className="text-xs text-foreground/80 font-medium whitespace-nowrap"
+                        data-testid={`breadcrumb-part-${idx}`}
+                      >
+                        {crumb.label}
                       </span>
-                    ));
-                  })()}
-                </nav>
-                </div>
-              ) : (
-                <div className="hidden sm:flex items-center gap-2 cursor-pointer" onClick={handleGoHome}>
-                  <div className="relative">
-                    <div className="absolute -inset-0.5 bg-primary/15 rounded-full blur-sm"></div>
-                    <img 
-                      src="https://oneness.org.in/assets/img/favicon.png" 
-                      alt="Advaita Vaaridhi"
-                      className="h-8 w-8 object-contain relative"
+                    )}
+                  </span>
+                ));
+              })()}
+            </nav>
+
+            <div className="flex items-center gap-1 shrink-0">
+              <Popover open={langSearchOpen} onOpenChange={(open) => { setLangSearchOpen(open); if (!open) setLangSearchQuery(""); }}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    data-testid="select-header-language"
+                  >
+                    <Globe className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-48 p-0" align="end">
+                  <div className="flex items-center gap-2 px-3 py-2 border-b">
+                    <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <input
+                      className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                      placeholder="Search..."
+                      value={langSearchQuery}
+                      onChange={(e) => setLangSearchQuery(e.target.value)}
+                      autoFocus
+                      data-testid="input-language-search"
                     />
                   </div>
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-1">
-                      <span className="text-xs text-primary/50">ॐ</span>
-                      <span className="font-serif text-sm font-bold text-primary">
-                        {t("advaitaVaaridhi")}
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground tracking-wide">
-                      {t("encyclopaediaOfAdvaitaVedanta")}
-                    </span>
+                  <div className="py-1 max-h-[200px] overflow-y-auto">
+                    {filteredHeaderLanguages.length === 0 ? (
+                      <div className="px-3 py-2 text-xs text-muted-foreground">No results</div>
+                    ) : (
+                      filteredHeaderLanguages.map((lang) => (
+                        <button
+                          key={lang.code}
+                          className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover-elevate cursor-pointer"
+                          onClick={() => {
+                            handleGlobalLanguageChange(lang.code);
+                            setLangSearchOpen(false);
+                            setLangSearchQuery("");
+                          }}
+                          data-testid={`option-header-lang-${lang.code}`}
+                        >
+                          <Check className={`h-3.5 w-3.5 shrink-0 ${(selectedCommentaryLanguage || "english") === lang.code ? "opacity-100" : "opacity-0"}`} />
+                          <span>{lang.name}</span>
+                        </button>
+                      ))
+                    )}
                   </div>
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1" data-testid="language-selector-header">
-                <Popover open={langSearchOpen} onOpenChange={(open) => { setLangSearchOpen(open); if (!open) setLangSearchQuery(""); }}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 gap-1.5 px-2 text-xs font-normal"
-                      data-testid="select-header-language"
-                    >
-                      <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                      <span className="max-w-[80px] truncate">{currentLangLabel}</span>
-                      <ChevronsUpDown className="h-3 w-3 text-muted-foreground shrink-0" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-48 p-0" align="end">
-                    <div className="flex items-center gap-2 px-3 py-2 border-b">
-                      <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                      <input
-                        className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                        placeholder="Search..."
-                        value={langSearchQuery}
-                        onChange={(e) => setLangSearchQuery(e.target.value)}
-                        autoFocus
-                        data-testid="input-language-search"
-                      />
-                    </div>
-                    <div className="py-1 max-h-[200px] overflow-y-auto">
-                      {filteredHeaderLanguages.length === 0 ? (
-                        <div className="px-3 py-2 text-xs text-muted-foreground">No results</div>
-                      ) : (
-                        filteredHeaderLanguages.map((lang) => (
-                          <button
-                            key={lang.code}
-                            className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover-elevate cursor-pointer"
-                            onClick={() => {
-                              handleGlobalLanguageChange(lang.code);
-                              setLangSearchOpen(false);
-                              setLangSearchQuery("");
-                            }}
-                            data-testid={`option-header-lang-${lang.code}`}
-                          >
-                            <Check className={`h-3.5 w-3.5 shrink-0 ${(selectedCommentaryLanguage || "english") === lang.code ? "opacity-100" : "opacity-0"}`} />
-                            <span>{lang.name}</span>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
+                </PopoverContent>
+              </Popover>
               <ThemeToggle />
               {!authLoading && (
                 isLoggedIn && user ? (
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-7 w-7">
-                      <AvatarImage src={user.profileImageUrl ?? undefined} alt={user.firstName ?? "User"} />
-                      <AvatarFallback className="text-xs">
-                        {(user.firstName?.[0] ?? "") + (user.lastName?.[0] ?? "")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={async () => {
-                        await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-                        queryClient.setQueryData(["/api/auth/user"], null);
-                      }}
-                      data-testid="button-logout"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span className="hidden sm:inline">{t("logOut")}</span>
-                    </Button>
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={async () => {
+                      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+                      queryClient.setQueryData(["/api/auth/user"], null);
+                    }}
+                    data-testid="button-logout"
+                    title={t("logOut")}
+                  >
+                    <LogOut className="h-4 w-4 text-muted-foreground" />
+                  </Button>
                 ) : (
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="icon"
+                    className="h-8 w-8"
                     onClick={() => { setLocation("/auth"); }}
                     data-testid="button-login"
+                    title={t("logIn")}
                   >
-                    <LogIn className="h-4 w-4" />
-                    <span>{t("logIn")}</span>
+                    <LogIn className="h-4 w-4 text-muted-foreground" />
                   </Button>
                 )
               )}
