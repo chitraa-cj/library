@@ -227,6 +227,14 @@ function getTranslatedSubtitle(item: { subtitle?: string; subtitleKey?: string }
   return item.subtitle || "";
 }
 
+function getTranslatedDescription(item: { description?: string; descriptionKey?: string }, t: (key: any) => string): string {
+  if (item.descriptionKey) {
+    const translated = t(item.descriptionKey);
+    if (translated !== item.descriptionKey) return translated;
+  }
+  return item.description || "";
+}
+
 interface LibraryCatalogProps {
   books: Book[];
   onSelectBook: (bookId: string) => void;
@@ -270,48 +278,50 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4" data-testid="catalog-tree">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5" data-testid="catalog-tree">
           {CATALOG_TREE.map(cat => {
             const catBooks = getBooksForCategory(books, cat);
-            const catImage = categoryImages[cat.id];
             const IconComponent = categoryIcons[cat.id] || Library;
 
             return (
               <Card
                 key={cat.id}
-                className="p-0 overflow-visible border-border/50 bg-card/80 flex flex-col hover:shadow-lg hover:border-primary/30 hover:-translate-y-1 hover:scale-[1.02] transition-all"
+                className="p-0 overflow-hidden border-primary/20 bg-card/90 backdrop-blur-sm flex flex-col hover:shadow-xl hover:border-primary/40 hover:-translate-y-1 transition-all rounded-xl"
                 data-testid={`card-category-${cat.id}`}
               >
                 <div
-                  className="flex flex-col items-center justify-center py-4 sm:py-5 px-3 border-b border-border/30 bg-gradient-to-b from-primary/[0.06] to-transparent rounded-t-md cursor-pointer hover-elevate active-elevate-2 transition-all"
+                  className="px-5 sm:px-6 pt-5 sm:pt-6 pb-4 cursor-pointer"
                   onClick={() => onSelectCategory?.(cat.id)}
                   data-testid={`button-category-${cat.id}`}
                 >
-                  {catImage ? (
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden mb-3 border-2 border-primary/20 shadow-sm">
-                      <img src={catImage} alt={getTranslatedLabel(cat, t)} className="w-full h-full object-cover" />
-                    </div>
-                  ) : (
-                    <div className="p-3 rounded-full bg-primary/10 mb-3">
-                      <IconComponent className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
-                    </div>
-                  )}
-                  <h3 className="font-serif text-xs sm:text-sm font-semibold text-foreground text-center leading-tight px-1">
+                  <div className="p-2.5 rounded-lg bg-primary/10 border border-primary/20 w-fit mb-4">
+                    <IconComponent className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                  </div>
+
+                  <h3 className="font-serif text-lg sm:text-xl font-bold text-foreground leading-tight">
                     {getTranslatedLabel(cat, t)}
                   </h3>
+
                   {cat.subtitle && (
-                    <p className="text-[9px] sm:text-[10px] text-muted-foreground text-center mt-1 px-1">
+                    <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-primary/70 font-medium mt-1.5">
                       {getTranslatedSubtitle(cat, t)}
                     </p>
                   )}
+
+                  {cat.description && (
+                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-3">
+                      {getTranslatedDescription(cat, t)}
+                    </p>
+                  )}
+
                   {catBooks.length > 0 && (
-                    <Badge variant="secondary" className="text-[9px] mt-2">
+                    <Badge variant="secondary" className="text-[10px] mt-3">
                       {catBooks.length} {catBooks.length === 1 ? t("textSingular") : t("textPlural")}
                     </Badge>
                   )}
                 </div>
 
-                <div className="flex-1 px-2.5 py-2.5 space-y-0.5">
+                <div className="border-t border-primary/10 flex-1 px-4 sm:px-5 py-3 sm:py-4 space-y-1">
                   {cat.children ? (
                     cat.children.map(sub => {
                       const subBooks = getBooksForSubCategory(books, sub.categoryMatch, sub.categoryAltMatch);
@@ -319,7 +329,7 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
                       return (
                         <button
                           key={sub.id}
-                          className={`w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md text-left text-xs transition-colors ${hasSubBooks ? "hover-elevate active-elevate-2 text-primary font-medium" : "text-muted-foreground/50 cursor-default"}`}
+                          className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-sm transition-colors ${hasSubBooks ? "hover:bg-primary/10 text-primary font-medium" : "text-muted-foreground/50 cursor-default"}`}
                           onClick={() => {
                             if (hasSubBooks) {
                               if (onSelectSubCategory) {
@@ -332,13 +342,13 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
                           data-testid={`button-subcat-${sub.id}`}
                         >
                           {hasSubBooks ? (
-                            <ChevronRight className="h-3 w-3 shrink-0" />
+                            <ChevronRight className="h-3.5 w-3.5 shrink-0" />
                           ) : (
-                            <Lock className="h-2.5 w-2.5 shrink-0 text-muted-foreground/30" />
+                            <Lock className="h-3 w-3 shrink-0 text-muted-foreground/30" />
                           )}
                           <span className="truncate">{getTranslatedLabel(sub, t)}</span>
                           {!hasSubBooks && (
-                            <span className="text-[9px] text-muted-foreground/30 ml-auto italic shrink-0">{t("soon")}</span>
+                            <span className="text-[10px] text-muted-foreground/30 ml-auto italic shrink-0">{t("soon")}</span>
                           )}
                         </button>
                       );
@@ -347,19 +357,19 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
                     catBooks.map(book => (
                       <button
                         key={book.id}
-                        className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md text-left hover-elevate active-elevate-2 transition-colors group"
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left hover:bg-primary/10 transition-colors group"
                         onClick={() => onSelectBook(book.id)}
                         data-testid={`button-book-${book.slug}`}
                       >
-                        <BookOpen className="h-3 w-3 shrink-0 text-primary/50" />
-                        <span className="text-xs font-serif text-foreground group-hover:text-primary transition-colors truncate">
+                        <BookOpen className="h-3.5 w-3.5 shrink-0 text-primary/50" />
+                        <span className="text-sm font-serif text-foreground group-hover:text-primary transition-colors truncate">
                           {tc(book.title, bookTitleTranslations)}
                         </span>
                       </button>
                     ))
                   ) : (
-                    <div className="py-2 text-center">
-                      <span className="text-[10px] text-muted-foreground/40 italic">{t("comingSoon")}</span>
+                    <div className="py-3 text-center">
+                      <span className="text-xs text-muted-foreground/40 italic">{t("comingSoon")}</span>
                     </div>
                   )}
                 </div>

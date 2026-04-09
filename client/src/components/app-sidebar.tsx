@@ -30,6 +30,8 @@ interface CatalogCategory {
   labelKey?: string;
   subtitle?: string;
   subtitleKey?: string;
+  description?: string;
+  descriptionKey?: string;
   children?: CatalogSubCategory[];
   categoryMatch?: string;
 }
@@ -39,8 +41,10 @@ const CATALOG_TREE: CatalogCategory[] = [
     id: "prasthana-thraya",
     label: "Prasthana Thraya",
     labelKey: "prasthanaThraya",
-    subtitle: "Prasthana Thraya - Shankaracharya Bhashya",
-    subtitleKey: "prasthanaThrayaShankaracharyaBhashya",
+    subtitle: "The Three Sources",
+    subtitleKey: "theThreeSources",
+    description: "The three foundational pillars of Vedanta: Upanishads (Sruti), Brahma Sutras (Nyaya), and Bhagavad Gita (Smriti).",
+    descriptionKey: "prasthanaThrayaDescription",
     children: [
       { id: "pt-upanishad", label: "Upanishad", labelKey: "upanishad", categoryMatch: "Upanishad", categoryAltMatch: "Upanishad Bhashya" },
       { id: "pt-gita", label: "Bhagavad Gita", labelKey: "bhagavadGita", categoryMatch: "Gita", categoryAltMatch: "Bhagavad Gita" },
@@ -51,6 +55,10 @@ const CATALOG_TREE: CatalogCategory[] = [
     id: "prakarana-granthas",
     label: "Prakarana Granthas",
     labelKey: "prakaranaGranthas",
+    subtitle: "Introductory Treatises",
+    subtitleKey: "introductoryTreatises",
+    description: "Foundational texts authored by Acharyas to explain the core tenets of Advaita.",
+    descriptionKey: "prakaranaGranthasDescription",
     children: [
       { id: "pg-independent", label: "Independent Advaita Works", labelKey: "independentAdvaitaWorks", categoryMatch: "Prakarana Grantha" },
       { id: "pg-other-gitas", label: "Other Gitas", labelKey: "otherGitas" },
@@ -62,6 +70,10 @@ const CATALOG_TREE: CatalogCategory[] = [
     id: "other-texts",
     label: "Other Texts",
     labelKey: "otherTexts",
+    subtitle: "Stotras & Puranas",
+    subtitleKey: "stotrasAndPuranas",
+    description: "Supplementary texts, devotional hymns, and relevant puranic literature.",
+    descriptionKey: "otherTextsDescription",
     children: [
       { id: "ot-shankara-works", label: "Other Independent Works of Shankaracharya", labelKey: "otherIndependentWorksShankaracharya" },
       { id: "ot-other-acharyas", label: "Prasthana Thraya - Other Advaita Acharyas", labelKey: "prasthanaThrayaOtherAdvaitaAcharyas" },
