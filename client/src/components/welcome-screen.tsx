@@ -501,36 +501,55 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onSelectSu
 
           <div className="flex-1 min-w-0">
             {category.children ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" data-testid="subcategory-grid">
+              <div className="space-y-6" data-testid="subcategory-grid">
                 {category.children.map(sub => {
                   const subBooks = booksBySubCategory[sub.id] ?? [];
                   if (subBooks.length === 0) return null;
-                  return subBooks.map(book => (
-                    <Card
-                      key={book.id}
-                      className="p-5 border-border/60 bg-card hover:border-primary/30 hover:shadow-md transition-all cursor-pointer"
-                      onClick={() => onSelectBook(book.id)}
-                      data-testid={`card-book-${book.slug || book.id}`}
-                    >
-                      <h3 className="font-serif text-base font-semibold text-foreground">
-                        {tc(book.title, bookTitleTranslations)}
-                      </h3>
-                      {book.author && (
-                        <p className="text-xs text-primary mt-0.5">
-                          {tc(book.author, bookAuthorTranslations)}
-                        </p>
-                      )}
-                      {book.description && (
-                        <p className="text-sm text-muted-foreground mt-2 leading-relaxed line-clamp-3">
-                          {tc(book.description, bookDescriptionTranslations)}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-1.5 mt-3 text-xs text-primary font-medium">
-                        <BookOpen className="h-3.5 w-3.5" />
-                        <span className="uppercase tracking-wider">{t("openText")}</span>
+                  return (
+                    <div key={sub.id}>
+                      <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border/40">
+                        <div className="w-1 h-5 rounded-full bg-primary/60"></div>
+                        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider" data-testid={`subcat-heading-${sub.id}`}>
+                          {getTranslatedLabel(sub, t)}
+                        </h3>
+                        <span className="text-[10px] text-muted-foreground ml-auto">{subBooks.length} {subBooks.length === 1 ? t("textSingular") : t("textPlural")}</span>
                       </div>
-                    </Card>
-                  ));
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {subBooks.map(book => (
+                          <Card
+                            key={book.id}
+                            className="group relative border-border/60 bg-card hover:border-primary/40 hover:shadow-lg transition-all cursor-pointer overflow-hidden border-l-[3px] border-l-primary/50 hover:border-l-primary"
+                            onClick={() => onSelectBook(book.id)}
+                            data-testid={`card-book-${book.slug || book.id}`}
+                          >
+                            <div className="p-5">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0 flex-1">
+                                  <h3 className="font-serif text-base font-semibold text-foreground leading-snug">
+                                    {tc(book.title, bookTitleTranslations)}
+                                  </h3>
+                                  {book.author && (
+                                    <p className="text-xs text-primary/80 mt-1 font-medium">
+                                      {tc(book.author, bookAuthorTranslations)}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1 text-[10px] text-primary font-semibold uppercase tracking-wider shrink-0 opacity-70 group-hover:opacity-100 transition-opacity pt-0.5">
+                                  <BookOpen className="h-3 w-3" />
+                                  <span>{t("openText")}</span>
+                                </div>
+                              </div>
+                              {book.description && (
+                                <p className="text-sm text-muted-foreground mt-3 leading-relaxed line-clamp-3">
+                                  {tc(book.description, bookDescriptionTranslations)}
+                                </p>
+                              )}
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  );
                 })}
               </div>
             ) : (
@@ -538,26 +557,32 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onSelectSu
                 {booksBySubCategory[category.id]?.map(book => (
                   <Card
                     key={book.id}
-                    className="p-5 border-border/60 bg-card hover:border-primary/30 hover:shadow-md transition-all cursor-pointer"
+                    className="group relative border-border/60 bg-card hover:border-primary/40 hover:shadow-lg transition-all cursor-pointer overflow-hidden border-l-[3px] border-l-primary/50 hover:border-l-primary"
                     onClick={() => onSelectBook(book.id)}
                     data-testid={`card-book-${book.slug || book.id}`}
                   >
-                    <h3 className="font-serif text-base font-semibold text-foreground">
-                      {tc(book.title, bookTitleTranslations)}
-                    </h3>
-                    {book.author && (
-                      <p className="text-xs text-primary mt-0.5">
-                        {tc(book.author, bookAuthorTranslations)}
-                      </p>
-                    )}
-                    {book.description && (
-                      <p className="text-sm text-muted-foreground mt-2 leading-relaxed line-clamp-3">
-                        {tc(book.description, bookDescriptionTranslations)}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-1.5 mt-3 text-xs text-primary font-medium">
-                      <BookOpen className="h-3.5 w-3.5" />
-                      <span className="uppercase tracking-wider">{t("openText")}</span>
+                    <div className="p-5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-serif text-base font-semibold text-foreground leading-snug">
+                            {tc(book.title, bookTitleTranslations)}
+                          </h3>
+                          {book.author && (
+                            <p className="text-xs text-primary/80 mt-1 font-medium">
+                              {tc(book.author, bookAuthorTranslations)}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] text-primary font-semibold uppercase tracking-wider shrink-0 opacity-70 group-hover:opacity-100 transition-opacity pt-0.5">
+                          <BookOpen className="h-3 w-3" />
+                          <span>{t("openText")}</span>
+                        </div>
+                      </div>
+                      {book.description && (
+                        <p className="text-sm text-muted-foreground mt-3 leading-relaxed line-clamp-3">
+                          {tc(book.description, bookDescriptionTranslations)}
+                        </p>
+                      )}
                     </div>
                   </Card>
                 ))}
@@ -642,26 +667,32 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
                 {subBooks.map(book => (
                   <Card
                     key={book.id}
-                    className="p-5 border-border/60 bg-card hover:border-primary/30 hover:shadow-md transition-all cursor-pointer"
+                    className="group relative border-border/60 bg-card hover:border-primary/40 hover:shadow-lg transition-all cursor-pointer overflow-hidden border-l-[3px] border-l-primary/50 hover:border-l-primary"
                     onClick={() => onSelectBook(book.id)}
                     data-testid={`card-book-${book.slug || book.id}`}
                   >
-                    <h3 className="font-serif text-base font-semibold text-foreground">
-                      {tc(book.title, bookTitleTranslations)}
-                    </h3>
-                    {book.author && (
-                      <p className="text-xs text-primary mt-0.5">
-                        {tc(book.author, bookAuthorTranslations)}
-                      </p>
-                    )}
-                    {book.description && (
-                      <p className="text-sm text-muted-foreground mt-2 leading-relaxed line-clamp-3">
-                        {tc(book.description, bookDescriptionTranslations)}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-1.5 mt-3 text-xs text-primary font-medium">
-                      <BookOpen className="h-3.5 w-3.5" />
-                      <span className="uppercase tracking-wider">{t("openText")}</span>
+                    <div className="p-5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-serif text-base font-semibold text-foreground leading-snug">
+                            {tc(book.title, bookTitleTranslations)}
+                          </h3>
+                          {book.author && (
+                            <p className="text-xs text-primary/80 mt-1 font-medium">
+                              {tc(book.author, bookAuthorTranslations)}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] text-primary font-semibold uppercase tracking-wider shrink-0 opacity-70 group-hover:opacity-100 transition-opacity pt-0.5">
+                          <BookOpen className="h-3 w-3" />
+                          <span>{t("openText")}</span>
+                        </div>
+                      </div>
+                      {book.description && (
+                        <p className="text-sm text-muted-foreground mt-3 leading-relaxed line-clamp-3">
+                          {tc(book.description, bookDescriptionTranslations)}
+                        </p>
+                      )}
                     </div>
                   </Card>
                 ))}
