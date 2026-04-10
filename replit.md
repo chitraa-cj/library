@@ -77,7 +77,8 @@ Supports multi-language sacred texts and user data:
 -   **API**: `POST /api/transliterate/queue` (queue IAST generation), `GET /api/transliterate/progress`, `POST /api/transliterate/preview` (on-the-fly preview).
 -   **Status**: IAST completed for Aitareya (33), Prashna (68), Kena (35), Mandukya (234) Upanishads.
 -   **Mundaka Upanishad**: Added (docId `qcbxoj6pwo01pgnr0hxloiun`, 65 manthras, 3 Mundakas × 2 Khandas each, has introduction, 1 teeka). Translation in progress for mantra/bhashyam/teeka in 43 languages.
--   **Safe Strapi saves**: Both `strapi-translate.ts` and `strapi-transliterate.ts` use a "re-fetch before write" pattern — every PUT to `/manthras` includes ALL fields (ShlokaManthraEntry, BhashyamEntry, Teekas) to prevent Strapi from wiping omitted inline components.
+-   **Safe Strapi saves**: Both `strapi-translate.ts` and `strapi-transliterate.ts` use a "re-fetch before write" pattern — every PUT to `/manthras` includes ALL fields (ShlokaManthraEntry, BhashyamEntry, Teekas) to prevent Strapi from wiping omitted inline components. Translation saves handle nginx 413 errors with a 3-tier fallback: full save → component-only save → chunked incremental save (10 at a time, then single). When at nginx capacity, remaining languages are gracefully skipped.
+-   **Taittiriya Upanishad**: (docId `bdmo8krmbcc8rrpireu47mvt`, 57 manthras, 3 Adhyays, has introduction). Translation in progress. Some large bhashyam entries (e.g., Mantra 3.6.1) hit nginx size limit at ~33 translations.
 
 ### Build System
 -   **Development**: Vite dev server.

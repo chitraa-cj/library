@@ -78,15 +78,19 @@ async function strapiPut(endpoint: string, body: any): Promise<any> {
     "Content-Type": "application/json",
     "Authorization": `Bearer ${STRAPI_API_TOKEN}`,
   };
+  const jsonBody = JSON.stringify(body);
   const response = await fetch(url.toString(), {
     method: "PUT",
     headers,
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(30000),
+    body: jsonBody,
+    signal: AbortSignal.timeout(60000),
   });
   if (!response.ok) {
     const text = await response.text().catch(() => "");
-    throw new Error(`Strapi PUT error: ${response.status} ${response.statusText} for ${endpoint}: ${text.substring(0, 200)}`);
+    const err = new Error(`Strapi PUT error: ${response.status} ${response.statusText} for ${endpoint}: ${text.substring(0, 200)}`);
+    (err as any).statusCode = response.status;
+    (err as any).payloadSize = jsonBody.length;
+    throw err;
   }
   return response.json();
 }
@@ -250,40 +254,130 @@ function buildFullManthraData(fresh: any, overrides: {
   return data;
 }
 
+async function chunkedSaveOtherTranslations(
+  docId: string,
+  component: "shloka" | "bhashyam",
+  entry: any
+): Promise<{ saved: number; total: number }> {
+  const allOTs: OtherTranslation[] = entry.OtherTranslations || [];
+  const CHUNK_SIZE = 10;
+  const field = component === "shloka" ? "ShlokaManthraEntry" : "BhashyamEntry";
+  let lastSaved = 0;
+  for (let i = 0; i < allOTs.length; i += CHUNK_SIZE) {
+    const chunkEnd = Math.min(i + CHUNK_SIZE, allOTs.length);
+    const partialEntry = { ...entry, OtherTranslations: allOTs.slice(0, chunkEnd) };
+    try {
+      await strapiPut(`/manthras/${docId}`, { data: { [field]: partialEntry } });
+      lastSaved = chunkEnd;
+      console.log(`[Translation] Chunked save ${component} ${chunkEnd}/${allOTs.length} for ${docId}`);
+    } catch (chunkErr: any) {
+      if ((chunkErr as any).statusCode === 413) {
+        for (let j = i; j < chunkEnd; j++) {
+          const singleEntry = { ...entry, OtherTranslations: allOTs.slice(0, j + 1) };
+          try {
+            await strapiPut(`/manthras/${docId}`, { data: { [field]: singleEntry } });
+            lastSaved = j + 1;
+            console.log(`[Translation] Single save ${component} ${j + 1}/${allOTs.length} for ${docId}`);
+          } catch (singleErr: any) {
+            if ((singleErr as any).statusCode === 413) {
+              console.log(`[Translation] Hit nginx size limit at ${j + 1}/${allOTs.length} for ${component} ${docId}, saved ${lastSaved} translations`);
+              return { saved: lastSaved, total: allOTs.length };
+            }
+            throw singleErr;
+          }
+        }
+      } else {
+        throw chunkErr;
+      }
+    }
+  }
+  return { saved: lastSaved, total: allOTs.length };
+}
+
 async function safeSaveShlokaOnly(
   docId: string,
   newTranslations: OtherTranslation[]
-): Promise<void> {
+): Promise<boolean> {
   const fresh = await refetchManthra(docId);
   if (!fresh) throw new Error(`Could not refetch manthra ${docId}`);
   const entry = cleanEntry(fresh.ShlokaManthraEntry);
-  if (!entry) return;
+  if (!entry) return true;
   const existingLangs = new Set((entry.OtherTranslations || []).map((ot: any) => ot.LanguageOfTranslation));
   const toAdd = newTranslations.filter(ot => !existingLangs.has(ot.LanguageOfTranslation));
   entry.OtherTranslations = [
     ...cleanOTs(entry.OtherTranslations || []),
     ...toAdd.map(ot => ({ LanguageOfTranslation: ot.LanguageOfTranslation, TranslationText: ot.TranslationText })),
   ];
-  const fullData = buildFullManthraData(fresh, { shlokaEntry: entry });
-  await strapiPut(`/manthras/${docId}`, { data: fullData });
+  try {
+    const fullData = buildFullManthraData(fresh, { shlokaEntry: entry });
+    await strapiPut(`/manthras/${docId}`, { data: fullData });
+    return true;
+  } catch (err: any) {
+    if ((err as any).statusCode === 413) {
+      console.log(`[Translation] 413 payload too large for full save, trying component-only save for shloka ${docId}`);
+      try {
+        await strapiPut(`/manthras/${docId}`, { data: { ShlokaManthraEntry: entry } });
+        return true;
+      } catch (err2: any) {
+        if ((err2 as any).statusCode === 413) {
+          console.log(`[Translation] 413 even for component-only shloka, trying chunked save for ${docId}`);
+          const result = await chunkedSaveOtherTranslations(docId, "shloka", entry);
+          if (result.saved < result.total) {
+            console.log(`[Translation] Shloka ${docId} at nginx capacity (${result.saved}/${result.total}), skipping remaining languages`);
+            return false;
+          }
+          return true;
+        } else {
+          throw err2;
+        }
+      }
+    } else {
+      throw err;
+    }
+  }
 }
 
 async function safeSaveBhashyamOnly(
   docId: string,
   newTranslations: OtherTranslation[]
-): Promise<void> {
+): Promise<boolean> {
   const fresh = await refetchManthra(docId);
   if (!fresh) throw new Error(`Could not refetch manthra ${docId}`);
   const entry = cleanEntry(fresh.BhashyamEntry);
-  if (!entry) return;
+  if (!entry) return true;
   const existingLangs = new Set((entry.OtherTranslations || []).map((ot: any) => ot.LanguageOfTranslation));
   const toAdd = newTranslations.filter(ot => !existingLangs.has(ot.LanguageOfTranslation));
   entry.OtherTranslations = [
     ...cleanOTs(entry.OtherTranslations || []),
     ...toAdd.map(ot => ({ LanguageOfTranslation: ot.LanguageOfTranslation, TranslationText: ot.TranslationText })),
   ];
-  const fullData = buildFullManthraData(fresh, { bhashyamEntry: entry });
-  await strapiPut(`/manthras/${docId}`, { data: fullData });
+  try {
+    const fullData = buildFullManthraData(fresh, { bhashyamEntry: entry });
+    await strapiPut(`/manthras/${docId}`, { data: fullData });
+    return true;
+  } catch (err: any) {
+    if ((err as any).statusCode === 413) {
+      console.log(`[Translation] 413 payload too large for full save, trying component-only save for bhashyam ${docId}`);
+      try {
+        await strapiPut(`/manthras/${docId}`, { data: { BhashyamEntry: entry } });
+        return true;
+      } catch (err2: any) {
+        if ((err2 as any).statusCode === 413) {
+          console.log(`[Translation] 413 even for component-only bhashyam, trying chunked save for ${docId}`);
+          const result = await chunkedSaveOtherTranslations(docId, "bhashyam", entry);
+          if (result.saved < result.total) {
+            console.log(`[Translation] Bhashyam ${docId} at nginx capacity (${result.saved}/${result.total}), skipping remaining languages`);
+            return false;
+          }
+          return true;
+        } else {
+          throw err2;
+        }
+      }
+    } else {
+      throw err;
+    }
+  }
 }
 
 async function safeSaveTeekaOnly(
@@ -303,8 +397,17 @@ async function safeSaveTeekaOnly(
     ...toAdd.map(ot => ({ LanguageOfTranslation: ot.LanguageOfTranslation, TranslationText: ot.TranslationText })),
   ];
   freshTeekas[teekaIndex].TeekaEntry = entry;
-  const fullData = buildFullManthraData(fresh, { teekas: freshTeekas });
-  await strapiPut(`/manthras/${docId}`, { data: fullData });
+  try {
+    const fullData = buildFullManthraData(fresh, { teekas: freshTeekas });
+    await strapiPut(`/manthras/${docId}`, { data: fullData });
+  } catch (err: any) {
+    if ((err as any).statusCode === 413) {
+      console.log(`[Translation] 413 payload too large for full save, trying component-only save for teeka ${docId}`);
+      await strapiPut(`/manthras/${docId}`, { data: { Teekas: freshTeekas } });
+    } else {
+      throw err;
+    }
+  }
 }
 
 async function translateAndStoreManthra(
@@ -320,13 +423,15 @@ async function translateAndStoreManthra(
   const sourceForShloka = shlokaEnglish || shlokaText;
   const sourceForBhashyam = bhashyamEnglish || bhashyamSanskrit;
 
-  const BATCH_SIZE = 3;
+  const BATCH_SIZE = 1;
 
   let shlokaAdded = 0;
+  let shlokaAtCapacity = false;
   {
     const existingShlokaLangs = getExistingLanguages(manthra.ShlokaManthraEntry?.OtherTranslations || []);
     let pendingBatch: OtherTranslation[] = [];
     for (const lang of targetLanguages) {
+      if (shlokaAtCapacity) break;
       progress.currentLanguage = lang;
       if (existingShlokaLangs.has(lang)) { progress.skippedExisting++; continue; }
       if (!sourceForShloka) continue;
@@ -336,24 +441,28 @@ async function translateAndStoreManthra(
         existingShlokaLangs.add(lang);
         shlokaAdded++;
         if (pendingBatch.length >= BATCH_SIZE) {
-          await safeSaveShlokaOnly(manthra.documentId, pendingBatch);
+          const ok = await safeSaveShlokaOnly(manthra.documentId, pendingBatch);
           console.log(`[Translation]   Shloka batch save (${shlokaAdded}) for ${manthra.ShlokaManthraNumber}`);
           pendingBatch = [];
+          if (!ok) { shlokaAtCapacity = true; progress.errors.push(`Shloka ${manthra.ShlokaManthraNumber}: nginx size limit reached, some languages skipped`); }
         }
       } catch (err: any) { progress.errors.push(`Shloka ${manthra.ShlokaManthraNumber} → ${lang}: ${err.message}`); }
       await delay(1500);
     }
-    if (pendingBatch.length > 0) {
-      await safeSaveShlokaOnly(manthra.documentId, pendingBatch);
+    if (pendingBatch.length > 0 && !shlokaAtCapacity) {
+      const ok = await safeSaveShlokaOnly(manthra.documentId, pendingBatch);
       console.log(`[Translation]   Shloka final save (${shlokaAdded}) for ${manthra.ShlokaManthraNumber}`);
+      if (!ok) { progress.errors.push(`Shloka ${manthra.ShlokaManthraNumber}: nginx size limit reached, some languages skipped`); }
     }
   }
 
   let bhashyamAdded = 0;
+  let bhashyamAtCapacity = false;
   {
     const existingBhashyamLangs = getExistingLanguages(manthra.BhashyamEntry?.OtherTranslations || []);
     let pendingBatch: OtherTranslation[] = [];
     for (const lang of targetLanguages) {
+      if (bhashyamAtCapacity) break;
       progress.currentLanguage = lang;
       if (existingBhashyamLangs.has(lang)) { progress.skippedExisting++; continue; }
       if (!sourceForBhashyam) continue;
@@ -363,16 +472,18 @@ async function translateAndStoreManthra(
         existingBhashyamLangs.add(lang);
         bhashyamAdded++;
         if (pendingBatch.length >= BATCH_SIZE) {
-          await safeSaveBhashyamOnly(manthra.documentId, pendingBatch);
+          const ok = await safeSaveBhashyamOnly(manthra.documentId, pendingBatch);
           console.log(`[Translation]   Bhashyam batch save (${bhashyamAdded}) for ${manthra.ShlokaManthraNumber}`);
           pendingBatch = [];
+          if (!ok) { bhashyamAtCapacity = true; progress.errors.push(`Bhashyam ${manthra.ShlokaManthraNumber}: nginx size limit reached, some languages skipped`); }
         }
       } catch (err: any) { progress.errors.push(`Bhashyam ${manthra.ShlokaManthraNumber} → ${lang}: ${err.message}`); }
       await delay(1500);
     }
-    if (pendingBatch.length > 0) {
-      await safeSaveBhashyamOnly(manthra.documentId, pendingBatch);
+    if (pendingBatch.length > 0 && !bhashyamAtCapacity) {
+      const ok = await safeSaveBhashyamOnly(manthra.documentId, pendingBatch);
       console.log(`[Translation]   Bhashyam final save (${bhashyamAdded}) for ${manthra.ShlokaManthraNumber}`);
+      if (!ok) { progress.errors.push(`Bhashyam ${manthra.ShlokaManthraNumber}: nginx size limit reached, some languages skipped`); }
     }
   }
 
@@ -481,7 +592,7 @@ async function translateIntroduction(
 
   const existingLangs = getExistingLanguages(intro.OtherTranslations || []);
   let added = 0;
-  const BATCH_SIZE = 3;
+  const BATCH_SIZE = 1;
   let pendingBatch: OtherTranslation[] = [];
 
   for (const lang of targetLanguages) {
