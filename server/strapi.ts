@@ -500,7 +500,6 @@ export async function strapiGetBookById(id: string): Promise<BookWithDetails | u
     const introVerse = mapIntroductionVerse(grantha, book.id);
     if (introVerse) {
       verses.push(introVerse);
-      globalIndex++;
     }
 
     async function fetchVersesFromLeafSections(
