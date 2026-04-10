@@ -711,7 +711,7 @@ export function BookReader({
   if (isLoading) {
     return (
       <div className="flex-1 p-4 sm:p-8">
-        <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto space-y-6">
+        <div className="max-w-4xl xl:max-w-5xl 2xl:max-w-6xl mx-auto space-y-6">
           <Skeleton className="h-10 sm:h-12 w-3/4" />
           <Skeleton className="h-5 sm:h-6 w-1/2" />
           <div className="space-y-4 mt-8">
@@ -799,7 +799,7 @@ export function BookReader({
     return (
       <div className="flex-1 flex flex-col min-w-0 focus:outline-none">
         <div className="flex-1 overflow-y-auto">
-          <div className="p-4 sm:p-6 max-w-2xl xl:max-w-3xl mx-auto">
+          <div className="p-4 sm:p-6 max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto">
             <div className="py-4 sm:py-6">
               <div className="flex flex-col items-center text-center mb-4 sm:mb-5">
                 <span className="text-2xl sm:text-3xl text-primary/20 font-serif mb-2 select-none pointer-events-none">ॐ</span>
@@ -1130,7 +1130,7 @@ export function BookReader({
 
         {book?.slug && bookMediaConfig[book.slug]?.videoId && (
           <div className="border-t border-border px-3 sm:px-8 py-2 sm:py-3 bg-background/80 backdrop-blur-sm">
-            <div className="max-w-3xl xl:max-w-4xl mx-auto flex items-center justify-center">
+            <div className="max-w-4xl xl:max-w-5xl 2xl:max-w-6xl mx-auto flex items-center justify-center">
               <VideoPopup
                 videoId={bookMediaConfig[book.slug].videoId!}
                 title={bookMediaConfig[book.slug].videoTitle || t("introductionVideo")}
@@ -1201,7 +1201,7 @@ export function BookReader({
       <div className="flex-1 flex flex-col min-w-0">
         {onExitChapterView && (
           <div className="border-b border-border/50 px-4 sm:px-8 py-1.5 shrink-0">
-            <div className="max-w-2xl xl:max-w-3xl mx-auto flex justify-end">
+            <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto flex justify-end">
               <Button
                 variant="ghost"
                 size="sm"
@@ -1217,7 +1217,7 @@ export function BookReader({
         )}
 
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-2xl xl:max-w-3xl mx-auto px-4 sm:px-8 py-4 sm:py-6">
+          <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-8 py-4 sm:py-6">
             {isChapterLoading ? (
               <div className="space-y-6">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -1407,7 +1407,7 @@ export function BookReader({
       <div className="flex-1 flex flex-col min-w-0 focus:outline-none" tabIndex={0} onKeyDown={handleKeyDown}>
         <div className="flex-1 overflow-y-auto">
           <div
-            className="max-w-2xl xl:max-w-3xl mx-auto px-4 sm:px-8 py-6 sm:py-10"
+            className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-8 py-6 sm:py-10"
             onMouseUp={handleTextSelect}
             onTouchEnd={handleTextSelect}
           >
@@ -1518,7 +1518,7 @@ export function BookReader({
         </div>
 
         <div className="border-t border-border/50 px-4 sm:px-8 py-2 shrink-0">
-          <div className="max-w-2xl xl:max-w-3xl mx-auto flex items-center justify-between">
+          <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto flex items-center justify-between">
             <Button
               variant="ghost"
               size="sm"
@@ -1572,7 +1572,7 @@ export function BookReader({
               </Button>
             </div>
           )}
-          <div className="max-w-4xl xl:max-w-5xl w-full mx-auto">
+          <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl w-full mx-auto">
             {isVerseLoading || !currentVerseDetails ? (
               <div className="space-y-4 py-8">
                 <Skeleton className="h-6 w-32 mx-auto" />
@@ -1814,7 +1814,7 @@ export function BookReader({
 
         {book?.slug && bookMediaConfig[book.slug]?.videoId && (
           <div className="border-t border-border px-3 sm:px-8 py-2 bg-background/80">
-            <div className="max-w-4xl xl:max-w-5xl mx-auto flex items-center justify-center">
+            <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto flex items-center justify-center">
               <VideoPopup 
                 videoId={bookMediaConfig[book.slug].videoId!}
                 title={bookMediaConfig[book.slug].videoTitle || t("introductionVideo")}
