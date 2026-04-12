@@ -1,4 +1,5 @@
 import { BookOpen, Library, FolderOpen, Lock, ArrowLeft, ChevronRight, ScrollText, Feather, Users, Heart, BookMarked, Music } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -596,6 +597,347 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onSelectSu
   );
 }
 
+interface BookLandingData {
+  iastTitle: string;
+  devanagariTitle: string;
+  authorIast: string;
+  verseCount: string;
+  verseLabel: string;
+  quote: string;
+  introTitle: string;
+  introText: string;
+  structureTitle: string;
+  structureItems: { title: string; description: string }[];
+  extraSection?: { title: string; text: string };
+  ctaLabel: string;
+  sidebarLabel: string;
+  sidebarDescription: string;
+  sidebarTreeLabel: string;
+}
+
+const BOOK_LANDING_DATA: Record<string, BookLandingData> = {
+  "pt-gita": {
+    iastTitle: "Śrīmad Bhagavad Gītā",
+    devanagariTitle: "श्रीमद्भगवद्गीता",
+    authorIast: "Veda Vyāsa",
+    verseCount: "701",
+    verseLabel: "Verses",
+    quote: '"The Bhagavad Gita is the essence of the Upanishads. It is a universal scripture applicable to people of all temperaments and for all times."',
+    introTitle: "Introduction",
+    introText: 'The "Song of the Lord" is a 700-verse dialogue set on the battlefield of Kurukshetra. It represents the spiritual struggle of the human soul, where Arjuna faces a crisis of conscience and Krishna provides the wisdom to transcend duality.',
+    structureTitle: "Structural Hexads",
+    structureItems: [
+      { title: "Karma Shatka (1–6)", description: "Nature of the individual soul (Tvam) and the path of action." },
+      { title: "Bhakti Shatka (7–12)", description: "Nature of the Supreme Lord (Tat) and the path of devotion." },
+      { title: "Jñāna Shatka (13–18)", description: "Unity of Jīva and Brahman (Asi) and the path of knowledge." },
+    ],
+    ctaLabel: "Open Text",
+    sidebarLabel: "Bhagavad Gita",
+    sidebarDescription: "The Smriti Prasthana: The dialogue between Krishna and Arjuna, synthesizing the wisdom of the Upanishads.",
+    sidebarTreeLabel: "Texts & Chapters",
+  },
+  "pt-brahmasutra": {
+    iastTitle: "Brahmasūtra",
+    devanagariTitle: "ब्रह्मसूत्र",
+    authorIast: "Sage Bādarāyaṇa",
+    verseCount: "555",
+    verseLabel: "Sūtras",
+    quote: '"Atha-ato brahma-jijñāsā — Now, therefore, the inquiry into Brahman."',
+    introTitle: "Introduction",
+    introText: 'The Brahma Sutras, also known as the Vedanta Sutras, are one of the most important texts of Hindu philosophy. They reconcile the seemingly contradictory statements found in the various Upanishads by presenting a logical, unified framework of Vedantic thought.',
+    structureTitle: "The Four Adhyāyas",
+    structureItems: [
+      { title: "Samanvaya (Harmony)", description: "Systematically correlates all Upanishadic passages to point to Brahman." },
+      { title: "Avirodha (Non-Conflict)", description: "Refutes the objections and alternative theories of other schools." },
+      { title: "Sādhana (The Means)", description: "Discusses the process of spiritual practice and the acquisition of knowledge." },
+      { title: "Phala (The Fruit)", description: "Describes the result of Self-knowledge — liberation (Moksha)." },
+    ],
+    extraSection: {
+      title: "Adi Shankara's Role",
+      text: "Adi Shankaracharya's commentary (Bhashya) on the Brahma Sutras is the cornerstone of Advaita Vedanta. His interpretation demonstrates that the Sutras teach the absolute identity of Atman and Brahman, and that liberation is attained through knowledge (Jñāna) alone.",
+    },
+    ctaLabel: "Open Bhashya",
+    sidebarLabel: "Brahma Sutra",
+    sidebarDescription: "The Nyāya Prasthāna: Logical systematization of Vedantic thought authored by Sage Badarayana.",
+    sidebarTreeLabel: "Adhyāyas & Pādas",
+  },
+};
+
+interface ChapterInfo {
+  number: number;
+  title: string;
+  verseCount: number;
+  khandas?: { number: number; title: string; count: number }[];
+}
+
+function useBookChapters(bookId: string | undefined) {
+  const { data } = useQuery<any>({
+    queryKey: ["/api/books", bookId],
+    enabled: !!bookId,
+  });
+
+  if (!data?.verses) return [];
+
+  const chapterMap = new Map<number, ChapterInfo>();
+  for (const v of data.verses) {
+    const adhyay = v.adhyayNumber;
+    if (adhyay == null) continue;
+
+    if (!chapterMap.has(adhyay)) {
+      chapterMap.set(adhyay, {
+        number: adhyay,
+        title: v.adhyayTitle || `Chapter ${adhyay}`,
+        verseCount: 0,
+      });
+    }
+    const ch = chapterMap.get(adhyay)!;
+    ch.verseCount++;
+
+    if (v.khandaNumber != null) {
+      if (!ch.khandas) ch.khandas = [];
+      const existingKhanda = ch.khandas.find(k => k.number === v.khandaNumber);
+      if (existingKhanda) {
+        existingKhanda.count++;
+      } else {
+        ch.khandas.push({
+          number: v.khandaNumber,
+          title: v.khandaTitle || `Part ${v.khandaNumber}`,
+          count: 1,
+        });
+      }
+    }
+  }
+
+  return Array.from(chapterMap.values()).sort((a, b) => a.number - b.number);
+}
+
+function BookLandingPage({ book, landingData, chapters, onSelectBook, t, tc }: {
+  book: Book;
+  landingData: BookLandingData;
+  chapters: ChapterInfo[];
+  onSelectBook: (bookId: string) => void;
+  t: (key: any) => string;
+  tc: (text: string | null | undefined, map: Record<string, Record<string, string>>) => string;
+}) {
+  return (
+    <div className="flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8" data-testid="book-landing-view">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex flex-col lg:flex-row gap-6">
+
+          <div className="lg:w-72 shrink-0">
+            <Card className="p-5 border-border/60 bg-card sticky top-4" data-testid="book-landing-sidebar">
+              <h2 className="font-serif text-lg font-semibold text-foreground" data-testid="text-landing-title">
+                {landingData.sidebarLabel}
+              </h2>
+
+              <p className="text-xs font-semibold text-primary uppercase tracking-wider mt-3">
+                {t("categoryOverview")}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+                {landingData.sidebarDescription}
+              </p>
+
+              <div className="h-px bg-border my-4"></div>
+
+              <p className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                {landingData.sidebarTreeLabel}
+              </p>
+              <div className="mt-3 space-y-0.5 max-h-[60vh] overflow-y-auto" data-testid="landing-chapter-tree">
+                <button
+                  className="flex items-center gap-2 w-full text-left px-2 py-2 rounded-md text-sm hover:bg-accent cursor-pointer transition-colors bg-primary/5 border border-primary/20"
+                  onClick={() => onSelectBook(book.id)}
+                  data-testid="tree-book-main"
+                >
+                  <BookOpen className="h-4 w-4 text-primary shrink-0" />
+                  <span className="font-medium text-primary">{tc(book.title, bookTitleTranslations)}</span>
+                </button>
+                {chapters.map((ch, idx) => (
+                  <div key={ch.number} className="pl-2">
+                    {ch.khandas && ch.khandas.length > 0 ? (
+                      <>
+                        <div className="px-2 pt-3 pb-1">
+                          <span className="text-[10px] font-semibold text-primary/70 uppercase tracking-wider">
+                            {ch.title}
+                          </span>
+                        </div>
+                        {ch.khandas.map((kh, ki) => (
+                          <button
+                            key={kh.number}
+                            className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-md text-sm hover:bg-accent cursor-pointer transition-colors"
+                            onClick={() => onSelectBook(book.id)}
+                            data-testid={`tree-chapter-${ch.number}-khanda-${kh.number}`}
+                          >
+                            <span className="text-xs text-muted-foreground/60 w-5 text-right shrink-0">
+                              {String(idx + ki + 1).padStart(2, '0')}
+                            </span>
+                            <span className="text-foreground/80 truncate">{kh.title}</span>
+                          </button>
+                        ))}
+                      </>
+                    ) : (
+                      <button
+                        className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-md text-sm hover:bg-accent cursor-pointer transition-colors"
+                        onClick={() => onSelectBook(book.id)}
+                        data-testid={`tree-chapter-${ch.number}`}
+                      >
+                        <span className="text-xs text-muted-foreground/60 w-5 text-right shrink-0">
+                          {String(idx + 1).padStart(2, '0')}
+                        </span>
+                        <span className="text-foreground/80 truncate">
+                          {ch.title.includes(' - ') ? ch.title.split(' - ').pop()?.trim() : ch.title}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+
+          <div className="flex-1 min-w-0" data-testid="book-landing-content">
+            <div className="border-l-[3px] border-l-primary/60 pl-6 sm:pl-8">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground leading-tight tracking-tight">
+                    {landingData.iastTitle}
+                  </h1>
+                  <p className="font-serif text-lg sm:text-xl text-foreground/70 mt-1">
+                    {landingData.devanagariTitle}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  className="shrink-0 gap-2 border-primary/30 text-primary hover:bg-primary/5 font-semibold uppercase text-xs tracking-wider"
+                  onClick={() => onSelectBook(book.id)}
+                  data-testid="button-open-text-landing"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  {landingData.ctaLabel}
+                </Button>
+              </div>
+
+              <p className="text-xs font-semibold text-primary/80 uppercase tracking-[0.15em] mt-3">
+                {landingData.authorIast} | {landingData.verseCount} {landingData.verseLabel}
+              </p>
+
+              <blockquote className="border-l-2 border-primary/30 pl-4 mt-6 text-base sm:text-lg text-foreground/80 font-serif italic leading-relaxed">
+                {landingData.quote}
+              </blockquote>
+
+              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+                <div>
+                  <h3 className="font-serif text-sm sm:text-base font-bold text-foreground uppercase tracking-wider">
+                    {landingData.introTitle}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
+                    {landingData.introText}
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="font-serif text-sm sm:text-base font-bold text-foreground uppercase tracking-wider">
+                    {landingData.structureTitle}
+                  </h3>
+                  <div className="mt-3 space-y-3">
+                    {landingData.structureItems.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="border-l-[3px] border-l-primary/50 bg-primary/[0.03] dark:bg-primary/[0.06] rounded-r-lg p-3"
+                        data-testid={`structure-item-${idx}`}
+                      >
+                        <p className="text-xs font-bold text-primary uppercase tracking-wider">
+                          {item.title}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                          {item.description}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {landingData.extraSection && (
+                <div className="mt-8">
+                  <h3 className="font-serif text-sm sm:text-base font-bold text-foreground uppercase tracking-wider">
+                    {landingData.extraSection.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
+                    {landingData.extraSection.text}
+                  </p>
+                </div>
+              )}
+
+              <div className="mt-8 pt-6 border-t border-border/40">
+                <div className="text-center">
+                  <div className="text-primary/25 text-xs tracking-widest font-serif">
+                    ॥ सर्वं खल्विदं ब्रह्म ॥
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GenericBookLanding({ book, onSelectBook, t, tc }: {
+  book: Book;
+  onSelectBook: (bookId: string) => void;
+  t: (key: any) => string;
+  tc: (text: string | null | undefined, map: Record<string, Record<string, string>>) => string;
+}) {
+  return (
+    <div className="flex-1 min-w-0" data-testid={`book-landing-${book.slug}`}>
+      <Card
+        className="group border-border/60 bg-card border-l-[3px] border-l-primary/50 hover:border-l-primary hover:shadow-lg transition-all cursor-pointer overflow-hidden"
+        onClick={() => onSelectBook(book.id)}
+        data-testid={`card-book-${book.slug || book.id}`}
+      >
+        <div className="p-5 sm:p-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <h3 className="font-serif text-lg sm:text-xl font-bold text-foreground leading-snug">
+                {tc(book.title, bookTitleTranslations)}
+              </h3>
+              {book.author && (
+                <p className="text-xs text-primary/80 mt-1 font-medium uppercase tracking-wider">
+                  {tc(book.author, bookAuthorTranslations)}
+                  {book.totalVerses ? ` | ${book.totalVerses} ${t("verses")}` : ''}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-1 text-[10px] text-primary font-semibold uppercase tracking-wider shrink-0 opacity-70 group-hover:opacity-100 transition-opacity pt-0.5">
+              <BookOpen className="h-3.5 w-3.5" />
+              <span>{t("openText")}</span>
+            </div>
+          </div>
+          {book.description && (
+            <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
+              {tc(book.description, bookDescriptionTranslations)}
+            </p>
+          )}
+          {book.bhashyamName && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Badge variant="secondary" className="text-[10px]">
+                {book.bhashyamName}
+              </Badge>
+              {book.teekasList?.map((teeka, i) => (
+                <Badge key={i} variant="outline" className="text-[10px]">
+                  {teeka.name} — {teeka.author}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 interface SubCategoryDetailViewProps {
   categoryId: string;
   subCategoryId: string;
@@ -615,6 +957,23 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
   const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, lang);
 
   const subBooks = books.filter(b => matchesCategory(subCategory.categoryMatch, subCategory.categoryAltMatch, b.category));
+
+  const landingData = BOOK_LANDING_DATA[subCategoryId];
+  const primaryBook = subBooks.length > 0 ? subBooks[0] : null;
+  const chapters = useBookChapters(landingData && primaryBook ? primaryBook.id : undefined);
+
+  if (landingData && primaryBook) {
+    return (
+      <BookLandingPage
+        book={primaryBook}
+        landingData={landingData}
+        chapters={chapters}
+        onSelectBook={onSelectBook}
+        t={t}
+        tc={tc}
+      />
+    );
+  }
 
   return (
     <div className="flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8" data-testid="subcategory-detail-view">
@@ -663,38 +1022,15 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
 
           <div className="flex-1 min-w-0">
             {subBooks.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" data-testid="subcat-books-grid">
+              <div className="space-y-4" data-testid="subcat-books-grid">
                 {subBooks.map(book => (
-                  <Card
+                  <GenericBookLanding
                     key={book.id}
-                    className="group relative border-border/60 bg-card hover:border-primary/40 hover:shadow-lg transition-all cursor-pointer overflow-hidden border-l-[3px] border-l-primary/50 hover:border-l-primary"
-                    onClick={() => onSelectBook(book.id)}
-                    data-testid={`card-book-${book.slug || book.id}`}
-                  >
-                    <div className="p-5">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-serif text-base font-semibold text-foreground leading-snug">
-                            {tc(book.title, bookTitleTranslations)}
-                          </h3>
-                          {book.author && (
-                            <p className="text-xs text-primary/80 mt-1 font-medium">
-                              {tc(book.author, bookAuthorTranslations)}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1 text-[10px] text-primary font-semibold uppercase tracking-wider shrink-0 opacity-70 group-hover:opacity-100 transition-opacity pt-0.5">
-                          <BookOpen className="h-3 w-3" />
-                          <span>{t("openText")}</span>
-                        </div>
-                      </div>
-                      {book.description && (
-                        <p className="text-sm text-muted-foreground mt-3 leading-relaxed line-clamp-3">
-                          {tc(book.description, bookDescriptionTranslations)}
-                        </p>
-                      )}
-                    </div>
-                  </Card>
+                    book={book}
+                    onSelectBook={onSelectBook}
+                    t={t}
+                    tc={tc}
+                  />
                 ))}
               </div>
             ) : (
