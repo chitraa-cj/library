@@ -884,6 +884,132 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, t, tc }: {
   );
 }
 
+interface PrincipalUpanishad {
+  number: string;
+  devanagari: string;
+  iast: string;
+  veda: string;
+  slugMatch: string;
+}
+
+const PRINCIPAL_UPANISHADS: PrincipalUpanishad[] = [
+  { number: "01", devanagari: "ईश", iast: "Īśa", veda: "Shukla Yajur", slugMatch: "isha" },
+  { number: "02", devanagari: "केन", iast: "Kena", veda: "Sama Veda", slugMatch: "kena" },
+  { number: "03", devanagari: "कठ", iast: "Kaṭha", veda: "Krishna Yajur", slugMatch: "katha" },
+  { number: "04", devanagari: "प्रश्न", iast: "Praśna", veda: "Atharva Veda", slugMatch: "prashna" },
+  { number: "05", devanagari: "मुण्डक", iast: "Muṇḍaka", veda: "Atharva Veda", slugMatch: "mundaka" },
+  { number: "06", devanagari: "माण्डूक्य", iast: "Māṇḍūkya", veda: "Atharva Veda", slugMatch: "mandukya" },
+  { number: "07", devanagari: "तैत्तिरीय", iast: "Taittirīya", veda: "Krishna Yajur", slugMatch: "taittariya" },
+  { number: "08", devanagari: "ऐतरेय", iast: "Aitareya", veda: "Rig Veda", slugMatch: "aitareya" },
+  { number: "09", devanagari: "छान्दोग्य", iast: "Chāndogya", veda: "Sama Veda", slugMatch: "chandogya" },
+  { number: "10", devanagari: "बृहदारण्यक", iast: "Bṛhadāraṇyaka", veda: "Shukla Yajur", slugMatch: "brihadaranyaka" },
+];
+
+function UpanishadLandingPage({ books, onSelectBook }: {
+  books: Book[];
+  onSelectBook: (bookId: string) => void;
+}) {
+  const findBook = (slugMatch: string) =>
+    books.find(b => b.slug?.toLowerCase().includes(slugMatch));
+
+  return (
+    <div className="flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8" data-testid="upanishad-landing-view">
+      <div className="max-w-5xl mx-auto">
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-8 h-[2px] bg-primary/60"></div>
+            <span className="text-xs font-semibold text-primary uppercase tracking-[0.2em]">
+              Shruti Prasthana
+            </span>
+          </div>
+          <div className="flex items-start justify-between gap-4">
+            <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground tracking-tight">
+              The Principal Upanishads
+            </h1>
+            <div className="text-right shrink-0">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Commentary</p>
+              <p className="text-sm font-serif font-medium text-foreground italic">Sri Shankaracharya</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3" data-testid="upanishad-grid">
+          {PRINCIPAL_UPANISHADS.map((up) => {
+            const book = findBook(up.slugMatch);
+            const isAvailable = !!book;
+            return (
+              <button
+                key={up.number}
+                className={`relative text-center p-4 sm:p-5 rounded-xl border transition-all ${
+                  isAvailable
+                    ? "border-border/60 bg-card hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
+                    : "border-border/30 bg-muted/30 opacity-50 cursor-default"
+                }`}
+                onClick={() => isAvailable && book && onSelectBook(book.id)}
+                data-testid={`upanishad-card-${up.slugMatch}`}
+              >
+                <span className="absolute top-2 left-3 text-[10px] text-muted-foreground/50 font-medium">
+                  {up.number}
+                </span>
+                <div className="mt-2">
+                  <p className="font-serif text-xl sm:text-2xl text-foreground leading-tight">
+                    {up.devanagari}
+                  </p>
+                  <p className="font-serif text-sm sm:text-base font-bold text-foreground uppercase tracking-wider mt-1 leading-tight">
+                    {up.iast}
+                  </p>
+                  <p className="text-[10px] text-primary/70 uppercase tracking-wider mt-2 font-medium">
+                    {up.veda}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {books.filter(b => !PRINCIPAL_UPANISHADS.some(up => b.slug?.toLowerCase().includes(up.slugMatch))).length > 0 && (
+          <div className="mt-8">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-6 h-[2px] bg-primary/40"></div>
+              <span className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                Other Upanishads
+              </span>
+              <div className="h-px flex-1 bg-border/40"></div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              {books
+                .filter(b => !PRINCIPAL_UPANISHADS.some(up => b.slug?.toLowerCase().includes(up.slugMatch)))
+                .map(book => (
+                  <button
+                    key={book.id}
+                    className="text-center p-4 rounded-xl border border-border/60 bg-card hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer"
+                    onClick={() => onSelectBook(book.id)}
+                    data-testid={`upanishad-card-other-${book.slug}`}
+                  >
+                    <p className="font-serif text-sm font-bold text-foreground uppercase tracking-wider leading-tight">
+                      {book.title}
+                    </p>
+                    {book.totalVerses && (
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        {book.totalVerses} manthras
+                      </p>
+                    )}
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-6 text-center">
+          <div className="text-primary/25 text-xs tracking-widest font-serif">
+            ॥ ॐ तत् सत् ॥
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function GenericBookLanding({ book, onSelectBook, t, tc }: {
   book: Book;
   onSelectBook: (bookId: string) => void;
@@ -961,6 +1087,15 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
   const landingData = BOOK_LANDING_DATA[subCategoryId];
   const primaryBook = subBooks.length > 0 ? subBooks[0] : null;
   const chapters = useBookChapters(landingData && primaryBook ? primaryBook.id : undefined);
+
+  if (subCategoryId === "pt-upanishad") {
+    return (
+      <UpanishadLandingPage
+        books={subBooks}
+        onSelectBook={onSelectBook}
+      />
+    );
+  }
 
   if (landingData && primaryBook) {
     return (
