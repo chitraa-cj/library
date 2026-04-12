@@ -1007,30 +1007,200 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, t, tc }: {
 interface PrincipalUpanishad {
   number: string;
   devanagari: string;
+  devanagariLong: string;
   iast: string;
+  iastFull: string;
   veda: string;
   slugMatch: string;
+  quote: string;
+  introText: string;
+  structureTitle: string;
+  structureItems: { title: string; description: string }[];
+  extraSection?: { title: string; text: string };
 }
 
 const PRINCIPAL_UPANISHADS: PrincipalUpanishad[] = [
-  { number: "01", devanagari: "ईश", iast: "Īśa", veda: "Shukla Yajur", slugMatch: "isha" },
-  { number: "02", devanagari: "केन", iast: "Kena", veda: "Sama Veda", slugMatch: "kena" },
-  { number: "03", devanagari: "कठ", iast: "Kaṭha", veda: "Krishna Yajur", slugMatch: "katha" },
-  { number: "04", devanagari: "प्रश्न", iast: "Praśna", veda: "Atharva Veda", slugMatch: "prashna" },
-  { number: "05", devanagari: "मुण्डक", iast: "Muṇḍaka", veda: "Atharva Veda", slugMatch: "mundaka" },
-  { number: "06", devanagari: "माण्डूक्य", iast: "Māṇḍūkya", veda: "Atharva Veda", slugMatch: "mandukya" },
-  { number: "07", devanagari: "तैत्तिरीय", iast: "Taittirīya", veda: "Krishna Yajur", slugMatch: "taittariya" },
-  { number: "08", devanagari: "ऐतरेय", iast: "Aitareya", veda: "Rig Veda", slugMatch: "aitareya" },
-  { number: "09", devanagari: "छान्दोग्य", iast: "Chāndogya", veda: "Sama Veda", slugMatch: "chandogya" },
-  { number: "10", devanagari: "बृहदारण्यक", iast: "Bṛhadāraṇyaka", veda: "Shukla Yajur", slugMatch: "brihadaranyaka" },
+  {
+    number: "01", devanagari: "ईश", devanagariLong: "ईशावास्योपनिषद्", iast: "Īśa", iastFull: "Īśāvāsyopaniṣad",
+    veda: "Shukla Yajur", slugMatch: "isha",
+    quote: '"Īśā vāsyam idaṁ sarvaṁ — All this is pervaded by the Lord."',
+    introText: "The Isha Upanishad, the opening chapter of the Shukla Yajurveda, is one of the shortest yet most profound Upanishads. In just 18 verses, it establishes the foundational vision of Advaita — that the entire universe is pervaded by Ishvara, and true renunciation lies in seeing the Self in all beings.",
+    structureTitle: "Key Themes",
+    structureItems: [
+      { title: "Verses 1–3", description: "The vision of Ishvara pervading all creation, and the consequences of ignorance." },
+      { title: "Verses 4–8", description: "The nature of Atman — unmoving yet swifter than the mind, beyond duality." },
+      { title: "Verses 9–18", description: "Vidya and Avidya, knowledge and ritual — their synthesis for liberation." },
+    ],
+  },
+  {
+    number: "02", devanagari: "केन", devanagariLong: "केनोपनिषद्", iast: "Kena", iastFull: "Kenopaniṣad",
+    veda: "Sama Veda", slugMatch: "kena",
+    quote: '"By whom directed does the mind go towards its objects? — Kena?"',
+    introText: "The Kena Upanishad takes its name from its opening word 'Kena' (by whom?). Belonging to the Talavakara Brahmana of the Sama Veda, it inquires into the ultimate cause behind all perception and cognition — the Brahman that is the ear of the ear, the mind of the mind.",
+    structureTitle: "Structure",
+    structureItems: [
+      { title: "Section I (Verses 1–4)", description: "The inquiry: What power enables the senses and mind to function?" },
+      { title: "Section II (Verses 5–9)", description: "Brahman defined as that which cannot be objectified by speech, mind, or senses." },
+      { title: "Sections III–IV", description: "The parable of Yaksha — how even the gods could not comprehend Brahman without grace." },
+    ],
+  },
+  {
+    number: "03", devanagari: "कठ", devanagariLong: "कठोपनिषद्", iast: "Kaṭha", iastFull: "Kaṭhopaniṣad",
+    veda: "Krishna Yajur", slugMatch: "katha",
+    quote: '"The Self is not attained by discourse, nor by intellect, nor by much hearing."',
+    introText: "The Katha Upanishad narrates the dialogue between the young Nachiketas and Yama, the lord of death. Nachiketas, through his unwavering resolve, receives the supreme teaching on the nature of the Self, death, and immortality — making this one of the most celebrated Upanishads.",
+    structureTitle: "Structure",
+    structureItems: [
+      { title: "Valli 1–3 (Adhyaya I)", description: "Nachiketas' journey to Yama, the choice between Preyas (pleasant) and Shreyas (good), and the teaching of the imperishable Atman." },
+      { title: "Valli 4–6 (Adhyaya II)", description: "The chariot metaphor for body-mind-Self, the hierarchy of reality, and the path to liberation through knowledge." },
+    ],
+  },
+  {
+    number: "04", devanagari: "प्रश्न", devanagariLong: "प्रश्नोपनिषद्", iast: "Praśna", iastFull: "Praśnopaniṣad",
+    veda: "Atharva Veda", slugMatch: "prashna",
+    quote: '"Prana is born of the Self. As a shadow is cast by a person, so is Prana attached to the Self."',
+    introText: "The Prashna Upanishad consists of six questions posed by six seekers to the sage Pippalada. Each question progressively deepens the inquiry — from the origin of creation to the nature of Prana, the states of consciousness, and ultimately the supreme Purusha with sixteen parts.",
+    structureTitle: "The Six Questions",
+    structureItems: [
+      { title: "Questions 1–2", description: "Origin of created beings, and the supremacy of Prana over the senses and elements." },
+      { title: "Questions 3–4", description: "The nature of Prana, its relation to the Self, and the three states of waking, dream, and deep sleep." },
+      { title: "Questions 5–6", description: "Meditation on Om, and the Purusha of sixteen parts — the ultimate reality." },
+    ],
+  },
+  {
+    number: "05", devanagari: "मुण्डक", devanagariLong: "मुण्डकोपनिषद्", iast: "Muṇḍaka", iastFull: "Muṇḍakopaniṣad",
+    veda: "Atharva Veda", slugMatch: "mundaka",
+    quote: '"Two birds, inseparable companions, perch on the same tree. One eats the fruit; the other looks on without eating."',
+    introText: "The Mundaka Upanishad, belonging to the Atharva Veda, is famous for its distinction between Para Vidya (higher knowledge of Brahman) and Apara Vidya (lower knowledge of rituals). Through vivid imagery — two birds on a tree, sparks from fire — it guides the seeker from worldly knowledge to Self-realization.",
+    structureTitle: "Three Mundakas",
+    structureItems: [
+      { title: "Mundaka I", description: "Para and Apara Vidya — the distinction between knowledge of Brahman and ritualistic knowledge." },
+      { title: "Mundaka II", description: "The nature of Brahman — all-pervading, self-luminous, the source from which all beings emerge like sparks from fire." },
+      { title: "Mundaka III", description: "The path to realization — the two birds metaphor, renunciation, and the attainment of Brahman through knowledge." },
+    ],
+  },
+  {
+    number: "06", devanagari: "माण्डूक्य", devanagariLong: "माण्डूक्योपनिषद्", iast: "Māṇḍūkya", iastFull: "Māṇḍūkyopaniṣad",
+    veda: "Atharva Veda", slugMatch: "mandukya",
+    quote: '"Om — this syllable is the whole world. All that is past, present, and future is truly Om."',
+    introText: "The Mandukya Upanishad is the shortest of the principal Upanishads with just 12 verses, yet it is considered the most concentrated teaching of Advaita Vedanta. Gaudapada's Karikas (200 verses) expand on its four states of consciousness and establish Ajativada — the doctrine of non-origination.",
+    structureTitle: "The Four States",
+    structureItems: [
+      { title: "Vaishvanara (A)", description: "The waking state — consciousness turned outward, experiencing the gross world through 19 doors." },
+      { title: "Taijasa (U)", description: "The dream state — consciousness turned inward, experiencing subtle impressions." },
+      { title: "Prajna (M)", description: "Deep sleep — undifferentiated consciousness, the seed state of bliss and ignorance." },
+      { title: "Turiya (Silence)", description: "The fourth — pure awareness beyond all states, non-dual, the true nature of Atman." },
+    ],
+  },
+  {
+    number: "07", devanagari: "तैत्तिरीय", devanagariLong: "तैत्तिरीयोपनिषद्", iast: "Taittirīya", iastFull: "Taittirīyopaniṣad",
+    veda: "Krishna Yajur", slugMatch: "taittariya",
+    quote: '"Satyam Jñānam Anantam Brahma — Brahman is Truth, Knowledge, Infinite."',
+    introText: "The Taittiriya Upanishad belongs to the Krishna Yajurveda and is structured in three sections (Vallis). It progresses from phonetics and ethics through the five sheaths (Pancha Kosha) to the ecstatic realization of Brahman as Ananda (bliss) — making it essential for understanding Advaita methodology.",
+    structureTitle: "Three Vallis",
+    structureItems: [
+      { title: "Shiksha Valli", description: "The preparatory section — meditation on syllables, ethics of a student's life, and the fivefold meditations." },
+      { title: "Brahmananda Valli", description: "The Pancha Kosha analysis — Annamaya to Anandamaya — leading to the definition: Satyam Jñānam Anantam Brahma." },
+      { title: "Bhrigu Valli", description: "Bhrigu's progressive realization through tapas — from food to bliss — culminating in Brahman-knowledge." },
+    ],
+  },
+  {
+    number: "08", devanagari: "ऐतरेय", devanagariLong: "ऐतरेयोपनिषद्", iast: "Aitareya", iastFull: "Aitareyopaniṣad",
+    veda: "Rig Veda", slugMatch: "aitareya",
+    quote: '"Prajñānam Brahma — Consciousness is Brahman."',
+    introText: "The Aitareya Upanishad belongs to the Rig Veda and contains one of the four Mahavakyas: 'Prajñānam Brahma.' It describes the creation of the universe from the Self, the entry of the Self into creation, and the three births of the individual — providing a complete cosmological and spiritual framework.",
+    structureTitle: "Three Chapters",
+    structureItems: [
+      { title: "Chapter I", description: "Cosmogony — how the Self (Atman) created the worlds, the cosmic person, and the elements." },
+      { title: "Chapter II", description: "The three births — physical birth, the birth of the Self into the body, and the birth into immortality." },
+      { title: "Chapter III", description: "The nature of the Self as pure consciousness (Prajñāna) — the Mahavakya: Prajñānam Brahma." },
+    ],
+  },
+  {
+    number: "09", devanagari: "छान्दोग्य", devanagariLong: "छान्दोग्योपनिषद्", iast: "Chāndogya", iastFull: "Chāndogyopaniṣad",
+    veda: "Sama Veda", slugMatch: "chandogya",
+    quote: '"Tat Tvam Asi — That Thou Art."',
+    introText: "The Chandogya Upanishad is one of the oldest and largest Upanishads, belonging to the Sama Veda. It contains the celebrated Mahavakya 'Tat Tvam Asi' taught by Uddalaka to Shvetaketu. Through nine examples (honey doctrine, rivers merging in ocean, salt in water), it demonstrates the identity of the individual self with Brahman.",
+    structureTitle: "Key Sections",
+    structureItems: [
+      { title: "Chapters I–III", description: "Meditation on Udgitha (Om), the honey doctrine, and the five fires — preparatory meditations." },
+      { title: "Chapters IV–V", description: "Stories of Satyakama, Raikva, and the doctrine of Vaishvanara — progressive teachings on Brahman." },
+      { title: "Chapters VI–VIII", description: "The teaching of Tat Tvam Asi, the Bhuma Vidya (meditation on the Infinite), and Dahara Vidya (the space within the heart)." },
+    ],
+  },
+  {
+    number: "10", devanagari: "बृहदारण्यक", devanagariLong: "बृहदारण्यकोपनिषद्", iast: "Bṛhadāraṇyaka", iastFull: "Bṛhadāraṇyakopaniṣad",
+    veda: "Shukla Yajur", slugMatch: "brihadaranyaka",
+    quote: '"Aham Brahmāsmi — I am Brahman."',
+    introText: "The Brihadaranyaka is the largest and arguably the most important Upanishad, belonging to the Shukla Yajurveda. It contains the Mahavakya 'Aham Brahmasmi' and Yajnavalkya's celebrated dialogues with Maitreyi and King Janaka — representing the pinnacle of Upanishadic wisdom on the nature of the Self.",
+    structureTitle: "Three Kandas",
+    structureItems: [
+      { title: "Madhu Kanda (I–II)", description: "The Ashvamedha allegory, creation from the Self, the honey doctrine — everything is interconnected through Brahman." },
+      { title: "Muni Kanda (III–IV)", description: "Yajnavalkya's debates at Janaka's court, the 'Neti Neti' teaching, and the dialogue with Maitreyi on the Self as pure awareness." },
+      { title: "Khila Kanda (V–VI)", description: "Supplementary meditations, the Gayatri as Brahman, and the path of the departed — Devayana and Pitriyana." },
+    ],
+  },
 ];
 
 function UpanishadLandingPage({ books, onSelectBook }: {
   books: Book[];
   onSelectBook: (bookId: string) => void;
 }) {
+  const [selectedUpanishadSlug, setSelectedUpanishadSlug] = useState<string | null>(null);
+
   const findBook = (slugMatch: string) =>
     books.find(b => b.slug?.toLowerCase().includes(slugMatch));
+
+  const selectedUp = selectedUpanishadSlug
+    ? PRINCIPAL_UPANISHADS.find(u => u.slugMatch === selectedUpanishadSlug)
+    : null;
+  const selectedBook = selectedUpanishadSlug ? findBook(selectedUpanishadSlug) : null;
+  const chapters = useBookChapters(selectedBook?.id);
+
+  if (selectedUp && selectedBook) {
+    const landingData: BookLandingData = {
+      iastTitle: selectedUp.iastFull,
+      devanagariTitle: selectedUp.devanagariLong,
+      authorIast: "Śrī Śaṅkarācārya",
+      verseCount: String(selectedBook.totalVerses || 0),
+      verseLabel: "Manthras",
+      quote: selectedUp.quote,
+      introTitle: "Introduction",
+      introText: selectedUp.introText,
+      structureTitle: selectedUp.structureTitle,
+      structureItems: selectedUp.structureItems,
+      extraSection: selectedUp.extraSection,
+      ctaLabel: "Open Text",
+      sidebarLabel: selectedUp.iastFull,
+      sidebarDescription: `${selectedUp.veda} Veda Upanishad with Shankara Bhashya.`,
+      sidebarTreeLabel: "Structure",
+    };
+
+    return (
+      <div className="flex-1 overflow-y-auto bg-background" data-testid="upanishad-detail-view">
+        <div className="px-4 sm:px-6 lg:px-8 pt-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedUpanishadSlug(null)}
+            className="gap-1.5 text-xs text-muted-foreground mb-2"
+            data-testid="button-back-to-upanishads"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            All Upanishads
+          </Button>
+        </div>
+        <BookLandingPage
+          book={selectedBook}
+          landingData={landingData}
+          chapters={chapters}
+          onSelectBook={onSelectBook}
+          t={(k: any) => k}
+          tc={(text) => text || ""}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8" data-testid="upanishad-landing-view">
@@ -1065,7 +1235,7 @@ function UpanishadLandingPage({ books, onSelectBook }: {
                     ? "border-border/60 bg-card hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
                     : "border-border/30 bg-muted/30 opacity-50 cursor-default"
                 }`}
-                onClick={() => isAvailable && book && onSelectBook(book.id)}
+                onClick={() => isAvailable && book && setSelectedUpanishadSlug(up.slugMatch)}
                 data-testid={`upanishad-card-${up.slugMatch}`}
               >
                 <span className="absolute top-2 left-3 text-[10px] text-muted-foreground/50 font-medium">
