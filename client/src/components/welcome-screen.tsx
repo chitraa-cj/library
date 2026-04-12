@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { BookOpen, Library, FolderOpen, Lock, ArrowLeft, ArrowRight, ChevronRight, ScrollText, Feather, Users, Heart, BookMarked, Music, Layers } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
