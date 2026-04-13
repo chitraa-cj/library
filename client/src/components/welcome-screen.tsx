@@ -832,6 +832,45 @@ function useBookChapters(bookId: string | undefined) {
   return Array.from(chapterMap.values()).sort((a, b) => a.number - b.number);
 }
 
+function IntroSection({ title, cmsDescription, introText }: {
+  title: string;
+  cmsDescription: string | null;
+  introText: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const fullText = [cmsDescription, introText && (!cmsDescription || introText !== cmsDescription) ? introText : null].filter(Boolean).join("\n\n");
+  const previewLength = 200;
+  const needsTruncation = fullText.length > previewLength;
+  const displayText = !expanded && needsTruncation
+    ? fullText.substring(0, previewLength).replace(/\s+\S*$/, "") + "..."
+    : fullText;
+
+  return (
+    <div>
+      <h3 className="font-serif text-sm sm:text-base font-bold text-foreground uppercase tracking-wider">
+        {title}
+      </h3>
+      {displayText.split("\n\n").map((paragraph, idx) => (
+        <p key={idx} className="text-sm text-muted-foreground mt-3 leading-relaxed">
+          {paragraph}
+        </p>
+      ))}
+      {needsTruncation && (
+        <Button
+          variant="link"
+          size="sm"
+          className="px-0 h-auto mt-2 text-primary text-xs font-semibold uppercase tracking-wider gap-1"
+          onClick={() => setExpanded(!expanded)}
+          data-testid="button-read-introduction"
+        >
+          {expanded ? "Show Less" : "Read Introduction"}
+          <ChevronRight className={`h-3 w-3 transition-transform ${expanded ? "rotate-90" : ""}`} />
+        </Button>
+      )}
+    </div>
+  );
+}
+
 function BookLandingPage({ book, landingData, chapters, onSelectBook, t, tc }: {
   book: Book;
   landingData: BookLandingData;
@@ -992,21 +1031,11 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, t, tc }: {
               </blockquote>
 
               <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-                <div>
-                  <h3 className="font-serif text-sm sm:text-base font-bold text-foreground uppercase tracking-wider">
-                    {landingData.introTitle}
-                  </h3>
-                  {book.description && (
-                    <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
-                      {book.description}
-                    </p>
-                  )}
-                  {landingData.introText && (!book.description || landingData.introText !== book.description) && (
-                    <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
-                      {landingData.introText}
-                    </p>
-                  )}
-                </div>
+                <IntroSection
+                  title={landingData.introTitle}
+                  cmsDescription={book.description || null}
+                  introText={landingData.introText}
+                />
 
                 <div>
                   <h3 className="font-serif text-sm sm:text-base font-bold text-foreground uppercase tracking-wider">
