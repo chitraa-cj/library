@@ -1196,7 +1196,7 @@ function UpanishadLandingPage({ books, onSelectBook }: {
   const [selectedUpanishadSlug, setSelectedUpanishadSlug] = useState<string | null>(null);
 
   const findBook = (slugMatch: string) =>
-    books.find(b => b.slug?.toLowerCase().includes(slugMatch));
+    books.find(b => b.slug?.toLowerCase().startsWith(slugMatch));
 
   const selectedUp = selectedUpanishadSlug
     ? PRINCIPAL_UPANISHADS.find(u => u.slugMatch === selectedUpanishadSlug)
@@ -1265,7 +1265,7 @@ function UpanishadLandingPage({ books, onSelectBook }: {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-testid="upanishad-grid">
           {books.map((book) => {
-            const principalUp = PRINCIPAL_UPANISHADS.find(up => book.slug?.toLowerCase().includes(up.slugMatch));
+            const principalUp = PRINCIPAL_UPANISHADS.find(up => book.slug?.toLowerCase().startsWith(up.slugMatch));
             return (
               <Card
                 key={book.id}
