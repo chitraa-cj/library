@@ -863,7 +863,7 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, t, tc }: {
               <p className="text-xs font-semibold text-foreground uppercase tracking-wider">
                 {landingData.sidebarTreeLabel}
               </p>
-              <div className="mt-3 space-y-0.5 max-h-[60vh] overflow-y-auto" data-testid="landing-chapter-tree">
+              <div className="mt-3 space-y-0.5 max-h-[35vh] overflow-y-auto pr-1" data-testid="landing-chapter-tree">
                 <button
                   className="flex items-center gap-2 w-full text-left px-2 py-2 rounded-md text-sm hover:bg-accent cursor-pointer transition-colors bg-primary/5 border border-primary/20"
                   onClick={() => onSelectBook(book.id)}
@@ -912,6 +912,52 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, t, tc }: {
                   </div>
                 ))}
               </div>
+
+              {(book.author || (book.teekasList && book.teekasList.length > 0)) && (
+                <>
+                  <div className="h-px bg-border my-4"></div>
+
+                  {book.author && (
+                    <div data-testid="landing-bhashyakara">
+                      <p className="text-[10px] font-semibold text-primary/70 uppercase tracking-[0.15em]">
+                        Bhāṣyakāra (Commentator)
+                      </p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <Users className="h-3 w-3 text-primary/70" />
+                        </div>
+                        <span className="text-sm font-medium text-foreground">{book.author}</span>
+                      </div>
+                      {book.bhashyamName && (
+                        <p className="text-xs text-muted-foreground mt-1 ml-8 italic">{book.bhashyamName}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {book.teekasList && book.teekasList.length > 0 && (
+                    <div className="mt-3" data-testid="landing-teekakaras">
+                      <p className="text-[10px] font-semibold text-primary/70 uppercase tracking-[0.15em]">
+                        Ṭīkākāras (Sub-commentators)
+                      </p>
+                      <div className="mt-1.5 space-y-1.5">
+                        {book.teekasList.map((teeka, idx) => (
+                          <div key={idx} className="flex items-start gap-2">
+                            <div className="w-6 h-6 rounded-full bg-accent/60 flex items-center justify-center shrink-0 mt-0.5">
+                              <Feather className="h-3 w-3 text-muted-foreground" />
+                            </div>
+                            <div className="min-w-0">
+                              <span className="text-sm font-medium text-foreground">{teeka.author || teeka.name}</span>
+                              {teeka.author && teeka.name && (
+                                <p className="text-xs text-muted-foreground italic truncate">{teeka.name}</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </Card>
           </div>
 
