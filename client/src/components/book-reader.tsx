@@ -671,9 +671,6 @@ export function BookReader({
       const numericLabel = chapterViewKhanda != null
         ? `${chapterViewAdhyay}.${chapterViewKhanda}`
         : `${chapterViewAdhyay}`;
-      const verseLabel = chapterViewKhanda != null
-        ? (tc(selectedKhanda?.khandaTitle ?? null, sectionTitleTranslations) || `${t("part")} ${chapterViewKhanda}`)
-        : (tc(chapterTitle, chapterTitleTranslations) || `${t("chapter")} ${chapterViewAdhyay}`);
 
       onBreadcrumbChange({
         bookTitle: tc(book.title, bookTitleTranslations),
@@ -681,7 +678,7 @@ export function BookReader({
         adhyayTitle: tc(chapterTitle, chapterTitleTranslations) || null,
         khandaNumber: chapterViewKhanda ?? null,
         khandaTitle: selectedKhanda ? (tc(selectedKhanda.khandaTitle, sectionTitleTranslations) || null) : null,
-        verseLabel,
+        verseLabel: "",
         numericLabel,
       });
     }
