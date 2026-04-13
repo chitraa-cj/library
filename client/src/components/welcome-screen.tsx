@@ -996,9 +996,16 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, t, tc }: {
                   <h3 className="font-serif text-sm sm:text-base font-bold text-foreground uppercase tracking-wider">
                     {landingData.introTitle}
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
-                    {book.description || landingData.introText}
-                  </p>
+                  {book.description && (
+                    <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
+                      {book.description}
+                    </p>
+                  )}
+                  {landingData.introText && (!book.description || landingData.introText !== book.description) && (
+                    <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
+                      {landingData.introText}
+                    </p>
+                  )}
                 </div>
 
                 <div>
