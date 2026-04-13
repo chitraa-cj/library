@@ -393,6 +393,46 @@ function HomePageContent() {
     }
   };
 
+  const handleLandingSelectChapter = useCallback((bookId: string, adhyayNumber: number) => {
+    setSelectedBookId(bookId);
+    setSelectedCategoryId(null);
+    setSelectedSubCategoryId(null);
+    setShowLibraryCatalog(false);
+    setSelectedVerseId(null);
+    setSelectedContent("");
+    setShowTranslationPanel(false);
+    setSelectedAuthor(null);
+    setNavigateToVerse(null);
+    setCurrentVerseNumber(1);
+    setVerseBreadcrumb(null);
+    setChapterViewAdhyay(adhyayNumber);
+    setChapterViewKhanda(null);
+    const book = allBooks?.find(b => b.id === bookId);
+    if (book?.slug) {
+      setLocation(`/${book.slug}/chapter/${adhyayNumber}`);
+    }
+  }, [allBooks, setLocation]);
+
+  const handleLandingSelectPart = useCallback((bookId: string, adhyayNumber: number, khandaNumber: number) => {
+    setSelectedBookId(bookId);
+    setSelectedCategoryId(null);
+    setSelectedSubCategoryId(null);
+    setShowLibraryCatalog(false);
+    setSelectedVerseId(null);
+    setSelectedContent("");
+    setShowTranslationPanel(false);
+    setSelectedAuthor(null);
+    setNavigateToVerse(null);
+    setCurrentVerseNumber(1);
+    setVerseBreadcrumb(null);
+    setChapterViewAdhyay(adhyayNumber);
+    setChapterViewKhanda(khandaNumber);
+    const book = allBooks?.find(b => b.id === bookId);
+    if (book?.slug) {
+      setLocation(`/${book.slug}/chapter/${adhyayNumber}/${khandaNumber}`);
+    }
+  }, [allBooks, setLocation]);
+
   const handleSelectChapter = useCallback((adhyayNumber: number) => {
     setChapterViewAdhyay(adhyayNumber);
     setChapterViewKhanda(null);
@@ -731,6 +771,8 @@ function HomePageContent() {
                 subCategoryId={selectedSubCategoryId}
                 books={allBooks || []}
                 onSelectBook={handleBookSelect}
+                onSelectChapter={handleLandingSelectChapter}
+                onSelectPart={handleLandingSelectPart}
                 onGoBack={() => {
                   setSelectedSubCategoryId(null);
                 }}

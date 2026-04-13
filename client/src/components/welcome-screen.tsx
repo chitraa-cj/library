@@ -871,11 +871,13 @@ function IntroSection({ title, cmsDescription, introText }: {
   );
 }
 
-function BookLandingPage({ book, landingData, chapters, onSelectBook, t, tc }: {
+function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectChapter, onSelectPart, t, tc }: {
   book: Book;
   landingData: BookLandingData;
   chapters: ChapterInfo[];
   onSelectBook: (bookId: string) => void;
+  onSelectChapter?: (bookId: string, adhyayNumber: number) => void;
+  onSelectPart?: (bookId: string, adhyayNumber: number, khandaNumber: number) => void;
   t: (key: any) => string;
   tc: (text: string | null | undefined, map: Record<string, Record<string, string>>) => string;
 }) {
@@ -915,16 +917,20 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, t, tc }: {
                   <div key={ch.number} className="pl-2">
                     {ch.khandas && ch.khandas.length > 0 ? (
                       <>
-                        <div className="px-2 pt-3 pb-1">
+                        <button
+                          className="flex items-center gap-2 w-full text-left px-2 pt-3 pb-1 rounded-md hover:bg-accent cursor-pointer transition-colors"
+                          onClick={() => onSelectChapter ? onSelectChapter(book.id, ch.number) : onSelectBook(book.id)}
+                          data-testid={`tree-adhyay-${ch.number}`}
+                        >
                           <span className="text-[10px] font-semibold text-primary/70 uppercase tracking-wider">
                             {ch.title}
                           </span>
-                        </div>
+                        </button>
                         {ch.khandas.map((kh, ki) => (
                           <button
                             key={kh.number}
                             className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-md text-sm hover:bg-accent cursor-pointer transition-colors"
-                            onClick={() => onSelectBook(book.id)}
+                            onClick={() => onSelectPart ? onSelectPart(book.id, ch.number, kh.number) : onSelectBook(book.id)}
                             data-testid={`tree-chapter-${ch.number}-khanda-${kh.number}`}
                           >
                             <span className="text-xs text-muted-foreground/60 w-5 text-right shrink-0">
@@ -937,7 +943,7 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, t, tc }: {
                     ) : (
                       <button
                         className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-md text-sm hover:bg-accent cursor-pointer transition-colors"
-                        onClick={() => onSelectBook(book.id)}
+                        onClick={() => onSelectChapter ? onSelectChapter(book.id, ch.number) : onSelectBook(book.id)}
                         data-testid={`tree-chapter-${ch.number}`}
                       >
                         <span className="text-xs text-muted-foreground/60 w-5 text-right shrink-0">
@@ -1043,9 +1049,16 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, t, tc }: {
                   </h3>
                   <div className="mt-3 space-y-3">
                     {landingData.structureItems.map((item, idx) => (
-                      <div
+                      <button
                         key={idx}
-                        className="border-l-[3px] border-l-primary/50 bg-primary/[0.03] dark:bg-primary/[0.06] rounded-r-lg p-3"
+                        className="w-full text-left border-l-[3px] border-l-primary/50 bg-primary/[0.03] dark:bg-primary/[0.06] rounded-r-lg p-3 hover:bg-primary/[0.08] dark:hover:bg-primary/[0.12] transition-colors cursor-pointer"
+                        onClick={() => {
+                          if (onSelectChapter && chapters[idx]) {
+                            onSelectChapter(book.id, chapters[idx].number);
+                          } else {
+                            onSelectBook(book.id);
+                          }
+                        }}
                         data-testid={`structure-item-${idx}`}
                       >
                         <p className="text-xs font-bold text-primary uppercase tracking-wider">
@@ -1054,7 +1067,7 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, t, tc }: {
                         <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
                           {item.description}
                         </p>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -1225,9 +1238,11 @@ const PRINCIPAL_UPANISHADS: PrincipalUpanishad[] = [
   },
 ];
 
-function UpanishadLandingPage({ books, onSelectBook }: {
+function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPart }: {
   books: Book[];
   onSelectBook: (bookId: string) => void;
+  onSelectChapter?: (bookId: string, adhyayNumber: number) => void;
+  onSelectPart?: (bookId: string, adhyayNumber: number, khandaNumber: number) => void;
 }) {
   const [selectedUpanishadSlug, setSelectedUpanishadSlug] = useState<string | null>(null);
 
@@ -1278,6 +1293,8 @@ function UpanishadLandingPage({ books, onSelectBook }: {
           landingData={landingData}
           chapters={chapters}
           onSelectBook={onSelectBook}
+          onSelectChapter={onSelectChapter}
+          onSelectPart={onSelectPart}
           t={(k: any) => k}
           tc={(text) => text || ""}
         />
@@ -1406,11 +1423,13 @@ interface SubCategoryDetailViewProps {
   subCategoryId: string;
   books: Book[];
   onSelectBook: (bookId: string) => void;
+  onSelectChapter?: (bookId: string, adhyayNumber: number) => void;
+  onSelectPart?: (bookId: string, adhyayNumber: number, khandaNumber: number) => void;
   onGoBack: () => void;
   languageCode?: string | null;
 }
 
-export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSelectBook, onGoBack, languageCode }: SubCategoryDetailViewProps) {
+export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSelectBook, onSelectChapter, onSelectPart, onGoBack, languageCode }: SubCategoryDetailViewProps) {
   const category = CATALOG_TREE.find(c => c.id === categoryId);
   const subCategory = category?.children?.find(s => s.id === subCategoryId);
   if (!category || !subCategory) return null;
@@ -1430,6 +1449,8 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
       <UpanishadLandingPage
         books={subBooks}
         onSelectBook={onSelectBook}
+        onSelectChapter={onSelectChapter}
+        onSelectPart={onSelectPart}
       />
     );
   }
@@ -1441,6 +1462,8 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
         landingData={landingData}
         chapters={chapters}
         onSelectBook={onSelectBook}
+        onSelectChapter={onSelectChapter}
+        onSelectPart={onSelectPart}
         t={t}
         tc={tc}
       />
