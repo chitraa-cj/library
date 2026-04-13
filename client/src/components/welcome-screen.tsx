@@ -951,7 +951,7 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, t, tc }: {
                     {landingData.introTitle}
                   </h3>
                   <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
-                    {landingData.introText}
+                    {book.description || landingData.introText}
                   </p>
                 </div>
 
