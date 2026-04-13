@@ -380,7 +380,7 @@ export function BookReader({
   const [commentaryExpanded, setCommentaryExpanded] = useState(true);
   const [commentaryMode, setCommentaryMode] = useState<"bhashyam" | "teeka">("bhashyam");
   const [selectionPopup, setSelectionPopup] = useState<{ text: string; x: number; y: number } | null>(null);
-  const [showCoverPage, setShowCoverPage] = useState(true);
+  const [showCoverPage, setShowCoverPage] = useState(false);
   const [expandedTOCAdhyays, setExpandedTOCAdhyays] = useState<Set<number>>(new Set());
   const [expandedTOCKhandas, setExpandedTOCKhandas] = useState<Set<string>>(new Set());
   const [showTeekas, setShowTeekas] = useState(false);
@@ -537,8 +537,7 @@ export function BookReader({
   }, [selectedCommentaryLanguage]);
 
   useEffect(() => {
-    setCurrentPage(0);
-    setShowCoverPage(true);
+    setShowCoverPage(false);
     hasNavigatedRef.current = false;
     setExpandedTOCAdhyays(new Set());
     setExpandedTOCKhandas(new Set());
@@ -553,8 +552,10 @@ export function BookReader({
         setShowCoverPage(false);
         hasNavigatedRef.current = true;
       }
-    } else if (chapterViewAdhyay == null && navigateToVerse == null) {
-      setShowCoverPage(true);
+    } else if (verses.length > 0 && !hasNavigatedRef.current) {
+      const firstNonIntro = verses.findIndex(v => v.verseNumber !== 0 || !isIntroSection(v.sectionTitle));
+      setCurrentPage(firstNonIntro >= 0 ? firstNonIntro : 0);
+      hasNavigatedRef.current = true;
     }
   }, [chapterViewAdhyay, navigateToVerse, verses]);
 
