@@ -4,9 +4,8 @@ import { queryClient, apiRequest } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { ThemeProvider, useTheme } from "@/components/theme-provider";
-import { AppSidebar, CATALOG_TREE, findBookPath } from "@/components/app-sidebar";
+import { CATALOG_TREE, findBookPath } from "@/components/app-sidebar";
 import { WelcomeScreen, LibraryCatalogView, CategoryDetailView, SubCategoryDetailView } from "@/components/welcome-screen";
 import { BookReader } from "@/components/book-reader";
 import { TranslationPanel } from "@/components/translation-panel";
@@ -53,7 +52,7 @@ function HomePageContent() {
   const [location, setLocation] = useLocation();
   const locationRef = useRef(location);
   locationRef.current = location;
-  const { toggleSidebar, state: sidebarState } = useSidebar();
+  
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [selectedVerseId, setSelectedVerseId] = useState<string | null>(null);
   const [selectedContent, setSelectedContent] = useState("");
@@ -431,56 +430,6 @@ function HomePageContent() {
 
   return (
       <div className="flex h-screen w-full overflow-hidden">
-        <AppSidebar
-          selectedBookId={selectedBookId}
-          onSelectBook={handleBookSelect}
-          onSelectVerse={handleSidebarVerseSelect}
-          onSelectChapter={handleSelectChapter}
-          onSelectPart={handleSelectPart}
-          languageCode={selectedCommentaryLanguage}
-          onSelectCategory={(categoryId) => {
-            setSelectedCategoryId(categoryId);
-            setSelectedSubCategoryId(null);
-            setSelectedBookId(null);
-            setShowLibraryCatalog(false);
-          }}
-          onSelectSubCategory={(categoryId, subCategoryId) => {
-            setSelectedCategoryId(categoryId);
-            setSelectedSubCategoryId(subCategoryId);
-            setSelectedBookId(null);
-            setShowLibraryCatalog(false);
-          }}
-          onShowCoverPage={handleShowCoverPage}
-          selectedVerseNumber={currentVerseNumber}
-          chapterViewAdhyay={chapterViewAdhyay}
-          chapterViewKhanda={chapterViewKhanda}
-          onGoHome={handleGoHome}
-          onGoBack={selectedBookId ? () => {
-            const book = allBooks?.find(b => b.id === selectedBookId);
-            setSelectedBookId(null);
-            setSelectedVerseId(null);
-            setSelectedContent("");
-            setShowTranslationPanel(false);
-            setSelectedAuthor(null);
-            setNavigateToVerse(null);
-            setCurrentVerseNumber(1);
-            setVerseBreadcrumb(null);
-            if (book) {
-              const path = findBookPath(book);
-              if (path) {
-                setSelectedCategoryId(path.categoryId);
-                setSelectedSubCategoryId(path.subCategoryId);
-                setShowLibraryCatalog(false);
-                setLocation("/");
-                return;
-              }
-            }
-            setShowLibraryCatalog(false);
-            setSelectedCategoryId(null);
-            setSelectedSubCategoryId(null);
-            setLocation("/");
-          } : undefined}
-        />
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
           <header className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-10 shrink-0">
             <div className="flex items-center h-12 px-3 sm:px-4">
@@ -842,16 +791,7 @@ function HomePageContent() {
 }
 
 function HomePage() {
-  const sidebarStyle = {
-    "--sidebar-width": "22rem",
-    "--sidebar-width-icon": "3rem",
-  } as React.CSSProperties;
-
-  return (
-    <SidebarProvider defaultOpen={false} style={sidebarStyle}>
-      <HomePageContent />
-    </SidebarProvider>
-  );
+  return <HomePageContent />;
 }
 
 function Router() {
