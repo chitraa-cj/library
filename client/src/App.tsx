@@ -457,6 +457,7 @@ function HomePageContent() {
 
   const handleVerseChange = useCallback((verseNumber: number) => {
     setCurrentVerseNumber(verseNumber);
+    if (chapterViewAdhyay != null) return;
     if (selectedBookId) {
       const slug = getBookSlug(selectedBookId);
       if (slug) {
@@ -466,7 +467,7 @@ function HomePageContent() {
         }
       }
     }
-  }, [selectedBookId, getBookSlug, setLocation]);
+  }, [selectedBookId, getBookSlug, setLocation, chapterViewAdhyay]);
 
   return (
       <div className="flex h-screen w-full overflow-hidden">
