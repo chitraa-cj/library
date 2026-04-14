@@ -882,11 +882,19 @@ const BOOK_LANDING_DATA: Record<string, BookLandingData> = {
   },
 };
 
+interface KhandaInfo {
+  number: number;
+  title: string;
+  count: number;
+  verseNumbers: number[];
+}
+
 interface ChapterInfo {
   number: number;
   title: string;
   verseCount: number;
-  khandas?: { number: number; title: string; count: number }[];
+  khandas?: KhandaInfo[];
+  verseNumbers: number[];
 }
 
 function useBookChapters(bookId: string | undefined) {
@@ -907,27 +915,36 @@ function useBookChapters(bookId: string | undefined) {
         number: adhyay,
         title: v.adhyayTitle || `Chapter ${adhyay}`,
         verseCount: 0,
+        verseNumbers: [],
       });
     }
     const ch = chapterMap.get(adhyay)!;
     ch.verseCount++;
+    ch.verseNumbers.push(v.verseNumber);
 
     if (v.khandaNumber != null) {
       if (!ch.khandas) ch.khandas = [];
       const existingKhanda = ch.khandas.find(k => k.number === v.khandaNumber);
       if (existingKhanda) {
         existingKhanda.count++;
+        existingKhanda.verseNumbers.push(v.verseNumber);
       } else {
         ch.khandas.push({
           number: v.khandaNumber,
           title: v.khandaTitle || `Part ${v.khandaNumber}`,
           count: 1,
+          verseNumbers: [v.verseNumber],
         });
       }
     }
   }
 
-  return Array.from(chapterMap.values()).sort((a, b) => a.number - b.number);
+  const result = Array.from(chapterMap.values()).sort((a, b) => a.number - b.number);
+  result.forEach(ch => {
+    ch.verseNumbers.sort((a, b) => a - b);
+    ch.khandas?.forEach(k => k.verseNumbers.sort((a, b) => a - b));
+  });
+  return result;
 }
 
 function IntroSection({ title, cmsDescription, introText }: {
@@ -969,13 +986,132 @@ function IntroSection({ title, cmsDescription, introText }: {
   );
 }
 
-function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectChapter, onSelectPart, t, tc }: {
+function LandingNavSidebar({ book, chapters, landingData, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, tc }: {
+  book: Book;
+  chapters: ChapterInfo[];
+  landingData: BookLandingData;
+  onSelectBook: (bookId: string) => void;
+  onSelectChapter?: (bookId: string, adhyayNumber: number) => void;
+  onSelectPart?: (bookId: string, adhyayNumber: number, khandaNumber: number) => void;
+  onSelectVerse?: (bookId: string, verseNumber: number) => void;
+  tc: (text: string | null | undefined, map: Record<string, Record<string, string>>) => string;
+}) {
+  const [expandedChapter, setExpandedChapter] = useState<number | null>(null);
+  const [expandedKhanda, setExpandedKhanda] = useState<string | null>(null);
+
+  const handleChapterClick = (ch: ChapterInfo) => {
+    if (ch.khandas && ch.khandas.length > 0) {
+      setExpandedChapter(expandedChapter === ch.number ? null : ch.number);
+      setExpandedKhanda(null);
+    } else {
+      if (expandedChapter === ch.number) {
+        setExpandedChapter(null);
+      } else {
+        setExpandedChapter(ch.number);
+      }
+    }
+  };
+
+  const handleKhandaClick = (chNum: number, khNum: number) => {
+    const key = `${chNum}-${khNum}`;
+    setExpandedKhanda(expandedKhanda === key ? null : key);
+  };
+
+  const renderVerseGrid = (verseNumbers: number[], bookId: string) => (
+    <div className="flex flex-wrap gap-1 mt-1.5 mb-1" data-testid="verse-number-grid">
+      {verseNumbers.map(vn => (
+        <button
+          key={vn}
+          onClick={() => onSelectVerse ? onSelectVerse(bookId, vn) : onSelectBook(bookId)}
+          className="w-8 h-8 rounded-md text-xs font-medium border border-border/40 bg-background hover:bg-primary/10 hover:border-primary/40 hover:text-primary transition-colors flex items-center justify-center"
+          data-testid={`nav-verse-${vn}`}
+        >
+          {vn}
+        </button>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="space-y-1" data-testid="landing-chapter-tree">
+      <button
+        className="flex items-center gap-2 w-full text-left px-3 py-2.5 rounded-lg text-sm bg-primary/5 border border-primary/20 hover:bg-primary/10 transition-colors"
+        onClick={() => onSelectBook(book.id)}
+        data-testid="tree-book-main"
+      >
+        <BookOpen className="h-4 w-4 text-primary shrink-0" />
+        <span className="font-medium text-primary truncate">{tc(book.title, bookTitleTranslations)}</span>
+      </button>
+
+      {chapters.map((ch, idx) => {
+        const isExpanded = expandedChapter === ch.number;
+        const hasKhandas = ch.khandas && ch.khandas.length > 0;
+        const chapterLabel = ch.title.includes(' - ') ? ch.title.split(' - ').pop()?.trim() : ch.title;
+
+        return (
+          <div key={ch.number} data-testid={`nav-chapter-${ch.number}`}>
+            <button
+              className={`flex items-center gap-2 w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                isExpanded ? "bg-accent text-foreground font-medium" : "hover:bg-accent/60 text-foreground/80"
+              }`}
+              onClick={() => handleChapterClick(ch)}
+              data-testid={`tree-chapter-${ch.number}`}
+            >
+              <span className="text-[11px] text-muted-foreground/60 w-5 text-right shrink-0 font-mono">
+                {String(idx + 1).padStart(2, '0')}
+              </span>
+              <span className="truncate flex-1">{chapterLabel}</span>
+              <span className="text-[10px] text-muted-foreground shrink-0">{ch.verseCount}</span>
+              <ChevronRight className={`h-3.5 w-3.5 text-muted-foreground/50 shrink-0 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+            </button>
+
+            {isExpanded && (
+              <div className="ml-5 pl-2 border-l-2 border-primary/15 mt-0.5 space-y-0.5 animate-in slide-in-from-top-1 duration-150">
+                {hasKhandas ? (
+                  ch.khandas!.map((kh) => {
+                    const khandaKey = `${ch.number}-${kh.number}`;
+                    const isKhandaExpanded = expandedKhanda === khandaKey;
+                    return (
+                      <div key={kh.number} data-testid={`nav-khanda-${ch.number}-${kh.number}`}>
+                        <button
+                          className={`flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors ${
+                            isKhandaExpanded ? "bg-primary/5 text-primary font-medium" : "hover:bg-accent/50 text-foreground/70"
+                          }`}
+                          onClick={() => handleKhandaClick(ch.number, kh.number)}
+                          data-testid={`tree-khanda-${ch.number}-${kh.number}`}
+                        >
+                          <span className="truncate flex-1">{kh.title}</span>
+                          <span className="text-[10px] text-muted-foreground shrink-0">{kh.count}</span>
+                          <ChevronRight className={`h-3 w-3 text-muted-foreground/50 shrink-0 transition-transform ${isKhandaExpanded ? "rotate-90" : ""}`} />
+                        </button>
+                        {isKhandaExpanded && (
+                          <div className="pl-2 animate-in slide-in-from-top-1 duration-150">
+                            {renderVerseGrid(kh.verseNumbers, book.id)}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  renderVerseGrid(ch.verseNumbers, book.id)
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, t, tc }: {
   book: Book;
   landingData: BookLandingData;
   chapters: ChapterInfo[];
   onSelectBook: (bookId: string) => void;
   onSelectChapter?: (bookId: string, adhyayNumber: number) => void;
   onSelectPart?: (bookId: string, adhyayNumber: number, khandaNumber: number) => void;
+  onSelectVerse?: (bookId: string, verseNumber: number) => void;
   t: (key: any) => string;
   tc: (text: string | null | undefined, map: Record<string, Record<string, string>>) => string;
 }) {
@@ -985,80 +1121,39 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
         <div className="flex flex-col lg:flex-row gap-6">
 
           <div className="lg:w-72 shrink-0">
-            <Card className="p-5 border-border/60 bg-card sticky top-4" data-testid="book-landing-sidebar">
-              <h2 className="font-serif text-lg font-semibold text-foreground" data-testid="text-landing-title">
+            <Card className="p-4 border-border/60 bg-card sticky top-4" data-testid="book-landing-sidebar">
+              <h2 className="font-serif text-base font-semibold text-foreground mb-1" data-testid="text-landing-title">
                 {landingData.sidebarLabel}
               </h2>
 
-              <p className="text-xs font-semibold text-primary uppercase tracking-wider mt-3">
+              <p className="text-[10px] font-semibold text-primary uppercase tracking-wider">
                 {t("categoryOverview")}
               </p>
-              <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                 {landingData.sidebarDescription}
               </p>
 
-              <div className="h-px bg-border my-4"></div>
+              <div className="h-px bg-border my-3"></div>
 
-              <p className="text-xs font-semibold text-foreground uppercase tracking-wider">
+              <p className="text-[10px] font-semibold text-foreground uppercase tracking-wider mb-2">
                 {landingData.sidebarTreeLabel}
               </p>
-              <div className="mt-3 space-y-0.5 max-h-[35vh] overflow-y-auto pr-1" data-testid="landing-chapter-tree">
-                <button
-                  className="flex items-center gap-2 w-full text-left px-2 py-2 rounded-md text-sm hover:bg-accent cursor-pointer transition-colors bg-primary/5 border border-primary/20"
-                  onClick={() => onSelectBook(book.id)}
-                  data-testid="tree-book-main"
-                >
-                  <BookOpen className="h-4 w-4 text-primary shrink-0" />
-                  <span className="font-medium text-primary">{tc(book.title, bookTitleTranslations)}</span>
-                </button>
-                {chapters.map((ch, idx) => (
-                  <div key={ch.number} className="pl-2">
-                    {ch.khandas && ch.khandas.length > 0 ? (
-                      <>
-                        <button
-                          className="flex items-center gap-2 w-full text-left px-2 pt-3 pb-1 rounded-md hover:bg-accent cursor-pointer transition-colors"
-                          onClick={() => onSelectChapter ? onSelectChapter(book.id, ch.number) : onSelectBook(book.id)}
-                          data-testid={`tree-adhyay-${ch.number}`}
-                        >
-                          <span className="text-[10px] font-semibold text-primary/70 uppercase tracking-wider">
-                            {ch.title}
-                          </span>
-                        </button>
-                        {ch.khandas.map((kh, ki) => (
-                          <button
-                            key={kh.number}
-                            className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-md text-sm hover:bg-accent cursor-pointer transition-colors"
-                            onClick={() => onSelectPart ? onSelectPart(book.id, ch.number, kh.number) : onSelectBook(book.id)}
-                            data-testid={`tree-chapter-${ch.number}-khanda-${kh.number}`}
-                          >
-                            <span className="text-xs text-muted-foreground/60 w-5 text-right shrink-0">
-                              {String(idx + ki + 1).padStart(2, '0')}
-                            </span>
-                            <span className="text-foreground/80 truncate">{kh.title}</span>
-                          </button>
-                        ))}
-                      </>
-                    ) : (
-                      <button
-                        className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-md text-sm hover:bg-accent cursor-pointer transition-colors"
-                        onClick={() => onSelectChapter ? onSelectChapter(book.id, ch.number) : onSelectBook(book.id)}
-                        data-testid={`tree-chapter-${ch.number}`}
-                      >
-                        <span className="text-xs text-muted-foreground/60 w-5 text-right shrink-0">
-                          {String(idx + 1).padStart(2, '0')}
-                        </span>
-                        <span className="text-foreground/80 truncate">
-                          {ch.title.includes(' - ') ? ch.title.split(' - ').pop()?.trim() : ch.title}
-                        </span>
-                      </button>
-                    )}
-                  </div>
-                ))}
+              <div className="max-h-[45vh] overflow-y-auto pr-0.5">
+                <LandingNavSidebar
+                  book={book}
+                  chapters={chapters}
+                  landingData={landingData}
+                  onSelectBook={onSelectBook}
+                  onSelectChapter={onSelectChapter}
+                  onSelectPart={onSelectPart}
+                  onSelectVerse={onSelectVerse}
+                  tc={tc}
+                />
               </div>
 
               {(book.author || (book.teekasList && book.teekasList.length > 0)) && (
                 <>
-                  <div className="h-px bg-border my-4"></div>
+                  <div className="h-px bg-border my-3"></div>
 
                   {book.author && (
                     <div data-testid="landing-bhashyakara">
@@ -1336,11 +1431,12 @@ const PRINCIPAL_UPANISHADS: PrincipalUpanishad[] = [
   },
 ];
 
-function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPart }: {
+function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse }: {
   books: Book[];
   onSelectBook: (bookId: string) => void;
   onSelectChapter?: (bookId: string, adhyayNumber: number) => void;
   onSelectPart?: (bookId: string, adhyayNumber: number, khandaNumber: number) => void;
+  onSelectVerse?: (bookId: string, verseNumber: number) => void;
 }) {
   const [selectedUpanishadSlug, setSelectedUpanishadSlug] = useState<string | null>(null);
 
@@ -1393,6 +1489,7 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
           onSelectBook={onSelectBook}
           onSelectChapter={onSelectChapter}
           onSelectPart={onSelectPart}
+          onSelectVerse={onSelectVerse}
           t={(k: any) => k}
           tc={(text) => text || ""}
         />
@@ -1523,11 +1620,12 @@ interface SubCategoryDetailViewProps {
   onSelectBook: (bookId: string) => void;
   onSelectChapter?: (bookId: string, adhyayNumber: number) => void;
   onSelectPart?: (bookId: string, adhyayNumber: number, khandaNumber: number) => void;
+  onSelectVerse?: (bookId: string, verseNumber: number) => void;
   onGoBack: () => void;
   languageCode?: string | null;
 }
 
-export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSelectBook, onSelectChapter, onSelectPart, onGoBack, languageCode }: SubCategoryDetailViewProps) {
+export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, onGoBack, languageCode }: SubCategoryDetailViewProps) {
   const category = CATALOG_TREE.find(c => c.id === categoryId);
   const subCategory = category?.children?.find(s => s.id === subCategoryId);
   if (!category || !subCategory) return null;
@@ -1549,6 +1647,7 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
         onSelectBook={onSelectBook}
         onSelectChapter={onSelectChapter}
         onSelectPart={onSelectPart}
+        onSelectVerse={onSelectVerse}
       />
     );
   }
@@ -1562,6 +1661,7 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
         onSelectBook={onSelectBook}
         onSelectChapter={onSelectChapter}
         onSelectPart={onSelectPart}
+        onSelectVerse={onSelectVerse}
         t={t}
         tc={tc}
       />

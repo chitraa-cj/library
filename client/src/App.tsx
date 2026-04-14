@@ -393,6 +393,26 @@ function HomePageContent() {
     }
   };
 
+  const handleLandingSelectVerse = useCallback((bookId: string, verseNumber: number) => {
+    setSelectedBookId(bookId);
+    setSelectedCategoryId(null);
+    setSelectedSubCategoryId(null);
+    setShowLibraryCatalog(false);
+    setSelectedVerseId(null);
+    setSelectedContent("");
+    setShowTranslationPanel(false);
+    setSelectedAuthor(null);
+    setNavigateToVerse(verseNumber);
+    setCurrentVerseNumber(verseNumber);
+    setVerseBreadcrumb(null);
+    setChapterViewAdhyay(null);
+    setChapterViewKhanda(null);
+    const book = allBooks?.find(b => b.id === bookId);
+    if (book?.slug) {
+      setLocation(`/${book.slug}/${verseNumber}`);
+    }
+  }, [allBooks, setLocation]);
+
   const handleLandingSelectChapter = useCallback((bookId: string, adhyayNumber: number) => {
     setSelectedBookId(bookId);
     setSelectedCategoryId(null);
@@ -774,6 +794,7 @@ function HomePageContent() {
                 onSelectBook={handleBookSelect}
                 onSelectChapter={handleLandingSelectChapter}
                 onSelectPart={handleLandingSelectPart}
+                onSelectVerse={handleLandingSelectVerse}
                 onGoBack={() => {
                   setSelectedSubCategoryId(null);
                 }}
