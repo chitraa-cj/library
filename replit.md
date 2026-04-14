@@ -33,6 +33,7 @@ Preferred communication style: Simple, everyday language.
 - **Header**: Clean horizontal nav bar with logo left, smart breadcrumb trail center (Home > Category > Subcategory > Book > Chapter > Verse), and icon controls (language, theme, auth) on right.
 - **Category/Subcategory Pages**: Two-panel layout — left panel shows category overview + scripture tree, right panel shows book cards with title, author, description, and "OPEN TEXT" action.
 - **Individual Upanishad Landing Pages**: Each of the 10 principal Upanishads (Isha, Kena, Katha, Prashna, Mundaka, Mandukya, Taittiriya, Aitareya, Chandogya, Brihadaranyaka) has a rich landing page with IAST title, Devanagari title, quote, introduction, structure breakdown, chapter tree, and "Open Text" CTA. Clicking an Upanishad from the grid shows this landing page first (like Gita/Brahma Sutra), with a back button to return to the grid.
+- **Reader Navigation Sidebar**: Persistent left sidebar visible when reading any book. Shows book title, search box, and chapter/khanda/verse drill-down navigation. Current verse is highlighted. Auto-expands to active chapter/khanda. Hidden on mobile. Component: `ReaderNavSidebar` in `reader-nav-sidebar.tsx`.
 - **Sidebar**: Left navigation sidebar has been removed. All navigation happens through the header breadcrumb trail and the landing page cards/buttons.
 
 ### Backend

@@ -9,6 +9,7 @@ import { CATALOG_TREE, findBookPath } from "@/components/app-sidebar";
 import { WelcomeScreen, LibraryCatalogView, CategoryDetailView, SubCategoryDetailView } from "@/components/welcome-screen";
 import { BookReader } from "@/components/book-reader";
 import { TranslationPanel } from "@/components/translation-panel";
+import { ReaderNavSidebar, useBookChapters } from "@/components/reader-nav-sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -93,6 +94,7 @@ function HomePageContent() {
   const [urlInitialized, setUrlInitialized] = useState(false);
   const [mobileInitialPanelShown, setMobileInitialPanelShown] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
+  const [readerNavCollapsed, setReaderNavCollapsed] = useState(false);
   const isMobile = useIsMobile();
   const { user, isLoading: authLoading, isAuthenticated: isLoggedIn } = useAuth();
   const { setTheme } = useTheme();
@@ -111,6 +113,9 @@ function HomePageContent() {
     queryKey: ["/api/books", selectedBookId, "commentary-options"],
     enabled: !!selectedBookId,
   });
+
+  const readerChapters = useBookChapters(selectedBookId || undefined);
+  const selectedBook = useMemo(() => allBooks?.find(b => b.id === selectedBookId), [allBooks, selectedBookId]);
 
   const headerLanguages = useMemo(() => {
     return [
@@ -412,6 +417,21 @@ function HomePageContent() {
       setLocation(`/${book.slug}/${verseNumber}`);
     }
   }, [allBooks, setLocation]);
+
+  const handleReaderNavSelectVerse = useCallback((bookId: string, verseNumber: number) => {
+    if (bookId === selectedBookId) {
+      setNavigateToVerse(verseNumber);
+      setCurrentVerseNumber(verseNumber);
+      setChapterViewAdhyay(null);
+      setChapterViewKhanda(null);
+      const slug = getBookSlug(bookId);
+      if (slug) {
+        setLocation(`/${slug}/${verseNumber}`);
+      }
+    } else {
+      handleLandingSelectVerse(bookId, verseNumber);
+    }
+  }, [selectedBookId, getBookSlug, setLocation, handleLandingSelectVerse]);
 
   const handleLandingSelectChapter = useCallback((bookId: string, adhyayNumber: number) => {
     setSelectedBookId(bookId);
@@ -734,6 +754,18 @@ function HomePageContent() {
           <main className="flex flex-1 min-h-0 overflow-hidden">
             {selectedBookId ? (
               <>
+                {!isMobile && readerChapters.length > 0 && !readerNavCollapsed && (
+                  <div className="w-56 xl:w-64 shrink-0 h-full" data-testid="reader-nav-sidebar-wrapper">
+                    <ReaderNavSidebar
+                      bookId={selectedBookId}
+                      bookTitle={selectedBook?.title || ""}
+                      chapters={readerChapters}
+                      currentVerseNumber={currentVerseNumber}
+                      onSelectVerse={handleReaderNavSelectVerse}
+                      onSelectBook={handleBookSelect}
+                    />
+                  </div>
+                )}
                 <BookReader
                   bookId={selectedBookId}
                   onVerseSelect={handleVerseSelect}
