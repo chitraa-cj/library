@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareText, StickyNote, List, Globe, Languages, Sparkles, Feather, ScrollText, Check } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareText, StickyNote, List, Globe, Languages, Sparkles, Feather, ScrollText, Check, Lock } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoPopup } from "@/components/video-popup";
 import { WordTooltip } from "@/components/word-tooltip";
@@ -36,6 +36,21 @@ const LANG_ALIASES: Record<string, string[]> = {
   "telugu": ["te", "telugu"],
   "ta": ["ta", "tamil"],
   "tamil": ["ta", "tamil"],
+  "devanagari": ["devanagari", "sa", "sanskrit"],
+  "sa": ["devanagari", "sa", "sanskrit"],
+  "sanskrit": ["devanagari", "sa", "sanskrit"],
+  "ml": ["ml", "malayalam"],
+  "malayalam": ["ml", "malayalam"],
+  "bn": ["bn", "bengali"],
+  "bengali": ["bn", "bengali"],
+  "gu": ["gu", "gujarati"],
+  "gujarati": ["gu", "gujarati"],
+  "mr": ["mr", "marathi"],
+  "marathi": ["mr", "marathi"],
+  "or": ["or", "odia"],
+  "odia": ["or", "odia"],
+  "pa": ["pa", "punjabi"],
+  "punjabi": ["pa", "punjabi"],
 };
 
 function langMatches(langCode: string, target: string): boolean {
@@ -207,6 +222,7 @@ function EnglishTranslationToggle({ englishContent }: { englishContent: string }
 function VerseExplanation({ 
   verseId, 
   languageCode, 
+  languageCodes,
   authorName,
   showAll,
   filterFn,
@@ -214,6 +230,7 @@ function VerseExplanation({
 }: { 
   verseId: string; 
   languageCode: string;
+  languageCodes?: string[];
   authorName: string | null;
   showAll: boolean;
   filterFn?: (explanation: any) => boolean;
@@ -226,27 +243,28 @@ function VerseExplanation({
     queryKey: ["/api/verses", verseId, "explanations"],
   });
 
+  const effectiveLanguages = languageCodes && languageCodes.length > 0 ? languageCodes : [languageCode];
+
   if (isLoading) {
     return <Skeleton className="h-20 w-full mt-3" />;
   }
 
-  let allForLanguage = explanations?.filter(e => langMatches(e.languageCode, languageCode)) || [];
+  let allForLanguages = explanations?.filter(e => effectiveLanguages.some(l => langMatches(e.languageCode, l))) || [];
   if (filterFn) {
-    const filtered = allForLanguage.filter(e => filterFn(e));
-    allForLanguage = filtered;
+    allForLanguages = allForLanguages.filter(e => filterFn(e));
   }
 
   let effectiveAuthor = authorName;
-  if (!showAll && authorName && !allForLanguage.some(e => e.authorName === authorName) && allForLanguage.length > 0) {
-    effectiveAuthor = allForLanguage[0].authorName;
+  if (!showAll && authorName && !allForLanguages.some(e => e.authorName === authorName) && allForLanguages.length > 0) {
+    effectiveAuthor = allForLanguages[0].authorName;
   }
 
   const primaryExplanations = showAll
-    ? allForLanguage
-    : allForLanguage.filter(e => !effectiveAuthor || e.authorName === effectiveAuthor);
+    ? allForLanguages
+    : allForLanguages.filter(e => !effectiveAuthor || e.authorName === effectiveAuthor);
 
   const otherExplanations = !showAll && effectiveAuthor
-    ? allForLanguage.filter(e => e.authorName !== effectiveAuthor)
+    ? allForLanguages.filter(e => e.authorName !== effectiveAuthor)
     : [];
 
   if (primaryExplanations.length === 0 && otherExplanations.length === 0) {
@@ -269,55 +287,81 @@ function VerseExplanation({
   const primaryGrouped = groupExplanations(primaryExplanations);
   const otherGrouped = groupExplanations(otherExplanations);
 
-  const renderGroup = (group: { authorName: string; authorTitle: string | null; items: Explanation[] }, gIdx: number) => (
-    <div 
-      key={group.authorName} 
-      className={`${gIdx > 0 ? "pt-3 border-t border-border/40" : ""}`}
-      data-testid={`commentary-group-${group.authorName.toLowerCase().replace(/\s+/g, '-')}`}
-    >
-      <div className="flex items-center gap-2 mb-2">
-        {isShankaracharya(group.authorName) ? (
-          <img src={shankaracharyaImg} alt="Adi Shankaracharya" className="h-8 w-8 object-contain shrink-0" />
-        ) : (
-          <User className="h-4 w-4 text-primary/70 shrink-0" />
-        )}
-        <h4 className="text-sm font-semibold text-foreground">{tc(group.authorName, bookAuthorTranslations)}</h4>
-        {group.authorTitle && (
-          <span className="text-xs text-muted-foreground">- {group.authorTitle}</span>
-        )}
-      </div>
-      {group.items.map((explanation, idx) => {
-        const englishVersion = languageCode !== "english"
-          ? explanations?.find(e => e.languageCode === "english" && e.authorName === explanation.authorName)
-          : null;
-        return (
-          <div key={idx} className={idx > 0 ? "mt-3 pt-3 border-t border-border/20" : ""}>
-            {explanation.isAiTranslated && (
-              <div className="pl-6 mb-1">
-                <Badge variant="outline" className="text-xs gap-1 no-default-hover-elevate no-default-active-elevate" data-testid="badge-ai-translated">
-                  <Sparkles className="h-3 w-3" />
-                  AI Translation
-                </Badge>
+  const LANG_DISPLAY_NAMES: Record<string, string> = {
+    devanagari: "संस्कृतम्", sa: "संस्कृतम्", sanskrit: "संस्कृतम्",
+    english: "English", en: "English",
+    hindi: "हिन्दी", hi: "हिन्दी",
+    kannada: "ಕನ್ನಡ", kn: "ಕನ್ನಡ",
+    telugu: "తెలుగు", te: "తెలుగు",
+    tamil: "தமிழ்", ta: "தமிழ்",
+    malayalam: "മലയാളം", ml: "മലയാളം",
+    bengali: "বাংলা", bn: "বাংলা",
+    gujarati: "ગુજરાતી", gu: "ગુજરાતી",
+    marathi: "मराठी", mr: "मराठी",
+    odia: "ଓଡ଼ିଆ", or: "ଓଡ଼ିଆ",
+    punjabi: "ਪੰਜਾਬੀ", pa: "ਪੰਜਾਬੀ",
+  };
+
+  const renderGroup = (group: { authorName: string; authorTitle: string | null; items: Explanation[] }, gIdx: number) => {
+    const sortedItems = effectiveLanguages.length > 1
+      ? [...group.items].sort((a, b) => {
+          const aIdx = effectiveLanguages.findIndex(l => langMatches(a.languageCode, l));
+          const bIdx = effectiveLanguages.findIndex(l => langMatches(b.languageCode, l));
+          return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+        })
+      : group.items;
+
+    return (
+      <div 
+        key={group.authorName} 
+        className={`${gIdx > 0 ? "pt-3 border-t border-border/40" : ""}`}
+        data-testid={`commentary-group-${group.authorName.toLowerCase().replace(/\s+/g, '-')}`}
+      >
+        <div className="flex items-center gap-2 mb-2">
+          {isShankaracharya(group.authorName) ? (
+            <img src={shankaracharyaImg} alt="Adi Shankaracharya" className="h-8 w-8 object-contain shrink-0" />
+          ) : (
+            <User className="h-4 w-4 text-primary/70 shrink-0" />
+          )}
+          <h4 className="text-sm font-semibold text-foreground">{tc(group.authorName, bookAuthorTranslations)}</h4>
+          {group.authorTitle && (
+            <span className="text-xs text-muted-foreground">- {group.authorTitle}</span>
+          )}
+        </div>
+        {sortedItems.map((explanation, idx) => {
+          const showLangLabel = effectiveLanguages.length > 1;
+          const langLabel = LANG_DISPLAY_NAMES[explanation.languageCode] || explanation.languageCode;
+          return (
+            <div key={`${explanation.languageCode}-${idx}`} className={idx > 0 ? "mt-3 pt-3 border-t border-border/20" : ""}>
+              {showLangLabel && (
+                <div className="pl-6 mb-1">
+                  <span className="text-[10px] uppercase tracking-wider font-semibold text-primary/60">{langLabel}</span>
+                </div>
+              )}
+              {explanation.isAiTranslated && (
+                <div className="pl-6 mb-1">
+                  <Badge variant="outline" className="text-xs gap-1 no-default-hover-elevate no-default-active-elevate" data-testid="badge-ai-translated">
+                    <Sparkles className="h-3 w-3" />
+                    AI Translation
+                  </Badge>
+                </div>
+              )}
+              <div className="font-serif text-base leading-relaxed whitespace-pre-wrap break-words text-foreground/90 pl-6" data-testid={`commentary-text-${explanation.languageCode}-${idx}`}>
+                <WordTooltip
+                  content={explanation.content}
+                  sourceLanguage={explanation.languageCode}
+                  verseId={verseId}
+                  className="inline"
+                  useWordMeanings={false}
+                  globalLanguage={languageCode}
+                />
               </div>
-            )}
-            <div className="font-serif text-base leading-relaxed whitespace-pre-wrap break-words text-foreground/90 pl-6" data-testid={`commentary-text-${idx}`}>
-              <WordTooltip
-                content={explanation.content}
-                sourceLanguage={languageCode}
-                verseId={verseId}
-                className="inline"
-                useWordMeanings={false}
-                globalLanguage={languageCode}
-              />
             </div>
-            {englishVersion && (
-              <EnglishTranslationToggle englishContent={englishVersion.content} />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div className="mt-3 space-y-4" data-testid={`explanation-${verseId}`}>
@@ -371,6 +415,50 @@ export function BookReader({
   const { toast } = useToast();
   const [localLanguage, setLocalLanguage] = useState<string | null>(selectedCommentaryLanguage);
   const effectiveLang = localLanguage || selectedCommentaryLanguage;
+  const [selectedLanguages, setSelectedLanguages] = useState<Set<string>>(() => {
+    const initial = new Set(["devanagari"]);
+    const pref = selectedCommentaryLanguage || "english";
+    initial.add(pref);
+    return initial;
+  });
+  const [showLanguagePanel, setShowLanguagePanel] = useState(false);
+  const langPanelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (selectedCommentaryLanguage) {
+      setSelectedLanguages(prev => {
+        if (prev.has(selectedCommentaryLanguage)) return prev;
+        const next = new Set(prev);
+        next.add(selectedCommentaryLanguage);
+        return next;
+      });
+    }
+  }, [selectedCommentaryLanguage]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (langPanelRef.current && !langPanelRef.current.contains(e.target as Node)) {
+        setShowLanguagePanel(false);
+      }
+    }
+    if (showLanguagePanel) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showLanguagePanel]);
+
+  const toggleLanguage = useCallback((langCode: string) => {
+    if (langCode === "devanagari" || langCode === "sa" || langCode === "sanskrit") return;
+    setSelectedLanguages(prev => {
+      const next = new Set(prev);
+      if (next.has(langCode)) {
+        next.delete(langCode);
+      } else {
+        next.add(langCode);
+      }
+      return next;
+    });
+  }, []);
   const { t } = useTranslation(effectiveLang);
   const lang = selectedCommentaryLanguage || "en";
   const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, lang);
@@ -596,15 +684,14 @@ export function BookReader({
 
   const availableTranslations = useMemo(() => {
     if (!currentVerseDetails?.translations) return [];
-    if (!effectiveLang || effectiveLang === "devanagari" || effectiveLang === "sa") {
-      return [];
-    }
-    const matchCodes = LANG_ALIASES[effectiveLang] || [effectiveLang];
+    const langsToShow = Array.from(selectedLanguages).filter(l => l !== "devanagari" && l !== "sa");
+    if (langsToShow.length === 0) return [];
+    const allMatchCodes = langsToShow.flatMap(l => LANG_ALIASES[l] || [l]);
     const filtered = currentVerseDetails.translations.filter((t: VerseTranslation) =>
-      matchCodes.includes(t.languageCode)
+      allMatchCodes.includes(t.languageCode)
     );
     return filtered;
-  }, [currentVerseDetails, effectiveLang]);
+  }, [currentVerseDetails, selectedLanguages]);
 
   const verseTransliteration = useMemo(() => {
     if (!currentVerseDetails || !effectiveLang) return null;
@@ -1584,27 +1671,41 @@ export function BookReader({
               onMouseUp={handleTextSelect}
               onTouchEnd={handleTextSelect}
             >
-              {commentaryOptions && commentaryOptions.languages.length > 1 && (
-                <div className="flex items-center justify-end gap-2 mb-3" data-testid="book-language-selector">
-                  <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                  <Select
-                    value={effectiveLang || "english"}
-                    onValueChange={(val) => setLocalLanguage(val)}
+              {commentaryOptions && commentaryOptions.languages.length > 0 && (
+                <div className="relative flex items-center justify-end gap-2 mb-3" ref={langPanelRef} data-testid="book-language-selector">
+                  <button
+                    onClick={() => setShowLanguagePanel(prev => !prev)}
+                    className="flex items-center gap-1.5 h-8 px-3 text-xs border border-border/50 bg-card/50 hover:bg-card/80 rounded-md transition-colors"
+                    data-testid="button-language-selector"
                   >
-                    <SelectTrigger className="h-8 w-auto min-w-[100px] max-w-[160px] text-xs border border-border/50 bg-card/50 shadow-none focus:ring-1 focus:ring-primary/30 px-2 rounded-md" data-testid="select-book-language">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
+                    <Languages className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-foreground/80">{t("languages") || "Languages"}</span>
+                    <Badge variant="secondary" className="h-4 min-w-[16px] px-1 text-[10px] no-default-hover-elevate no-default-active-elevate">{selectedLanguages.size}</Badge>
+                    <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform ${showLanguagePanel ? "rotate-180" : ""}`} />
+                  </button>
+                  {showLanguagePanel && (
+                    <div className="absolute top-full right-0 mt-1 z-50 w-64 max-h-80 overflow-y-auto rounded-lg border border-border bg-card shadow-lg p-2" data-testid="language-checkbox-panel">
                       {commentaryOptions.languages.map((lang) => {
                         const normCode = lang.code === "hi" ? "hindi" : lang.code === "en" ? "english" : lang.code;
+                        const isDevanagari = normCode === "devanagari" || normCode === "sa";
+                        const isChecked = isDevanagari || selectedLanguages.has(normCode);
                         return (
-                          <SelectItem key={normCode} value={normCode} data-testid={`option-book-lang-${normCode}`}>
-                            {lang.name}
-                          </SelectItem>
+                          <button
+                            key={normCode}
+                            onClick={() => !isDevanagari && toggleLanguage(normCode)}
+                            className={`flex items-center gap-2 w-full px-2 py-1.5 text-sm rounded-md transition-colors ${isDevanagari ? "opacity-70 cursor-default" : "hover:bg-accent cursor-pointer"}`}
+                            data-testid={`checkbox-lang-${normCode}`}
+                          >
+                            <div className={`flex items-center justify-center h-4 w-4 rounded border shrink-0 ${isChecked ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground/40"}`}>
+                              {isChecked && <Check className="h-3 w-3" />}
+                            </div>
+                            <span className="flex-1 text-left text-foreground/90">{lang.name}</span>
+                            {isDevanagari && <Lock className="h-3 w-3 text-muted-foreground" />}
+                          </button>
                         );
                       })}
-                    </SelectContent>
-                  </Select>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1638,22 +1739,41 @@ export function BookReader({
                     <span className="text-xs uppercase tracking-widest font-bold text-primary">{t("meaning") || "MEANING"}</span>
                     <div className="h-px flex-1 bg-primary/15"></div>
                   </div>
-                  {availableTranslations.map((translation: VerseTranslation, idx: number) => (
-                    <div key={translation.id} className={idx > 0 ? "mt-3 pt-3 border-t border-border/20" : ""}>
-                      <div 
-                        className="text-sm sm:text-base leading-relaxed text-foreground/80 font-serif"
-                        data-testid={`text-translation-${translation.languageCode}-${currentVerse.verseNumber}`}
-                      >
-                        <WordTooltip
-                          content={translation.content}
-                          commentaryContent={commentaryContext}
-                          sourceLanguage={translation.languageCode}
-                          verseId={currentVerse.id}
-                          globalLanguage={lang}
-                        />
+                  {availableTranslations.map((translation: VerseTranslation, idx: number) => {
+                    const MEANING_LANG_NAMES: Record<string, string> = {
+                      english: "English", en: "English",
+                      hindi: "हिन्दी", hi: "हिन्दी",
+                      kannada: "ಕನ್ನಡ", kn: "ಕನ್ನಡ",
+                      telugu: "తెలుగు", te: "తెలుగు",
+                      tamil: "தமிழ்", ta: "தமிழ்",
+                      malayalam: "മലയാളം", ml: "മലയാളം",
+                      bengali: "বাংলা", bn: "বাংলা",
+                      gujarati: "ગુજરાતી", gu: "ગુજરાતી",
+                      marathi: "मराठी", mr: "मराठी",
+                    };
+                    const showLangLabel = selectedLanguages.size > 2 || (selectedLanguages.size === 2 && !selectedLanguages.has("english"));
+                    return (
+                      <div key={translation.id} className={idx > 0 ? "mt-3 pt-3 border-t border-border/20" : ""}>
+                        {showLangLabel && (
+                          <span className="text-[10px] uppercase tracking-wider font-semibold text-primary/60 mb-1 block">
+                            {MEANING_LANG_NAMES[translation.languageCode] || translation.languageCode}
+                          </span>
+                        )}
+                        <div 
+                          className="text-sm sm:text-base leading-relaxed text-foreground/80 font-serif"
+                          data-testid={`text-translation-${translation.languageCode}-${currentVerse.verseNumber}`}
+                        >
+                          <WordTooltip
+                            content={translation.content}
+                            commentaryContent={commentaryContext}
+                            sourceLanguage={translation.languageCode}
+                            verseId={currentVerse.id}
+                            globalLanguage={lang}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
@@ -1711,6 +1831,7 @@ export function BookReader({
                           <VerseExplanation 
                             verseId={currentVerse.id} 
                             languageCode={effectiveLang}
+                            languageCodes={Array.from(selectedLanguages)}
                             authorName={selectedBhashyaAuthor}
                             showAll={false}
                             filterFn={(e: any) => e.commentaryType ? e.commentaryType === "bhashya" : isBhashyaAuthorByName(e.authorName)}
@@ -1761,6 +1882,7 @@ export function BookReader({
                             <VerseExplanation 
                               verseId={currentVerse.id} 
                               languageCode={effectiveLang}
+                              languageCodes={Array.from(selectedLanguages)}
                               authorName={selectedTeekaAuthor}
                               showAll={false}
                               filterFn={(e: any) => e.commentaryType ? e.commentaryType === "teeka" : isTeekaAuthorByName(e.authorName)}

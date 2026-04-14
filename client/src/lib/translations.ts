@@ -76,6 +76,7 @@ const translations = {
     bhashyam: "Bhāṣyam",
     teeka: "Ṭīkā",
     meaning: "Meaning",
+    languages: "Languages",
     readTeekas: "Read Tīkās",
     hideTeekas: "Hide Tīkās",
     mantra: "Mantra",
