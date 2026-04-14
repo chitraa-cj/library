@@ -1517,30 +1517,24 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
             return (
               <Card
                 key={book.id}
-                className="p-4 border-border/60 bg-card hover:border-primary/40 hover:shadow-lg transition-all flex flex-col"
+                className="p-4 border-border/60 bg-card hover:border-primary/40 hover:shadow-lg transition-all flex flex-col cursor-pointer group border-l-[3px] border-l-primary/50 hover:border-l-primary"
+                onClick={() => {
+                  if (principalUp) {
+                    setSelectedUpanishadSlug(principalUp.slugMatch);
+                  } else {
+                    onSelectBook(book.id);
+                  }
+                }}
                 data-testid={`upanishad-card-${principalUp?.slugMatch || book.slug}`}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <h3 className="font-semibold text-base text-foreground leading-snug" data-testid={`text-upanishad-title-${book.id}`}>
                     {book.title}
                   </h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="shrink-0 text-primary text-xs font-semibold uppercase tracking-wider gap-1 px-2 h-7 hover:bg-primary/5"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (principalUp) {
-                        setSelectedUpanishadSlug(principalUp.slugMatch);
-                      } else {
-                        onSelectBook(book.id);
-                      }
-                    }}
-                    data-testid={`button-open-text-${book.id}`}
-                  >
+                  <div className="flex items-center gap-1 text-[10px] text-primary font-semibold uppercase tracking-wider shrink-0 opacity-70 group-hover:opacity-100 transition-opacity pt-0.5" data-testid={`button-open-text-${book.id}`}>
                     <BookOpen className="h-3.5 w-3.5" />
-                    Open Text
-                  </Button>
+                    <span>Open Text</span>
+                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground mb-2">
                   {book.author || "Sri Shankaracharya"}
