@@ -77,6 +77,8 @@ const translations = {
     teeka: "Ṭīkā",
     meaning: "Meaning",
     languages: "Languages",
+    searchTexts: "Search Upanishads, Gita, Brahma Sutra...",
+    noResultsFound: "No texts found",
     readTeekas: "Read Tīkās",
     hideTeekas: "Hide Tīkās",
     mantra: "Mantra",

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { BookOpen, Library, FolderOpen, Lock, ArrowLeft, ArrowRight, ChevronRight, ScrollText, Feather, Users, Heart, BookMarked, Music, Layers } from "lucide-react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { BookOpen, Library, FolderOpen, Lock, ArrowLeft, ArrowRight, ChevronRight, ScrollText, Feather, Users, Heart, BookMarked, Music, Layers, Search, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +71,102 @@ function getBooksForCategory(books: Book[], cat: CatalogCategory): Book[] {
   return [];
 }
 
+function HomeSearchBar({ books, onSelectBook, languageCode }: { books: Book[]; onSelectBook: (bookId: string) => void; languageCode: string | null }) {
+  const { t } = useTranslation(languageCode);
+  const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, languageCode || "en");
+  const [query, setQuery] = useState("");
+  const [focused, setFocused] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setFocused(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const results = useMemo(() => {
+    if (!query.trim()) return [];
+    const q = query.toLowerCase().trim();
+    return books.filter(b => {
+      const title = (b.title || "").toLowerCase();
+      const slug = (b.slug || "").toLowerCase();
+      const author = (b.author || "").toLowerCase();
+      const desc = (b.description || "").toLowerCase();
+      const category = (b.category || "").toLowerCase();
+      return title.includes(q) || slug.includes(q) || author.includes(q) || desc.includes(q) || category.includes(q);
+    }).slice(0, 8);
+  }, [query, books]);
+
+  const showResults = focused && query.trim().length > 0;
+
+  return (
+    <div className="relative max-w-lg mx-auto w-full" ref={containerRef} data-testid="home-search-container">
+      <div className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm transition-all ${focused ? "border-primary/40 ring-2 ring-primary/10" : "border-border/60"}`}>
+        <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => setFocused(true)}
+          placeholder={t("searchTexts") || "Search Upanishads, Gita, Brahma Sutra..."}
+          className="flex-1 bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground/60"
+          data-testid="input-home-search"
+        />
+        {query && (
+          <button
+            onClick={() => { setQuery(""); inputRef.current?.focus(); }}
+            className="p-0.5 rounded-full hover:bg-muted/50 transition-colors"
+            data-testid="button-clear-search"
+          >
+            <X className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
+        )}
+      </div>
+      {showResults && (
+        <div className="absolute top-full left-0 right-0 mt-1 z-50 rounded-xl border border-border bg-card shadow-lg overflow-hidden" data-testid="search-results-dropdown">
+          {results.length === 0 ? (
+            <div className="px-4 py-6 text-center text-sm text-muted-foreground" data-testid="search-no-results">
+              {t("noResultsFound") || "No texts found"}
+            </div>
+          ) : (
+            <div className="py-1 max-h-80 overflow-y-auto">
+              {results.map((book) => (
+                <button
+                  key={book.id}
+                  onClick={() => {
+                    onSelectBook(book.id);
+                    setQuery("");
+                    setFocused(false);
+                  }}
+                  className="flex items-start gap-3 w-full px-4 py-2.5 hover:bg-accent transition-colors text-left"
+                  data-testid={`search-result-${book.slug}`}
+                >
+                  <BookOpen className="h-4 w-4 text-primary/70 mt-0.5 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium text-foreground truncate">{tc(book.title, bookTitleTranslations)}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      {book.author && <span>{tc(book.author, bookAuthorTranslations)}</span>}
+                      {book.author && book.category && <span> · </span>}
+                      {book.category && <span>{tc(book.category, bookCategoryTranslations)}</span>}
+                    </div>
+                  </div>
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 mt-1 shrink-0" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, languageCode }: WelcomeScreenProps) {
   const { t } = useTranslation(languageCode ?? null);
   return (
@@ -117,6 +213,8 @@ export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, languageCo
             {t("browseTheLibrary")}
           </Button>
         </div>
+
+        <HomeSearchBar books={books} onSelectBook={onSelectBook} languageCode={languageCode ?? null} />
 
         <div className="space-y-6 sm:space-y-8">
           <div className="space-y-3">
