@@ -177,7 +177,7 @@ export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, languageCo
         <div className="absolute top-1/2 right-1/3 text-[7rem] text-primary/[0.01] dark:text-primary/[0.015] font-serif -rotate-6">श्री</div>
       </div>
 
-      <div className="max-w-4xl w-full relative z-10 py-4 sm:py-8 space-y-6 sm:space-y-8">
+      <div className="max-w-6xl w-full relative z-10 py-4 sm:py-8 space-y-6 sm:space-y-8">
         <div className="text-center space-y-3">
           <div className="relative inline-block">
             <div className="absolute -inset-4 bg-primary/5 dark:bg-primary/15 rounded-full blur-xl"></div>
@@ -356,7 +356,7 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
         <div className="absolute bottom-24 right-16 text-[10rem] text-primary/[0.015] dark:text-primary/[0.02] font-serif rotate-12">ॐ</div>
       </div>
 
-      <div className="max-w-4xl w-full relative z-10 py-4 sm:py-8 space-y-6 sm:space-y-8">
+      <div className="max-w-6xl w-full relative z-10 py-4 sm:py-8 space-y-6 sm:space-y-8">
         <div className="space-y-3">
           <Button
             variant="ghost"
