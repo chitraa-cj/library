@@ -358,22 +358,23 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
             <span className="text-[10px] font-bold text-primary uppercase tracking-wider">{labels.mantraLabel}</span>
           </div>
           {mantraNumbers.length > 0 ? (
-            <div className={`grid ${showLeftPanel ? "grid-cols-2" : "grid-cols-4"} gap-1 p-2`} data-testid="nav-mantra-grid">
+            <div className="flex flex-col" data-testid="nav-mantra-grid">
               {mantraNumbers.map(vn => {
                 const isActive = currentVerseNumber === vn;
                 return (
                   <button
                     key={vn}
                     ref={isActive ? activeVerseRef : undefined}
-                    className={`py-1.5 rounded text-xs font-mono transition-colors ${
+                    className={`flex items-center w-full text-left px-3 py-2 text-[11px] transition-colors border-b border-border/20 ${
                       isActive
-                        ? "bg-primary text-primary-foreground font-bold shadow-sm"
-                        : "bg-muted/40 hover:bg-accent text-foreground/70 hover:text-foreground"
+                        ? "bg-primary/10 text-primary font-bold border-l-[3px] border-l-primary"
+                        : "hover:bg-accent/60 text-foreground/80 border-l-[3px] border-l-transparent"
                     }`}
                     onClick={() => onSelectVerse(bookId, vn)}
                     data-testid={`nav-mantra-${vn}`}
                   >
-                    {vn}
+                    <span className={`w-6 text-right font-mono mr-2.5 text-[11px] ${isActive ? "text-primary" : "text-muted-foreground/60"}`}>{vn}</span>
+                    <span className="flex-1">{labels.mantraLabel} {vn}</span>
                   </button>
                 );
               })}
