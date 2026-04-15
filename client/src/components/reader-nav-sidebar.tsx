@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, ChevronRight } from "lucide-react";
+import { BookOpen, Search, ChevronDown } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 export interface KhandaInfo {
   number: number;
@@ -96,6 +97,8 @@ function detectLabels(chapters: ChapterInfo[]): { chapterLabel: string; khandaLa
   return { chapterLabel, khandaLabel, mantraLabel: "Mantra" };
 }
 
+type NavTab = "chapter" | "khanda" | "mantra";
+
 export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumber, onSelectVerse, onSelectBook }: {
   bookId: string;
   bookTitle: string;
@@ -107,9 +110,11 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
   const hasKhandas = useMemo(() => chapters.some(ch => ch.khandas && ch.khandas.length > 0), [chapters]);
   const labels = useMemo(() => detectLabels(chapters), [chapters]);
 
+  const [activeTab, setActiveTab] = useState<NavTab>("chapter");
   const [selectedChapterNum, setSelectedChapterNum] = useState<number | null>(null);
   const [selectedKhandaNum, setSelectedKhandaNum] = useState<number | null>(null);
-  const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
+  const [chapterDropdownOpen, setChapterDropdownOpen] = useState(false);
 
   const activeVerseRef = useRef<HTMLButtonElement>(null);
 
@@ -134,17 +139,12 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
   }, [chapters, currentVerseNumber]);
 
   useEffect(() => {
-    if (activeChapter != null) {
-      setSelectedChapterNum(activeChapter);
-      setExpandedChapters(prev => {
-        const next = new Set(prev);
-        next.add(activeChapter);
-        return next;
-      });
-    }
-    if (activeKhandaObj) {
-      setSelectedKhandaNum(activeKhandaObj.khandaNum);
-    }
+    if (hasKhandas && activeTab === "chapter") setActiveTab("khanda");
+  }, [hasKhandas]);
+
+  useEffect(() => {
+    if (activeChapter != null) setSelectedChapterNum(activeChapter);
+    if (activeKhandaObj) setSelectedKhandaNum(activeKhandaObj.khandaNum);
   }, [activeChapter, activeKhandaObj]);
 
   useEffect(() => {
@@ -155,28 +155,84 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
 
   const selectedChapter = useMemo(() => chapters.find(ch => ch.number === selectedChapterNum), [chapters, selectedChapterNum]);
 
-  const verseNumbers = useMemo(() => {
-    if (!selectedChapter) return [];
-    if (hasKhandas && selectedKhandaNum != null) {
-      const kh = selectedChapter.khandas?.find(k => k.number === selectedKhandaNum);
-      return kh?.verseNumbers || [];
-    }
-    return selectedChapter.verseNumbers;
-  }, [selectedChapter, hasKhandas, selectedKhandaNum]);
+  const availableTabs = useMemo(() => {
+    const tabs: NavTab[] = [hasKhandas ? "chapter" : "chapter"];
+    if (hasKhandas) tabs[0] = "chapter";
+    if (hasKhandas) tabs.push("khanda");
+    tabs.push("mantra");
+    return tabs;
+  }, [hasKhandas]);
 
-  const toggleChapter = (chNum: number) => {
-    setExpandedChapters(prev => {
-      const next = new Set(prev);
-      if (next.has(chNum)) next.delete(chNum);
-      else next.add(chNum);
-      return next;
-    });
-    setSelectedChapterNum(chNum);
-    if (hasKhandas) {
-      const ch = chapters.find(c => c.number === chNum);
-      setSelectedKhandaNum(ch?.khandas?.[0]?.number ?? null);
+  const tabLabel = (tab: NavTab) => {
+    switch (tab) {
+      case "chapter": return labels.chapterLabel;
+      case "khanda": return labels.khandaLabel;
+      case "mantra": return labels.mantraLabel;
     }
   };
+
+  const leftListItems = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+
+    if (activeTab === "chapter") {
+      return chapters
+        .filter(ch => !q || getChapterLabel(ch.title).toLowerCase().includes(q) || String(ch.number).includes(q))
+        .map(ch => ({
+          number: ch.number,
+          label: getChapterLabel(ch.title),
+          count: ch.verseCount,
+          isActive: activeChapter === ch.number,
+          isSelected: selectedChapterNum === ch.number,
+          onClick: () => {
+            setSelectedChapterNum(ch.number);
+            if (hasKhandas) {
+              setSelectedKhandaNum(ch.khandas?.[0]?.number ?? null);
+            }
+          },
+        }));
+    }
+
+    if (activeTab === "khanda" && selectedChapter?.khandas) {
+      return selectedChapter.khandas
+        .filter(kh => !q || kh.title.toLowerCase().includes(q) || String(kh.number).includes(q))
+        .map(kh => ({
+          number: kh.number,
+          label: kh.title,
+          count: kh.count,
+          isActive: activeKhandaObj?.chapterNum === selectedChapterNum && activeKhandaObj?.khandaNum === kh.number,
+          isSelected: selectedKhandaNum === kh.number,
+          onClick: () => {
+            setSelectedKhandaNum(kh.number);
+          },
+        }));
+    }
+
+    return [];
+  }, [activeTab, chapters, selectedChapter, searchQuery, activeChapter, activeKhandaObj, selectedChapterNum, selectedKhandaNum, hasKhandas]);
+
+  const mantraNumbers = useMemo(() => {
+    let nums: number[] = [];
+    if (activeTab === "mantra") {
+      nums = chapters.flatMap(ch => ch.verseNumbers).sort((a, b) => a - b);
+    } else if (activeTab === "khanda") {
+      if (selectedKhandaNum != null && selectedChapter?.khandas) {
+        const kh = selectedChapter.khandas.find(k => k.number === selectedKhandaNum);
+        nums = kh?.verseNumbers || [];
+      } else {
+        nums = selectedChapter?.verseNumbers || [];
+      }
+    } else if (activeTab === "chapter") {
+      nums = selectedChapter?.verseNumbers || [];
+    }
+    if (activeTab === "mantra" && searchQuery.trim()) {
+      const q = searchQuery.trim();
+      nums = nums.filter(n => String(n).includes(q));
+    }
+    return nums;
+  }, [activeTab, selectedChapter, selectedKhandaNum, chapters, searchQuery]);
+
+  const showLeftPanel = activeTab !== "mantra";
+  const searchPlaceholder = `Search ${tabLabel(activeTab)}...`;
 
   return (
     <div className="h-full flex flex-col border-r border-border bg-card" data-testid="reader-nav-sidebar">
@@ -189,74 +245,121 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
           <BookOpen className="h-4 w-4 text-primary shrink-0" />
           <span className="font-medium text-primary truncate text-xs">{bookTitle}</span>
         </button>
-      </div>
 
-      <div className="flex flex-1 overflow-hidden" data-testid="reader-chapter-tree">
-        <div className="w-1/2 border-r border-border/40 overflow-y-auto">
-          <div className="px-2 py-1.5 border-b border-border/60">
-            <span className="text-[10px] font-bold text-primary uppercase tracking-wider">{labels.chapterLabel}</span>
-          </div>
-          <div className="divide-y divide-border/20">
-            {chapters.map(ch => {
-              const isExpanded = expandedChapters.has(ch.number);
-              const isActive = activeChapter === ch.number;
-              return (
-                <div key={ch.number}>
-                  <button
-                    className={`flex items-center w-full text-left px-2 py-2 text-[11px] transition-colors ${
-                      selectedChapterNum === ch.number
-                        ? "bg-primary/10 text-primary font-semibold"
-                        : "hover:bg-accent/60 text-foreground/80"
-                    } ${isActive ? "border-l-[3px] border-l-primary" : "border-l-[3px] border-l-transparent"}`}
-                    onClick={() => toggleChapter(ch.number)}
-                    data-testid={`nav-chapter-${ch.number}`}
-                  >
-                    {(hasKhandas && ch.khandas?.length) ? (
-                      <ChevronRight className={`h-3 w-3 shrink-0 mr-1 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
-                    ) : (
-                      <span className="w-4 shrink-0" />
-                    )}
-                    <span className="flex-1 truncate leading-tight">{getChapterLabel(ch.title)}</span>
-                    <span className="text-[10px] text-muted-foreground/50 font-mono ml-1">{ch.verseCount}</span>
-                  </button>
-                  {hasKhandas && isExpanded && ch.khandas && (
-                    <div className="bg-muted/30">
-                      {ch.khandas.map(kh => {
-                        const isKhandaActive = activeKhandaObj?.chapterNum === ch.number && activeKhandaObj?.khandaNum === kh.number;
-                        return (
-                          <button
-                            key={kh.number}
-                            className={`flex items-center w-full text-left pl-6 pr-2 py-1.5 text-[10px] transition-colors ${
-                              selectedChapterNum === ch.number && selectedKhandaNum === kh.number
-                                ? "bg-primary/8 text-primary font-semibold"
-                                : "hover:bg-accent/40 text-foreground/70"
-                            } ${isKhandaActive ? "border-l-[2px] border-l-primary" : ""}`}
-                            onClick={() => {
-                              setSelectedChapterNum(ch.number);
-                              setSelectedKhandaNum(kh.number);
-                            }}
-                            data-testid={`nav-khanda-${ch.number}-${kh.number}`}
-                          >
-                            <span className="flex-1 truncate">{kh.title}</span>
-                            <span className="text-[9px] text-muted-foreground/50 font-mono ml-1">{kh.count}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+        <div className="flex items-center gap-1.5">
+          <div className="relative flex-1">
+            <Search className="h-3 w-3 text-muted-foreground absolute left-2 top-1/2 -translate-y-1/2" />
+            <Input
+              className="h-7 pl-7 text-[11px] bg-background"
+              placeholder={searchPlaceholder}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              data-testid="input-nav-search"
+            />
           </div>
         </div>
 
-        <div className="w-1/2 overflow-y-auto">
+        <div className="flex gap-1" data-testid="nav-tab-bar">
+          {availableTabs.map(tab => (
+            <button
+              key={tab}
+              onClick={() => { setActiveTab(tab); setSearchQuery(""); setChapterDropdownOpen(false); }}
+              className={`flex-1 px-2 py-1.5 rounded-md text-[11px] font-semibold transition-colors ${
+                activeTab === tab
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+              data-testid={`nav-tab-${tab}`}
+            >
+              {tabLabel(tab)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden border-t border-border/60" data-testid="reader-chapter-tree">
+        {showLeftPanel && (
+          <div className="w-1/2 border-r border-border/40 flex flex-col overflow-hidden">
+            {activeTab === "khanda" && (
+              <div className="px-2 py-1.5 border-b border-border/60 shrink-0 relative">
+                <button
+                  className="flex items-center justify-between w-full text-left"
+                  onClick={() => setChapterDropdownOpen(!chapterDropdownOpen)}
+                  data-testid="dropdown-chapter-selector"
+                >
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-[10px] font-bold text-primary uppercase tracking-wider shrink-0">{labels.chapterLabel}</span>
+                    <span className="text-[11px] text-foreground font-medium truncate">{selectedChapter ? getChapterLabel(selectedChapter.title) : "Select"}</span>
+                  </div>
+                  <ChevronDown className={`h-3 w-3 text-muted-foreground shrink-0 transition-transform ${chapterDropdownOpen ? "rotate-180" : ""}`} />
+                </button>
+                {chapterDropdownOpen && (
+                  <div className="absolute left-0 right-0 top-full z-20 bg-card border border-border shadow-lg rounded-b-lg max-h-48 overflow-y-auto">
+                    {chapters.map(ch => (
+                      <button
+                        key={ch.number}
+                        className={`flex items-center gap-2 w-full text-left px-3 py-2 text-[11px] hover:bg-accent transition-colors ${
+                          selectedChapterNum === ch.number ? "bg-primary/5 text-primary font-medium" : "text-foreground/80"
+                        }`}
+                        onClick={() => {
+                          setSelectedChapterNum(ch.number);
+                          setSelectedKhandaNum(ch.khandas?.[0]?.number ?? null);
+                          setChapterDropdownOpen(false);
+                        }}
+                        data-testid={`dropdown-chapter-${ch.number}`}
+                      >
+                        <span className="text-muted-foreground/60 w-4 text-right font-mono text-[10px]">{ch.number}</span>
+                        <span className="flex-1 truncate">{getChapterLabel(ch.title)}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="flex-1 overflow-y-auto">
+              <div className="divide-y divide-border/20">
+                {leftListItems.map((item) => (
+                  <button
+                    key={`${activeTab}-${item.number}`}
+                    className={`flex items-center w-full text-left px-2.5 py-2 text-[11px] transition-colors ${
+                      item.isSelected
+                        ? "bg-primary/10 text-primary font-semibold"
+                        : "hover:bg-accent/60 text-foreground/80"
+                    } ${item.isActive ? "border-l-[3px] border-l-primary" : "border-l-[3px] border-l-transparent"}`}
+                    onClick={item.onClick}
+                    data-testid={`nav-item-${activeTab}-${item.number}`}
+                  >
+                    <span className={`w-5 text-right shrink-0 font-mono text-[11px] mr-2 ${
+                      item.isActive ? "text-primary" : "text-muted-foreground/60"
+                    }`}>
+                      {item.number}
+                    </span>
+                    <span className="flex-1 truncate leading-tight">{item.label}</span>
+                    <span className={`text-[10px] font-mono shrink-0 ml-1 ${
+                      item.isActive ? "text-primary font-bold" : "text-muted-foreground/50"
+                    }`}>
+                      {item.count}
+                    </span>
+                  </button>
+                ))}
+                {leftListItems.length === 0 && (
+                  <div className="text-[10px] text-muted-foreground text-center py-6">
+                    No results found
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className={`${showLeftPanel ? "w-1/2" : "w-full"} overflow-y-auto`}>
           <div className="px-2 py-1.5 border-b border-border/60">
             <span className="text-[10px] font-bold text-primary uppercase tracking-wider">{labels.mantraLabel}</span>
           </div>
-          {verseNumbers.length > 0 ? (
-            <div className="grid grid-cols-3 gap-1 p-2" data-testid="nav-mantra-grid">
-              {verseNumbers.map(vn => {
+          {mantraNumbers.length > 0 ? (
+            <div className={`grid ${showLeftPanel ? "grid-cols-2" : "grid-cols-4"} gap-1 p-2`} data-testid="nav-mantra-grid">
+              {mantraNumbers.map(vn => {
                 const isActive = currentVerseNumber === vn;
                 return (
                   <button
@@ -277,7 +380,7 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
             </div>
           ) : (
             <div className="text-[10px] text-muted-foreground text-center py-6 px-2">
-              Select a {labels.chapterLabel.toLowerCase()} to see mantras
+              {activeTab === "mantra" ? "Select a chapter" : `Select a ${tabLabel(activeTab).toLowerCase()}`}
             </div>
           )}
         </div>
