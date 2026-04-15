@@ -500,7 +500,9 @@ async function translateAndStoreManthra(
     const existingLangs = getExistingLanguages(teekaEntry.OtherTranslations || []);
     let pendingBatch: OtherTranslation[] = [];
     let batchAdded = 0;
+    let teekaAtCapacity = false;
     for (const lang of targetLanguages) {
+      if (teekaAtCapacity) break;
       progress.currentLanguage = lang;
       if (existingLangs.has(lang)) { progress.skippedExisting++; continue; }
       if (!sourceForTeeka) continue;
@@ -511,16 +513,42 @@ async function translateAndStoreManthra(
         batchAdded++;
         teekaAdded++;
         if (pendingBatch.length >= BATCH_SIZE) {
-          await safeSaveTeekaOnly(manthra.documentId, ti, pendingBatch);
-          console.log(`[Translation]   Teeka batch save (${batchAdded}) for ${manthra.ShlokaManthraNumber}`);
+          try {
+            await safeSaveTeekaOnly(manthra.documentId, ti, pendingBatch);
+            console.log(`[Translation]   Teeka batch save (${batchAdded}) for ${manthra.ShlokaManthraNumber}`);
+          } catch (saveErr: any) {
+            if (saveErr?.statusCode === 413 || saveErr?.message?.includes("413")) {
+              teekaAtCapacity = true;
+              progress.errors.push(`${teekaName} ${manthra.ShlokaManthraNumber}: nginx size limit reached, remaining languages skipped`);
+              console.log(`[Translation]   Teeka at nginx capacity for ${manthra.ShlokaManthraNumber}, skipping remaining languages`);
+            } else {
+              throw saveErr;
+            }
+          }
           pendingBatch = [];
         }
-      } catch (err: any) { progress.errors.push(`${teekaName} ${manthra.ShlokaManthraNumber} → ${lang}: ${err.message}`); }
+      } catch (err: any) {
+        if (err?.statusCode === 413 || err?.message?.includes("413")) {
+          teekaAtCapacity = true;
+          progress.errors.push(`${teekaName} ${manthra.ShlokaManthraNumber}: nginx size limit reached, remaining languages skipped`);
+          console.log(`[Translation]   Teeka at nginx capacity for ${manthra.ShlokaManthraNumber}, skipping remaining languages`);
+        } else {
+          progress.errors.push(`${teekaName} ${manthra.ShlokaManthraNumber} → ${lang}: ${err.message}`);
+        }
+      }
       await delay(1500);
     }
-    if (pendingBatch.length > 0) {
-      await safeSaveTeekaOnly(manthra.documentId, ti, pendingBatch);
-      console.log(`[Translation]   Teeka final save (${batchAdded}) for ${manthra.ShlokaManthraNumber}`);
+    if (pendingBatch.length > 0 && !teekaAtCapacity) {
+      try {
+        await safeSaveTeekaOnly(manthra.documentId, ti, pendingBatch);
+        console.log(`[Translation]   Teeka final save (${batchAdded}) for ${manthra.ShlokaManthraNumber}`);
+      } catch (saveErr: any) {
+        if (saveErr?.statusCode === 413 || saveErr?.message?.includes("413")) {
+          progress.errors.push(`${teekaName} ${manthra.ShlokaManthraNumber}: nginx size limit reached on final save`);
+        } else {
+          throw saveErr;
+        }
+      }
     }
   }
 
