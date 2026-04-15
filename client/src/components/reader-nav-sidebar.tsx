@@ -1,7 +1,6 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, Search, ChevronDown } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { BookOpen, ChevronRight } from "lucide-react";
 
 export interface KhandaInfo {
   number: number;
@@ -70,8 +69,6 @@ export function useBookChapters(bookId: string | undefined): ChapterInfo[] {
   }, [data]);
 }
 
-type NavTab = "chapter" | "khanda" | "mantra";
-
 function getChapterLabel(title: string) {
   if (title.includes(' - ')) return title.split(' - ').pop()?.trim() || title;
   return title;
@@ -110,12 +107,11 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
   const hasKhandas = useMemo(() => chapters.some(ch => ch.khandas && ch.khandas.length > 0), [chapters]);
   const labels = useMemo(() => detectLabels(chapters), [chapters]);
 
-  const [activeTab, setActiveTab] = useState<NavTab>("chapter");
   const [selectedChapterNum, setSelectedChapterNum] = useState<number | null>(null);
   const [selectedKhandaNum, setSelectedKhandaNum] = useState<number | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [chapterDropdownOpen, setChapterDropdownOpen] = useState(false);
-  const [khandaDropdownOpen, setKhandaDropdownOpen] = useState(false);
+  const [expandedChapters, setExpandedChapters] = useState<Set<number>>(new Set());
+
+  const activeVerseRef = useRef<HTMLButtonElement>(null);
 
   const activeChapter = useMemo(() => {
     for (const ch of chapters) {
@@ -140,6 +136,11 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
   useEffect(() => {
     if (activeChapter != null) {
       setSelectedChapterNum(activeChapter);
+      setExpandedChapters(prev => {
+        const next = new Set(prev);
+        next.add(activeChapter);
+        return next;
+      });
     }
     if (activeKhandaObj) {
       setSelectedKhandaNum(activeKhandaObj.khandaNum);
@@ -147,89 +148,35 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
   }, [activeChapter, activeKhandaObj]);
 
   useEffect(() => {
-    if (hasKhandas && activeTab === "khanda" && selectedChapterNum == null && activeChapter != null) {
-      setSelectedChapterNum(activeChapter);
-    }
-  }, [activeTab, hasKhandas, selectedChapterNum, activeChapter]);
+    setTimeout(() => {
+      activeVerseRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }, 100);
+  }, [currentVerseNumber]);
 
   const selectedChapter = useMemo(() => chapters.find(ch => ch.number === selectedChapterNum), [chapters, selectedChapterNum]);
-  const selectedKhanda = useMemo(() => selectedChapter?.khandas?.find(kh => kh.number === selectedKhandaNum), [selectedChapter, selectedKhandaNum]);
 
-  const availableTabs = useMemo(() => {
-    const tabs: NavTab[] = ["chapter"];
-    if (hasKhandas) tabs.push("khanda");
-    tabs.push("mantra");
-    return tabs;
-  }, [hasKhandas]);
+  const verseNumbers = useMemo(() => {
+    if (!selectedChapter) return [];
+    if (hasKhandas && selectedKhandaNum != null) {
+      const kh = selectedChapter.khandas?.find(k => k.number === selectedKhandaNum);
+      return kh?.verseNumbers || [];
+    }
+    return selectedChapter.verseNumbers;
+  }, [selectedChapter, hasKhandas, selectedKhandaNum]);
 
-  const tabLabel = (tab: NavTab) => {
-    switch (tab) {
-      case "chapter": return labels.chapterLabel;
-      case "khanda": return labels.khandaLabel;
-      case "mantra": return labels.mantraLabel;
+  const toggleChapter = (chNum: number) => {
+    setExpandedChapters(prev => {
+      const next = new Set(prev);
+      if (next.has(chNum)) next.delete(chNum);
+      else next.add(chNum);
+      return next;
+    });
+    setSelectedChapterNum(chNum);
+    if (hasKhandas) {
+      const ch = chapters.find(c => c.number === chNum);
+      setSelectedKhandaNum(ch?.khandas?.[0]?.number ?? null);
     }
   };
-
-  const listItems = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim();
-
-    if (activeTab === "chapter") {
-      return chapters
-        .filter(ch => !q || getChapterLabel(ch.title).toLowerCase().includes(q) || String(ch.number).includes(q))
-        .map(ch => ({
-          number: ch.number,
-          label: getChapterLabel(ch.title),
-          count: ch.verseCount,
-          isActive: activeChapter === ch.number,
-          onClick: () => {
-            setSelectedChapterNum(ch.number);
-            if (hasKhandas) {
-              setActiveTab("khanda");
-              setSelectedKhandaNum(ch.khandas?.[0]?.number ?? null);
-            } else {
-              setActiveTab("mantra");
-            }
-          },
-        }));
-    }
-
-    if (activeTab === "khanda" && selectedChapter?.khandas) {
-      return selectedChapter.khandas
-        .filter(kh => !q || kh.title.toLowerCase().includes(q) || String(kh.number).includes(q))
-        .map(kh => ({
-          number: kh.number,
-          label: kh.title,
-          count: kh.count,
-          isActive: activeKhandaObj?.chapterNum === selectedChapterNum && activeKhandaObj?.khandaNum === kh.number,
-          onClick: () => {
-            setSelectedKhandaNum(kh.number);
-            setActiveTab("mantra");
-          },
-        }));
-    }
-
-    if (activeTab === "mantra") {
-      let verseNums: number[] = [];
-      if (hasKhandas && selectedKhanda) {
-        verseNums = selectedKhanda.verseNumbers;
-      } else if (selectedChapter) {
-        verseNums = selectedChapter.verseNumbers;
-      } else {
-        verseNums = chapters.flatMap(ch => ch.verseNumbers).sort((a, b) => a - b);
-      }
-      return verseNums
-        .filter(vn => !q || String(vn).includes(q))
-        .map((vn, idx) => ({
-          number: idx + 1,
-          label: `Mantra ${vn}`,
-          count: vn,
-          isActive: currentVerseNumber === vn,
-          onClick: () => onSelectVerse(bookId, vn),
-        }));
-    }
-
-    return [];
-  }, [activeTab, chapters, selectedChapter, selectedKhanda, searchQuery, currentVerseNumber, activeChapter, activeKhandaObj, selectedChapterNum, hasKhandas, bookId, onSelectVerse]);
 
   return (
     <div className="h-full flex flex-col border-r border-border bg-card" data-testid="reader-nav-sidebar">
@@ -242,184 +189,98 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
           <BookOpen className="h-4 w-4 text-primary shrink-0" />
           <span className="font-medium text-primary truncate text-xs">{bookTitle}</span>
         </button>
-
-        <div className="relative">
-          <Search className="h-3.5 w-3.5 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2" />
-          <Input
-            className="h-8 pl-8 text-xs bg-background"
-            placeholder={`Search ${tabLabel(activeTab)}...`}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            data-testid="input-nav-search"
-          />
-        </div>
-
-        <div className="flex gap-1" data-testid="nav-tab-bar">
-          {availableTabs.map(tab => (
-            <button
-              key={tab}
-              onClick={() => { setActiveTab(tab); setSearchQuery(""); }}
-              className={`flex-1 px-2 py-1.5 rounded-md text-[11px] font-semibold transition-colors ${
-                activeTab === tab
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-              data-testid={`nav-tab-${tab}`}
-            >
-              {tabLabel(tab)}
-            </button>
-          ))}
-        </div>
       </div>
 
-      <div className="border-t border-border/60 shrink-0">
-        {activeTab === "khanda" && (
-          <div className="px-3 py-2 border-b border-border/40 relative">
-            <button
-              className="flex items-center justify-between w-full text-left"
-              onClick={() => setChapterDropdownOpen(!chapterDropdownOpen)}
-              data-testid="dropdown-chapter-selector"
-            >
-              <div>
-                <span className="text-[10px] font-bold text-primary uppercase tracking-wider">{labels.chapterLabel}</span>
-                <span className="text-xs text-foreground font-medium ml-2">{selectedChapter ? getChapterLabel(selectedChapter.title) : "Select"}</span>
-              </div>
-              <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${chapterDropdownOpen ? "rotate-180" : ""}`} />
-            </button>
-            {chapterDropdownOpen && (
-              <div className="absolute left-0 right-0 top-full z-20 bg-card border border-border shadow-lg rounded-b-lg max-h-48 overflow-y-auto">
-                {chapters.map(ch => (
+      <div className="flex flex-1 overflow-hidden" data-testid="reader-chapter-tree">
+        <div className="w-1/2 border-r border-border/40 overflow-y-auto">
+          <div className="px-2 py-1.5 border-b border-border/60">
+            <span className="text-[10px] font-bold text-primary uppercase tracking-wider">{labels.chapterLabel}</span>
+          </div>
+          <div className="divide-y divide-border/20">
+            {chapters.map(ch => {
+              const isExpanded = expandedChapters.has(ch.number);
+              const isActive = activeChapter === ch.number;
+              return (
+                <div key={ch.number}>
                   <button
-                    key={ch.number}
-                    className={`flex items-center gap-2 w-full text-left px-4 py-2 text-xs hover:bg-accent transition-colors ${
-                      selectedChapterNum === ch.number ? "bg-primary/5 text-primary font-medium" : "text-foreground/80"
-                    }`}
-                    onClick={() => {
-                      setSelectedChapterNum(ch.number);
-                      setSelectedKhandaNum(ch.khandas?.[0]?.number ?? null);
-                      setChapterDropdownOpen(false);
-                    }}
-                    data-testid={`dropdown-chapter-${ch.number}`}
+                    className={`flex items-center w-full text-left px-2 py-2 text-[11px] transition-colors ${
+                      selectedChapterNum === ch.number
+                        ? "bg-primary/10 text-primary font-semibold"
+                        : "hover:bg-accent/60 text-foreground/80"
+                    } ${isActive ? "border-l-[3px] border-l-primary" : "border-l-[3px] border-l-transparent"}`}
+                    onClick={() => toggleChapter(ch.number)}
+                    data-testid={`nav-chapter-${ch.number}`}
                   >
-                    <span className="text-muted-foreground/60 w-4 text-right font-mono text-[10px]">{ch.number}</span>
-                    <span className="flex-1 truncate">{getChapterLabel(ch.title)}</span>
+                    {(hasKhandas && ch.khandas?.length) ? (
+                      <ChevronRight className={`h-3 w-3 shrink-0 mr-1 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+                    ) : (
+                      <span className="w-4 shrink-0" />
+                    )}
+                    <span className="flex-1 truncate leading-tight">{getChapterLabel(ch.title)}</span>
+                    <span className="text-[10px] text-muted-foreground/50 font-mono ml-1">{ch.verseCount}</span>
                   </button>
-                ))}
-              </div>
-            )}
+                  {hasKhandas && isExpanded && ch.khandas && (
+                    <div className="bg-muted/30">
+                      {ch.khandas.map(kh => {
+                        const isKhandaActive = activeKhandaObj?.chapterNum === ch.number && activeKhandaObj?.khandaNum === kh.number;
+                        return (
+                          <button
+                            key={kh.number}
+                            className={`flex items-center w-full text-left pl-6 pr-2 py-1.5 text-[10px] transition-colors ${
+                              selectedChapterNum === ch.number && selectedKhandaNum === kh.number
+                                ? "bg-primary/8 text-primary font-semibold"
+                                : "hover:bg-accent/40 text-foreground/70"
+                            } ${isKhandaActive ? "border-l-[2px] border-l-primary" : ""}`}
+                            onClick={() => {
+                              setSelectedChapterNum(ch.number);
+                              setSelectedKhandaNum(kh.number);
+                            }}
+                            data-testid={`nav-khanda-${ch.number}-${kh.number}`}
+                          >
+                            <span className="flex-1 truncate">{kh.title}</span>
+                            <span className="text-[9px] text-muted-foreground/50 font-mono ml-1">{kh.count}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        )}
-
-        {activeTab === "mantra" && (
-          <div className="px-3 py-2 border-b border-border/40 space-y-1">
-            {selectedChapter && (
-              <div className="relative">
-                <button
-                  className="flex items-center justify-between w-full text-left"
-                  onClick={() => { setChapterDropdownOpen(!chapterDropdownOpen); setKhandaDropdownOpen(false); }}
-                  data-testid="dropdown-chapter-selector"
-                >
-                  <div>
-                    <span className="text-[10px] font-bold text-primary uppercase tracking-wider">{labels.chapterLabel}</span>
-                    <span className="text-xs text-foreground font-medium ml-2">{getChapterLabel(selectedChapter.title)}</span>
-                  </div>
-                  <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${chapterDropdownOpen ? "rotate-180" : ""}`} />
-                </button>
-                {chapterDropdownOpen && (
-                  <div className="absolute left-0 right-0 top-full z-20 bg-card border border-border shadow-lg rounded-b-lg max-h-48 overflow-y-auto">
-                    {chapters.map(ch => (
-                      <button
-                        key={ch.number}
-                        className={`flex items-center gap-2 w-full text-left px-4 py-2 text-xs hover:bg-accent transition-colors ${
-                          selectedChapterNum === ch.number ? "bg-primary/5 text-primary font-medium" : "text-foreground/80"
-                        }`}
-                        onClick={() => {
-                          setSelectedChapterNum(ch.number);
-                          setSelectedKhandaNum(ch.khandas?.[0]?.number ?? null);
-                          setChapterDropdownOpen(false);
-                        }}
-                        data-testid={`dropdown-chapter-${ch.number}`}
-                      >
-                        <span className="text-muted-foreground/60 w-4 text-right font-mono text-[10px]">{ch.number}</span>
-                        <span className="flex-1 truncate">{getChapterLabel(ch.title)}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-            {hasKhandas && selectedKhanda && (
-              <div className="relative">
-                <button
-                  className="flex items-center justify-between w-full text-left"
-                  onClick={() => { setKhandaDropdownOpen(!khandaDropdownOpen); setChapterDropdownOpen(false); }}
-                  data-testid="dropdown-khanda-selector"
-                >
-                  <div>
-                    <span className="text-[10px] font-bold text-primary uppercase tracking-wider">{labels.khandaLabel}</span>
-                    <span className="text-xs text-foreground font-medium ml-2">{selectedKhanda.title}</span>
-                  </div>
-                  <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${khandaDropdownOpen ? "rotate-180" : ""}`} />
-                </button>
-                {khandaDropdownOpen && selectedChapter?.khandas && (
-                  <div className="absolute left-0 right-0 top-full z-20 bg-card border border-border shadow-lg rounded-b-lg max-h-48 overflow-y-auto">
-                    {selectedChapter.khandas.map(kh => (
-                      <button
-                        key={kh.number}
-                        className={`flex items-center gap-2 w-full text-left px-4 py-2 text-xs hover:bg-accent transition-colors ${
-                          selectedKhandaNum === kh.number ? "bg-primary/5 text-primary font-medium" : "text-foreground/80"
-                        }`}
-                        onClick={() => {
-                          setSelectedKhandaNum(kh.number);
-                          setKhandaDropdownOpen(false);
-                        }}
-                        data-testid={`dropdown-khanda-${kh.number}`}
-                      >
-                        <span className="text-muted-foreground/60 w-4 text-right font-mono text-[10px]">{kh.number}</span>
-                        <span className="flex-1 truncate">{kh.title}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div className="flex-1 overflow-y-auto" data-testid="reader-chapter-tree">
-        <div className="divide-y divide-border/30">
-          {listItems.map((item) => (
-            <button
-              key={`${activeTab}-${item.count}-${item.number}`}
-              className={`flex items-center w-full text-left px-3 py-2.5 text-xs transition-colors ${
-                item.isActive
-                  ? "bg-primary/10 border-l-[3px] border-l-primary font-semibold text-primary"
-                  : "hover:bg-accent/60 text-foreground/80 border-l-[3px] border-l-transparent"
-              }`}
-              onClick={item.onClick}
-              data-testid={`nav-item-${activeTab}-${item.count}`}
-            >
-              <span className={`w-6 text-right shrink-0 font-mono text-[11px] mr-3 ${
-                item.isActive ? "text-primary" : "text-muted-foreground/60"
-              }`}>
-                {item.number}
-              </span>
-              <span className="flex-1 truncate leading-tight">{item.label}</span>
-              <span className={`text-[11px] font-mono shrink-0 ml-2 ${
-                item.isActive ? "text-primary font-bold" : "text-muted-foreground/50"
-              }`}>
-                {item.count}
-              </span>
-            </button>
-          ))}
         </div>
 
-        {listItems.length === 0 && (
-          <div className="text-xs text-muted-foreground text-center py-6">
-            No results found
+        <div className="w-1/2 overflow-y-auto">
+          <div className="px-2 py-1.5 border-b border-border/60">
+            <span className="text-[10px] font-bold text-primary uppercase tracking-wider">{labels.mantraLabel}</span>
           </div>
-        )}
+          {verseNumbers.length > 0 ? (
+            <div className="grid grid-cols-3 gap-1 p-2" data-testid="nav-mantra-grid">
+              {verseNumbers.map(vn => {
+                const isActive = currentVerseNumber === vn;
+                return (
+                  <button
+                    key={vn}
+                    ref={isActive ? activeVerseRef : undefined}
+                    className={`py-1.5 rounded text-xs font-mono transition-colors ${
+                      isActive
+                        ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                        : "bg-muted/40 hover:bg-accent text-foreground/70 hover:text-foreground"
+                    }`}
+                    onClick={() => onSelectVerse(bookId, vn)}
+                    data-testid={`nav-mantra-${vn}`}
+                  >
+                    {vn}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-[10px] text-muted-foreground text-center py-6 px-2">
+              Select a {labels.chapterLabel.toLowerCase()} to see mantras
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
