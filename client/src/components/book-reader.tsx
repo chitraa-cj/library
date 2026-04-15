@@ -1671,18 +1671,22 @@ export function BookReader({
               onMouseUp={handleTextSelect}
               onTouchEnd={handleTextSelect}
             >
-              {commentaryOptions && commentaryOptions.languages.length > 0 && (
-                <div className="relative flex items-center justify-end gap-2 mb-3" ref={langPanelRef} data-testid="book-language-selector">
-                  <button
-                    onClick={() => setShowLanguagePanel(prev => !prev)}
-                    className="flex items-center gap-1.5 h-8 px-3 text-xs border border-border/50 bg-card/50 hover:bg-card/80 rounded-md transition-colors"
-                    data-testid="button-language-selector"
-                  >
-                    <Languages className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-foreground/80">{t("languages") || "Languages"}</span>
-                    <Badge variant="secondary" className="h-4 min-w-[16px] px-1 text-[10px] no-default-hover-elevate no-default-active-elevate">{selectedLanguages.size}</Badge>
-                    <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform ${showLanguagePanel ? "rotate-180" : ""}`} />
-                  </button>
+              <div className="flex items-center justify-between gap-4 mb-4" data-testid="reader-book-header">
+                <h1 className="font-serif text-xl sm:text-2xl text-primary/90 italic tracking-tight truncate" data-testid="reader-book-title">
+                  {tc(book.title, bookTitleTranslations)}
+                </h1>
+                {commentaryOptions && commentaryOptions.languages.length > 0 && (
+                  <div className="relative flex items-center gap-2 shrink-0" ref={langPanelRef} data-testid="book-language-selector">
+                    <button
+                      onClick={() => setShowLanguagePanel(prev => !prev)}
+                      className="flex items-center gap-1.5 h-8 px-3 text-xs border border-border/50 bg-card/50 hover:bg-card/80 rounded-md transition-colors"
+                      data-testid="button-language-selector"
+                    >
+                      <Languages className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-foreground/80">{t("languages") || "Languages"}</span>
+                      <Badge variant="secondary" className="h-4 min-w-[16px] px-1 text-[10px] no-default-hover-elevate no-default-active-elevate">{selectedLanguages.size}</Badge>
+                      <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform ${showLanguagePanel ? "rotate-180" : ""}`} />
+                    </button>
                   {showLanguagePanel && (
                     <div className="absolute top-full right-0 mt-1 z-50 w-64 max-h-80 overflow-y-auto rounded-lg border border-border bg-card shadow-lg p-2" data-testid="language-checkbox-panel">
                       {commentaryOptions.languages.map((lang) => {
@@ -1708,6 +1712,7 @@ export function BookReader({
                   )}
                 </div>
               )}
+              </div>
 
               <div className="rounded-xl border border-primary/20 bg-primary/5 dark:bg-primary/10 p-4 sm:p-6 mb-4" data-testid="verse-card">
                 <div 
