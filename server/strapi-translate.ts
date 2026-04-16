@@ -459,7 +459,17 @@ async function translateAndStoreManthra(
   let bhashyamAdded = 0;
   let bhashyamAtCapacity = false;
   {
-    const existingBhashyamLangs = getExistingLanguages(manthra.BhashyamEntry?.OtherTranslations || []);
+    const existingBhashyamOTs = manthra.BhashyamEntry?.OtherTranslations || [];
+    const existingBhashyamLangs = getExistingLanguages(existingBhashyamOTs);
+    const existingBhashyamSize = JSON.stringify(existingBhashyamOTs).length;
+    if (existingBhashyamSize > 800000) {
+      console.log(`[Translation]   Bhashyam for ${manthra.ShlokaManthraNumber} already at ~${Math.round(existingBhashyamSize/1024)}KB, skipping (nginx limit)`);
+      progress.errors.push(`Bhashyam ${manthra.ShlokaManthraNumber}: already at nginx capacity (~${Math.round(existingBhashyamSize/1024)}KB), skipping`);
+      bhashyamAtCapacity = true;
+      for (const lang of targetLanguages) {
+        if (existingBhashyamLangs.has(lang)) { progress.skippedExisting++; }
+      }
+    }
     let pendingBatch: OtherTranslation[] = [];
     for (const lang of targetLanguages) {
       if (bhashyamAtCapacity) break;
@@ -497,7 +507,18 @@ async function translateAndStoreManthra(
     const teekaEnglish = richTextToString(teekaEntry.EnglishTranslationText);
     const teekaSanskrit = richTextToString(teekaEntry.SanskritTextEntry);
     const sourceForTeeka = teekaEnglish || teekaSanskrit;
-    const existingLangs = getExistingLanguages(teekaEntry.OtherTranslations || []);
+    const existingOTs = teekaEntry.OtherTranslations || [];
+    const existingLangs = getExistingLanguages(existingOTs);
+    const existingTeekaSize = JSON.stringify(existingOTs).length;
+    const teekaAlreadyAtCapacity = existingTeekaSize > 800000;
+    if (teekaAlreadyAtCapacity) {
+      console.log(`[Translation]   Teeka ${teekaName} for ${manthra.ShlokaManthraNumber} already at ~${Math.round(existingTeekaSize/1024)}KB, skipping all remaining languages (nginx limit)`);
+      progress.errors.push(`${teekaName} ${manthra.ShlokaManthraNumber}: teeka already at nginx capacity (~${Math.round(existingTeekaSize/1024)}KB), skipping`);
+      for (const lang of targetLanguages) {
+        if (existingLangs.has(lang)) { progress.skippedExisting++; }
+      }
+      continue;
+    }
     let pendingBatch: OtherTranslation[] = [];
     let batchAdded = 0;
     let teekaAtCapacity = false;
