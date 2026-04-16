@@ -9,7 +9,7 @@ import { authStorage } from "./replit_integrations/auth/storage";
 import { z } from "zod";
 import multer from "multer";
 import { translateTextChunked, translateImage, translatePdf, transliterateTextChunked, translateBhashyam } from "./gemini";
-import { startTranslationJob, getTranslationProgress, getAllTranslationJobs, queueTranslationJob, getQueueStatus, cancelTranslationJob, restoreQueueFromFile, STRAPI_LANGUAGES, SKIP_TRANSLATE } from "./strapi-translate";
+import { startTranslationJob, getTranslationProgress, getAllTranslationJobs, queueTranslationJob, getQueueStatus, cancelTranslationJob, restoreQueueFromFile, queueAllGranthas, fetchAllGranthaIds, STRAPI_LANGUAGES, SKIP_TRANSLATE } from "./strapi-translate";
 import { queueTransliteration, getTransliterationProgress, transliterateSanskrit, ALL_LANGUAGES as TRANSLIT_LANGUAGES } from "./strapi-transliterate";
 
 function getUserId(req: any): string {
@@ -450,8 +450,19 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/translate/queue/all", async (_req, res) => {
+    try {
+      const result = await queueAllGranthas();
+      res.json({ message: `Queued ${result.total} granthas for translation`, ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.get("/api/translate/queue/status", async (_req, res) => {
-    res.json(getQueueStatus());
+    const status = getQueueStatus();
+    const allJobs = getAllTranslationJobs();
+    res.json({ ...status, jobs: allJobs });
   });
 
   app.post("/api/translate/cancel", async (req, res) => {

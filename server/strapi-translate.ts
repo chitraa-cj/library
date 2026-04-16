@@ -384,11 +384,11 @@ async function safeSaveTeekaOnly(
   docId: string,
   teekaIndex: number,
   newTranslations: OtherTranslation[]
-): Promise<void> {
+): Promise<boolean> {
   const fresh = await refetchManthra(docId);
   if (!fresh) throw new Error(`Could not refetch manthra ${docId}`);
   const freshTeekas = cleanTeekas(fresh.Teekas);
-  if (!freshTeekas[teekaIndex]?.TeekaEntry) return;
+  if (!freshTeekas[teekaIndex]?.TeekaEntry) return true;
   const entry = freshTeekas[teekaIndex].TeekaEntry;
   const existingLangs = new Set((entry.OtherTranslations || []).map((ot: any) => ot.LanguageOfTranslation));
   const toAdd = newTranslations.filter(ot => !existingLangs.has(ot.LanguageOfTranslation));
@@ -400,13 +400,55 @@ async function safeSaveTeekaOnly(
   try {
     const fullData = buildFullManthraData(fresh, { teekas: freshTeekas });
     await strapiPut(`/manthras/${docId}`, { data: fullData });
+    return true;
   } catch (err: any) {
     if ((err as any).statusCode === 413) {
       console.log(`[Translation] 413 payload too large for full save, trying component-only save for teeka ${docId}`);
-      await strapiPut(`/manthras/${docId}`, { data: { Teekas: freshTeekas } });
-    } else {
-      throw err;
+      try {
+        await strapiPut(`/manthras/${docId}`, { data: { Teekas: freshTeekas } });
+        return true;
+      } catch (err2: any) {
+        if ((err2 as any).statusCode === 413) {
+          console.log(`[Translation] 413 even for component-only teeka, trying chunked save for ${docId}`);
+          const allOTs: OtherTranslation[] = entry.OtherTranslations || [];
+          const CHUNK_SIZE = 10;
+          let lastSaved = 0;
+          for (let i = 0; i < allOTs.length; i += CHUNK_SIZE) {
+            const chunkEnd = Math.min(i + CHUNK_SIZE, allOTs.length);
+            const partialEntry = { ...entry, OtherTranslations: allOTs.slice(0, chunkEnd) };
+            freshTeekas[teekaIndex].TeekaEntry = partialEntry;
+            try {
+              await strapiPut(`/manthras/${docId}`, { data: { Teekas: freshTeekas } });
+              lastSaved = chunkEnd;
+              console.log(`[Translation] Chunked save teeka ${chunkEnd}/${allOTs.length} for ${docId}`);
+            } catch (chunkErr: any) {
+              if ((chunkErr as any).statusCode === 413) {
+                for (let j = i; j < chunkEnd; j++) {
+                  const singleEntry = { ...entry, OtherTranslations: allOTs.slice(0, j + 1) };
+                  freshTeekas[teekaIndex].TeekaEntry = singleEntry;
+                  try {
+                    await strapiPut(`/manthras/${docId}`, { data: { Teekas: freshTeekas } });
+                    lastSaved = j + 1;
+                    console.log(`[Translation] Single save teeka ${j + 1}/${allOTs.length} for ${docId}`);
+                  } catch (singleErr: any) {
+                    if ((singleErr as any).statusCode === 413) {
+                      console.log(`[Translation] Hit nginx size limit at ${j + 1}/${allOTs.length} for teeka ${docId}, saved ${lastSaved} translations`);
+                      return false;
+                    }
+                    throw singleErr;
+                  }
+                }
+              } else {
+                throw chunkErr;
+              }
+            }
+          }
+          return lastSaved >= allOTs.length;
+        }
+        throw err2;
+      }
     }
+    throw err;
   }
 }
 
@@ -459,17 +501,7 @@ async function translateAndStoreManthra(
   let bhashyamAdded = 0;
   let bhashyamAtCapacity = false;
   {
-    const existingBhashyamOTs = manthra.BhashyamEntry?.OtherTranslations || [];
-    const existingBhashyamLangs = getExistingLanguages(existingBhashyamOTs);
-    const existingBhashyamSize = JSON.stringify(existingBhashyamOTs).length;
-    if (existingBhashyamSize > 800000) {
-      console.log(`[Translation]   Bhashyam for ${manthra.ShlokaManthraNumber} already at ~${Math.round(existingBhashyamSize/1024)}KB, skipping (nginx limit)`);
-      progress.errors.push(`Bhashyam ${manthra.ShlokaManthraNumber}: already at nginx capacity (~${Math.round(existingBhashyamSize/1024)}KB), skipping`);
-      bhashyamAtCapacity = true;
-      for (const lang of targetLanguages) {
-        if (existingBhashyamLangs.has(lang)) { progress.skippedExisting++; }
-      }
-    }
+    const existingBhashyamLangs = getExistingLanguages(manthra.BhashyamEntry?.OtherTranslations || []);
     let pendingBatch: OtherTranslation[] = [];
     for (const lang of targetLanguages) {
       if (bhashyamAtCapacity) break;
@@ -507,18 +539,7 @@ async function translateAndStoreManthra(
     const teekaEnglish = richTextToString(teekaEntry.EnglishTranslationText);
     const teekaSanskrit = richTextToString(teekaEntry.SanskritTextEntry);
     const sourceForTeeka = teekaEnglish || teekaSanskrit;
-    const existingOTs = teekaEntry.OtherTranslations || [];
-    const existingLangs = getExistingLanguages(existingOTs);
-    const existingTeekaSize = JSON.stringify(existingOTs).length;
-    const teekaAlreadyAtCapacity = existingTeekaSize > 800000;
-    if (teekaAlreadyAtCapacity) {
-      console.log(`[Translation]   Teeka ${teekaName} for ${manthra.ShlokaManthraNumber} already at ~${Math.round(existingTeekaSize/1024)}KB, skipping all remaining languages (nginx limit)`);
-      progress.errors.push(`${teekaName} ${manthra.ShlokaManthraNumber}: teeka already at nginx capacity (~${Math.round(existingTeekaSize/1024)}KB), skipping`);
-      for (const lang of targetLanguages) {
-        if (existingLangs.has(lang)) { progress.skippedExisting++; }
-      }
-      continue;
-    }
+    const existingLangs = getExistingLanguages(teekaEntry.OtherTranslations || []);
     let pendingBatch: OtherTranslation[] = [];
     let batchAdded = 0;
     let teekaAtCapacity = false;
@@ -534,42 +555,18 @@ async function translateAndStoreManthra(
         batchAdded++;
         teekaAdded++;
         if (pendingBatch.length >= BATCH_SIZE) {
-          try {
-            await safeSaveTeekaOnly(manthra.documentId, ti, pendingBatch);
-            console.log(`[Translation]   Teeka batch save (${batchAdded}) for ${manthra.ShlokaManthraNumber}`);
-          } catch (saveErr: any) {
-            if (saveErr?.statusCode === 413 || saveErr?.message?.includes("413")) {
-              teekaAtCapacity = true;
-              progress.errors.push(`${teekaName} ${manthra.ShlokaManthraNumber}: nginx size limit reached, remaining languages skipped`);
-              console.log(`[Translation]   Teeka at nginx capacity for ${manthra.ShlokaManthraNumber}, skipping remaining languages`);
-            } else {
-              throw saveErr;
-            }
-          }
+          const ok = await safeSaveTeekaOnly(manthra.documentId, ti, pendingBatch);
+          console.log(`[Translation]   Teeka batch save (${batchAdded}) for ${manthra.ShlokaManthraNumber}`);
           pendingBatch = [];
+          if (!ok) { teekaAtCapacity = true; progress.errors.push(`${teekaName} ${manthra.ShlokaManthraNumber}: nginx size limit reached, remaining languages skipped`); }
         }
-      } catch (err: any) {
-        if (err?.statusCode === 413 || err?.message?.includes("413")) {
-          teekaAtCapacity = true;
-          progress.errors.push(`${teekaName} ${manthra.ShlokaManthraNumber}: nginx size limit reached, remaining languages skipped`);
-          console.log(`[Translation]   Teeka at nginx capacity for ${manthra.ShlokaManthraNumber}, skipping remaining languages`);
-        } else {
-          progress.errors.push(`${teekaName} ${manthra.ShlokaManthraNumber} → ${lang}: ${err.message}`);
-        }
-      }
+      } catch (err: any) { progress.errors.push(`${teekaName} ${manthra.ShlokaManthraNumber} → ${lang}: ${err.message}`); }
       await delay(1500);
     }
     if (pendingBatch.length > 0 && !teekaAtCapacity) {
-      try {
-        await safeSaveTeekaOnly(manthra.documentId, ti, pendingBatch);
-        console.log(`[Translation]   Teeka final save (${batchAdded}) for ${manthra.ShlokaManthraNumber}`);
-      } catch (saveErr: any) {
-        if (saveErr?.statusCode === 413 || saveErr?.message?.includes("413")) {
-          progress.errors.push(`${teekaName} ${manthra.ShlokaManthraNumber}: nginx size limit reached on final save`);
-        } else {
-          throw saveErr;
-        }
-      }
+      const ok = await safeSaveTeekaOnly(manthra.documentId, ti, pendingBatch);
+      console.log(`[Translation]   Teeka final save (${batchAdded}) for ${manthra.ShlokaManthraNumber}`);
+      if (!ok) { progress.errors.push(`${teekaName} ${manthra.ShlokaManthraNumber}: nginx size limit reached on final save`); }
     }
   }
 
@@ -872,6 +869,39 @@ export function cancelTranslationJob(granthaDocId: string): boolean {
     return true;
   }
   return false;
+}
+
+export async function fetchAllGranthaIds(): Promise<{ documentId: string; name: string }[]> {
+  const results: { documentId: string; name: string }[] = [];
+  let page = 1;
+  const pageSize = 100;
+  while (true) {
+    const url = `${STRAPI_URL}/api/granthas?pagination[page]=${page}&pagination[pageSize]=${pageSize}&fields[0]=GranthaName`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
+    });
+    if (!res.ok) throw new Error(`Failed to fetch granthas: ${res.status}`);
+    const json = await res.json();
+    const data = json.data || [];
+    for (const g of data) {
+      results.push({ documentId: g.documentId, name: g.GranthaName || g.documentId });
+    }
+    const pagination = json.meta?.pagination;
+    if (!pagination || page >= pagination.pageCount) break;
+    page++;
+  }
+  return results;
+}
+
+export async function queueAllGranthas(): Promise<{ queued: string[]; total: number }> {
+  const granthas = await fetchAllGranthaIds();
+  const queued: string[] = [];
+  for (const g of granthas) {
+    queueTranslationJob(g.documentId);
+    queued.push(g.documentId);
+  }
+  console.log(`[Translation] Queued ALL ${queued.length} granthas for translation`);
+  return { queued, total: queued.length };
 }
 
 export { STRAPI_LANGUAGES, SKIP_TRANSLATE };
