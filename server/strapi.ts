@@ -17,6 +17,52 @@ import type { CommentaryOptions, CommentaryOption } from "./storage";
 const STRAPI_URL = process.env.STRAPI_URL || "";
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN || "";
 
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
+const CACHE_TTL = 10 * 60 * 1000;
+const bookDetailCache = new Map<string, CacheEntry<BookWithDetails>>();
+const bookVerseMetaCache = new Map<string, CacheEntry<BookWithVerseMeta>>();
+let bookListCacheEntry: CacheEntry<(Book & { bhashyamName?: string; teekasList?: { name: string; author: string }[] })[]> | null = null;
+const verseCache = new Map<string, CacheEntry<VerseWithTranslations>>();
+const explanationCache = new Map<string, CacheEntry<Explanation[]>>();
+const commentaryOptionsCache = new Map<string, CacheEntry<CommentaryOptions>>();
+const inflight = new Map<string, Promise<any>>();
+
+function getCached<T>(cache: Map<string, CacheEntry<T>>, key: string): T | undefined {
+  const entry = cache.get(key);
+  if (entry && Date.now() - entry.timestamp < CACHE_TTL) return entry.data;
+  if (entry) cache.delete(key);
+  return undefined;
+}
+
+function setCache<T>(cache: Map<string, CacheEntry<T>>, key: string, data: T): void {
+  cache.set(key, { data, timestamp: Date.now() });
+}
+
+async function dedup<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  const existing = inflight.get(key);
+  if (existing) return existing as Promise<T>;
+  const promise = fn().finally(() => inflight.delete(key));
+  inflight.set(key, promise);
+  return promise;
+}
+
+export function invalidateBookCache(bookId: string): void {
+  bookDetailCache.delete(bookId);
+  bookVerseMetaCache.delete(bookId);
+  bookListCacheEntry = null;
+  for (const key of verseCache.keys()) {
+    if (key.startsWith(bookId)) verseCache.delete(key);
+  }
+  for (const key of explanationCache.keys()) {
+    if (key.startsWith(bookId)) explanationCache.delete(key);
+  }
+  commentaryOptionsCache.delete(bookId);
+}
+
 interface StrapiResponse<T> {
   data: T;
   meta?: { pagination?: { page: number; pageSize: number; pageCount: number; total: number } };
@@ -425,15 +471,20 @@ export async function testStrapiConnection(): Promise<{ connected: boolean; mess
 }
 
 export async function strapiGetAllBooks(): Promise<(Book & { bhashyamName?: string; teekasList?: { name: string; author: string }[] })[]> {
-  const granthas = await strapiFetchAll("/granthas", {
-    "populate[0]": "sections.manthras",
-    "populate[1]": "sections.sub_sections.manthras",
-    "populate[2]": "sections.sub_sections.sub_sections.manthras",
-    "populate[3]": "coverImage",
-    "populate[4]": "GranthaNameTranslations",
-    "populate[5]": "teekas",
+  if (bookListCacheEntry && Date.now() - bookListCacheEntry.timestamp < CACHE_TTL) return bookListCacheEntry.data;
+  return dedup("allBooks", async () => {
+    const granthas = await strapiFetchAll("/granthas", {
+      "populate[0]": "sections.manthras",
+      "populate[1]": "sections.sub_sections.manthras",
+      "populate[2]": "sections.sub_sections.sub_sections.manthras",
+      "populate[3]": "coverImage",
+      "populate[4]": "GranthaNameTranslations",
+      "populate[5]": "teekas",
+    });
+    const result = granthas.map(mapGranthaToBook);
+    bookListCacheEntry = { data: result, timestamp: Date.now() };
+    return result;
   });
-  return granthas.map(mapGranthaToBook);
 }
 
 export async function strapiGetBookBySlug(slug: string): Promise<Book | undefined> {
@@ -475,6 +526,21 @@ async function fetchManthrasForSection(sectionDocId: string): Promise<any[]> {
 }
 
 export async function strapiGetBookById(id: string): Promise<BookWithDetails | undefined> {
+  const cached = getCached(bookDetailCache, id);
+  if (cached) return cached;
+  return dedup(`bookDetail:${id}`, async () => {
+    const result = await _strapiGetBookByIdUncached(id);
+    if (result) {
+      setCache(bookDetailCache, id, result);
+      for (const v of result.verses) {
+        setCache(verseCache, v.id, v);
+      }
+    }
+    return result;
+  });
+}
+
+async function _strapiGetBookByIdUncached(id: string): Promise<BookWithDetails | undefined> {
   try {
     const result = await strapiFetch<StrapiResponse<any>>(`/granthas/${id}`, {
       "populate[0]": "sections",
@@ -556,6 +622,16 @@ export async function strapiGetBookById(id: string): Promise<BookWithDetails | u
 }
 
 export async function strapiGetBookWithVerseMeta(id: string): Promise<BookWithVerseMeta | undefined> {
+  const cached = getCached(bookVerseMetaCache, id);
+  if (cached) return cached;
+  return dedup(`bookMeta:${id}`, async () => {
+    const result = await _strapiGetBookWithVerseMetaUncached(id);
+    if (result) setCache(bookVerseMetaCache, id, result);
+    return result;
+  });
+}
+
+async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWithVerseMeta | undefined> {
   try {
     const result = await strapiFetch<StrapiResponse<any>>(`/granthas/${id}`, {
       "populate[0]": "sections",
@@ -688,10 +764,22 @@ function mapIntroductionVerse(grantha: any, bookId: string): VerseWithTranslatio
 }
 
 export async function strapiGetVerseById(verseId: string): Promise<VerseWithTranslations | undefined> {
+  const cached = getCached(verseCache, verseId);
+  if (cached) return cached;
+
   if (verseId.endsWith("-intro")) {
     const bookId = verseId.replace("-intro", "");
     const book = await strapiGetBookById(bookId);
-    return book?.verses.find((v) => v.id === verseId);
+    const verse = book?.verses.find((v) => v.id === verseId);
+    if (verse) setCache(verseCache, verseId, verse);
+    return verse;
+  }
+
+  for (const [, entry] of bookDetailCache) {
+    if (Date.now() - entry.timestamp < CACHE_TTL) {
+      const found = entry.data.verses.find((v) => v.id === verseId);
+      if (found) { setCache(verseCache, verseId, found); return found; }
+    }
   }
 
   try {
@@ -735,12 +823,14 @@ export async function strapiGetVerseById(verseId: string): Promise<VerseWithTran
       }
     }
 
-    return mapManthraToVerse(
+    const verse = mapManthraToVerse(
       m, bookId, m.order ?? 0,
       adhyayNumber, adhyayTitle,
       khandaNumber, khandaTitle,
       bhashyamAuthor, bhashyamName,
     );
+    if (verse) setCache(verseCache, verseId, verse);
+    return verse;
   } catch (err: any) {
     console.warn("[Strapi] getVerseById failed:", err.message);
     return undefined;
