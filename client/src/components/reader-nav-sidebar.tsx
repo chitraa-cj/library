@@ -227,6 +227,33 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
     return [];
   }, [activeTab, chapters, selectedChapter, searchQuery, activeChapter, activeKhandaObj, selectedChapterNum, selectedKhandaNum, hasKhandas]);
 
+  const verseLabelMap = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const ch of chapters) {
+      if (ch.khandas && ch.khandas.length > 0) {
+        for (const kh of ch.khandas) {
+          kh.verseNumbers.forEach((vn, idx) => {
+            map.set(vn, `${ch.number}.${kh.number}.${idx + 1}`);
+          });
+        }
+        // Cover any chapter verses not in a khanda
+        ch.verseNumbers.forEach((vn) => {
+          if (!map.has(vn)) {
+            const idx = ch.verseNumbers.indexOf(vn);
+            map.set(vn, `${ch.number}.${idx + 1}`);
+          }
+        });
+      } else {
+        ch.verseNumbers.forEach((vn, idx) => {
+          map.set(vn, `${ch.number}.${idx + 1}`);
+        });
+      }
+    }
+    return map;
+  }, [chapters]);
+
+  const labelFor = (vn: number) => verseLabelMap.get(vn) || String(vn);
+
   const mantraNumbers = useMemo(() => {
     let nums: number[] = [];
     if (activeTab === "mantra") {
@@ -405,7 +432,7 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
                     onClick={() => onSelectVerse(bookId, vn)}
                     data-testid={`nav-mantra-${vn}`}
                   >
-                    <span className={`flex-1 font-mono ${isActive ? "text-primary" : ""}`}>{vn}</span>
+                    <span className={`flex-1 font-mono ${isActive ? "text-primary" : ""}`}>{labelFor(vn)}</span>
                   </button>
                 );
               })}
