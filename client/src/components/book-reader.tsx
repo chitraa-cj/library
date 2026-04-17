@@ -648,10 +648,16 @@ export function BookReader({
   }, [chapterViewAdhyay, navigateToVerse, verses]);
 
   useEffect(() => {
-    if (onVerseChange && currentVerse && !showCoverPage && !isCurrentVerseIntro) {
-      onVerseChange(currentVerse.verseNumber);
+    if (!onVerseChange || !currentVerse || showCoverPage || isCurrentVerseIntro) return;
+    if (
+      navigateToVerse !== null &&
+      navigateToVerse !== undefined &&
+      currentVerse.verseNumber !== navigateToVerse
+    ) {
+      return;
     }
-  }, [currentPage, currentVerse, onVerseChange, showCoverPage, isCurrentVerseIntro]);
+    onVerseChange(currentVerse.verseNumber);
+  }, [currentPage, currentVerse, onVerseChange, showCoverPage, isCurrentVerseIntro, navigateToVerse]);
 
   useEffect(() => {
     if (onBreadcrumbChange && currentVerse && !showCoverPage && book) {
