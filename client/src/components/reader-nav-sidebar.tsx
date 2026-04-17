@@ -111,14 +111,18 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
     queryKey: ["/api/books", bookId],
     enabled: !!bookId,
   });
-  const hasIntro = useMemo(() => {
-    if (!bookData?.verses) return false;
-    return bookData.verses.some((v: any) =>
+  const introInfo = useMemo(() => {
+    if (!bookData?.verses) return { hasIntro: false, label: "Read Introduction" };
+    const introVerse = bookData.verses.find((v: any) =>
       v.verseNumber === 0 &&
       typeof v.sectionTitle === "string" &&
       ["introduction", "sambandha bhashyam"].includes(v.sectionTitle.toLowerCase().trim())
     );
+    if (!introVerse) return { hasIntro: false, label: "Read Introduction" };
+    const isSambandha = introVerse.sectionTitle?.toLowerCase().trim() === "sambandha bhashyam";
+    return { hasIntro: true, label: isSambandha ? "Read Sambandha Bhāṣyam" : "Read Introduction" };
   }, [bookData]);
+  const hasIntro = introInfo.hasIntro;
   const isIntroActive = currentVerseNumber === 0;
   const hasKhandas = useMemo(() => chapters.some(ch => ch.khandas && ch.khandas.length > 0), [chapters]);
   const labels = useMemo(() => detectLabels(chapters), [chapters]);
