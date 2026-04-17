@@ -1049,18 +1049,26 @@ function LandingNavSidebar({ book, chapters, landingData, onSelectBook, onSelect
     setExpandedKhanda(expandedKhanda === key ? null : key);
   };
 
-  const renderVerseGrid = (verseNumbers: number[], bookId: string) => (
+  const renderVerseGrid = (verseNumbers: number[], bookId: string, chapterNum?: number, khandaNum?: number) => (
     <div className="flex flex-wrap gap-1 mt-1.5 mb-1" data-testid="verse-number-grid">
-      {verseNumbers.map(vn => (
-        <button
-          key={vn}
-          onClick={() => onSelectVerse ? onSelectVerse(bookId, vn) : onSelectBook(bookId)}
-          className="w-8 h-8 rounded-md text-xs font-medium border border-border/40 bg-background hover:bg-primary/10 hover:border-primary/40 hover:text-primary transition-colors flex items-center justify-center"
-          data-testid={`nav-verse-${vn}`}
-        >
-          {vn}
-        </button>
-      ))}
+      {verseNumbers.map((vn, idx) => {
+        const label =
+          chapterNum != null && khandaNum != null
+            ? `${chapterNum}.${khandaNum}.${idx + 1}`
+            : chapterNum != null
+              ? `${chapterNum}.${idx + 1}`
+              : String(vn);
+        return (
+          <button
+            key={vn}
+            onClick={() => onSelectVerse ? onSelectVerse(bookId, vn) : onSelectBook(bookId)}
+            className="min-w-[2.5rem] h-8 px-2 rounded-md text-[11px] font-medium border border-border/40 bg-background hover:bg-primary/10 hover:border-primary/40 hover:text-primary transition-colors flex items-center justify-center"
+            data-testid={`nav-verse-${vn}`}
+          >
+            {label}
+          </button>
+        );
+      })}
     </div>
   );
 
@@ -1118,14 +1126,14 @@ function LandingNavSidebar({ book, chapters, landingData, onSelectBook, onSelect
                         </button>
                         {isKhandaExpanded && (
                           <div className="pl-2 animate-in slide-in-from-top-1 duration-150">
-                            {renderVerseGrid(kh.verseNumbers, book.id)}
+                            {renderVerseGrid(kh.verseNumbers, book.id, ch.number, kh.number)}
                           </div>
                         )}
                       </div>
                     );
                   })
                 ) : (
-                  renderVerseGrid(ch.verseNumbers, book.id)
+                  renderVerseGrid(ch.verseNumbers, book.id, ch.number)
                 )}
               </div>
             )}
