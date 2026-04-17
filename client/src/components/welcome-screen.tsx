@@ -947,13 +947,45 @@ function useBookChapters(bookId: string | undefined) {
   return result;
 }
 
-function IntroSection({ title, cmsDescription, introText }: {
+const INTRO_LANG_ALIASES: Record<string, string[]> = {
+  en: ["english", "en"],
+  english: ["english", "en"],
+  hi: ["hindi", "hi"],
+  hindi: ["hindi", "hi"],
+  sa: ["devanagari", "sa", "sanskrit"],
+  devanagari: ["devanagari", "sa", "sanskrit"],
+  sanskrit: ["devanagari", "sa", "sanskrit"],
+};
+
+function pickIntroForLanguage(explanations: { languageCode: string; content: string }[] | undefined, langCode: string | null): string | null {
+  if (!explanations || explanations.length === 0) return null;
+  const target = (langCode || "english").toLowerCase();
+  const aliases = INTRO_LANG_ALIASES[target] || [target];
+  const match = explanations.find(e => aliases.includes((e.languageCode || "").toLowerCase()));
+  if (match) return match.content;
+  const en = explanations.find(e => ["english", "en"].includes((e.languageCode || "").toLowerCase()));
+  if (en) return en.content;
+  return explanations[0]?.content || null;
+}
+
+function IntroSection({ title, cmsDescription, introText, bookId, languageCode }: {
   title: string;
   cmsDescription: string | null;
   introText: string;
+  bookId?: string;
+  languageCode?: string | null;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const fullText = [cmsDescription, introText && (!cmsDescription || introText !== cmsDescription) ? introText : null].filter(Boolean).join("\n\n");
+
+  const { data: introExplanations } = useQuery<{ languageCode: string; content: string }[]>({
+    queryKey: ["/api/verses", bookId ? `${bookId}-intro` : null, "explanations"],
+    enabled: !!bookId,
+  });
+
+  const cmsIntroForLang = pickIntroForLanguage(introExplanations, languageCode || null);
+
+  const primaryIntro = cmsIntroForLang || cmsDescription;
+  const fullText = [primaryIntro, introText && (!primaryIntro || introText !== primaryIntro) ? introText : null].filter(Boolean).join("\n\n");
   const previewLength = 200;
   const needsTruncation = fullText.length > previewLength;
   const displayText = !expanded && needsTruncation
@@ -1104,7 +1136,7 @@ function LandingNavSidebar({ book, chapters, landingData, onSelectBook, onSelect
   );
 }
 
-function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, t, tc }: {
+function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, t, tc, languageCode }: {
   book: Book;
   landingData: BookLandingData;
   chapters: ChapterInfo[];
@@ -1114,6 +1146,7 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
   onSelectVerse?: (bookId: string, verseNumber: number) => void;
   t: (key: any) => string;
   tc: (text: string | null | undefined, map: Record<string, Record<string, string>>) => string;
+  languageCode?: string | null;
 }) {
   return (
     <div className="flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8" data-testid="book-landing-view">
@@ -1234,6 +1267,8 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
                   title={landingData.introTitle}
                   cmsDescription={book.description || null}
                   introText={landingData.introText}
+                  bookId={book.id}
+                  languageCode={languageCode}
                 />
 
                 <div>
@@ -1431,12 +1466,13 @@ const PRINCIPAL_UPANISHADS: PrincipalUpanishad[] = [
   },
 ];
 
-function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse }: {
+function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, languageCode }: {
   books: Book[];
   onSelectBook: (bookId: string) => void;
   onSelectChapter?: (bookId: string, adhyayNumber: number) => void;
   onSelectPart?: (bookId: string, adhyayNumber: number, khandaNumber: number) => void;
   onSelectVerse?: (bookId: string, verseNumber: number) => void;
+  languageCode?: string | null;
 }) {
   const [selectedUpanishadSlug, setSelectedUpanishadSlug] = useState<string | null>(null);
 
@@ -1642,6 +1678,7 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
         onSelectChapter={onSelectChapter}
         onSelectPart={onSelectPart}
         onSelectVerse={onSelectVerse}
+        languageCode={languageCode}
       />
     );
   }
@@ -1658,6 +1695,7 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
         onSelectVerse={onSelectVerse}
         t={t}
         tc={tc}
+        languageCode={languageCode}
       />
     );
   }
