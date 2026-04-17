@@ -1485,7 +1485,8 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
   const [selectedUpanishadSlug, setSelectedUpanishadSlug] = useState<string | null>(null);
 
   const findBook = (slugMatch: string) =>
-    books.find(b => b.slug?.toLowerCase().startsWith(slugMatch));
+    books.find(b => b.slug?.toLowerCase().startsWith(slugMatch)) ||
+    books.find(b => b.slug?.toLowerCase() === slugMatch);
 
   const selectedUp = selectedUpanishadSlug
     ? PRINCIPAL_UPANISHADS.find(u => u.slugMatch === selectedUpanishadSlug)
@@ -1493,24 +1494,50 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
   const selectedBook = selectedUpanishadSlug ? findBook(selectedUpanishadSlug) : null;
   const chapters = useBookChapters(selectedBook?.id);
 
-  if (selectedUp && selectedBook) {
-    const landingData: BookLandingData = {
-      iastTitle: selectedUp.iastFull,
-      devanagariTitle: selectedUp.devanagariLong,
-      authorIast: "Śrī Śaṅkarācārya",
-      verseCount: String(selectedBook.totalVerses || 0),
-      verseLabel: "Manthras",
-      quote: selectedUp.quote,
-      introTitle: "Introduction",
-      introText: selectedUp.introText,
-      structureTitle: selectedUp.structureTitle,
-      structureItems: selectedUp.structureItems,
-      extraSection: selectedUp.extraSection,
-      ctaLabel: "Open Text",
-      sidebarLabel: selectedUp.iastFull,
-      sidebarDescription: `${selectedUp.veda} Veda Upanishad with Shankara Bhashya.`,
-      sidebarTreeLabel: "Structure",
-    };
+  if (selectedBook) {
+    const chapterStructure = chapters.length > 0
+      ? chapters.slice(0, 6).map((ch) => ({
+          title: ch.title || `Chapter ${ch.number}`,
+          description: ch.khandas && ch.khandas.length > 0
+            ? `${ch.khandas.length} sections, ${ch.verseCount} mantras`
+            : `${ch.verseCount} mantras`,
+        }))
+      : [];
+
+    const landingData: BookLandingData = selectedUp
+      ? {
+          iastTitle: selectedUp.iastFull,
+          devanagariTitle: selectedUp.devanagariLong,
+          authorIast: "Śrī Śaṅkarācārya",
+          verseCount: String(selectedBook.totalVerses || 0),
+          verseLabel: "Manthras",
+          quote: selectedUp.quote,
+          introTitle: "Introduction",
+          introText: selectedUp.introText,
+          structureTitle: selectedUp.structureTitle,
+          structureItems: selectedUp.structureItems,
+          extraSection: selectedUp.extraSection,
+          ctaLabel: "Open Text",
+          sidebarLabel: selectedUp.iastFull,
+          sidebarDescription: `${selectedUp.veda} Veda Upanishad with Shankara Bhashya.`,
+          sidebarTreeLabel: "Structure",
+        }
+      : {
+          iastTitle: selectedBook.title || "Upanishad",
+          devanagariTitle: (selectedBook as any).titleDevanagari || selectedBook.title || "",
+          authorIast: selectedBook.author || "Śrī Śaṅkarācārya",
+          verseCount: String(selectedBook.totalVerses || 0),
+          verseLabel: "Manthras",
+          quote: "",
+          introTitle: "Introduction",
+          introText: selectedBook.description || "",
+          structureTitle: chapterStructure.length > 0 ? "Structure" : "",
+          structureItems: chapterStructure,
+          ctaLabel: "Open Text",
+          sidebarLabel: selectedBook.title || "Upanishad",
+          sidebarDescription: selectedBook.description || "Upanishad text with commentary.",
+          sidebarTreeLabel: "Structure",
+        };
 
     return (
       <div className="flex-1 overflow-y-auto bg-background" data-testid="upanishad-detail-view">
@@ -1558,18 +1585,13 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-testid="upanishad-grid">
           {books.map((book) => {
             const principalUp = PRINCIPAL_UPANISHADS.find(up => book.slug?.toLowerCase().startsWith(up.slugMatch));
+            const slugKey = principalUp?.slugMatch || book.slug?.toLowerCase() || book.id;
             return (
               <Card
                 key={book.id}
                 className="p-4 border-border/60 bg-card hover:border-primary/40 hover:shadow-lg transition-all flex flex-col cursor-pointer group border-l-[3px] border-l-primary/50 hover:border-l-primary"
-                onClick={() => {
-                  if (principalUp) {
-                    setSelectedUpanishadSlug(principalUp.slugMatch);
-                  } else {
-                    onSelectBook(book.id);
-                  }
-                }}
-                data-testid={`upanishad-card-${principalUp?.slugMatch || book.slug}`}
+                onClick={() => setSelectedUpanishadSlug(slugKey)}
+                data-testid={`upanishad-card-${slugKey}`}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <h3 className="font-semibold text-base text-foreground leading-snug" data-testid={`text-upanishad-title-${book.id}`}>
