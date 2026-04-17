@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, Search, ChevronDown } from "lucide-react";
+import { BookOpen, Search, ChevronDown, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 export interface KhandaInfo {
@@ -107,6 +107,19 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
   onSelectVerse: (bookId: string, verseNumber: number) => void;
   onSelectBook: (bookId: string) => void;
 }) {
+  const { data: bookData } = useQuery<any>({
+    queryKey: ["/api/books", bookId],
+    enabled: !!bookId,
+  });
+  const hasIntro = useMemo(() => {
+    if (!bookData?.verses) return false;
+    return bookData.verses.some((v: any) =>
+      v.verseNumber === 0 &&
+      typeof v.sectionTitle === "string" &&
+      ["introduction", "sambandha bhashyam"].includes(v.sectionTitle.toLowerCase().trim())
+    );
+  }, [bookData]);
+  const isIntroActive = currentVerseNumber === 0;
   const hasKhandas = useMemo(() => chapters.some(ch => ch.khandas && ch.khandas.length > 0), [chapters]);
   const labels = useMemo(() => detectLabels(chapters), [chapters]);
 
@@ -245,6 +258,21 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
           <BookOpen className="h-4 w-4 text-primary shrink-0" />
           <span className="font-medium text-primary truncate text-xs">{bookTitle}</span>
         </button>
+
+        {hasIntro && (
+          <button
+            className={`flex items-center gap-2 w-full text-left px-2.5 py-1.5 rounded-md text-[11px] border transition-colors ${
+              isIntroActive
+                ? "bg-primary/10 border-primary/30 text-primary font-semibold"
+                : "bg-muted/40 border-border/60 text-foreground/80 hover:bg-accent/60"
+            }`}
+            onClick={() => onSelectVerse(bookId, 0)}
+            data-testid="reader-nav-read-introduction"
+          >
+            <FileText className={`h-3.5 w-3.5 shrink-0 ${isIntroActive ? "text-primary" : "text-muted-foreground"}`} />
+            <span className="truncate">Read Introduction</span>
+          </button>
+        )}
 
         <div className="flex items-center gap-1.5">
           <div className="relative flex-1">
