@@ -117,7 +117,38 @@ async function runSeedOperations() {
     log("All seed operations completed");
     await importTranslationDataFromFiles().catch(err => console.error("Translation data import error:", err));
     await syncSouthIndianBhashya().catch(err => console.error("South Indian bhashya sync error:", err));
+    prewarmAllBookCaches().catch(err => console.error("Pre-warm error:", err));
   } catch (err) {
     console.error("Seed operations failed:", err);
+  }
+}
+
+async function prewarmAllBookCaches() {
+  if (!process.env.STRAPI_URL || !process.env.STRAPI_API_TOKEN) return;
+  try {
+    const { strapiGetAllBooks, strapiGetBookById } = await import("./strapi");
+    const books = await strapiGetAllBooks();
+    log(`[Pre-warm] Loading ${books.length} granthas into cache...`);
+    let done = 0;
+    const CONCURRENCY = 3;
+    let nextIdx = 0;
+    async function worker() {
+      while (true) {
+        const i = nextIdx++;
+        if (i >= books.length) return;
+        const book = books[i];
+        try {
+          await strapiGetBookById(book.id);
+          done++;
+          log(`[Pre-warm] (${done}/${books.length}) ${book.title}`);
+        } catch (e: any) {
+          log(`[Pre-warm] failed ${book.title}: ${e.message}`);
+        }
+      }
+    }
+    await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
+    log(`[Pre-warm] All ${done} granthas cached and ready.`);
+  } catch (e: any) {
+    log(`[Pre-warm] Skipped: ${e.message}`);
   }
 }
