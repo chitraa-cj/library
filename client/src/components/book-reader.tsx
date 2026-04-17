@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -632,7 +632,7 @@ export function BookReader({
     setLocalLanguage(selectedCommentaryLanguage);
   }, [bookId]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (navigateToVerse !== null && navigateToVerse !== undefined && verses.length > 0) {
       const pageIndex = verses.findIndex(v => v.verseNumber === navigateToVerse);
       if (pageIndex >= 0) {
