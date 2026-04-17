@@ -373,8 +373,7 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
                     onClick={() => onSelectVerse(bookId, vn)}
                     data-testid={`nav-mantra-${vn}`}
                   >
-                    <span className={`w-6 text-right font-mono mr-2.5 text-[11px] ${isActive ? "text-primary" : "text-muted-foreground/60"}`}>{vn}</span>
-                    <span className="flex-1">{labels.mantraLabel} {vn}</span>
+                    <span className={`flex-1 font-mono ${isActive ? "text-primary" : ""}`}>{vn}</span>
                   </button>
                 );
               })}
