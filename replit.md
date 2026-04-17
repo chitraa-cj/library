@@ -50,12 +50,13 @@ Preferred communication style: Simple, everyday language.
     -   Comprehensive commentary data management with authoritative data sources and auto-correction.
 
 ### Server-Side Caching (Strapi)
--   **In-memory TTL cache** (10 minutes) for all Strapi read operations in `server/strapi.ts`.
+-   **In-memory TTL cache** (24 hours) for all Strapi read operations in `server/strapi.ts`.
 -   Cached: `strapiGetBookById` (full book with all verses), `strapiGetBookWithVerseMeta`, `strapiGetAllBooks`, individual verses, explanations, commentary options.
 -   **Request deduplication**: Concurrent requests for the same resource share a single in-flight fetch via `dedup()`.
 -   **Verse pre-population**: When a full book is loaded, all its verses are individually cached, so subsequent single-verse lookups are instant.
--   **Cache invalidation**: `invalidateBookCache(bookId)` clears all caches for a specific book. TTL auto-expires after 10 minutes.
--   Performance: First load ~2s from Strapi, subsequent loads ~8ms from cache (~270x faster).
+-   **Parallel section fetching**: `_strapiGetBookByIdUncached` collects all leaf sections (khandas) into a flat task list, then fetches their manthras with concurrency=8 using a worker pool. Critical for large books like Chandogya (~160 leaf sections).
+-   **Cache invalidation**: `invalidateBookCache(bookId)` clears all caches for a specific book. TTL auto-expires after 24 hours.
+-   Performance: Chandogya cold load ~2.3s (was 30-60s sequentially), cached ~40ms. Smaller books cold ~1-2s, cached ~8ms.
 
 ### Strapi CMS Integration
 -   Acts as an optional hybrid storage layer for read operations (books, verses, translations, explanations).

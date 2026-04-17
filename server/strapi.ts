@@ -22,7 +22,7 @@ interface CacheEntry<T> {
   timestamp: number;
 }
 
-const CACHE_TTL = 10 * 60 * 1000;
+const CACHE_TTL = 24 * 60 * 60 * 1000;
 const bookDetailCache = new Map<string, CacheEntry<BookWithDetails>>();
 const bookVerseMetaCache = new Map<string, CacheEntry<BookWithVerseMeta>>();
 let bookListCacheEntry: CacheEntry<(Book & { bhashyamName?: string; teekasList?: { name: string; author: string }[] })[]> | null = null;
@@ -561,39 +561,51 @@ async function _strapiGetBookByIdUncached(id: string): Promise<BookWithDetails |
     const sectionTree = buildSectionTree(allSections);
 
     const verses: VerseWithTranslations[] = [];
-    let globalIndex = 0;
 
     const introVerse = mapIntroductionVerse(grantha, book.id);
     if (introVerse) {
       verses.push(introVerse);
     }
 
-    async function fetchVersesFromLeafSections(
+    type LeafTask = {
+      sectionDocId: string;
+      adhyayNum: number | null;
+      adhyayTitle: string | null;
+      khandaNum: number | null;
+      khandaTitle: string | null;
+      orderKey: [number, number];
+    };
+    const leafTasks: LeafTask[] = [];
+
+    function collectLeafTasks(
       section: any,
       adhyayNum: number | null,
       adhyayTitle: string | null,
       khandaNum: number | null,
       khandaTitle: string | null,
+      adhyayOrder: number,
     ) {
       const subs = (section.sub_sections || []).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
       if (subs.length > 0) {
         for (const sub of subs) {
-          await fetchVersesFromLeafSections(sub, adhyayNum, adhyayTitle, khandaNum || sub.order, khandaTitle || sub.title);
+          collectLeafTasks(sub, adhyayNum, adhyayTitle, khandaNum || sub.order, khandaTitle || sub.title, adhyayOrder);
         }
       } else {
-        const manthras = await fetchManthrasForSection(section.documentId);
-        for (const m of manthras) {
-          globalIndex++;
-          verses.push(
-            mapManthraToVerse(m, book.id, globalIndex, adhyayNum, adhyayTitle, khandaNum, khandaTitle, bhashyamAuthor, bhashyamName)
-          );
-        }
+        leafTasks.push({
+          sectionDocId: section.documentId,
+          adhyayNum,
+          adhyayTitle,
+          khandaNum,
+          khandaTitle,
+          orderKey: [adhyayOrder, khandaNum ?? 0],
+        });
       }
     }
 
     for (const adhyay of sectionTree) {
       const adhyayNum = adhyay.order ?? null;
       const adhyayTitle = adhyay.title || null;
+      const adhyayOrder = adhyay.order ?? 0;
 
       const khandas = (adhyay.sub_sections || []).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
 
@@ -601,16 +613,41 @@ async function _strapiGetBookByIdUncached(id: string): Promise<BookWithDetails |
         for (const khanda of khandas) {
           const khandaNum = khanda.order ?? null;
           const khandaTitle = khanda.title || null;
-          await fetchVersesFromLeafSections(khanda, adhyayNum, adhyayTitle, khandaNum, khandaTitle);
+          collectLeafTasks(khanda, adhyayNum, adhyayTitle, khandaNum, khandaTitle, adhyayOrder);
         }
       } else {
-        const manthras = await fetchManthrasForSection(adhyay.documentId);
-        for (const m of manthras) {
-          globalIndex++;
-          verses.push(
-            mapManthraToVerse(m, book.id, globalIndex, adhyayNum, adhyayTitle, null, null, bhashyamAuthor, bhashyamName)
-          );
-        }
+        leafTasks.push({
+          sectionDocId: adhyay.documentId,
+          adhyayNum,
+          adhyayTitle,
+          khandaNum: null,
+          khandaTitle: null,
+          orderKey: [adhyayOrder, 0],
+        });
+      }
+    }
+
+    const CONCURRENCY = 8;
+    const taskResults: { task: LeafTask; manthras: any[] }[] = new Array(leafTasks.length);
+    let nextIdx = 0;
+    async function worker() {
+      while (true) {
+        const i = nextIdx++;
+        if (i >= leafTasks.length) return;
+        const task = leafTasks[i];
+        const manthras = await fetchManthrasForSection(task.sectionDocId);
+        taskResults[i] = { task, manthras };
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(CONCURRENCY, leafTasks.length) }, () => worker()));
+
+    let globalIndex = 0;
+    for (const { task, manthras } of taskResults) {
+      for (const m of manthras) {
+        globalIndex++;
+        verses.push(
+          mapManthraToVerse(m, book.id, globalIndex, task.adhyayNum, task.adhyayTitle, task.khandaNum, task.khandaTitle, bhashyamAuthor, bhashyamName)
+        );
       }
     }
 
