@@ -404,8 +404,8 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
                     }`}>
                       {item.number}
                     </span>
-                    <span className="flex-1 truncate leading-tight">{item.label}</span>
-                    <span className={`text-[10px] font-mono shrink-0 ml-1 ${
+                    <span className="flex-1 leading-tight break-words pr-1">{item.label}</span>
+                    <span className={`text-[10px] font-mono shrink-0 ${
                       item.isActive ? "text-primary font-bold" : "text-muted-foreground/50"
                     }`}>
                       {item.count}
