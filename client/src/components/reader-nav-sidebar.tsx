@@ -112,15 +112,14 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
     enabled: !!bookId,
   });
   const introInfo = useMemo(() => {
-    if (!bookData?.verses) return { hasIntro: false, label: "Read Introduction" };
+    if (!bookData?.verses) return { hasIntro: false, label: "Sambandha Bhāṣyam" };
     const introVerse = bookData.verses.find((v: any) =>
       v.verseNumber === 0 &&
       typeof v.sectionTitle === "string" &&
       ["introduction", "sambandha bhashyam"].includes(v.sectionTitle.toLowerCase().trim())
     );
-    if (!introVerse) return { hasIntro: false, label: "Read Introduction" };
-    const isSambandha = introVerse.sectionTitle?.toLowerCase().trim() === "sambandha bhashyam";
-    return { hasIntro: true, label: isSambandha ? "Read Sambandha Bhāṣyam" : "Read Introduction" };
+    if (!introVerse) return { hasIntro: false, label: "Sambandha Bhāṣyam" };
+    return { hasIntro: true, label: "Sambandha Bhāṣyam" };
   }, [bookData]);
   const hasIntro = introInfo.hasIntro;
   const isIntroActive = currentVerseNumber === 0;
@@ -301,7 +300,7 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
             data-testid="reader-nav-read-introduction"
           >
             <FileText className={`h-3.5 w-3.5 shrink-0 ${isIntroActive ? "text-primary" : "text-muted-foreground"}`} />
-            <span className="truncate">Read Introduction</span>
+            <span className="truncate">{introInfo.label}</span>
           </button>
         )}
 
