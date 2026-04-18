@@ -346,7 +346,6 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
                   data-testid="dropdown-chapter-selector"
                 >
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-[10px] font-bold text-primary uppercase tracking-wider shrink-0">{labels.chapterLabel}</span>
                     <span className="text-[11px] text-foreground font-medium truncate">{selectedChapter ? getChapterLabel(selectedChapter.title) : "Select"}</span>
                   </div>
                   <ChevronDown className={`h-3 w-3 text-muted-foreground shrink-0 transition-transform ${chapterDropdownOpen ? "rotate-180" : ""}`} />
