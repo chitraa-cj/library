@@ -73,8 +73,11 @@ export function useBookChapters(bookId: string | undefined): ChapterInfo[] {
 function getChapterLabel(title: string) {
   let t = title;
   if (t.includes(' - ')) t = t.split(' - ').pop()?.trim() || t;
-  t = t.replace(/\s+(adhy[aā]ya|vall[iī]|pra[sś]na|mu[nṇ][dḍ]aka|kha[nṇ][dḍ]a|anuv[aā]ka|p[aā]da|chapter|section)[ḥh]?\.?\s*$/i, '').trim();
-  return t;
+  const levelWord = /(adhy[aā]ya|vall[iī]|pra[sś]na|mu[nṇ][dḍ]aka|kha[nṇ][dḍ]a|anuv[aā]ka|p[aā]da|chapter|section)[ḥh]?/i;
+  t = t.replace(new RegExp(`\\s+${levelWord.source}\\.?\\s*$`, 'i'), '').trim();
+  t = t.replace(new RegExp(`^${levelWord.source}\\s+[\\d०-९ivxIVX]*\\.?\\s*`, 'i'), '').trim();
+  t = t.replace(new RegExp(`^${levelWord.source}\\s+`, 'i'), '').trim();
+  return t || title;
 }
 
 function detectLabels(chapters: ChapterInfo[]): { chapterLabel: string; khandaLabel: string; mantraLabel: string } {
