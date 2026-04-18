@@ -376,11 +376,13 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
             )}
 
             <div className="flex-1 overflow-y-auto">
-              <div className="px-2 py-1.5 border-b border-border/60 mt-1.5">
-                <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
-                  {activeTab === "khanda" ? labels.khandaLabel : activeTab === "chapter" ? labels.chapterLabel : labels.mantraLabel}
-                </span>
-              </div>
+              {activeTab === "khanda" && (
+                <div className="px-2 py-1.5 border-b border-border/60 mt-1.5">
+                  <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                    {labels.khandaLabel}
+                  </span>
+                </div>
+              )}
               <div className="divide-y divide-border/20">
                 {leftListItems.map((item) => (
                   <button
