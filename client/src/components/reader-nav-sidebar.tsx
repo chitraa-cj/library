@@ -71,8 +71,10 @@ export function useBookChapters(bookId: string | undefined): ChapterInfo[] {
 }
 
 function getChapterLabel(title: string) {
-  if (title.includes(' - ')) return title.split(' - ').pop()?.trim() || title;
-  return title;
+  let t = title;
+  if (t.includes(' - ')) t = t.split(' - ').pop()?.trim() || t;
+  t = t.replace(/\s+(adhy[aā]ya|vall[iī]|pra[sś]na|mu[nṇ][dḍ]aka|kha[nṇ][dḍ]a|anuv[aā]ka|p[aā]da|chapter|section)\b\.?$/i, '').trim();
+  return t;
 }
 
 function detectLabels(chapters: ChapterInfo[]): { chapterLabel: string; khandaLabel: string; mantraLabel: string } {
