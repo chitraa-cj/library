@@ -94,6 +94,17 @@ Supports multi-language sacred texts and user data:
 -   **Safe Strapi saves**: Both `strapi-translate.ts` and `strapi-transliterate.ts` use a "re-fetch before write" pattern — every PUT to `/manthras` includes ALL fields (ShlokaManthraEntry, BhashyamEntry, Teekas) to prevent Strapi from wiping omitted inline components. Translation saves handle nginx 413 errors with a 3-tier fallback: full save → component-only save → chunked incremental save (10 at a time, then single). When at nginx capacity, remaining languages are gracefully skipped.
 -   **Taittiriya Upanishad**: (docId `bdmo8krmbcc8rrpireu47mvt`, 57 manthras, 3 Adhyays, has introduction). Translation in progress. Some large bhashyam entries (e.g., Mantra 3.6.1) hit nginx size limit at ~33 translations.
 
+### Per-Manthra Publish (server/strapi-publish.ts)
+-   **Purpose**: Bulk-publishing a Strapi section/pada (e.g., Brahma Sutra 2.3) in the Strapi admin UI returns `504 upstream request timeout` because all manthras + 45-language translations are serialized into one request larger than nginx's upstream timeout.
+-   **Solution**: Iterate manthras one-by-one and call Strapi v5's `POST /api/manthras/{documentId}/actions/publish` per manthra. This endpoint only flips `publishedAt` to push the current draft state — it does NOT write field data, so existing translations/bhashyam/teekas can never be overridden.
+-   **Endpoints**:
+    -   `POST /api/strapi/publish/grantha { granthaId }` — publish all manthras under a grantha
+    -   `POST /api/strapi/publish/section { sectionDocId }` — publish all leaf manthras under a section/pada
+    -   `POST /api/strapi/publish/manthra { manthraDocId }` — publish a single manthra
+    -   `GET  /api/strapi/publish/status?jobId=<jobId>` — progress (jobs identified as `grantha:<id>`, `section:<id>`, `manthra:<id>`)
+    -   `POST /api/strapi/publish/cancel { jobId }` — cancel a running job
+-   Retries on 5xx/429 with exponential backoff (3 attempts), 300ms throttle between manthras, in-memory progress tracking.
+
 ### Build System
 -   **Development**: Vite dev server.
 -   **Production**: Vite for client, esbuild for server.

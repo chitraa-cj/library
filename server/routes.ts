@@ -11,6 +11,7 @@ import multer from "multer";
 import { translateTextChunked, translateImage, translatePdf, transliterateTextChunked, translateBhashyam } from "./gemini";
 import { startTranslationJob, getTranslationProgress, getAllTranslationJobs, queueTranslationJob, getQueueStatus, cancelTranslationJob, restoreQueueFromFile, queueAllGranthas, fetchAllGranthaIds, STRAPI_LANGUAGES, SKIP_TRANSLATE } from "./strapi-translate";
 import { queueTransliteration, getTransliterationProgress, transliterateSanskrit, ALL_LANGUAGES as TRANSLIT_LANGUAGES } from "./strapi-transliterate";
+import { startPublishGrantha, startPublishSection, startPublishManthra, getPublishProgress, getAllPublishJobs, cancelPublishJob } from "./strapi-publish";
 
 function getUserId(req: any): string {
   if (req.session?.emailUserId) {
@@ -484,6 +485,65 @@ export async function registerRoutes(
       skipped: Array.from(SKIP_TRANSLATE),
       translatable: STRAPI_LANGUAGES.filter(l => !SKIP_TRANSLATE.has(l)),
     });
+  });
+
+  // ===== Strapi per-manthra publish =====
+  // Avoids the bulk-publish nginx 504 timeout by publishing each manthra
+  // individually via Strapi's actions/publish endpoint (which only flips
+  // status — never touches field data, so no translations are overridden).
+
+  app.post("/api/strapi/publish/grantha", async (req, res) => {
+    try {
+      const { granthaId } = req.body || {};
+      if (!granthaId) return res.status(400).json({ error: "granthaId required" });
+      const progress = await startPublishGrantha(granthaId);
+      res.json(progress);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/strapi/publish/section", async (req, res) => {
+    try {
+      const { sectionDocId } = req.body || {};
+      if (!sectionDocId) return res.status(400).json({ error: "sectionDocId required" });
+      const progress = await startPublishSection(sectionDocId);
+      res.json(progress);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/strapi/publish/manthra", async (req, res) => {
+    try {
+      const { manthraDocId } = req.body || {};
+      if (!manthraDocId) return res.status(400).json({ error: "manthraDocId required" });
+      const progress = await startPublishManthra(manthraDocId);
+      res.json(progress);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/strapi/publish/status", async (req, res) => {
+    const { jobId } = req.query as { jobId?: string };
+    if (jobId) {
+      const p = getPublishProgress(jobId);
+      if (!p) return res.status(404).json({ error: "Job not found" });
+      return res.json(p);
+    }
+    res.json({ jobs: getAllPublishJobs() });
+  });
+
+  app.post("/api/strapi/publish/cancel", async (req, res) => {
+    try {
+      const { jobId } = req.body || {};
+      if (!jobId) return res.status(400).json({ error: "jobId required" });
+      const cancelled = cancelPublishJob(jobId);
+      res.json({ cancelled, jobId });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   });
 
   app.post("/api/transliterate/queue", async (req, res) => {
