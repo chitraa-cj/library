@@ -947,28 +947,7 @@ function useBookChapters(bookId: string | undefined) {
   return result;
 }
 
-const INTRO_LANG_ALIASES: Record<string, string[]> = {
-  en: ["english", "en"],
-  english: ["english", "en"],
-  hi: ["hindi", "hi"],
-  hindi: ["hindi", "hi"],
-  sa: ["devanagari", "sa", "sanskrit"],
-  devanagari: ["devanagari", "sa", "sanskrit"],
-  sanskrit: ["devanagari", "sa", "sanskrit"],
-};
-
-function pickIntroForLanguage(explanations: { languageCode: string; content: string }[] | undefined, langCode: string | null): string | null {
-  if (!explanations || explanations.length === 0) return null;
-  const target = (langCode || "english").toLowerCase();
-  const aliases = INTRO_LANG_ALIASES[target] || [target];
-  const match = explanations.find(e => aliases.includes((e.languageCode || "").toLowerCase()));
-  if (match) return match.content;
-  const en = explanations.find(e => ["english", "en"].includes((e.languageCode || "").toLowerCase()));
-  if (en) return en.content;
-  return explanations[0]?.content || null;
-}
-
-function IntroSection({ title, cmsDescription, introText, bookId, languageCode }: {
+function IntroSection({ title, cmsDescription, introText }: {
   title: string;
   cmsDescription: string | null;
   introText: string;
@@ -977,14 +956,7 @@ function IntroSection({ title, cmsDescription, introText, bookId, languageCode }
 }) {
   const [expanded, setExpanded] = useState(false);
 
-  const { data: introExplanations } = useQuery<{ languageCode: string; content: string }[]>({
-    queryKey: ["/api/verses", bookId ? `${bookId}-intro` : null, "explanations"],
-    enabled: !!bookId,
-  });
-
-  const cmsIntroForLang = pickIntroForLanguage(introExplanations, languageCode || null);
-
-  const primaryIntro = cmsIntroForLang || cmsDescription;
+  const primaryIntro = cmsDescription;
   const fullText = [primaryIntro, introText && (!primaryIntro || introText !== primaryIntro) ? introText : null].filter(Boolean).join("\n\n");
   const previewLength = 200;
   const needsTruncation = fullText.length > previewLength;
