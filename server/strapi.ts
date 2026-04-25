@@ -389,21 +389,29 @@ function mapGranthaToBook(g: any): Book & { bhashyamName?: string; teekasList?: 
         }
       }
     }
-    const countManthras = (section: any): number => {
+    const seenDocIds = new Set<string>();
+    const seenNumberKeys = new Set<string>();
+    const collectManthras = (section: any) => {
       const subs = section.sub_sections;
       if (Array.isArray(subs) && subs.length > 0) {
-        let sum = 0;
-        for (const sub of subs) {
-          sum += countManthras(sub);
-        }
-        return sum;
+        for (const sub of subs) collectManthras(sub);
+        return;
       }
-      return section.manthras?.length || 0;
+      const ms = section.manthras || [];
+      for (const m of ms) {
+        const mDocId = m.documentId || String(m.id);
+        if (seenDocIds.has(mDocId)) continue;
+        const numKey = m.ShlokaManthraNumber ? `${section.documentId || section.id}|${m.ShlokaManthraNumber}` : "";
+        if (numKey && seenNumberKeys.has(numKey)) continue;
+        seenDocIds.add(mDocId);
+        if (numKey) seenNumberKeys.add(numKey);
+        totalVerses++;
+      }
     };
     for (const s of g.sections) {
       const sId = s.documentId || String(s.id);
       if (subSectionIds.has(sId)) continue;
-      totalVerses += countManthras(s);
+      collectManthras(s);
     }
   }
 
@@ -506,7 +514,8 @@ async function fetchSectionsForGrantha(granthaDocId: string): Promise<StrapiSect
     "populate[1]": "sub_sections",
     "populate[2]": "manthras",
     "populate[3]": "titleTranslations",
-    "sort": "order",
+    "sort[0]": "order:asc",
+    "sort[1]": "id:asc",
   });
 }
 
@@ -521,7 +530,8 @@ async function fetchManthrasForSection(sectionDocId: string): Promise<any[]> {
     "populate[5]": "ShlokaManthraEntry.OtherTranslations",
     "populate[6]": "BhashyamEntry.OtherTranslations",
     "populate[7]": "Teekas.TeekaEntry.OtherTranslations",
-    "sort": "order",
+    "sort[0]": "order:asc",
+    "sort[1]": "id:asc",
   });
 }
 
@@ -642,13 +652,31 @@ async function _strapiGetBookByIdUncached(id: string): Promise<BookWithDetails |
     await Promise.all(Array.from({ length: Math.min(CONCURRENCY, leafTasks.length) }, () => worker()));
 
     let globalIndex = 0;
+    const seenManthraDocIds = new Set<string>();
+    const seenManthraKeys = new Set<string>();
+    let droppedDuplicates = 0;
     for (const { task, manthras } of taskResults) {
       for (const m of manthras) {
+        const docId = m.documentId || String(m.id);
+        if (seenManthraDocIds.has(docId)) {
+          droppedDuplicates++;
+          continue;
+        }
+        const numberKey = `${task.adhyayNum ?? ""}|${task.khandaNum ?? ""}|${m.ShlokaManthraNumber ?? ""}`;
+        if (m.ShlokaManthraNumber && seenManthraKeys.has(numberKey)) {
+          droppedDuplicates++;
+          continue;
+        }
+        seenManthraDocIds.add(docId);
+        if (m.ShlokaManthraNumber) seenManthraKeys.add(numberKey);
         globalIndex++;
         verses.push(
           mapManthraToVerse(m, book.id, globalIndex, task.adhyayNum, task.adhyayTitle, task.khandaNum, task.khandaTitle, bhashyamAuthor, bhashyamName)
         );
       }
+    }
+    if (droppedDuplicates > 0) {
+      console.warn(`[Strapi] Grantha ${id}: dropped ${droppedDuplicates} duplicate manthra(s) (same docId or same adhyay/khanda/ShlokaManthraNumber). Clean up duplicates in CMS.`);
     }
 
     return { ...book, titles: [], verses, totalVerses: verses.length };
@@ -686,6 +714,9 @@ async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWith
 
     const verses: VerseMeta[] = [];
     let globalIndex = 0;
+    const seenManthraDocIds = new Set<string>();
+    const seenManthraKeys = new Set<string>();
+    let droppedDuplicates = 0;
 
     if (grantha.BhashyakaraIntroduction) {
       verses.push({
@@ -697,6 +728,38 @@ async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWith
         adhyayTitle: null,
         khandaNumber: null,
         khandaTitle: null,
+      });
+    }
+
+    function pushManthra(
+      m: any,
+      adhyayNum: number | null,
+      adhyayTitle: string | null,
+      khandaNum: number | null,
+      khandaTitle: string | null,
+    ) {
+      const docId = m.documentId || String(m.id);
+      if (seenManthraDocIds.has(docId)) {
+        droppedDuplicates++;
+        return;
+      }
+      const numberKey = `${adhyayNum ?? ""}|${khandaNum ?? ""}|${m.ShlokaManthraNumber ?? ""}`;
+      if (m.ShlokaManthraNumber && seenManthraKeys.has(numberKey)) {
+        droppedDuplicates++;
+        return;
+      }
+      seenManthraDocIds.add(docId);
+      if (m.ShlokaManthraNumber) seenManthraKeys.add(numberKey);
+      globalIndex++;
+      verses.push({
+        id: docId,
+        bookId: book.id,
+        verseNumber: globalIndex,
+        sectionTitle: m.ShlokaManthraNumber ? `Mantra ${m.ShlokaManthraNumber}` : `Mantra ${globalIndex}`,
+        adhyayNumber: adhyayNum,
+        adhyayTitle,
+        khandaNumber: khandaNum,
+        khandaTitle,
       });
     }
 
@@ -716,17 +779,7 @@ async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWith
         const manthraDocs = section.manthras || [];
         const sortedManthras = [...manthraDocs].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
         for (const m of sortedManthras) {
-          globalIndex++;
-          verses.push({
-            id: m.documentId || String(m.id),
-            bookId: book.id,
-            verseNumber: globalIndex,
-            sectionTitle: m.ShlokaManthraNumber ? `Mantra ${m.ShlokaManthraNumber}` : `Mantra ${globalIndex}`,
-            adhyayNumber: adhyayNum,
-            adhyayTitle,
-            khandaNumber: khandaNum,
-            khandaTitle,
-          });
+          pushManthra(m, adhyayNum, adhyayTitle, khandaNum, khandaTitle);
         }
       }
     }
@@ -748,19 +801,13 @@ async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWith
         const sortedManthras = [...manthraDocs].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
 
         for (const m of sortedManthras) {
-          globalIndex++;
-          verses.push({
-            id: m.documentId || String(m.id),
-            bookId: book.id,
-            verseNumber: globalIndex,
-            sectionTitle: m.ShlokaManthraNumber ? `Mantra ${m.ShlokaManthraNumber}` : `Mantra ${globalIndex}`,
-            adhyayNumber: adhyayNum,
-            adhyayTitle,
-            khandaNumber: null,
-            khandaTitle: null,
-          });
+          pushManthra(m, adhyayNum, adhyayTitle, null, null);
         }
       }
+    }
+
+    if (droppedDuplicates > 0) {
+      console.warn(`[Strapi] Grantha ${id} (verse-meta): dropped ${droppedDuplicates} duplicate manthra(s). Clean up duplicates in CMS.`);
     }
 
     return { ...book, titles: [], verses, totalVerses: verses.length };

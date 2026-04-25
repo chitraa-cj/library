@@ -50,6 +50,12 @@ Preferred communication style: Simple, everyday language.
     -   User preference management (language, author, theme).
     -   Comprehensive commentary data management with authoritative data sources and auto-correction.
 
+### Strapi Manthra Deduplication (Vivekachudamani fix)
+-   The CMS may contain accidental duplicate manthra records (different `documentId`s with the same `ShlokaManthraNumber` under the same section). For example, Vivekachudamani had 746 manthra rows in Strapi but only 543 unique `ShlokaManthraNumber`s (≈250 duplicates).
+-   `_strapiGetBookByIdUncached`, `_strapiGetBookWithVerseMetaUncached`, and `mapGranthaToBook` all dedupe by **(a)** `documentId` and **(b)** `(adhyayNumber|khandaNumber|ShlokaManthraNumber)` while collecting verses, so the reader, nav sidebar, and library card counts all match.
+-   Pagination of `/manthras` and `/sections` uses **stable sort** `sort[0]=order:asc, sort[1]=id:asc` to avoid page-boundary overlap when records share an `order` value.
+-   Dropped duplicates are logged via `console.warn` so the data team can clean up the CMS.
+
 ### Server-Side Caching (Strapi)
 -   **In-memory TTL cache** (24 hours) for all Strapi read operations in `server/strapi.ts`.
 -   Cached: `strapiGetBookById` (full book with all verses), `strapiGetBookWithVerseMeta`, `strapiGetAllBooks`, individual verses, explanations, commentary options.
