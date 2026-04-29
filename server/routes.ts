@@ -1,7 +1,7 @@
 import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { testStrapiConnection, STRAPI_URL } from "./strapi";
+import { testStrapiConnection, STRAPI_URL, invalidateBookCache } from "./strapi";
 import { translateWord } from "./openai";
 import { translateWordRequestSchema } from "@shared/schema";
 import { isAuthenticated } from "./replit_integrations/auth";
@@ -533,6 +533,19 @@ export async function registerRoutes(
       return res.json(p);
     }
     res.json({ jobs: getAllPublishJobs() });
+  });
+
+  // Clear the in-memory Strapi cache for a single book/grantha so freshly-edited
+  // CMS data shows up on the site without waiting for the 24-hour TTL.
+  app.post("/api/strapi/cache/invalidate", async (req, res) => {
+    try {
+      const { bookId } = req.body || {};
+      if (!bookId) return res.status(400).json({ error: "bookId required" });
+      invalidateBookCache(bookId);
+      res.json({ invalidated: true, bookId });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
   });
 
   app.post("/api/strapi/publish/cancel", async (req, res) => {
