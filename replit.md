@@ -83,3 +83,10 @@ Preferred communication style: Simple, everyday language.
 
 ### Manual Cache Invalidation
 - `POST /api/strapi/cache/invalidate { bookId }` clears all in-memory Strapi caches for one grantha (book detail, verse meta, individual verses, explanations, commentary options) so freshly-edited CMS data shows up without waiting for the 24-hour TTL or restarting the server. Use this after publishing/editing manthras in Strapi.
+
+### Strapi-Replaces-Local Promotion (Katha Upanishad)
+- The legacy PG Katha (`2df8da41-1198-41ca-b4c7-5579f13e9fcb`) only had 26 verses in 1 adhyaya, starting with `sectionTitle="1.1.4"`. The sidebar's `verseLabelMap` re-labels verses by index, so vn=4 was mislabeled `1.1.1`, causing the user-visible bug "1.1.1 shows the 4th śloka".
+- The Strapi Katha (docId `t2d3crlf4ptuadp73lziogy5`, slug `kathopanishad`) is complete: 120 mantras across 2 adhyāyas (Prathama 71 + Dvitiya 49).
+- `server/routes.ts` defines `STRAPI_REPLACES_LOCAL = [{ strapiDocId, localPgId }, …]`. In `GET /api/books`, a legacy PG entry is filtered out **only when** its corresponding Strapi grantha is present in the same merged response — preserving DB-fallback behavior if Strapi is unreachable.
+- `client/src/App.tsx` defines `SLUG_ALIASES = { "katha-upanishad-bhashya": "kathopanishad" }`. The URL-bootstrap effect rewrites the legacy slug to the canonical one (preserving any tail like `/1`), so old bookmarks keep working.
+- Isha and BG remain on PG-canonical via `LOCAL_STRAPI_DUPLICATES` (Strapi versions hidden from listing).

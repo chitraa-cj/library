@@ -27,17 +27,34 @@ export async function registerRoutes(
   
   setTimeout(() => restoreQueueFromFile(), 5000);
 
+  // Strapi grantha docIds whose corresponding legacy PG book is the canonical version
+  // (the Strapi version is hidden from the listing).
   const LOCAL_STRAPI_DUPLICATES: Record<string, string> = {
     "ngjdm2fcgp0ogp16jcey3vo1": "isha-upanishad-bhashya",
-    "t2d3crlf4ptuadp73lziogy5": "katha-upanishad-bhashya",
     "b7zir6h4z5v2ng6uofnvhmp3": "bhagavad-gita",
   };
+
+  // Legacy PG book IDs (UUIDs) that should be hidden ONLY when the corresponding
+  // Strapi grantha is also present in the same response — preserves DB fallback
+  // when Strapi is unreachable.
+  // - Katha: Strapi has all 120 mantras across 2 adhyayas; PG had 26 in 1 adhyaya.
+  const STRAPI_REPLACES_LOCAL: Array<{ strapiDocId: string; localPgId: string }> = [
+    {
+      strapiDocId: "t2d3crlf4ptuadp73lziogy5",
+      localPgId: "2df8da41-1198-41ca-b4c7-5579f13e9fcb",
+    },
+  ];
 
   app.get("/api/books", async (req, res) => {
     try {
       const books = await storage.getAllBooks();
       const isLocalDb = (b: any) => typeof b.id === 'string' && b.id.includes('-') && b.id.length > 30;
-      const localBooks = books.filter(b => isLocalDb(b));
+      const presentIds = new Set(books.map(b => b.id as string));
+      const hideLocalIds = new Set<string>();
+      for (const { strapiDocId, localPgId } of STRAPI_REPLACES_LOCAL) {
+        if (presentIds.has(strapiDocId)) hideLocalIds.add(localPgId);
+      }
+      const localBooks = books.filter(b => isLocalDb(b) && !hideLocalIds.has(b.id as string));
       const strapiBooks = books.filter(b => !isLocalDb(b) && !LOCAL_STRAPI_DUPLICATES[b.id as string]);
       res.json([...localBooks, ...strapiBooks]);
     } catch (error) {

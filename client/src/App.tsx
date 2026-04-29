@@ -49,6 +49,10 @@ interface VerseBreadcrumb {
   numericLabel: string;
 }
 
+const SLUG_ALIASES: Record<string, string> = {
+  "katha-upanishad-bhashya": "kathopanishad",
+};
+
 function HomePageContent() {
   const [location, setLocation] = useLocation();
   const locationRef = useRef(location);
@@ -263,7 +267,19 @@ function HomePageContent() {
     if (urlInitialized || !allBooks) return;
 
     if (bookSlugFromUrl) {
-      const matchedBook = allBooks.find(b => b.slug === bookSlugFromUrl);
+      let matchedBook = allBooks.find(b => b.slug === bookSlugFromUrl);
+
+      // Slug aliases: legacy URLs that should redirect to the new canonical slug.
+      if (!matchedBook && SLUG_ALIASES[bookSlugFromUrl]) {
+        const targetSlug = SLUG_ALIASES[bookSlugFromUrl];
+        const aliased = allBooks.find(b => b.slug === targetSlug);
+        if (aliased) {
+          const tail = location.replace(/^\//, '').split('/').slice(1).join('/');
+          setLocation(`/${targetSlug}${tail ? `/${tail}` : ''}`);
+          return;
+        }
+      }
+
       if (matchedBook) {
         setSelectedBookId(matchedBook.id);
         if (chapterNumberFromUrl !== null && !isNaN(chapterNumberFromUrl)) {
@@ -280,7 +296,7 @@ function HomePageContent() {
       }
     }
     setUrlInitialized(true);
-  }, [allBooks, bookSlugFromUrl, verseNumberFromUrl, chapterNumberFromUrl, partNumberFromUrl, urlInitialized, setLocation]);
+  }, [allBooks, bookSlugFromUrl, verseNumberFromUrl, chapterNumberFromUrl, partNumberFromUrl, urlInitialized, setLocation, location]);
 
   useEffect(() => {
     if (!urlInitialized || !allBooks) return;
@@ -294,7 +310,16 @@ function HomePageContent() {
       return;
     }
 
-    const matchedBook = allBooks.find(b => b.slug === bookSlugFromUrl);
+    let matchedBook = allBooks.find(b => b.slug === bookSlugFromUrl);
+    if (!matchedBook && SLUG_ALIASES[bookSlugFromUrl]) {
+      const targetSlug = SLUG_ALIASES[bookSlugFromUrl];
+      const aliased = allBooks.find(b => b.slug === targetSlug);
+      if (aliased) {
+        const tail = location.replace(/^\//, '').split('/').slice(1).join('/');
+        setLocation(`/${targetSlug}${tail ? `/${tail}` : ''}`);
+        return;
+      }
+    }
     if (!matchedBook) return;
 
     if (matchedBook.id !== selectedBookId) {
