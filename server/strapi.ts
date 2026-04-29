@@ -535,6 +535,54 @@ async function fetchManthrasForSection(sectionDocId: string): Promise<any[]> {
   });
 }
 
+// A manthra is considered "empty" (and therefore should not appear on the site)
+// when none of its content components carry any data. This lets editors remove
+// a manthra from the reader simply by clearing its inline components in the CMS,
+// without having to delete the manthra row itself.
+function isManthraNonEmpty(m: any): boolean {
+  if (!m) return false;
+  const sm = m.ShlokaManthraEntry;
+  if (sm && (sm.SanskritTextEntry || sm.EnglishTranslationText || sm.IASTTransliteration ||
+    (Array.isArray(sm.OtherTranslations) && sm.OtherTranslations.length > 0))) return true;
+  const bm = m.BhashyamEntry;
+  if (bm && (bm.SanskritTextEntry || bm.EnglishTranslationText || bm.IASTTransliteration ||
+    (Array.isArray(bm.OtherTranslations) && bm.OtherTranslations.length > 0))) return true;
+  if (Array.isArray(m.Teekas)) {
+    for (const t of m.Teekas) {
+      const te = t?.TeekaEntry;
+      if (te && (te.SanskritTextEntry || te.EnglishTranslationText || te.IASTTransliteration ||
+        (Array.isArray(te.OtherTranslations) && te.OtherTranslations.length > 0))) return true;
+    }
+  }
+  return false;
+}
+
+// Lightweight query that returns the docIds of all manthras under a grantha that
+// have at least one non-empty content component. Used by the verse-meta path
+// (which doesn't deep-populate manthras when fetching sections).
+async function fetchNonEmptyManthraDocIds(granthaDocId: string): Promise<Set<string>> {
+  const results: any[] = await strapiFetchAll("/manthras", {
+    "filters[Section][grantha][documentId]": granthaDocId,
+    "fields[0]": "documentId",
+    "populate[0]": "ShlokaManthraEntry",
+    "populate[1]": "BhashyamEntry",
+    "populate[2]": "Teekas.TeekaEntry",
+    "populate[3]": "ShlokaManthraEntry.OtherTranslations",
+    "populate[4]": "BhashyamEntry.OtherTranslations",
+    "populate[5]": "Teekas.TeekaEntry.OtherTranslations",
+    "sort[0]": "order:asc",
+    "sort[1]": "id:asc",
+  });
+  const set = new Set<string>();
+  for (const m of results) {
+    if (isManthraNonEmpty(m)) {
+      const id = m.documentId || String(m.id);
+      set.add(id);
+    }
+  }
+  return set;
+}
+
 export async function strapiGetBookById(id: string): Promise<BookWithDetails | undefined> {
   const cached = getCached(bookDetailCache, id);
   if (cached) return cached;
@@ -655,6 +703,7 @@ async function _strapiGetBookByIdUncached(id: string): Promise<BookWithDetails |
     const seenManthraDocIds = new Set<string>();
     const seenManthraKeys = new Set<string>();
     let droppedDuplicates = 0;
+    let droppedEmpty = 0;
     for (const { task, manthras } of taskResults) {
       for (const m of manthras) {
         const docId = m.documentId || String(m.id);
@@ -667,6 +716,12 @@ async function _strapiGetBookByIdUncached(id: string): Promise<BookWithDetails |
           droppedDuplicates++;
           continue;
         }
+        if (!isManthraNonEmpty(m)) {
+          droppedEmpty++;
+          // Intentionally NOT adding to seen* sets so a non-empty duplicate
+          // appearing later (e.g., during a CMS cleanup transition) can still win.
+          continue;
+        }
         seenManthraDocIds.add(docId);
         if (m.ShlokaManthraNumber) seenManthraKeys.add(numberKey);
         globalIndex++;
@@ -677,6 +732,9 @@ async function _strapiGetBookByIdUncached(id: string): Promise<BookWithDetails |
     }
     if (droppedDuplicates > 0) {
       console.warn(`[Strapi] Grantha ${id}: dropped ${droppedDuplicates} duplicate manthra(s) (same docId or same adhyay/khanda/ShlokaManthraNumber). Clean up duplicates in CMS.`);
+    }
+    if (droppedEmpty > 0) {
+      console.warn(`[Strapi] Grantha ${id}: dropped ${droppedEmpty} empty manthra row(s) (no shloka, bhashya, or teeka content). Delete them in CMS to remove these warnings.`);
     }
 
     return { ...book, titles: [], verses, totalVerses: verses.length };
@@ -709,7 +767,10 @@ async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWith
     const grantha = result.data;
     const book = mapGranthaToBook(grantha);
 
-    const allSections = await fetchSectionsForGrantha(grantha.documentId);
+    const [allSections, nonEmptyManthraIds] = await Promise.all([
+      fetchSectionsForGrantha(grantha.documentId),
+      fetchNonEmptyManthraDocIds(grantha.documentId),
+    ]);
     const sectionTree = buildSectionTree(allSections);
 
     const verses: VerseMeta[] = [];
@@ -717,6 +778,7 @@ async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWith
     const seenManthraDocIds = new Set<string>();
     const seenManthraKeys = new Set<string>();
     let droppedDuplicates = 0;
+    let droppedEmpty = 0;
 
     if (grantha.BhashyakaraIntroduction) {
       verses.push({
@@ -746,6 +808,12 @@ async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWith
       const numberKey = `${adhyayNum ?? ""}|${khandaNum ?? ""}|${m.ShlokaManthraNumber ?? ""}`;
       if (m.ShlokaManthraNumber && seenManthraKeys.has(numberKey)) {
         droppedDuplicates++;
+        return;
+      }
+      if (!nonEmptyManthraIds.has(docId)) {
+        droppedEmpty++;
+        // Intentionally NOT adding to seen* sets so a non-empty duplicate
+        // appearing later can still win over an earlier empty one.
         return;
       }
       seenManthraDocIds.add(docId);
