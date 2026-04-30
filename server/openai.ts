@@ -1,7 +1,17 @@
 import OpenAI from "openai";
 
-// Using gpt-4o-mini for faster responses while maintaining quality
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Using gpt-4o-mini for faster responses while maintaining quality.
+// Lazy-initialised so the server can boot even when OPENAI_API_KEY is missing.
+let openaiClient: OpenAI | null = null;
+function getOpenAI(): OpenAI {
+  if (!openaiClient) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("OPENAI_API_KEY is not configured");
+    }
+    openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  }
+  return openaiClient;
+}
 
 export interface WordTranslationResult {
   word: string;
@@ -86,7 +96,7 @@ JSON response:
 {"translation":"meaning in ${targetLang}","grammaticalInfo":"root, formation, case/gender/tense in ${targetLang}","etymology":"word origin in ${targetLang}","contextualMeaning":"Advaita interpretation in ${targetLang}"}`;
 
   try {
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" },
