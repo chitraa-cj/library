@@ -56,7 +56,7 @@ export async function registerRoutes(
       for (const { strapiDocId, localPgSlug } of STRAPI_REPLACES_LOCAL) {
         if (!presentIds.has(strapiDocId)) continue;
         for (const b of books) {
-          if (isLocalDb(b) && (b as any).slug === localPgSlug) {
+          if (isLocalDb(b) && b.slug === localPgSlug) {
             hideLocalIds.add(b.id as string);
           }
         }
