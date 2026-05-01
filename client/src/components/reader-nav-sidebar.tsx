@@ -342,15 +342,13 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
 
       <div className="flex flex-col flex-1 overflow-hidden border-t border-border/60" data-testid="reader-chapter-tree">
         {activeTab === "khanda" && showLeftPanel && (
-          <div className="flex items-stretch shrink-0 border-b border-border/60 bg-muted/30">
-            <div className="w-[62%] px-3 py-2 border-r border-border/40 flex items-center">
-              <span className="text-[10px] font-bold text-primary uppercase tracking-[0.12em]">
-                {labels.chapterLabel}
-              </span>
-            </div>
-            <div className="w-[38%] px-1.5 py-1.5 relative">
+          <div className="flex items-center justify-between shrink-0 border-b border-border/60 bg-muted/30 px-3 py-1.5 gap-2">
+            <span className="text-[10px] font-bold text-primary uppercase tracking-[0.12em] shrink-0">
+              {labels.chapterLabel}
+            </span>
+            <div className="relative shrink-0">
               <button
-                className={`flex items-center justify-between gap-1 w-full text-left px-2 py-1 rounded-md border transition-colors ${
+                className={`flex items-center justify-between gap-1.5 text-left px-2.5 py-1 rounded-md border transition-colors min-w-[110px] max-w-[180px] ${
                   chapterDropdownOpen
                     ? "border-primary/40 bg-background shadow-sm"
                     : "border-border/60 bg-background/70 hover:bg-background hover:border-border"
@@ -364,7 +362,7 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
                 <ChevronDown className={`h-3 w-3 text-muted-foreground shrink-0 transition-transform ${chapterDropdownOpen ? "rotate-180" : ""}`} />
               </button>
               {chapterDropdownOpen && (
-                <div className="absolute right-1.5 top-full mt-1 z-20 min-w-full w-max max-w-[220px] bg-popover border border-border shadow-xl rounded-md overflow-hidden">
+                <div className="absolute right-0 top-full mt-1 z-20 min-w-full w-max max-w-[240px] bg-popover border border-border shadow-xl rounded-md overflow-hidden">
                   <div className="max-h-56 overflow-y-auto py-1">
                     {chapters.map(ch => (
                       <button
