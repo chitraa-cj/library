@@ -342,42 +342,50 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
 
       <div className="flex flex-col flex-1 overflow-hidden border-t border-border/60" data-testid="reader-chapter-tree">
         {activeTab === "khanda" && showLeftPanel && (
-          <div className="flex shrink-0 border-b border-border/60 relative">
-            <div className="w-[62%] px-2 py-1.5 border-r border-border/40 flex items-center">
-              <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+          <div className="flex items-stretch shrink-0 border-b border-border/60 bg-muted/30">
+            <div className="w-[62%] px-3 py-2 border-r border-border/40 flex items-center">
+              <span className="text-[10px] font-bold text-primary uppercase tracking-[0.12em]">
                 {labels.chapterLabel}
               </span>
             </div>
-            <div className="w-[38%] px-2 py-1.5 relative">
+            <div className="w-[38%] px-1.5 py-1.5 relative">
               <button
-                className="flex items-center justify-between w-full text-left"
+                className={`flex items-center justify-between gap-1 w-full text-left px-2 py-1 rounded-md border transition-colors ${
+                  chapterDropdownOpen
+                    ? "border-primary/40 bg-background shadow-sm"
+                    : "border-border/60 bg-background/70 hover:bg-background hover:border-border"
+                }`}
                 onClick={() => setChapterDropdownOpen(!chapterDropdownOpen)}
                 data-testid="dropdown-chapter-selector"
               >
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="text-[11px] text-foreground font-medium truncate">{selectedChapter ? getChapterLabel(selectedChapter.title) : "Select"}</span>
-                </div>
+                <span className="text-[11px] text-foreground font-medium truncate">
+                  {selectedChapter ? getChapterLabel(selectedChapter.title) : "Select"}
+                </span>
                 <ChevronDown className={`h-3 w-3 text-muted-foreground shrink-0 transition-transform ${chapterDropdownOpen ? "rotate-180" : ""}`} />
               </button>
               {chapterDropdownOpen && (
-                <div className="absolute left-0 right-0 top-full z-20 bg-card border border-border shadow-lg rounded-b-lg max-h-48 overflow-y-auto">
-                  {chapters.map(ch => (
-                    <button
-                      key={ch.number}
-                      className={`flex items-center gap-2 w-full text-left px-3 py-2 text-[11px] hover:bg-accent transition-colors ${
-                        selectedChapterNum === ch.number ? "bg-primary/5 text-primary font-medium" : "text-foreground/80"
-                      }`}
-                      onClick={() => {
-                        setSelectedChapterNum(ch.number);
-                        setSelectedKhandaNum(ch.khandas?.[0]?.number ?? null);
-                        setChapterDropdownOpen(false);
-                      }}
-                      data-testid={`dropdown-chapter-${ch.number}`}
-                    >
-                      <span className="text-muted-foreground/60 w-4 text-right font-mono text-[10px]">{ch.number}</span>
-                      <span className="flex-1 truncate">{getChapterLabel(ch.title)}</span>
-                    </button>
-                  ))}
+                <div className="absolute right-1.5 top-full mt-1 z-20 min-w-full w-max max-w-[220px] bg-popover border border-border shadow-xl rounded-md overflow-hidden">
+                  <div className="max-h-56 overflow-y-auto py-1">
+                    {chapters.map(ch => (
+                      <button
+                        key={ch.number}
+                        className={`flex items-center gap-2.5 w-full text-left px-2.5 py-1.5 text-[11px] transition-colors ${
+                          selectedChapterNum === ch.number
+                            ? "bg-primary/10 text-primary font-semibold"
+                            : "text-foreground/80 hover:bg-accent"
+                        }`}
+                        onClick={() => {
+                          setSelectedChapterNum(ch.number);
+                          setSelectedKhandaNum(ch.khandas?.[0]?.number ?? null);
+                          setChapterDropdownOpen(false);
+                        }}
+                        data-testid={`dropdown-chapter-${ch.number}`}
+                      >
+                        <span className={`w-4 text-right font-mono text-[10px] ${selectedChapterNum === ch.number ? "text-primary/80" : "text-muted-foreground/60"}`}>{ch.number}</span>
+                        <span className="flex-1 whitespace-nowrap">{getChapterLabel(ch.title)}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
