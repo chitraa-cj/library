@@ -340,55 +340,63 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden border-t border-border/60" data-testid="reader-chapter-tree">
-        {showLeftPanel && (
-          <div className="w-[62%] border-r border-border/40 flex flex-col overflow-hidden">
-            {activeTab === "khanda" && (
-              <div className="px-2 py-1.5 border-b border-border/60 shrink-0 relative">
-                <button
-                  className="flex items-center justify-between w-full text-left"
-                  onClick={() => setChapterDropdownOpen(!chapterDropdownOpen)}
-                  data-testid="dropdown-chapter-selector"
-                >
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-[11px] text-foreground font-medium truncate">{selectedChapter ? getChapterLabel(selectedChapter.title) : "Select"}</span>
-                  </div>
-                  <ChevronDown className={`h-3 w-3 text-muted-foreground shrink-0 transition-transform ${chapterDropdownOpen ? "rotate-180" : ""}`} />
-                </button>
-                {chapterDropdownOpen && (
-                  <div className="absolute left-0 right-0 top-full z-20 bg-card border border-border shadow-lg rounded-b-lg max-h-48 overflow-y-auto">
-                    {chapters.map(ch => (
-                      <button
-                        key={ch.number}
-                        className={`flex items-center gap-2 w-full text-left px-3 py-2 text-[11px] hover:bg-accent transition-colors ${
-                          selectedChapterNum === ch.number ? "bg-primary/5 text-primary font-medium" : "text-foreground/80"
-                        }`}
-                        onClick={() => {
-                          setSelectedChapterNum(ch.number);
-                          setSelectedKhandaNum(ch.khandas?.[0]?.number ?? null);
-                          setChapterDropdownOpen(false);
-                        }}
-                        data-testid={`dropdown-chapter-${ch.number}`}
-                      >
-                        <span className="text-muted-foreground/60 w-4 text-right font-mono text-[10px]">{ch.number}</span>
-                        <span className="flex-1 truncate">{getChapterLabel(ch.title)}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="flex-1 overflow-y-auto">
-              {activeTab === "khanda" && (
-                <div className="px-2 py-1.5 border-b border-border/60 mt-1.5">
-                  <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
-                    {labels.khandaLabel}
-                  </span>
+      <div className="flex flex-col flex-1 overflow-hidden border-t border-border/60" data-testid="reader-chapter-tree">
+        {activeTab === "khanda" && showLeftPanel && (
+          <div className="flex shrink-0 border-b border-border/60 relative">
+            <div className="w-[62%] px-2 py-1.5 border-r border-border/40 flex items-center">
+              <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                {labels.chapterLabel}
+              </span>
+            </div>
+            <div className="w-[38%] px-2 py-1.5 relative">
+              <button
+                className="flex items-center justify-between w-full text-left"
+                onClick={() => setChapterDropdownOpen(!chapterDropdownOpen)}
+                data-testid="dropdown-chapter-selector"
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-[11px] text-foreground font-medium truncate">{selectedChapter ? getChapterLabel(selectedChapter.title) : "Select"}</span>
+                </div>
+                <ChevronDown className={`h-3 w-3 text-muted-foreground shrink-0 transition-transform ${chapterDropdownOpen ? "rotate-180" : ""}`} />
+              </button>
+              {chapterDropdownOpen && (
+                <div className="absolute left-0 right-0 top-full z-20 bg-card border border-border shadow-lg rounded-b-lg max-h-48 overflow-y-auto">
+                  {chapters.map(ch => (
+                    <button
+                      key={ch.number}
+                      className={`flex items-center gap-2 w-full text-left px-3 py-2 text-[11px] hover:bg-accent transition-colors ${
+                        selectedChapterNum === ch.number ? "bg-primary/5 text-primary font-medium" : "text-foreground/80"
+                      }`}
+                      onClick={() => {
+                        setSelectedChapterNum(ch.number);
+                        setSelectedKhandaNum(ch.khandas?.[0]?.number ?? null);
+                        setChapterDropdownOpen(false);
+                      }}
+                      data-testid={`dropdown-chapter-${ch.number}`}
+                    >
+                      <span className="text-muted-foreground/60 w-4 text-right font-mono text-[10px]">{ch.number}</span>
+                      <span className="flex-1 truncate">{getChapterLabel(ch.title)}</span>
+                    </button>
+                  ))}
                 </div>
               )}
-              <div className="divide-y divide-border/20">
-                {leftListItems.map((item) => (
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-1 overflow-hidden">
+          {showLeftPanel && (
+            <div className="w-[62%] border-r border-border/40 flex flex-col overflow-hidden">
+              <div className="flex-1 overflow-y-auto">
+                {activeTab === "khanda" && (
+                  <div className="px-2 py-1.5 border-b border-border/60">
+                    <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                      {labels.khandaLabel}
+                    </span>
+                  </div>
+                )}
+                <div className="divide-y divide-border/20">
+                  {leftListItems.map((item) => (
                   <button
                     key={`${activeTab}-${item.number}`}
                     className={`flex items-center w-full text-left px-2.5 py-2 text-[11px] transition-colors ${
@@ -452,6 +460,7 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
               {activeTab === "mantra" ? "Select a chapter" : `Select a ${tabLabel(activeTab).toLowerCase()}`}
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>
