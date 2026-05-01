@@ -1790,9 +1790,9 @@ export function BookReader({
 
               {hasCommentaryOptions && (
                 <div className="space-y-4">
-                  {(bhashyaAuthors.length > 1 || (teekaAuthors.length > 0 && !showTeekas)) && (
+                  {bhashyaAuthors.length > 1 && (
                     <div className="flex flex-wrap items-center gap-2" data-testid="bhashya-tabs-row">
-                      {bhashyaAuthors.length > 1 && bhashyaAuthors.map((author) => (
+                      {bhashyaAuthors.map((author) => (
                         <button
                           key={author.authorName}
                           className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
@@ -1811,27 +1811,28 @@ export function BookReader({
                           {tc(author.authorName, bookAuthorTranslations)}
                         </button>
                       ))}
-
-                      {teekaAuthors.length > 0 && !showTeekas && (
-                        <button
-                          className="ml-auto px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 bg-card border border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/30"
-                          onClick={() => setShowTeekas(true)}
-                          data-testid="button-toggle-teekas"
-                        >
-                          <ScrollText className="h-3.5 w-3.5" />
-                          {t("readTeekas") || "Read Tīkās"}
-                        </button>
-                      )}
                     </div>
                   )}
 
                   <div className={`grid gap-4 ${showTeekas && teekaAuthors.length > 0 ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"}`}>
                     <div className="rounded-xl border border-border/60 bg-card/80 dark:bg-card/50 overflow-hidden shadow-sm" data-testid="bhashya-content-card">
-                      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/40 bg-muted/30">
-                        <Feather className="h-3.5 w-3.5 text-primary/70" />
-                        <span className="text-xs font-bold uppercase tracking-wider text-foreground/80">
-                          {t("bhashyam")}
-                        </span>
+                      <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-border/40 bg-muted/30">
+                        <div className="flex items-center gap-2">
+                          <Feather className="h-3.5 w-3.5 text-primary/70" />
+                          <span className="text-xs font-bold uppercase tracking-wider text-foreground/80">
+                            {t("bhashyam")}
+                          </span>
+                        </div>
+                        {teekaAuthors.length > 0 && !showTeekas && (
+                          <button
+                            className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1 bg-background/60 border border-border/60 text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5"
+                            onClick={() => setShowTeekas(true)}
+                            data-testid="button-toggle-teekas"
+                          >
+                            <ScrollText className="h-3 w-3" />
+                            {t("readTeekas") || "Read Tīkās"}
+                          </button>
+                        )}
                       </div>
                       <div className="p-4">
                         {commentaryExpanded && effectiveLang && (
