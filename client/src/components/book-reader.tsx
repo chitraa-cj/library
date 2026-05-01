@@ -1790,51 +1790,47 @@ export function BookReader({
 
               {hasCommentaryOptions && (
                 <div className="space-y-4">
-                  <div className="flex flex-wrap items-center gap-2" data-testid="bhashya-tabs-row">
-                    {bhashyaAuthors.map((author) => (
-                      <button
-                        key={author.authorName}
-                        className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-                          selectedBhashyaAuthor === author.authorName
-                            ? "bg-primary text-primary-foreground shadow-sm"
-                            : "bg-card border border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/30"
-                        }`}
-                        onClick={() => {
-                          setSelectedBhashyaAuthor(author.authorName);
-                          handleAuthorChange(author.authorName);
-                          setCommentaryMode("bhashyam");
-                          setCommentaryExpanded(true);
-                        }}
-                        data-testid={`tab-bhashya-${author.authorName.replace(/\s+/g, '-').toLowerCase()}`}
-                      >
-                        {tc(author.authorName, bookAuthorTranslations)}
-                      </button>
-                    ))}
+                  {(bhashyaAuthors.length > 1 || (teekaAuthors.length > 0 && !showTeekas)) && (
+                    <div className="flex flex-wrap items-center gap-2" data-testid="bhashya-tabs-row">
+                      {bhashyaAuthors.length > 1 && bhashyaAuthors.map((author) => (
+                        <button
+                          key={author.authorName}
+                          className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                            selectedBhashyaAuthor === author.authorName
+                              ? "bg-primary text-primary-foreground shadow-sm"
+                              : "bg-card border border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/30"
+                          }`}
+                          onClick={() => {
+                            setSelectedBhashyaAuthor(author.authorName);
+                            handleAuthorChange(author.authorName);
+                            setCommentaryMode("bhashyam");
+                            setCommentaryExpanded(true);
+                          }}
+                          data-testid={`tab-bhashya-${author.authorName.replace(/\s+/g, '-').toLowerCase()}`}
+                        >
+                          {tc(author.authorName, bookAuthorTranslations)}
+                        </button>
+                      ))}
 
-                    {teekaAuthors.length > 0 && (
-                      <button
-                        className={`ml-auto px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 ${
-                          showTeekas
-                            ? "bg-primary/15 border border-primary/30 text-primary"
-                            : "bg-card border border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/30"
-                        }`}
-                        onClick={() => setShowTeekas(!showTeekas)}
-                        data-testid="button-toggle-teekas"
-                      >
-                        <ScrollText className="h-3.5 w-3.5" />
-                        {showTeekas ? t("hideTeekas") || "Hide Tīkās" : t("readTeekas") || "Read Tīkās"}
-                      </button>
-                    )}
-                  </div>
+                      {teekaAuthors.length > 0 && !showTeekas && (
+                        <button
+                          className="ml-auto px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 bg-card border border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/30"
+                          onClick={() => setShowTeekas(true)}
+                          data-testid="button-toggle-teekas"
+                        >
+                          <ScrollText className="h-3.5 w-3.5" />
+                          {t("readTeekas") || "Read Tīkās"}
+                        </button>
+                      )}
+                    </div>
+                  )}
 
                   <div className={`grid gap-4 ${showTeekas && teekaAuthors.length > 0 ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"}`}>
                     <div className="rounded-xl border border-border/60 bg-card/80 dark:bg-card/50 overflow-hidden shadow-sm" data-testid="bhashya-content-card">
                       <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/40 bg-muted/30">
                         <Feather className="h-3.5 w-3.5 text-primary/70" />
                         <span className="text-xs font-bold uppercase tracking-wider text-foreground/80">
-                          {selectedBhashyaAuthor 
-                            ? `${tc(selectedBhashyaAuthor, bookAuthorTranslations)}`
-                            : t("bhashyam")}
+                          {t("bhashyam")}
                         </span>
                       </div>
                       <div className="p-4">
@@ -1854,39 +1850,49 @@ export function BookReader({
 
                     {showTeekas && teekaAuthors.length > 0 && (
                       <div className="rounded-xl border border-border/60 bg-card/80 dark:bg-card/50 overflow-hidden shadow-sm" data-testid="teeka-content-card">
-                        <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/40 bg-muted/30">
+                        <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-border/40 bg-muted/30">
                           <div className="flex items-center gap-2">
                             <ScrollText className="h-3.5 w-3.5 text-primary/70" />
                             <span className="text-xs font-bold uppercase tracking-wider text-foreground/80">
                               {t("teeka")}
                             </span>
                           </div>
-                          {teekaAuthors.length > 1 && (
-                            <Select
-                              value={selectedTeekaAuthor || teekaAuthors[0]?.authorName || ""}
-                              onValueChange={setSelectedTeekaAuthor}
+                          <div className="flex items-center gap-2">
+                            {teekaAuthors.length > 1 && (
+                              <Select
+                                value={selectedTeekaAuthor || teekaAuthors[0]?.authorName || ""}
+                                onValueChange={setSelectedTeekaAuthor}
+                              >
+                                <SelectTrigger className="h-7 w-auto min-w-[120px] max-w-[200px] text-[11px] border border-border/50 bg-background/60 shadow-none focus:ring-1 focus:ring-primary/30 px-2 rounded-md" data-testid="select-teeka-author">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {teekaAuthors.map((author) => (
+                                    <SelectItem key={author.authorName} value={author.authorName} data-testid={`option-teeka-${author.authorName.replace(/\s+/g, '-').toLowerCase()}`}>
+                                      {tc(author.authorName, bookAuthorTranslations)}
+                                      {author.authorTitle && (
+                                        <span className="text-muted-foreground ml-1">— {author.authorTitle}</span>
+                                      )}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                            {teekaAuthors.length === 1 && (
+                              <span className="text-[11px] text-muted-foreground">
+                                {tc(teekaAuthors[0].authorName, bookAuthorTranslations)}
+                                {teekaAuthors[0].authorTitle && ` — ${teekaAuthors[0].authorTitle}`}
+                              </span>
+                            )}
+                            <button
+                              className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1 bg-primary/10 border border-primary/30 text-primary hover:bg-primary/15"
+                              onClick={() => setShowTeekas(false)}
+                              data-testid="button-toggle-teekas"
                             >
-                              <SelectTrigger className="h-7 w-auto min-w-[120px] max-w-[200px] text-[11px] border border-border/50 bg-background/60 shadow-none focus:ring-1 focus:ring-primary/30 px-2 rounded-md" data-testid="select-teeka-author">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {teekaAuthors.map((author) => (
-                                  <SelectItem key={author.authorName} value={author.authorName} data-testid={`option-teeka-${author.authorName.replace(/\s+/g, '-').toLowerCase()}`}>
-                                    {tc(author.authorName, bookAuthorTranslations)}
-                                    {author.authorTitle && (
-                                      <span className="text-muted-foreground ml-1">— {author.authorTitle}</span>
-                                    )}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-                          {teekaAuthors.length === 1 && (
-                            <span className="text-[11px] text-muted-foreground">
-                              {tc(teekaAuthors[0].authorName, bookAuthorTranslations)}
-                              {teekaAuthors[0].authorTitle && ` — ${teekaAuthors[0].authorTitle}`}
-                            </span>
-                          )}
+                              <ScrollText className="h-3 w-3" />
+                              {t("hideTeekas") || "Hide Tīkās"}
+                            </button>
+                          </div>
                         </div>
                         <div className="p-4">
                           {effectiveLang && (
