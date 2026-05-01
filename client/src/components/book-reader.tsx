@@ -1879,12 +1879,6 @@ export function BookReader({
                                 </SelectContent>
                               </Select>
                             )}
-                            {teekaAuthors.length === 1 && (
-                              <span className="text-[11px] text-muted-foreground">
-                                {tc(teekaAuthors[0].authorName, bookAuthorTranslations)}
-                                {teekaAuthors[0].authorTitle && ` — ${teekaAuthors[0].authorTitle}`}
-                              </span>
-                            )}
                             <button
                               className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1 bg-primary/10 border border-primary/30 text-primary hover:bg-primary/15"
                               onClick={() => setShowTeekas(false)}
