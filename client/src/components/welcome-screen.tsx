@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { BookOpen, Library, FolderOpen, Lock, ArrowLeft, ArrowRight, ChevronRight, ScrollText, Feather, Users, Heart, BookMarked, Music, Layers, Search, X } from "lucide-react";
+import { BookOpen, Library, FolderOpen, Lock, ArrowLeft, ArrowRight, ChevronRight, ScrollText, Feather, Users, Heart, BookMarked, Music, Layers, Search, X, FileText, Archive, Sparkles } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -178,7 +178,12 @@ export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, languageCo
       </div>
 
       <div className="max-w-6xl w-full relative z-10 py-4 sm:py-8 space-y-6 sm:space-y-8">
-        <div className="text-center space-y-3">
+        <div className="text-center space-y-3 relative">
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/[0.06] dark:border-primary/[0.10]" style={{ width: 600, height: 600 }}></div>
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/[0.08] dark:border-primary/[0.14]" style={{ width: 400, height: 400 }}></div>
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/[0.10] dark:border-primary/[0.18]" style={{ width: 240, height: 240 }}></div>
+          </div>
           <div className="relative inline-block">
             <div className="absolute -inset-4 bg-primary/5 dark:bg-primary/15 rounded-full blur-xl"></div>
             <img
@@ -187,17 +192,17 @@ export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, languageCo
               className="h-16 sm:h-20 w-16 sm:w-20 object-contain mx-auto relative"
             />
           </div>
-          <div className="flex items-center justify-center gap-2 sm:gap-3">
+          <div className="relative flex items-center justify-center gap-2 sm:gap-3">
             <span className="text-xl sm:text-2xl text-primary/50 font-serif">ॐ</span>
             <h1 className="font-serif text-xl sm:text-3xl font-semibold tracking-tight text-primary">
               {t("advaitaVedantaDigitalLibrary")}
             </h1>
             <span className="text-xl sm:text-2xl text-primary/50 font-serif">ॐ</span>
           </div>
-          <p className="text-[10px] sm:text-xs uppercase tracking-[0.25em] text-muted-foreground">
+          <p className="relative text-[10px] sm:text-xs uppercase tracking-[0.25em] text-muted-foreground">
             {t("eternalEchoOfNonDuality")}
           </p>
-          <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl mx-auto leading-relaxed mt-2">
+          <p className="relative text-xs sm:text-sm text-muted-foreground max-w-2xl mx-auto leading-relaxed mt-2">
             {t("welcomeDescription")}
           </p>
         </div>
@@ -217,20 +222,38 @@ export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, languageCo
         <HomeSearchBar books={books} onSelectBook={onSelectBook} languageCode={languageCode ?? null} />
 
         <div className="space-y-6 sm:space-y-8">
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex items-center gap-3">
               <BookMarked className="h-5 w-5 text-primary shrink-0" />
               <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground">{t("treasuryOfWisdom")}</h2>
               <div className="h-px flex-1 bg-primary/15"></div>
             </div>
-            <div className="text-xs sm:text-sm text-muted-foreground leading-relaxed space-y-2 pl-8">
-              <p>{t("treasuryIntro")}</p>
-              <ul className="list-disc pl-4 space-y-1">
-                <li><span className="text-foreground font-medium">{t("prasthanatriyaBhashyasLabel")}</span> {t("prasthanatriyaBhashyasDesc")}</li>
-                <li><span className="text-foreground font-medium">{t("prakaranaGranthasLabel")}</span> {t("prakaranaGranthasDesc")}</li>
-                <li><span className="text-foreground font-medium">{t("scholasticTraditionLabel")}</span> {t("scholasticTraditionDesc")}</li>
-                <li><span className="text-foreground font-medium">{t("regionalLuminariesLabel")}</span> {t("regionalLuminariesDesc")}</li>
-              </ul>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed pl-8">{t("treasuryIntro")}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-0 sm:pl-8" data-testid="treasury-grid">
+              {[
+                { icon: ScrollText, labelKey: "prasthanatriyaBhashyasLabel", descKey: "prasthanatriyaBhashyasDesc" },
+                { icon: BookMarked, labelKey: "prakaranaGranthasLabel", descKey: "prakaranaGranthasDesc" },
+                { icon: Layers, labelKey: "scholasticTraditionLabel", descKey: "scholasticTraditionDesc" },
+                { icon: Users, labelKey: "regionalLuminariesLabel", descKey: "regionalLuminariesDesc" },
+              ].map(({ icon: Icon, labelKey, descKey }) => (
+                <div
+                  key={labelKey}
+                  className="group flex gap-3 p-3.5 rounded-xl bg-card/60 dark:bg-card/40 border border-border/60 hover:border-primary/40 hover:bg-card/90 hover:shadow-md transition-all"
+                  data-testid={`treasury-card-${labelKey}`}
+                >
+                  <div className="shrink-0 h-9 w-9 rounded-lg bg-primary/10 border border-primary/15 flex items-center justify-center group-hover:bg-primary/15 transition-colors">
+                    <Icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-serif text-sm font-semibold text-foreground leading-snug mb-1">
+                      {t(labelKey as any).replace(/:\s*$/, "")}
+                    </div>
+                    <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
+                      {t(descKey as any)}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -248,24 +271,43 @@ export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, languageCo
             </blockquote>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex items-center gap-3">
               <Library className="h-5 w-5 text-primary shrink-0" />
               <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground">{t("featuresOfDigitalLibrary")}</h2>
               <div className="h-px flex-1 bg-primary/15"></div>
             </div>
-            <div className="text-xs sm:text-sm text-muted-foreground leading-relaxed space-y-1 pl-8">
-              <ul className="list-disc pl-4 space-y-1">
-                <li><span className="text-foreground font-medium">{t("authenticTranscriptionsLabel")}</span> {t("authenticTranscriptionsDesc")}</li>
-                <li><span className="text-foreground font-medium">{t("manuscriptPreservationLabel")}</span> {t("manuscriptPreservationDesc")}</li>
-                <li><span className="text-foreground font-medium">{t("scholarlySearchLabel")}</span> {t("scholarlySearchDesc")}</li>
-              </ul>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pl-0 sm:pl-8" data-testid="features-grid">
+              {[
+                { icon: FileText, labelKey: "authenticTranscriptionsLabel", descKey: "authenticTranscriptionsDesc" },
+                { icon: Archive, labelKey: "manuscriptPreservationLabel", descKey: "manuscriptPreservationDesc" },
+                { icon: Search, labelKey: "scholarlySearchLabel", descKey: "scholarlySearchDesc" },
+              ].map(({ icon: Icon, labelKey, descKey }) => (
+                <div
+                  key={labelKey}
+                  className="p-4 rounded-xl bg-card/60 dark:bg-card/40 border border-border/60 hover:border-primary/40 hover:shadow-md transition-all"
+                  data-testid={`feature-card-${labelKey}`}
+                >
+                  <div className="h-9 w-9 rounded-lg bg-primary/10 border border-primary/15 flex items-center justify-center mb-3">
+                    <Icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="font-serif text-sm font-semibold text-foreground leading-snug mb-1.5">
+                    {t(labelKey as any).replace(/:\s*$/, "")}
+                  </div>
+                  <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
+                    {t(descKey as any)}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
 
-          <blockquote className="text-center font-serif text-xs sm:text-sm text-primary/60 italic py-2">
-            {t("saVidyaQuote")}
-          </blockquote>
+          <div className="text-center pt-2">
+            <div className="mx-auto h-px w-16 bg-primary/20 mb-3"></div>
+            <blockquote className="font-serif text-base sm:text-lg text-primary/80 italic leading-relaxed">
+              {t("saVidyaQuote")}
+            </blockquote>
+          </div>
 
           <p className="text-xs text-center text-muted-foreground/70">
             {t("invitationText")}
