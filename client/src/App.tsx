@@ -890,6 +890,10 @@ function HomePageContent() {
                 books={allBooks || []}
                 onSelectBook={handleBookSelect}
                 onBrowseLibrary={() => setShowLibraryCatalog(true)}
+                onSelectSubCategory={(categoryId, subCategoryId) => {
+                  setSelectedCategoryId(categoryId);
+                  setSelectedSubCategoryId(subCategoryId);
+                }}
                 languageCode={selectedCommentaryLanguage}
               />
             )}

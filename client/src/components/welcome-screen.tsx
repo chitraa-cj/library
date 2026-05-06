@@ -65,6 +65,7 @@ interface WelcomeScreenProps {
   books: Book[];
   onSelectBook: (bookId: string) => void;
   onBrowseLibrary: () => void;
+  onSelectSubCategory?: (categoryId: string, subCategoryId: string) => void;
   languageCode?: string | null;
 }
 
@@ -190,8 +191,111 @@ function HomeSearchBar({ books, onSelectBook, languageCode }: { books: Book[]; o
   );
 }
 
-export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, languageCode }: WelcomeScreenProps) {
+export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, onSelectSubCategory, languageCode }: WelcomeScreenProps) {
   const { t } = useTranslation(languageCode ?? null);
+
+  const upanishadBooks = useMemo(
+    () => books.filter(b => b.category === "Upanishad" || b.category === "Upanishad Bhashya"),
+    [books],
+  );
+  const gitaBooks = useMemo(
+    () => books.filter(b => b.category === "Gita" || b.category === "Bhagavad Gita"),
+    [books],
+  );
+  const brahmaSutraBooks = useMemo(
+    () => books.filter(b => b.category === "Brahma Sutra"),
+    [books],
+  );
+
+  const findBookBySlug = (slugs: string[]) => {
+    for (const s of slugs) {
+      const b = books.find(x => x.slug?.toLowerCase() === s);
+      if (b) return b;
+    }
+    for (const s of slugs) {
+      const b = books.find(x => x.slug?.toLowerCase().startsWith(s));
+      if (b) return b;
+    }
+    return null;
+  };
+
+  const prakaranaBookList: { title: string; author: string; slugs: string[] }[] = [
+    { title: "Vivekachudamani", author: "Adi Shankaracharya", slugs: ["vivekachudamani", "viveka-chudamani"] },
+    { title: "Upadesha Sahasri", author: "Adi Shankaracharya", slugs: ["upadesha-sahasri", "upadesa-sahasri"] },
+    { title: "Atma Bodha", author: "Adi Shankaracharya", slugs: ["atma-bodha", "atmabodha"] },
+    { title: "Tattva Bodha", author: "Adi Shankaracharya", slugs: ["tattva-bodha", "tattvabodha"] },
+    { title: "Panchikaranam", author: "Adi Shankaracharya", slugs: ["panchikaranam", "panchikarana"] },
+    { title: "Drig Drishya Viveka", author: "Attributed to Shankaracharya", slugs: ["drig-drishya-viveka", "drk-drsya-viveka"] },
+  ];
+
+  const tripleCanon = [
+    {
+      key: "upanishads",
+      title: "Upanishads",
+      subtitle: "SHRUTI PRASTHANA",
+      symbol: "ॐ",
+      count: upanishadBooks.length,
+      countLabel: "texts",
+      subId: "pt-upanishad",
+    },
+    {
+      key: "gita",
+      title: "Bhagavad Gita",
+      subtitle: "SMRITI PRASTHANA",
+      symbol: "卐",
+      count: gitaBooks[0]?.totalVerses ? 18 : gitaBooks.length,
+      countLabel: "chapters",
+      subId: "pt-gita",
+    },
+    {
+      key: "brahmasutra",
+      title: "Brahma Sutras",
+      subtitle: "NYAYA PRASTHANA",
+      symbol: "≈",
+      count: 4,
+      countLabel: "adhyayas",
+      subId: "pt-brahmasutra",
+    },
+  ];
+
+  const twoSchools = [
+    { name: "Bhamati School", members: ["Vachaspati Misra", "Amalananda", "Appayya Dikshita"], colorClass: "border-l-orange-500" },
+    { name: "Vivarana School", members: ["Padmapada", "Prakashatman", "Vidyaranya Swami"], colorClass: "border-l-orange-500" },
+  ];
+
+  const regionalLuminaries = [
+    "Sri Bellamkonda Rama Raya",
+    "Shrimad Bodhendra Saraswati",
+    "Sringeri Peetham",
+    "Kanchi Peetham",
+    "Uttaradi Math",
+    "Nirmohi Akhada",
+  ];
+
+  const manifestations = [
+    {
+      title: "Varkari Saints",
+      tags: ["MARATHI", "VARKARI"],
+      description: "Abhangas and ovis exploring the non-dual nature of Vithoba and the self.",
+      borderClass: "border-t-amber-500",
+      tagClass: "bg-amber-100 text-amber-900 dark:bg-amber-950/40 dark:text-amber-200",
+    },
+    {
+      title: "Bhakti Saints",
+      tags: ["HINDI", "RAJASTHANI", "BHAKTI"],
+      description: "Devotional poetry dissolving the veil between the lover and the beloved.",
+      borderClass: "border-t-teal-500",
+      tagClass: "bg-teal-100 text-teal-900 dark:bg-teal-950/40 dark:text-teal-200",
+    },
+    {
+      title: "Sikh Akhada Granthas",
+      tags: ["PUNJABI", "GURMUKHI"],
+      description: "Gurbani and Akhada literature on Ik Onkar — the one undivided reality.",
+      borderClass: "border-t-purple-500",
+      tagClass: "bg-purple-100 text-purple-900 dark:bg-purple-950/40 dark:text-purple-200",
+    },
+  ];
+
   return (
     <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-background relative overflow-y-auto">
       <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
@@ -247,34 +351,140 @@ export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, languageCo
         <div className="space-y-6 sm:space-y-8">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
+              <ScrollText className="h-5 w-5 text-primary shrink-0" />
+              <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground">Prasthanatrayi — The Triple Canon</h2>
+              <div className="h-px flex-1 bg-primary/15"></div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pl-0 sm:pl-8" data-testid="triple-canon-grid">
+              {tripleCanon.map((c) => (
+                <button
+                  key={c.key}
+                  type="button"
+                  onClick={() => onSelectSubCategory?.("prasthana-thraya", c.subId)}
+                  className="group flex flex-col items-center text-center p-5 rounded-xl bg-card/70 dark:bg-card/40 border border-border/60 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5 transition-all"
+                  data-testid={`triple-canon-${c.key}`}
+                >
+                  <div className="h-12 w-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
+                    <span className="text-xl text-primary font-serif leading-none">{c.symbol}</span>
+                  </div>
+                  <div className="font-serif text-base font-semibold text-foreground leading-snug">{c.title}</div>
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/80 mt-1">{c.subtitle}</div>
+                  <div className="mt-3 inline-flex items-center gap-1 text-xs text-primary font-medium px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20">
+                    <span>{c.count} {c.countLabel}</span>
+                    <ArrowRight className="h-3 w-3" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-5">
+            <div className="flex items-center gap-3">
               <BookMarked className="h-5 w-5 text-primary shrink-0" />
               <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground">{t("treasuryOfWisdom")}</h2>
               <div className="h-px flex-1 bg-primary/15"></div>
             </div>
-            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed pl-8">{t("treasuryIntro")}</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-0 sm:pl-8" data-testid="treasury-grid">
-              {[
-                { icon: ScrollText, labelKey: "prasthanatriyaBhashyasLabel", descKey: "prasthanatriyaBhashyasDesc" },
-                { icon: BookMarked, labelKey: "prakaranaGranthasLabel", descKey: "prakaranaGranthasDesc" },
-                { icon: Layers, labelKey: "scholasticTraditionLabel", descKey: "scholasticTraditionDesc" },
-                { icon: Users, labelKey: "regionalLuminariesLabel", descKey: "regionalLuminariesDesc" },
-              ].map(({ icon: Icon, labelKey, descKey }) => (
-                <div
-                  key={labelKey}
-                  className="group flex gap-3 p-3.5 rounded-xl bg-card/60 dark:bg-card/40 border border-border/60 hover:border-primary/40 hover:bg-card/90 hover:shadow-md transition-all"
-                  data-testid={`treasury-card-${labelKey}`}
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed pl-8">
+              The Nyas has meticulously curated a vast collection spanning from the foundational Triple Canon to the sophisticated dialectical works of later Advaita masters — commentaries, introductory monographs, scholastic debates, and rare regional masterpieces.
+            </p>
+
+            <div className="space-y-3 pl-0 sm:pl-8">
+              <div className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-primary font-semibold">
+                Prakarana Granthas — Introductory Monographs
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5" data-testid="prakarana-list">
+                {prakaranaBookList.map((p) => {
+                  const book = findBookBySlug(p.slugs);
+                  return (
+                    <button
+                      key={p.title}
+                      type="button"
+                      disabled={!book}
+                      onClick={() => book && onSelectBook(book.id)}
+                      className="group flex items-center justify-between gap-3 p-3 rounded-lg bg-card/60 dark:bg-card/40 border border-border/60 hover:border-primary/40 hover:bg-card/90 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                      data-testid={`prakarana-item-${p.title.toLowerCase().replace(/\s+/g, "-")}`}
+                    >
+                      <div className="min-w-0">
+                        <div className="font-serif text-sm font-semibold text-foreground truncate">{p.title}</div>
+                        <div className="text-[11px] text-muted-foreground truncate">{p.author}</div>
+                      </div>
+                      <ArrowRight className="h-3.5 w-3.5 text-primary/70 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-3 pl-0 sm:pl-8">
+              <div className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-primary font-semibold">
+                The Scholastic Tradition — Two Schools
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" data-testid="two-schools-grid">
+                {twoSchools.map((s) => (
+                  <div
+                    key={s.name}
+                    className={`p-3.5 rounded-lg bg-card/60 dark:bg-card/40 border border-border/60 border-l-[3px] ${s.colorClass}`}
+                    data-testid={`school-${s.name.toLowerCase().replace(/\s+/g, "-")}`}
+                  >
+                    <div className="font-serif text-sm font-semibold text-foreground mb-1">{s.name}</div>
+                    <div className="text-[11px] text-muted-foreground">{s.members.join(" · ")}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3 pl-0 sm:pl-8">
+              <div className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-primary font-semibold">
+                Regional Luminaries
+              </div>
+              <div className="flex flex-wrap gap-2" data-testid="regional-luminaries">
+                {regionalLuminaries.map((name) => (
+                  <span
+                    key={name}
+                    className="px-3 py-1 rounded-full bg-card/70 dark:bg-card/40 border border-border/60 text-[11px] text-foreground/80"
+                    data-testid={`luminary-${name.toLowerCase().replace(/\s+/g, "-")}`}
+                  >
+                    {name}
+                  </span>
+                ))}
+                <button
+                  type="button"
+                  onClick={onBrowseLibrary}
+                  className="px-3 py-1 rounded-full bg-card/70 dark:bg-card/40 border border-border/60 text-[11px] text-primary hover:bg-primary/5 transition-colors inline-flex items-center gap-1"
+                  data-testid="luminary-view-all"
                 >
-                  <div className="shrink-0 h-9 w-9 rounded-lg bg-primary/10 border border-primary/15 flex items-center justify-center group-hover:bg-primary/15 transition-colors">
-                    <Icon className="h-4 w-4 text-primary" />
+                  View all
+                  <ArrowRight className="h-3 w-3" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <Users className="h-5 w-5 text-primary shrink-0" />
+              <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground">Manifestations Across Traditions</h2>
+              <div className="h-px flex-1 bg-primary/15"></div>
+            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed pl-8">
+              Non-dual wisdom does not belong to Sanskrit alone. It pours through the abhangas of Maharashtra, the padas of Rajasthan, the Gurbani of the Sikhs, and the Tiruvachakam of Tamil Nadu — each a different shore of the same boundless ocean.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pl-0 sm:pl-8" data-testid="manifestations-grid">
+              {manifestations.map((m) => (
+                <div
+                  key={m.title}
+                  className={`p-4 rounded-xl bg-card/60 dark:bg-card/40 border border-border/60 border-t-[3px] ${m.borderClass}`}
+                  data-testid={`manifestation-${m.title.toLowerCase().replace(/\s+/g, "-")}`}
+                >
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {m.tags.map(tag => (
+                      <span key={tag} className={`px-2 py-0.5 rounded-full text-[9px] font-semibold tracking-wider ${m.tagClass}`}>
+                        {tag}
+                      </span>
+                    ))}
                   </div>
-                  <div className="min-w-0">
-                    <div className="font-serif text-sm font-semibold text-foreground leading-snug mb-1">
-                      {t(labelKey as any).replace(/:\s*$/, "")}
-                    </div>
-                    <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
-                      {t(descKey as any)}
-                    </p>
-                  </div>
+                  <div className="font-serif text-sm font-semibold text-foreground mb-1">{m.title}</div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">{m.description}</p>
                 </div>
               ))}
             </div>
