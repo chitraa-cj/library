@@ -1,4 +1,4 @@
-import { eq, ilike, and } from "drizzle-orm";
+import { eq, ilike, and, sql } from "drizzle-orm";
 import { db } from "./db";
 import {
   books,
@@ -9,6 +9,7 @@ import {
   languages,
   wordTranslations,
   notes,
+  verseProgress,
   verseWordMeanings,
   type Book,
   type InsertBook,
@@ -30,6 +31,7 @@ import {
   type InsertWordTranslation,
   type Note,
   type InsertNote,
+  type VerseProgress,
   type VerseWordMeaning,
 } from "@shared/schema";
 import {
@@ -98,6 +100,11 @@ export interface IStorage {
   createNote(note: InsertNote): Promise<Note>;
   updateNote(id: string, userId: string, content: string): Promise<Note | undefined>;
   deleteNote(id: string, userId: string): Promise<boolean>;
+
+  markVerseComplete(userId: string, bookId: string, verseId: string): Promise<VerseProgress>;
+  unmarkVerseComplete(userId: string, verseId: string): Promise<boolean>;
+  getCompletedVerseIdsForBook(userId: string, bookId: string): Promise<string[]>;
+  getProgressSummary(userId: string): Promise<Record<string, number>>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -373,6 +380,45 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return result.length > 0;
   }
+
+  async markVerseComplete(userId: string, bookId: string, verseId: string): Promise<VerseProgress> {
+    const result = await db
+      .insert(verseProgress)
+      .values({ userId, bookId, verseId })
+      .onConflictDoUpdate({
+        target: [verseProgress.userId, verseProgress.verseId],
+        set: { bookId, completedAt: new Date() },
+      })
+      .returning();
+    return result[0];
+  }
+
+  async unmarkVerseComplete(userId: string, verseId: string): Promise<boolean> {
+    const result = await db
+      .delete(verseProgress)
+      .where(and(eq(verseProgress.userId, userId), eq(verseProgress.verseId, verseId)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async getCompletedVerseIdsForBook(userId: string, bookId: string): Promise<string[]> {
+    const rows = await db
+      .select({ verseId: verseProgress.verseId })
+      .from(verseProgress)
+      .where(and(eq(verseProgress.userId, userId), eq(verseProgress.bookId, bookId)));
+    return rows.map(r => r.verseId);
+  }
+
+  async getProgressSummary(userId: string): Promise<Record<string, number>> {
+    const rows = await db
+      .select({ bookId: verseProgress.bookId, count: sql<number>`count(*)::int` })
+      .from(verseProgress)
+      .where(eq(verseProgress.userId, userId))
+      .groupBy(verseProgress.bookId);
+    const out: Record<string, number> = {};
+    for (const r of rows) out[r.bookId] = Number(r.count);
+    return out;
+  }
 }
 
 export class HybridStorage implements IStorage {
@@ -620,6 +666,22 @@ export class HybridStorage implements IStorage {
 
   async deleteNote(id: string, userId: string): Promise<boolean> {
     return this.db.deleteNote(id, userId);
+  }
+
+  async markVerseComplete(userId: string, bookId: string, verseId: string): Promise<VerseProgress> {
+    return this.db.markVerseComplete(userId, bookId, this.resolveDbVerseId(verseId));
+  }
+
+  async unmarkVerseComplete(userId: string, verseId: string): Promise<boolean> {
+    return this.db.unmarkVerseComplete(userId, this.resolveDbVerseId(verseId));
+  }
+
+  async getCompletedVerseIdsForBook(userId: string, bookId: string): Promise<string[]> {
+    return this.db.getCompletedVerseIdsForBook(userId, bookId);
+  }
+
+  async getProgressSummary(userId: string): Promise<Record<string, number>> {
+    return this.db.getProgressSummary(userId);
   }
 }
 

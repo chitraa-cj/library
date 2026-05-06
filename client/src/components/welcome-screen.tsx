@@ -8,10 +8,33 @@ import { VideoInline } from "@/components/video-popup";
 import { CATALOG_TREE, type CatalogCategory } from "@/components/app-sidebar";
 import { useTranslation } from "@/lib/translations";
 import { translateContent, bookTitleTranslations, bookAuthorTranslations, bookCategoryTranslations, bookDescriptionTranslations } from "@/lib/content-translations";
+import { useProgressSummary } from "@/hooks/use-progress";
 
 import catImgPrasthana from "@assets/image_1770803826016.png";
 import catImgPrakarana from "@assets/image_1770803849999.png";
 import catImgShlokas from "@assets/image_1770803820218.png";
+
+function BookProgressBar({ bookId, totalVerses, compact = false }: { bookId: string; totalVerses: number | null | undefined; compact?: boolean }) {
+  const { data: summary } = useProgressSummary();
+  const total = totalVerses ?? 0;
+  if (!summary || total <= 0) return null;
+  const completed = Math.min(summary[bookId] || 0, total);
+  if (completed <= 0) return null;
+  const pct = Math.round((completed / total) * 100);
+  return (
+    <div className={`flex items-center gap-1.5 ${compact ? "mt-1" : "mt-2"}`} data-testid={`progress-bar-${bookId}`}>
+      <div className={`flex-1 ${compact ? "h-1" : "h-1.5"} rounded-full bg-muted overflow-hidden`}>
+        <div
+          className="h-full bg-primary transition-all"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <span className="text-[10px] text-muted-foreground tabular-nums shrink-0" data-testid={`progress-pct-${bookId}`}>
+        {pct}%
+      </span>
+    </div>
+  );
+}
 
 const categoryImages: Record<string, string> = {
   "prasthana-thraya": catImgPrasthana,
@@ -1681,6 +1704,7 @@ function GenericBookLanding({ book, onSelectBook, t, tc }: {
               ))}
             </div>
           )}
+          <BookProgressBar bookId={book.id} totalVerses={book.totalVerses} />
         </div>
       </Card>
     </div>
@@ -1775,12 +1799,13 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
                     onClick={() => onSelectBook(book.id)}
                     data-testid={`tree-book-${book.slug || book.id}`}
                   >
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <span className="font-medium text-foreground">{tc(book.title, bookTitleTranslations)}</span>
                       <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
                         <BookOpen className="h-3 w-3" />
                         <span>{book.totalVerses ?? 0} {t("verses")}</span>
                       </div>
+                      <BookProgressBar bookId={book.id} totalVerses={book.totalVerses} compact />
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
                   </button>

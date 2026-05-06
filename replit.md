@@ -81,6 +81,14 @@ Preferred communication style: Simple, everyday language.
 - Skipped manthras are logged via `console.warn`.
 - **Caveat**: home-page book-listing card counts (`strapiGetAllBooks`) are raw CMS row counts and may be 1–2 higher than the filtered counts shown inside the reader. The reader paths are always self-consistent.
 
+### Per-User Reading Progress
+- Schema: `verseProgress` table (userId, bookId, verseId, completedAt) with unique `(userId, verseId)` and index on `(userId, bookId)`. `verseId` is plain `varchar` (no FK) because Strapi verse IDs aren't in the local PG `verses` table; HybridStorage maps them via `resolveDbVerseId` before hitting the DB.
+- Storage: `markVerseComplete` (idempotent upsert), `unmarkVerseComplete`, `getCompletedVerseIdsForBook`, `getProgressSummary` (returns `{ bookId: completedCount }`).
+- API (auth required): `GET /api/progress/summary`, `GET /api/progress/book/:bookId`, `POST /api/progress { bookId, verseId }`, `DELETE /api/progress/:verseId`.
+- Frontend hooks: `useProgressSummary`, `useBookProgress`, `useMarkVerseComplete`, `useUnmarkVerseComplete` in `client/src/hooks/use-progress.ts`. Mutations invalidate both summary and per-book queries.
+- BookReader bottom nav: thin progress bar + "Mark complete" toggle + primary "Complete & next" button (auto-marks current verse and advances). All hooks are declared at the top of `BookReader` (above the `isLoading`/`error` early returns) to satisfy Rules of Hooks; only derived constants live further down.
+- Book cards in `welcome-screen.tsx` (sidebar tree + `GenericBookLanding`) show a `BookProgressBar` (% of verses completed). Hidden when not signed in, when `totalVerses` is 0, or when no verses are completed yet.
+
 ### Manual Cache Invalidation
 - `POST /api/strapi/cache/invalidate { bookId }` clears all in-memory Strapi caches for one grantha (book detail, verse meta, individual verses, explanations, commentary options) so freshly-edited CMS data shows up without waiting for the 24-hour TTL or restarting the server. Use this after publishing/editing manthras in Strapi.
 

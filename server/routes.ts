@@ -327,6 +327,52 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/progress/summary", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const summary = await storage.getProgressSummary(userId);
+      res.json(summary);
+    } catch (error) {
+      console.error("Error fetching progress summary:", error);
+      res.status(500).json({ error: "Failed to fetch progress summary" });
+    }
+  });
+
+  app.get("/api/progress/book/:bookId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const completedVerseIds = await storage.getCompletedVerseIdsForBook(userId, req.params.bookId);
+      res.json({ completedVerseIds });
+    } catch (error) {
+      console.error("Error fetching book progress:", error);
+      res.status(500).json({ error: "Failed to fetch book progress" });
+    }
+  });
+
+  app.post("/api/progress", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const schema = z.object({ bookId: z.string().min(1), verseId: z.string().min(1) });
+      const { bookId, verseId } = schema.parse(req.body);
+      const row = await storage.markVerseComplete(userId, bookId, verseId);
+      res.status(201).json(row);
+    } catch (error) {
+      console.error("Error marking verse complete:", error);
+      res.status(500).json({ error: "Failed to mark verse complete" });
+    }
+  });
+
+  app.delete("/api/progress/:verseId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const ok = await storage.unmarkVerseComplete(userId, req.params.verseId);
+      res.json({ success: ok });
+    } catch (error) {
+      console.error("Error unmarking verse complete:", error);
+      res.status(500).json({ error: "Failed to unmark verse complete" });
+    }
+  });
+
   app.delete("/api/notes/:id", isAuthenticated, async (req: any, res) => {
     try {
       const userId = getUserId(req);

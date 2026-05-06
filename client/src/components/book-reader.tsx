@@ -9,6 +9,7 @@ import { VideoPopup } from "@/components/video-popup";
 import { WordTooltip } from "@/components/word-tooltip";
 import { useTranslation } from "@/lib/translations";
 import { useAuth } from "@/hooks/use-auth";
+import { useBookProgress, useMarkVerseComplete, useUnmarkVerseComplete } from "@/hooks/use-progress";
 import { useToast } from "@/hooks/use-toast";
 import { translateContent, bookTitleTranslations, bookAuthorTranslations, bookCategoryTranslations, bookDescriptionTranslations, chapterTitleTranslations, sectionTitleTranslations, verseSectionTitleTranslations } from "@/lib/content-translations";
 import type { BookWithVerseMeta, VerseMeta, VerseTranslation, Explanation, VerseWithTranslations } from "@shared/schema";
@@ -413,6 +414,10 @@ export function BookReader({
 }: BookReaderProps) {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const { data: bookProgress } = useBookProgress(bookId);
+  const markCompleteMutation = useMarkVerseComplete();
+  const unmarkCompleteMutation = useUnmarkVerseComplete();
+  const completedSet = useMemo(() => new Set(bookProgress?.completedVerseIds || []), [bookProgress]);
   const [localLanguage, setLocalLanguage] = useState<string | null>(selectedCommentaryLanguage);
   const effectiveLang = localLanguage || selectedCommentaryLanguage;
   const [selectedLanguages, setSelectedLanguages] = useState<Set<string>>(() => {
@@ -843,6 +848,47 @@ export function BookReader({
   const goToNextPage = () => {
     if (currentPage < totalPages - 1) {
       setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const currentVerseIsCompleted = currentVerse ? completedSet.has(currentVerse.id) : false;
+  const completedCount = completedSet.size;
+  const verseTotal = verses.length || 0;
+  const completedPct = verseTotal > 0 ? Math.round((completedCount / verseTotal) * 100) : 0;
+  const progressAuthed = isAuthenticated;
+
+  const handleMarkCompleteAndNext = async () => {
+    if (!progressAuthed) {
+      toast({ title: t("signInRequired" as any) || "Sign in required", description: t("signInToTrackProgress" as any) || "Please sign in to track your reading progress.", variant: "destructive" });
+      return;
+    }
+    if (!book?.id || !currentVerse?.id) return;
+    try {
+      if (!currentVerseIsCompleted) {
+        await markCompleteMutation.mutateAsync({ bookId: book.id, verseId: currentVerse.id });
+      }
+      if (currentPage < totalPages - 1) {
+        setCurrentPage(currentPage + 1);
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err?.message || "Failed to mark complete", variant: "destructive" });
+    }
+  };
+
+  const handleToggleComplete = async () => {
+    if (!progressAuthed) {
+      toast({ title: t("signInRequired" as any) || "Sign in required", description: t("signInToTrackProgress" as any) || "Please sign in to track your reading progress.", variant: "destructive" });
+      return;
+    }
+    if (!book?.id || !currentVerse?.id) return;
+    try {
+      if (currentVerseIsCompleted) {
+        await unmarkCompleteMutation.mutateAsync({ bookId: book.id, verseId: currentVerse.id });
+      } else {
+        await markCompleteMutation.mutateAsync({ bookId: book.id, verseId: currentVerse.id });
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err?.message || "Failed to update progress", variant: "destructive" });
     }
   };
 
@@ -1913,34 +1959,83 @@ export function BookReader({
         </div>
 
         <div className="shrink-0 border-t border-border/50 px-4 sm:px-8 py-2 sm:py-3">
-          <div className="max-w-4xl xl:max-w-5xl mx-auto flex items-center justify-between gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={goToPrevPage}
-              disabled={currentPage === 0}
-              className="gap-1"
-              data-testid="button-prev-page"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("previous")}</span>
-            </Button>
+          <div className="max-w-4xl xl:max-w-5xl mx-auto space-y-2">
+            {progressAuthed && verseTotal > 0 && (
+              <div className="flex items-center gap-2" data-testid="reader-progress-bar">
+                <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full bg-primary transition-all"
+                    style={{ width: `${completedPct}%` }}
+                    data-testid="reader-progress-fill"
+                  />
+                </div>
+                <span className="text-[10px] text-muted-foreground tabular-nums shrink-0" data-testid="text-reader-progress">
+                  {completedCount}/{verseTotal} ({completedPct}%)
+                </span>
+              </div>
+            )}
+            <div className="flex items-center justify-between gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={goToPrevPage}
+                disabled={currentPage === 0}
+                className="gap-1"
+                data-testid="button-prev-page"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">{t("previous")}</span>
+              </Button>
 
-            <span className="text-xs text-muted-foreground">
-              {currentPage + 1} / {totalPages}
-            </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={currentVerseIsCompleted ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={handleToggleComplete}
+                  disabled={!currentVerse || markCompleteMutation.isPending || unmarkCompleteMutation.isPending}
+                  className="gap-1.5"
+                  data-testid="button-toggle-complete"
+                  title={currentVerseIsCompleted ? "Mark as not read" : "Mark as completed"}
+                >
+                  <Check className={`h-4 w-4 ${currentVerseIsCompleted ? "text-primary" : "text-muted-foreground"}`} />
+                  <span className="hidden sm:inline text-xs">
+                    {currentVerseIsCompleted ? "Completed" : "Mark complete"}
+                  </span>
+                </Button>
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {currentPage + 1} / {totalPages}
+                </span>
+              </div>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={goToNextPage}
-              disabled={currentPage === totalPages - 1}
-              className="gap-1"
-              data-testid="button-next-page"
-            >
-              <span className="hidden sm:inline">{t("next")}</span>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages - 1}
+                  className="gap-1"
+                  data-testid="button-next-page"
+                >
+                  <span className="hidden sm:inline">{t("next")}</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleMarkCompleteAndNext}
+                  disabled={currentPage === totalPages - 1 || markCompleteMutation.isPending}
+                  className="gap-1.5 hidden md:inline-flex"
+                  data-testid="button-mark-complete-next"
+                  title="Mark this verse complete and continue to the next"
+                >
+                  <Check className="h-4 w-4" />
+                  <span className="text-xs whitespace-nowrap">
+                    {currentVerseIsCompleted ? "Next" : "Complete & next"}
+                  </span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
 

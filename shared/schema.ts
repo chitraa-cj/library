@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, jsonb, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, jsonb, timestamp, boolean, uniqueIndex, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -160,5 +160,20 @@ export const insertNoteSchema = createInsertSchema(notes).omit({ id: true, creat
 
 export type InsertNote = z.infer<typeof insertNoteSchema>;
 export type Note = typeof notes.$inferSelect;
+
+export const verseProgress = pgTable("verse_progress", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  bookId: varchar("book_id").notNull(),
+  verseId: varchar("verse_id").notNull(),
+  completedAt: timestamp("completed_at").defaultNow().notNull(),
+}, (t) => ({
+  uniqUserVerse: uniqueIndex("verse_progress_user_verse_uq").on(t.userId, t.verseId),
+  byUserBook: index("verse_progress_user_book_idx").on(t.userId, t.bookId),
+}));
+
+export const insertVerseProgressSchema = createInsertSchema(verseProgress).omit({ id: true, completedAt: true });
+export type InsertVerseProgress = z.infer<typeof insertVerseProgressSchema>;
+export type VerseProgress = typeof verseProgress.$inferSelect;
 
 export * from "./models/auth";
