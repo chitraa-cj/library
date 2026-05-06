@@ -14,13 +14,13 @@ import catImgPrasthana from "@assets/image_1770803826016.png";
 import catImgPrakarana from "@assets/image_1770803849999.png";
 import catImgShlokas from "@assets/image_1770803820218.png";
 
-function BookProgressBar({ bookId, totalVerses, compact = false }: { bookId: string; totalVerses: number | null | undefined; compact?: boolean }) {
+function BookProgressBar({ bookId, totalVerses, compact = false, alwaysShow = false }: { bookId: string; totalVerses: number | null | undefined; compact?: boolean; alwaysShow?: boolean }) {
   const { data: summary } = useProgressSummary();
   const total = totalVerses ?? 0;
-  if (!summary || total <= 0) return null;
-  const completed = Math.min(summary[bookId] || 0, total);
-  if (completed <= 0) return null;
-  const pct = Math.round((completed / total) * 100);
+  if (total <= 0) return null;
+  const completed = summary ? Math.min(summary[bookId] || 0, total) : 0;
+  if (!alwaysShow && completed <= 0) return null;
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
   return (
     <div className={`flex items-center gap-1.5 ${compact ? "mt-1" : "mt-2"}`} data-testid={`progress-bar-${bookId}`}>
       <div className={`flex-1 ${compact ? "h-1" : "h-1.5"} rounded-full bg-muted overflow-hidden`}>
@@ -30,7 +30,7 @@ function BookProgressBar({ bookId, totalVerses, compact = false }: { bookId: str
         />
       </div>
       <span className="text-[10px] text-muted-foreground tabular-nums shrink-0" data-testid={`progress-pct-${bookId}`}>
-        {pct}%
+        {completed}/{total}
       </span>
     </div>
   );
@@ -1857,7 +1857,7 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
                     {book.description}
                   </p>
                 )}
-                <BookProgressBar bookId={book.id} totalVerses={book.totalVerses} />
+                <BookProgressBar bookId={book.id} totalVerses={book.totalVerses} alwaysShow />
               </Card>
             );
           })}
