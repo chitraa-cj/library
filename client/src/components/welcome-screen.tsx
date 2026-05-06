@@ -1647,6 +1647,7 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
                     {book.description}
                   </p>
                 )}
+                <BookProgressBar bookId={book.id} totalVerses={book.totalVerses} />
               </Card>
             );
           })}
