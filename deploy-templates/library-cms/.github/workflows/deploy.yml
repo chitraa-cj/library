@@ -1,4 +1,4 @@
-name: Deploy Library App
+name: Deploy CMS Library
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd ~/library/library
+            cd ~/library/library-cms
 
             git pull origin main
 
@@ -25,6 +25,8 @@ jobs:
 
             npm run build
 
-            pm2 restart sacred-script-hub --update-env
+            NODE_TLS_REJECT_UNAUTHORIZED=0 npm run db:push
+
+            pm2 restart cms-library --update-env
 
             pm2 save
