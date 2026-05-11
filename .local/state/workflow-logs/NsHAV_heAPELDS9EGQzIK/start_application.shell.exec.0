@@ -1,0 +1,133 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+[1G[0K6:40:40 AM [express] serving on port 5000
+Checking if database needs seeding...
+Database already seeded, skipping...
+Checking for additional commentaries to seed...
+Warning: Missing commentary data for verses: 0
+All additional commentaries already exist
+Checking for incomplete Shankaracharya explanations...
+All Shankaracharya explanations are complete
+Syncing authoritative commentary data (bhashyam + teeka)...
+All commentary data is already up to date
+Checking for missing English verse translations...
+All English verse translations already exist
+Checking for missing South Indian language verse translations...
+All South Indian language verse translations already exist
+Checking verse section titles...
+All verse section titles are already correct
+Checking Isha Upanishad hierarchy (adhyay/khanda)...
+Isha Upanishad hierarchy already set
+Bhagavad Gita already seeded, skipping...
+Seeding word-by-word meanings from local data file...
+Word meanings already seeded (11447 entries), skipping...
+[Katha] Katha Upanishad already seeded, skipping...
+Checking for duplicate verse translations...
+No duplicate verse translations found
+Checking for duplicate explanations...
+No duplicate explanations found
+Checking for incomplete Konkani (kok) bhashya on Isha verse 9...
+Konkani bhashya for Isha verse 9 already complete
+6:40:41 AM [express] All seed operations completed
+[Import] Loading isha-upanishad-bhashya...
+[Import] isha-upanishad-bhashya: inserted 0 VTs, 0 explanations
+[Import] Loading katha-upanishad-bhashya...
+[Import] katha-upanishad-bhashya: inserted 0 VTs, 0 explanations
+[Import] Loading bhagavad-gita...
+[Import] bhagavad-gita: inserted 0 VTs, 0 explanations
+[Import] All translation data already exists, nothing new to import
+Browserslist: browsers data (caniuse-lite) is 7 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+[South Indian Bhashya Sync] All translations already correct
+6:40:48 AM [express] [Pre-warm] Loading 17 granthas into cache...
+6:40:53 AM [express] GET /api/auth/user 401 in 2ms
+[Strapi] Connection active — using Strapi as primary source
+6:40:56 AM [express] GET /api/books 304 in 2909ms
+[Strapi] Connection active — using Strapi as primary source
+6:40:56 AM [express] GET /api/languages 304 in 2799ms
+6:41:00 AM [express] [Pre-warm] (1/17) Mandukya upanishad
+6:41:02 AM [express] GET /api/auth/user 401 in 1ms
+6:41:02 AM [express] GET /api/books 304 in 4ms
+6:41:02 AM [express] GET /api/languages 304 in 14ms
+6:41:03 AM [express] [Pre-warm] (2/17) Aitareya upanishad
+[Strapi] Grantha ms4s02bun5nw9an4ds594aoe: dropped 1 empty manthra row(s) (no shloka, bhashya, or teeka content). Delete them in CMS to remove these warnings.
+6:41:12 AM [express] [Pre-warm] (3/17) Chandogya Upanishad
+6:41:12 AM [express] [Pre-warm] (4/17) Srimad Bhagavad Gita
+6:41:12 AM [express] [Pre-warm] (5/17) Advaitasiddhānta Vaijayantī
+[Strapi] Grantha nljnhc539t2q4z7im448nznm: dropped 2 duplicate manthra(s) (same docId or same adhyay/khanda/ShlokaManthraNumber). Clean up duplicates in CMS.
+[Strapi] Grantha nljnhc539t2q4z7im448nznm: dropped 1 empty manthra row(s) (no shloka, bhashya, or teeka content). Delete them in CMS to remove these warnings.
+6:41:15 AM [express] [Pre-warm] (6/17) Brahma Sutra
+6:41:15 AM [express] [Pre-warm] (7/17) Kathopanishad
+6:41:17 AM [express] [Pre-warm] (8/17) Taittariya  upanishad 
+6:41:17 AM [express] [Pre-warm] (9/17) Shvetashvatara Upanishad
+6:41:20 AM [express] [Pre-warm] (10/17) Mundaka Upanishad 
+[Strapi] Grantha d65kii2nmwdmo9ob61cka59y: dropped 211 duplicate manthra(s) (same docId or same adhyay/khanda/ShlokaManthraNumber). Clean up duplicates in CMS.
+6:41:24 AM [express] [Pre-warm] (11/17) Vivekachudamani
+6:41:25 AM [express] [Pre-warm] (12/17) Brihadaranyaka Upanishad
+6:41:25 AM [express] [Pre-warm] (13/17) Sarva Vedanta Siddhanta Saar Sangraha
+6:41:26 AM [express] [Pre-warm] (14/17) Ishavasya upanishad
+6:41:26 AM [express] [Pre-warm] (15/17) Kena upanishad 
+[Strapi] Grantha xmkwqad2p77yr1ej3jeqj82j: dropped 1 empty manthra row(s) (no shloka, bhashya, or teeka content). Delete them in CMS to remove these warnings.
+6:41:27 AM [express] [Pre-warm] (16/17) Prashna upanishad 
+6:41:28 AM [express] [Pre-warm] (17/17) Kenopanishad padabhashyam
+6:41:28 AM [express] [Pre-warm] All 17 granthas cached and ready.
+6:41:41 AM [express] GET /api/auth/user 401 in 1ms
+6:41:41 AM [express] GET /api/books 304 in 20ms
+6:41:41 AM [express] GET /api/languages 304 in 21ms
+6:41:41 AM [express] GET /api/books/t2d3crlf4ptuadp73lziogy5 200 in 1ms
+6:41:41 AM [express] GET /api/books/t2d3crlf4ptuadp73lziogy5/commentary-options 200 in 5ms
+6:41:41 AM [express] GET /api/verses/t2d3crlf4ptuadp73lziogy5-intro/explanations 200 in 2ms
+6:41:41 AM [express] GET /api/verses/t2d3crlf4ptuadp73lziogy5-intro 200 in 1ms
+6:41:41 AM [express] GET /api/verses/ulx0gx9gtx27pts0uyvqkror 200 in 3ms
+6:41:41 AM [express] GET /api/verses/ulx0gx9gtx27pts0uyvqkror/explanations 200 in 2ms
+6:41:41 AM [express] GET /api/verses/ulx0gx9gtx27pts0uyvqkror/word-meanings 200 in 7ms
+[Strapi] Connection active — using Strapi as primary source
+6:45:24 AM [express] GET /api/books/sdhg4ecqcn6k4fi6hqfca8oe/commentary-options 200 in 11ms
+6:45:38 AM [express] GET /api/books/sdhg4ecqcn6k4fi6hqfca8oe 200 in 17504ms
+6:45:39 AM [express] GET /api/verses/sdhg4ecqcn6k4fi6hqfca8oe-intro/explanations 200 in 3ms
+6:45:39 AM [express] GET /api/verses/sdhg4ecqcn6k4fi6hqfca8oe-intro 200 in 2ms
+6:45:39 AM [express] GET /api/verses/xmo2ie4eqdvn0hxowy3cna56 200 in 3ms
+6:45:41 AM [express] GET /api/verses/xmo2ie4eqdvn0hxowy3cna56/explanations 200 in 3ms
+6:45:42 AM [express] GET /api/verses/xmo2ie4eqdvn0hxowy3cna56/word-meanings 304 in 13ms
+6:45:54 AM [express] POST /api/auth/login 200 in 197ms
+6:45:54 AM [express] GET /api/auth/user 200 in 164ms
+6:45:55 AM [express] GET /api/authors 200 in 521ms
+6:46:01 AM [express] GET /api/progress/book/qcbxoj6pwo01pgnr0hxloiun 200 in 7ms
+6:46:01 AM [express] GET /api/books/qcbxoj6pwo01pgnr0hxloiun/commentary-options 200 in 9ms
+6:46:04 AM [express] GET /api/books/qcbxoj6pwo01pgnr0hxloiun 200 in 4377ms
+6:46:05 AM [express] GET /api/verses/qcbxoj6pwo01pgnr0hxloiun-intro/explanations 200 in 9ms
+6:46:05 AM [express] GET /api/verses/b5vic0u6fz7ao7mb9ifelqg1 200 in 9ms
+6:46:05 AM [express] GET /api/verses/qcbxoj6pwo01pgnr0hxloiun-intro 200 in 18ms
+6:46:06 AM [express] GET /api/verses/b5vic0u6fz7ao7mb9ifelqg1/explanations 200 in 6ms
+6:46:06 AM [express] GET /api/verses/b5vic0u6fz7ao7mb9ifelqg1/notes 200 in 12ms
+6:46:06 AM [express] GET /api/verses/b5vic0u6fz7ao7mb9ifelqg1/word-meanings 200 in 8ms
+6:46:07 AM [express] POST /api/progress 201 in 10ms
+6:46:07 AM [express] GET /api/progress/book/qcbxoj6pwo01pgnr0hxloiun 200 in 7ms
+6:46:07 AM [express] GET /api/verses/q8lcbd611tbfb404zgpx0vlk 200 in 7ms
+6:46:08 AM [express] GET /api/verses/q8lcbd611tbfb404zgpx0vlk/word-meanings 200 in 8ms
+6:46:08 AM [express] GET /api/verses/q8lcbd611tbfb404zgpx0vlk/notes 200 in 7ms
+6:46:08 AM [express] GET /api/verses/q8lcbd611tbfb404zgpx0vlk/explanations 200 in 5ms
+6:46:11 AM [express] POST /api/progress 201 in 11ms
+6:46:11 AM [express] GET /api/verses/aylrsnu76tp3skgll4xuup7p 200 in 8ms
+6:46:11 AM [express] GET /api/progress/book/qcbxoj6pwo01pgnr0hxloiun 200 in 8ms
+6:46:13 AM [express] GET /api/verses/aylrsnu76tp3skgll4xuup7p/notes 200 in 6ms
+6:46:13 AM [express] GET /api/verses/aylrsnu76tp3skgll4xuup7p/word-meanings 200 in 7ms
+6:46:13 AM [express] GET /api/verses/aylrsnu76tp3skgll4xuup7p/explanations 200 in 6ms
+6:46:14 AM [express] POST /api/progress 201 in 9ms
+6:46:14 AM [express] GET /api/verses/cn19kszt46wxfqulfqwvs7pb 200 in 7ms
+6:46:14 AM [express] GET /api/progress/book/qcbxoj6pwo01pgnr0hxloiun 200 in 5ms
+6:46:16 AM [express] GET /api/verses/cn19kszt46wxfqulfqwvs7pb/explanations 200 in 5ms
+6:46:16 AM [express] GET /api/verses/cn19kszt46wxfqulfqwvs7pb/word-meanings 200 in 9ms
+6:46:16 AM [express] GET /api/verses/cn19kszt46wxfqulfqwvs7pb/notes 200 in 16ms
+6:46:17 AM [express] POST /api/progress 201 in 11ms
+6:46:17 AM [express] GET /api/progress/book/qcbxoj6pwo01pgnr0hxloiun 200 in 10ms
+6:46:17 AM [express] GET /api/verses/corv0u8jalp6y0t4ej8o753o 200 in 8ms
+6:46:18 AM [express] GET /api/verses/corv0u8jalp6y0t4ej8o753o/word-meanings 200 in 7ms
+6:46:18 AM [express] GET /api/verses/corv0u8jalp6y0t4ej8o753o/notes 200 in 7ms
+6:46:18 AM [express] GET /api/verses/corv0u8jalp6y0t4ej8o753o/explanations 200 in 7ms
+Received SIGHUP, ignoring (keeping server alive)

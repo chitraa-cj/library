@@ -1,0 +1,134 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+[1G[0K6:46:56 AM [express] serving on port 5000
+Checking if database needs seeding...
+Database already seeded, skipping...
+Checking for additional commentaries to seed...
+Warning: Missing commentary data for verses: 0
+All additional commentaries already exist
+Checking for incomplete Shankaracharya explanations...
+All Shankaracharya explanations are complete
+Syncing authoritative commentary data (bhashyam + teeka)...
+All commentary data is already up to date
+Checking for missing English verse translations...
+All English verse translations already exist
+Checking for missing South Indian language verse translations...
+All South Indian language verse translations already exist
+Checking verse section titles...
+All verse section titles are already correct
+Checking Isha Upanishad hierarchy (adhyay/khanda)...
+Isha Upanishad hierarchy already set
+Bhagavad Gita already seeded, skipping...
+Seeding word-by-word meanings from local data file...
+Word meanings already seeded (11447 entries), skipping...
+[Katha] Katha Upanishad already seeded, skipping...
+Checking for duplicate verse translations...
+No duplicate verse translations found
+Checking for duplicate explanations...
+No duplicate explanations found
+Checking for incomplete Konkani (kok) bhashya on Isha verse 9...
+Konkani bhashya for Isha verse 9 already complete
+6:46:57 AM [express] All seed operations completed
+[Import] Loading isha-upanishad-bhashya...
+[Import] isha-upanishad-bhashya: inserted 0 VTs, 0 explanations
+[Import] Loading katha-upanishad-bhashya...
+[Import] katha-upanishad-bhashya: inserted 0 VTs, 0 explanations
+[Import] Loading bhagavad-gita...
+[Import] bhagavad-gita: inserted 0 VTs, 0 explanations
+[Import] All translation data already exists, nothing new to import
+[South Indian Bhashya Sync] All translations already correct
+Browserslist: browsers data (caniuse-lite) is 7 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+6:47:03 AM [express] [Pre-warm] Loading 17 granthas into cache...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m6:47:04 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/welcome-screen.tsx, /src/index.css[22m
+6:47:06 AM [express] GET /api/auth/user 304 in 11ms
+[Strapi] Connection active — using Strapi as primary source
+6:47:10 AM [express] GET /api/languages 304 in 4152ms
+[Strapi] Connection active — using Strapi as primary source
+6:47:10 AM [express] GET /api/books 304 in 4181ms
+[Strapi] Connection active — using Strapi as primary source
+6:47:12 AM [express] GET /api/authors 304 in 5465ms
+6:47:13 AM [express] GET /api/auth/user 401 in 1ms
+6:47:13 AM [express] GET /api/books 304 in 4ms
+6:47:13 AM [express] GET /api/languages 304 in 17ms
+6:47:16 AM [express] [Pre-warm] (1/17) Mandukya upanishad
+6:47:19 AM [express] [Pre-warm] (2/17) Aitareya upanishad
+[Strapi] Grantha ms4s02bun5nw9an4ds594aoe: dropped 1 empty manthra row(s) (no shloka, bhashya, or teeka content). Delete them in CMS to remove these warnings.
+6:47:21 AM [express] [Pre-warm] (3/17) Chandogya Upanishad
+6:47:23 AM [express] [Pre-warm] (4/17) Advaitasiddhānta Vaijayantī
+6:47:26 AM [express] [Pre-warm] (5/17) Srimad Bhagavad Gita
+[Strapi] Grantha nljnhc539t2q4z7im448nznm: dropped 2 duplicate manthra(s) (same docId or same adhyay/khanda/ShlokaManthraNumber). Clean up duplicates in CMS.
+[Strapi] Grantha nljnhc539t2q4z7im448nznm: dropped 1 empty manthra row(s) (no shloka, bhashya, or teeka content). Delete them in CMS to remove these warnings.
+6:47:27 AM [express] [Pre-warm] (6/17) Brahma Sutra
+6:47:30 AM [express] [Pre-warm] (7/17) Taittariya  upanishad 
+6:47:31 AM [express] [Pre-warm] (8/17) Kathopanishad
+6:47:33 AM [express] [Pre-warm] (9/17) Shvetashvatara Upanishad
+6:47:36 AM [express] [Pre-warm] (10/17) Mundaka Upanishad 
+[Strapi] Grantha d65kii2nmwdmo9ob61cka59y: dropped 211 duplicate manthra(s) (same docId or same adhyay/khanda/ShlokaManthraNumber). Clean up duplicates in CMS.
+6:47:37 AM [express] [Pre-warm] (11/17) Vivekachudamani
+6:47:37 AM [express] [Pre-warm] (12/17) Sarva Vedanta Siddhanta Saar Sangraha
+6:47:38 AM [express] [Pre-warm] (13/17) Ishavasya upanishad
+6:47:39 AM [express] [Pre-warm] (14/17) Kena upanishad 
+[Strapi] Grantha xmkwqad2p77yr1ej3jeqj82j: dropped 1 empty manthra row(s) (no shloka, bhashya, or teeka content). Delete them in CMS to remove these warnings.
+6:47:40 AM [express] [Pre-warm] (15/17) Prashna upanishad 
+6:47:40 AM [express] [Pre-warm] (16/17) Brihadaranyaka Upanishad
+6:47:41 AM [express] [Pre-warm] (17/17) Kenopanishad padabhashyam
+6:47:41 AM [express] [Pre-warm] All 17 granthas cached and ready.
+[Strapi] Connection active — using Strapi as primary source
+6:49:10 AM [express] GET /api/books/qcbxoj6pwo01pgnr0hxloiun 304 in 4875ms
+6:49:12 AM [express] GET /api/auth/user 401 in 1ms
+6:49:12 AM [express] GET /api/books 304 in 17ms
+6:49:12 AM [express] GET /api/languages 304 in 18ms
+Received SIGHUP, ignoring (keeping server alive)

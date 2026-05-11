@@ -13,9 +13,39 @@ import type {
 } from "@shared/schema";
 import { transliterateSanskrit, LANGUAGE_TO_SCHEME } from "./strapi-transliterate";
 import type { CommentaryOptions, CommentaryOption } from "./storage";
+import { Agent, fetch as undiciFetch } from "undici";
 
-const STRAPI_URL = process.env.STRAPI_URL || "";
-const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN || "";
+const STRAPI_URL = (process.env.STRAPI_URL ?? "").trim().replace(/\/+$/, "");
+const STRAPI_API_TOKEN = (process.env.STRAPI_API_TOKEN ?? "").trim();
+
+const strapiTlsAgent =
+  process.env.STRAPI_TLS_SKIP_VERIFY === "1"
+    ? new Agent({ connect: { rejectUnauthorized: false } })
+    : undefined;
+
+if (strapiTlsAgent) {
+  console.warn(
+    "[Strapi] STRAPI_TLS_SKIP_VERIFY=1 — TLS verification is disabled for Strapi requests only (local dev). Fix the CMS certificate for production.",
+  );
+}
+
+const strapiUserAgent =
+  process.env.STRAPI_USER_AGENT?.trim() ||
+  "Sacred-Script-Hub/1.0 (server; Strapi REST client)";
+
+async function strapiHttpFetch(
+  url: string,
+  headers: Record<string, string>,
+  timeoutMs: number,
+): Promise<Response> {
+  return undiciFetch(url, {
+    headers: { "User-Agent": strapiUserAgent, ...headers },
+    signal: AbortSignal.timeout(timeoutMs),
+    ...(strapiTlsAgent ? { dispatcher: strapiTlsAgent } : {}),
+  } as RequestInit);
+}
+
+let loggedStrapiReachabilityFailure = false;
 
 interface CacheEntry<T> {
   data: T;
@@ -92,11 +122,25 @@ async function strapiFetch<T = any>(endpoint: string, params: Record<string, str
     headers["Authorization"] = `Bearer ${STRAPI_API_TOKEN}`;
   }
 
-  const response = await fetch(url.toString(), { headers, signal: AbortSignal.timeout(15000) });
-  if (!response.ok) {
-    throw new Error(`Strapi API error: ${response.status} ${response.statusText} for ${endpoint}`);
+  const timeoutMs = Number(process.env.STRAPI_TIMEOUT_MS || 15000);
+  let response: Response;
+  try {
+    response = await strapiHttpFetch(url.toString(), headers, timeoutMs);
+  } catch (e: unknown) {
+    const err = e as Error & { cause?: Error };
+    const cause = err?.cause?.message || err?.cause || "";
+    throw new Error(
+      `Strapi fetch failed for ${endpoint}: ${err?.message || String(e)}${cause ? ` (${String(cause)})` : ""}. If you see certificate errors, try STRAPI_TLS_SKIP_VERIFY=1 in .env for local dev only.`,
+    );
   }
-  return response.json();
+  if (!response.ok) {
+    const body = await response.text();
+    const snippet = body.replace(/\s+/g, " ").slice(0, 400);
+    throw new Error(
+      `Strapi API error: ${response.status} ${response.statusText} for ${url.pathname}${url.search} — ${snippet}`,
+    );
+  }
+  return response.json() as Promise<T>;
 }
 
 async function strapiFetchAll<T = any>(endpoint: string, params: Record<string, string> = {}): Promise<T[]> {
@@ -450,7 +494,12 @@ export async function isStrapiReachable(): Promise<boolean> {
   try {
     await strapiFetch("/granthas", { "pagination[pageSize]": "1" });
     return true;
-  } catch {
+  } catch (e: unknown) {
+    if (!loggedStrapiReachabilityFailure) {
+      loggedStrapiReachabilityFailure = true;
+      const msg = e instanceof Error ? e.message : String(e);
+      console.warn("[Strapi] Reachability check failed — using DB-only until Strapi works:", msg);
+    }
     return false;
   }
 }
@@ -463,18 +512,15 @@ export async function testStrapiConnection(): Promise<{ connected: boolean; mess
     return { connected: false, message: "STRAPI_URL not configured" };
   }
   try {
-    const response = await fetch(`${STRAPI_URL}/api/granthas?pagination[pageSize]=1`, {
-      headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
-      signal: AbortSignal.timeout(10000),
-    });
-    if (response.ok) {
-      const data = await response.json();
-      const count = data?.meta?.pagination?.total ?? data?.data?.length ?? "unknown";
-      return { connected: true, message: `Connected to Strapi. Granthas found: ${count}` };
-    }
-    return { connected: false, message: `Strapi returned status ${response.status}` };
-  } catch (error: any) {
-    return { connected: false, message: `Connection failed: ${error.message || error}` };
+    const data = await strapiFetch<{ meta?: { pagination?: { total?: number } }; data?: unknown[] }>(
+      "/granthas",
+      { "pagination[pageSize]": "1" },
+    );
+    const count = data?.meta?.pagination?.total ?? data?.data?.length ?? "unknown";
+    return { connected: true, message: `Connected to Strapi. Granthas found: ${count}` };
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    return { connected: false, message: msg };
   }
 }
 

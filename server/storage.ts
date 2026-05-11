@@ -51,6 +51,7 @@ import {
   strapiGetWordMeaningsByVerseId,
   strapiGetChapterVerses,
 } from "./strapi";
+import { normalizeBookSlugForMerge, STRAPI_IDS_MERGE_DESPITE_SHARED_SLUG } from "./strapi-merge-policy";
 
 export interface CommentaryOption {
   authorName: string;
@@ -487,15 +488,22 @@ export class HybridStorage implements IStorage {
   }
 
   async getAllBooks(): Promise<Book[]> {
-    const dbBooks = await this.db.getAllBooks();
+    let dbBooks: Book[] = [];
+    try {
+      dbBooks = await this.db.getAllBooks();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn("[HybridStorage] getAllBooks DB query failed; continuing with Strapi if available:", msg);
+    }
     if (!(await this.isStrapiAvailable())) return dbBooks;
     try {
       const strapiBooks = await strapiGetAllBooks();
-      const dbSlugSet = new Set(dbBooks.map(b => (b.slug || '').toLowerCase().replace(/-+$/, '').replace(/-bhashya$/, '').trim()));
+      const dbSlugSet = new Set(dbBooks.map((b) => normalizeBookSlugForMerge(b.slug)));
       const merged = [...dbBooks];
       for (const b of strapiBooks) {
-        const sSlug = (b.slug || '').toLowerCase().replace(/-+$/, '').trim();
-        if (!dbSlugSet.has(sSlug)) {
+        const sSlug = normalizeBookSlugForMerge(b.slug);
+        const forceMerge = STRAPI_IDS_MERGE_DESPITE_SHARED_SLUG.has(b.id);
+        if (!dbSlugSet.has(sSlug) || forceMerge) {
           merged.push(b);
         }
       }

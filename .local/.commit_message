@@ -1,0 +1,19 @@
+Homepage redesign: Triple Canon, structured Treasury, Manifestations
+
+Restructured the WelcomeScreen with three new visual sections matching the
+provided mockups:
+
+1. Prasthanatrayi - The Triple Canon: 3 large cards (Upanishads / Bhagavad
+   Gita / Brahma Sutras) with sacred symbol, SHRUTI/SMRITI/NYAYA PRASTHANA
+   subtitles and a count pill. Cards navigate to the respective subcategory
+   via a new onSelectSubCategory prop wired through App.tsx.
+2. Treasury of Wisdom restructured into three labelled blocks:
+   - Prakarana Granthas (2-col list of 6 monographs that link to the actual
+     books by slug, gracefully disabled if the slug is not in the library)
+   - Two Schools (Bhamati / Vivarana with member chips)
+   - Regional Luminaries (chip pills + View all -> library)
+3. Manifestations Across Traditions: 3 colored top-border cards (Varkari
+   Saints amber, Bhakti Saints teal, Sikh Akhada Granthas purple) with
+   tradition tag pills.
+
+Existing Vision / Features / Quote / Videos blocks below are untouched.

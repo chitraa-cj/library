@@ -1,6 +1,7 @@
 import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { LOCAL_STRAPI_DUPLICATES, STRAPI_REPLACES_LOCAL } from "./strapi-merge-policy";
 import { testStrapiConnection, STRAPI_URL, invalidateBookCache } from "./strapi";
 import { translateWord } from "./openai";
 import { translateWordRequestSchema } from "@shared/schema";
@@ -27,25 +28,9 @@ export async function registerRoutes(
   
   setTimeout(() => restoreQueueFromFile(), 5000);
 
-  // Strapi grantha docIds whose corresponding legacy PG book is the canonical version
-  // (the Strapi version is hidden from the listing).
-  const LOCAL_STRAPI_DUPLICATES: Record<string, string> = {
-    "ngjdm2fcgp0ogp16jcey3vo1": "isha-upanishad-bhashya",
-    "b7zir6h4z5v2ng6uofnvhmp3": "bhagavad-gita",
-  };
-
-  // Legacy PG books (identified by stable slug) that should be hidden ONLY when
-  // the corresponding Strapi grantha is also present in the same response —
-  // preserves DB fallback when Strapi is unreachable. Slug is used (not the PG
-  // UUID) because the seeder generates a fresh UUID on every fresh database, so
-  // the production UUID will not match a hard-coded dev UUID.
-  // - Katha: Strapi has all 120 mantras across 2 adhyayas; PG had 26 in 1 adhyaya.
-  const STRAPI_REPLACES_LOCAL: Array<{ strapiDocId: string; localPgSlug: string }> = [
-    {
-      strapiDocId: "t2d3crlf4ptuadp73lziogy5",
-      localPgSlug: "katha-upanishad-bhashya",
-    },
-  ];
+  app.get("/api/health", (_req, res) => {
+    res.status(200).send("OK");
+  });
 
   app.get("/api/books", async (req, res) => {
     try {

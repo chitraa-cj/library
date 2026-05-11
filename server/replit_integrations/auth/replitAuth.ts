@@ -8,14 +8,18 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { authStorage } from "./storage";
 
+const defaultIssuer = "https://replit.com/oidc";
+const issuerUrl = () =>
+  (process.env.ISSUER_URL && process.env.ISSUER_URL.trim()) || defaultIssuer;
+
 const getOidcConfig = memoize(
   async () => {
     return await client.discovery(
-      new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
-      process.env.REPL_ID!
+      new URL(issuerUrl()),
+      process.env.REPL_ID!.trim(),
     );
   },
-  { maxAge: 3600 * 1000 }
+  { maxAge: 3600 * 1000 },
 );
 
 export function getSession() {
@@ -34,7 +38,7 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       maxAge: sessionTtl,
     },
   });
@@ -74,6 +78,15 @@ export async function setupAuth(app: Express) {
   });
   app.use(passport.initialize());
   app.use(passport.session());
+
+  if (!process.env.REPL_ID?.trim()) {
+    console.warn(
+      "[auth] REPL_ID unset — Replit OIDC disabled. Use email/password (/api/auth/register, /api/auth/login) or set REPL_ID for Replit sign-in.",
+    );
+    passport.serializeUser((user: Express.User, cb) => cb(null, user));
+    passport.deserializeUser((user: Express.User, cb) => cb(null, user));
+    return;
+  }
 
   const config = await getOidcConfig();
 

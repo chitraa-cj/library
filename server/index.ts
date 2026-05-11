@@ -1,5 +1,7 @@
-process.on('SIGHUP', () => {
-  console.log('Received SIGHUP, ignoring (keeping server alive)');
+import "./bootstrap-env";
+
+process.on("SIGHUP", () => {
+  console.log("Received SIGHUP, ignoring (keeping server alive)");
 });
 
 import express, { type Request, Response, NextFunction } from "express";
@@ -83,22 +85,55 @@ app.use((req, res, next) => {
     await setupVite(httpServer, app);
   }
 
-  const port = parseInt(process.env.PORT || "5000", 10);
-  httpServer.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
-    () => {
-      log(`serving on port ${port}`);
-
-      runSeedOperations();
-    },
+  const explicitPort = process.env.PORT?.trim();
+  const basePort = parseInt(
+    explicitPort || (process.env.NODE_ENV === "development" ? "5050" : "8080"),
+    10,
   );
+  const pinPort = Boolean(explicitPort);
+  const maxDevPortSkips = 40;
+
+  const bind = (port: number): void => {
+    const onError = (err: NodeJS.ErrnoException) => {
+      httpServer.removeListener("error", onError);
+      if (
+        err.code === "EADDRINUSE" &&
+        !pinPort &&
+        process.env.NODE_ENV === "development" &&
+        port - basePort < maxDevPortSkips
+      ) {
+        log(`port ${port} in use, trying ${port + 1}…`);
+        bind(port + 1);
+        return;
+      }
+      if (err.code === "EADDRINUSE") {
+        console.error(
+          `[express] Port ${port} is already in use.${pinPort ? " Change PORT in .env." : " Set PORT in .env to pin a free port."} On macOS, AirPlay Receiver may use 5000 (System Settings → AirDrop & Handoff).`,
+        );
+      } else {
+        console.error("[express] HTTP server error:", err);
+      }
+      process.exit(1);
+    };
+    httpServer.once("error", onError);
+    httpServer.listen(port, "0.0.0.0", () => {
+      httpServer.removeListener("error", onError);
+      log(`serving on port ${port}`);
+      runSeedOperations();
+    });
+  };
+
+  bind(basePort);
 })();
 
+let seedOperationsStarted = false;
+
 async function runSeedOperations() {
+  if (seedOperationsStarted) {
+    console.warn("[express] runSeedOperations() already invoked in this process — skipping duplicate call.");
+    return;
+  }
+  seedOperationsStarted = true;
   try {
     await seedDatabase().catch(console.error);
     await seedAdditionalCommentaries().catch(console.error);
@@ -148,7 +183,9 @@ async function prewarmAllBookCaches() {
     }
     await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
     log(`[Pre-warm] All ${done} granthas cached and ready.`);
-  } catch (e: any) {
-    log(`[Pre-warm] Skipped: ${e.message}`);
+  } catch (e: unknown) {
+    const err = e as Error & { cause?: Error };
+    const detail = err?.cause?.message || err?.message || String(e);
+    log(`[Pre-warm] Skipped: ${detail}`);
   }
 }

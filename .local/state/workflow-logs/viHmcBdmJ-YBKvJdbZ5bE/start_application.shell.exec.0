@@ -1,0 +1,131 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+[1G[0K6:39:48 AM [express] serving on port 5000
+Checking if database needs seeding...
+Database already seeded, skipping...
+Checking for additional commentaries to seed...
+Warning: Missing commentary data for verses: 0
+All additional commentaries already exist
+Checking for incomplete Shankaracharya explanations...
+All Shankaracharya explanations are complete
+Syncing authoritative commentary data (bhashyam + teeka)...
+All commentary data is already up to date
+Checking for missing English verse translations...
+All English verse translations already exist
+Checking for missing South Indian language verse translations...
+All South Indian language verse translations already exist
+Checking verse section titles...
+All verse section titles are already correct
+Checking Isha Upanishad hierarchy (adhyay/khanda)...
+Isha Upanishad hierarchy already set
+Bhagavad Gita already seeded, skipping...
+Seeding word-by-word meanings from local data file...
+Word meanings already seeded (11447 entries), skipping...
+[Katha] Katha Upanishad already seeded, skipping...
+Checking for duplicate verse translations...
+No duplicate verse translations found
+Checking for duplicate explanations...
+No duplicate explanations found
+Checking for incomplete Konkani (kok) bhashya on Isha verse 9...
+Konkani bhashya for Isha verse 9 already complete
+6:39:48 AM [express] All seed operations completed
+[Import] Loading isha-upanishad-bhashya...
+[Import] isha-upanishad-bhashya: inserted 0 VTs, 0 explanations
+[Import] Loading katha-upanishad-bhashya...
+[Import] katha-upanishad-bhashya: inserted 0 VTs, 0 explanations
+[Import] Loading bhagavad-gita...
+[Import] bhagavad-gita: inserted 0 VTs, 0 explanations
+[Import] All translation data already exists, nothing new to import
+[South Indian Bhashya Sync] All translations already correct
+6:39:52 AM [express] [Pre-warm] Loading 17 granthas into cache...
+6:40:04 AM [express] [Pre-warm] (1/17) Mandukya upanishad
+6:40:08 AM [express] [Pre-warm] (2/17) Aitareya upanishad
+[Strapi] Grantha ms4s02bun5nw9an4ds594aoe: dropped 1 empty manthra row(s) (no shloka, bhashya, or teeka content). Delete them in CMS to remove these warnings.
+6:40:14 AM [express] [Pre-warm] (3/17) Chandogya Upanishad
+6:40:14 AM [express] [Pre-warm] (4/17) Srimad Bhagavad Gita
+6:40:15 AM [express] [Pre-warm] (5/17) Advaitasiddhānta Vaijayantī
+[Strapi] Grantha nljnhc539t2q4z7im448nznm: dropped 2 duplicate manthra(s) (same docId or same adhyay/khanda/ShlokaManthraNumber). Clean up duplicates in CMS.
+[Strapi] Grantha nljnhc539t2q4z7im448nznm: dropped 1 empty manthra row(s) (no shloka, bhashya, or teeka content). Delete them in CMS to remove these warnings.
+6:40:16 AM [express] [Pre-warm] (6/17) Brahma Sutra
+6:40:20 AM [express] [Pre-warm] (7/17) Taittariya  upanishad 
+6:40:20 AM [express] [Pre-warm] (8/17) Kathopanishad
+Browserslist: browsers data (caniuse-lite) is 7 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+[replit-cartographer] Error processing /home/runner/workspace/client/src/components/book-reader.tsx: SyntaxError: Identifier 'completedSet' has already been declared. (854:8)
+    at toParseError [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parse-error.ts:95:45[90m)[39m
+    at raise [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/tokenizer/index.ts:1503:19[90m)[39m
+    at checkRedeclarationInScope [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/util/scope.ts:164:19[90m)[39m
+    at declareName [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/util/scope.ts:118:12[90m)[39m
+    at declareName [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/plugins/typescript/scope.ts:89:11[90m)[39m
+    at declareNameFromIdentifier [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/lval.ts:818:16[90m)[39m
+    at checkIdentifier [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/lval.ts:813:12[90m)[39m
+    at checkLVal [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/lval.ts:713:12[90m)[39m
+    at parseVarId [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:1628:10[90m)[39m
+    at parseVarId [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/plugins/typescript/index.ts:3663:13[90m)[39m
+    at parseVar [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:1577:12[90m)[39m
+    at parseVarStatement [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:1246:10[90m)[39m
+    at parseVarStatement [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/plugins/typescript/index.ts:3126:33[90m)[39m
+    at parseStatementContent [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:607:21[90m)[39m
+    at parseStatementContent [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/plugins/typescript/index.ts:3185:20[90m)[39m
+    at parseStatementLike [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:477:17[90m)[39m
+    at parseStatementListItem [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:426:17[90m)[39m
+    at parseBlockOrModuleBlockBody [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:1439:16[90m)[39m
+    at parseBlockBody [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:1412:10[90m)[39m
+    at parseBlock [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:1380:10[90m)[39m
+    at parseFunctionBody [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:2616:24[90m)[39m
+    at parseFunctionBodyAndFinish [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:2585:10[90m)[39m
+    at parseFunctionBodyAndFinish [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/plugins/typescript/index.ts:2646:20[90m)[39m
+    at callback [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:1690:12[90m)[39m
+    at withSmartMixTopicForbiddingContext [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/expression.ts:3166:14[90m)[39m
+    at parseFunction [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:1688:10[90m)[39m
+    at parseFunctionStatement [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:1075:17[90m)[39m
+    at parseStatementContent [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:520:21[90m)[39m
+    at parseStatementContent [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/plugins/typescript/index.ts:3185:20[90m)[39m
+    at parseStatementLike [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:477:17[90m)[39m
+    at parseStatementListItem [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:426:17[90m)[39m
+    at parseExportDeclaration [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:2630:17[90m)[39m
+    at parseExportDeclaration [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/plugins/typescript/index.ts:3430:15[90m)[39m
+    at maybeParseExportDeclaration [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:2546:31[90m)[39m
+    at parseExport [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:2427:29[90m)[39m
+    at parseExport [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/plugins/typescript/index.ts:3087:22[90m)[39m
+    at parseStatementContent [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:644:25[90m)[39m
+    at parseStatementContent [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/plugins/typescript/index.ts:3185:20[90m)[39m
+    at parseStatementLike [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:477:17[90m)[39m
+    at parseModuleItem [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:414:17[90m)[39m
+    at parseBlockOrModuleBlockBody [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:1438:16[90m)[39m
+    at parseBlockBody [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:1412:10[90m)[39m
+    at parseProgram [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:229:10[90m)[39m
+    at parseTopLevel [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/statement.ts:203:25[90m)[39m
+    at parse [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/parser/index.ts:93:10[90m)[39m
+    at parse [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/plugins/typescript/index.ts:4309:20[90m)[39m
+    at parse [90m(/home/runner/workspace/[39mnode_modules/[4m@babel/parser[24m/src/index.ts:92:38[90m)[39m
+    at TransformPluginContext.handler [90m(/home/runner/workspace/[39mnode_modules/[4m@replit/vite-plugin-cartographer[24m/dist/index.mjs:74:23[90m)[39m
+    at EnvironmentPluginContainer.transform [90m(/home/runner/workspace/[39mnode_modules/[4mvite[24m/dist/node/chunks/config.js:28796:51[90m)[39m
+    at loadAndTransform [90m(/home/runner/workspace/[39mnode_modules/[4mvite[24m/dist/node/chunks/config.js:22669:48[90m)[39m {
+  code: [32m'BABEL_PARSER_SYNTAX_ERROR'[39m,
+  reasonCode: [32m'VarRedeclaration'[39m,
+  loc: Position { line: [33m854[39m, column: [33m8[39m, index: [33m33080[39m },
+  pos: [33m33080[39m,
+  syntaxPlugin: [90mundefined[39m
+}
+[2m6:40:22 AM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: /home/runner/workspace/client/src/components/book-reader.tsx: Identifier 'completedSet' has already been declared. (854:8)
+
+[0m [90m 852 |[39m   }[33m;[39m
+ [90m 853 |[39m
+[31m[1m>[22m[39m[90m 854 |[39m   [36mconst[39m completedSet [33m=[39m useMemo(() [33m=>[39m [36mnew[39m [33mSet[39m(bookProgress[33m?[39m[33m.[39mcompletedVerseIds [33m||[39m [])[33m,[39m [bookProgress])[33m;[39m
+ [90m     |[39m         [31m[1m^[22m[39m
+ [90m 855 |[39m   [36mconst[39m currentVerseIsCompleted [33m=[39m currentVerse [33m?[39m completedSet[33m.[39mhas(currentVerse[33m.[39mid) [33m:[39m [36mfalse[39m[33m;[39m
+ [90m 856 |[39m   [36mconst[39m completedCount [33m=[39m completedSet[33m.[39msize[33m;[39m
+ [90m 857 |[39m   [36mconst[39m verseTotal [33m=[39m verses[33m.[39mlength [33m||[39m [35m0[39m[33m;[39m[0m
+  Plugin: [35mvite:react-babel[39m
+  File: [36m/home/runner/workspace/client/src/components/book-reader.tsx[39m:854:8
+[33m  852 |    };
+  853 |  
+  854 |    const completedSet = useMemo(() => new Set(bookProgress?.completedVerseIds || []), [bookProgress]);
+      |          ^
+  855 |    const currentVerseIsCompleted = currentVerse ? completedSet.has(currentVerse.id) : false;
+  856 |    const completedCount = completedSet.size;[39m
+[1G[0K⠙[1G[0K

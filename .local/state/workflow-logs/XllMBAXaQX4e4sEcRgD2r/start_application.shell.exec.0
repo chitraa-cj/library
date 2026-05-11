@@ -1,0 +1,66 @@
+[1G[0K⠙[1G[0K
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+[1G[0K⠙[1G[0K7:25:23 AM [express] serving on port 5000
+Checking if database needs seeding...
+Database already seeded, skipping...
+Checking for additional commentaries to seed...
+Warning: Missing commentary data for verses: 0
+All additional commentaries already exist
+Checking for incomplete Shankaracharya explanations...
+All Shankaracharya explanations are complete
+Syncing authoritative commentary data (bhashyam + teeka)...
+All commentary data is already up to date
+Checking for missing English verse translations...
+All English verse translations already exist
+Checking for missing South Indian language verse translations...
+All South Indian language verse translations already exist
+Checking verse section titles...
+All verse section titles are already correct
+Checking Isha Upanishad hierarchy (adhyay/khanda)...
+Isha Upanishad hierarchy already set
+Bhagavad Gita already seeded, skipping...
+Seeding word-by-word meanings from local data file...
+Word meanings already seeded (11447 entries), skipping...
+[Katha] Katha Upanishad already seeded, skipping...
+Checking for duplicate verse translations...
+No duplicate verse translations found
+Checking for duplicate explanations...
+No duplicate explanations found
+Checking for incomplete Konkani (kok) bhashya on Isha verse 9...
+Konkani bhashya for Isha verse 9 already complete
+7:25:25 AM [express] All seed operations completed
+[Import] Loading isha-upanishad-bhashya...
+[Import] isha-upanishad-bhashya: inserted 0 VTs, 0 explanations
+[Import] Loading katha-upanishad-bhashya...
+[Import] katha-upanishad-bhashya: inserted 0 VTs, 0 explanations
+[Import] Loading bhagavad-gita...
+[Import] bhagavad-gita: inserted 0 VTs, 0 explanations
+[Import] All translation data already exists, nothing new to import
+[South Indian Bhashya Sync] All translations already correct
+7:25:30 AM [express] [Pre-warm] Loading 17 granthas into cache...
+7:25:41 AM [express] [Pre-warm] (1/17) Mandukya upanishad
+7:25:44 AM [express] [Pre-warm] (2/17) Aitareya upanishad
+7:25:50 AM [express] [Pre-warm] (3/17) Srimad Bhagavad Gita
+[Strapi] Grantha ms4s02bun5nw9an4ds594aoe: dropped 1 empty manthra row(s) (no shloka, bhashya, or teeka content). Delete them in CMS to remove these warnings.
+7:25:51 AM [express] [Pre-warm] (4/17) Chandogya Upanishad
+7:25:51 AM [express] [Pre-warm] (5/17) Advaitasiddhānta Vaijayantī
+[Strapi] Grantha nljnhc539t2q4z7im448nznm: dropped 2 duplicate manthra(s) (same docId or same adhyay/khanda/ShlokaManthraNumber). Clean up duplicates in CMS.
+[Strapi] Grantha nljnhc539t2q4z7im448nznm: dropped 1 empty manthra row(s) (no shloka, bhashya, or teeka content). Delete them in CMS to remove these warnings.
+7:25:54 AM [express] [Pre-warm] (6/17) Brahma Sutra
+7:25:56 AM [express] [Pre-warm] (7/17) Taittariya  upanishad 
+7:25:57 AM [express] [Pre-warm] (8/17) Kathopanishad
+7:25:58 AM [express] [Pre-warm] (9/17) Shvetashvatara Upanishad
+7:26:01 AM [express] [Pre-warm] (10/17) Mundaka Upanishad 
+[Strapi] Grantha d65kii2nmwdmo9ob61cka59y: dropped 211 duplicate manthra(s) (same docId or same adhyay/khanda/ShlokaManthraNumber). Clean up duplicates in CMS.
+7:26:02 AM [express] [Pre-warm] (11/17) Vivekachudamani
+7:26:04 AM [express] [Pre-warm] (12/17) Kena upanishad 
+7:26:05 AM [express] [Pre-warm] (13/17) Brihadaranyaka Upanishad
+7:26:05 AM [express] [Pre-warm] (14/17) Ishavasya upanishad
+[Strapi] Grantha xmkwqad2p77yr1ej3jeqj82j: dropped 1 empty manthra row(s) (no shloka, bhashya, or teeka content). Delete them in CMS to remove these warnings.
+7:26:06 AM [express] [Pre-warm] (15/17) Prashna upanishad 
+7:26:07 AM [express] [Pre-warm] (16/17) Sarva Vedanta Siddhanta Saar Sangraha
+7:26:07 AM [express] [Pre-warm] (17/17) Kenopanishad padabhashyam
+7:26:07 AM [express] [Pre-warm] All 17 granthas cached and ready.
+Received SIGHUP, ignoring (keeping server alive)

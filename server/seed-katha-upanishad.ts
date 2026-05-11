@@ -57,6 +57,21 @@ const LANG_MAP: Record<string, string> = {
   "Sanskrit": "sa",
 };
 
+function resolveKathaJsonPath(): string | null {
+  const candidates = [
+    path.resolve("attached_assets/Upanishads_Complete_Export_(1)_1771923200056.json"),
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  const dir = path.resolve("attached_assets");
+  if (!fs.existsSync(dir)) return null;
+  const fallback = fs
+    .readdirSync(dir)
+    .find((f) => /\.json$/i.test(f) && /Upanishads|Katha|upanishad/i.test(f));
+  return fallback ? path.join(dir, fallback) : null;
+}
+
 export async function seedKathaUpanishad() {
   const existingBooks = await db.select().from(books).where(eq(books.slug, "katha-upanishad-bhashya"));
   if (existingBooks.length > 0) {
@@ -66,10 +81,15 @@ export async function seedKathaUpanishad() {
 
   console.log("[Katha] Seeding Katha Upanishad...");
 
-  const jsonPath = path.resolve("attached_assets/Upanishads_Complete_Export_(1)_1771923200056.json");
-  if (!fs.existsSync(jsonPath)) {
-    console.error("[Katha] JSON file not found:", jsonPath);
+  const jsonPath = resolveKathaJsonPath();
+  if (!jsonPath) {
+    console.error(
+      "[Katha] No Katha JSON in attached_assets/. Add Upanishads_Complete_Export_(1)_1771923200056.json (or any *Upanishads*.json) under attached_assets/, or load Katha from Strapi.",
+    );
     return null;
+  }
+  if (!jsonPath.includes("1771923200056")) {
+    console.log("[Katha] Using JSON file:", jsonPath);
   }
 
   const rawData = fs.readFileSync(jsonPath, "utf-8");
