@@ -11,3 +11,5 @@ vite.config.ts.*
 .config/replit/
 *.db
 .replit
+*.pem
+replacements.txt
