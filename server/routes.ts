@@ -2,7 +2,12 @@ import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { LOCAL_STRAPI_DUPLICATES, STRAPI_REPLACES_LOCAL } from "./strapi-merge-policy";
-import { testStrapiConnection, STRAPI_URL, invalidateBookCache } from "./strapi";
+import { testStrapiConnection, STRAPI_URL, invalidateBookCache, invalidateAllStrapiCaches, strapiGetVerseById } from "./strapi";
+import {
+  applyCacheInvalidation,
+  isWebhookAuthorized,
+  resolveCacheInvalidationFromWebhook,
+} from "./strapi-webhook";
 import { translateWord } from "./openai";
 import { translateWordRequestSchema } from "@shared/schema";
 import { isAuthenticated } from "./replit_integrations/auth";
@@ -21,6 +26,22 @@ function getUserId(req: any): string {
   return req.user?.claims?.sub;
 }
 
+function isStrapiCacheSecretValid(req: Request): boolean {
+  const secret = (process.env.STRAPI_WEBHOOK_SECRET ?? "").trim();
+  if (!secret) return true;
+  const header = req.headers["x-strapi-webhook-secret"] ?? req.headers["x-webhook-secret"];
+  const provided =
+    (typeof header === "string" ? header : header?.[0]) ??
+    (typeof req.body === "object" && req.body && "secret" in req.body
+      ? String((req.body as { secret?: string }).secret)
+      : "");
+  return provided === secret;
+}
+
+function setContentApiCacheHeaders(res: import("express").Response): void {
+  res.setHeader("Cache-Control", "private, no-cache, must-revalidate");
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -34,6 +55,7 @@ export async function registerRoutes(
 
   app.get("/api/books", async (req, res) => {
     try {
+      setContentApiCacheHeaders(res);
       const books = await storage.getAllBooks();
       const isLocalDb = (b: any) => typeof b.id === 'string' && b.id.includes('-') && b.id.length > 30;
       const presentIds = new Set(books.map(b => b.id as string));
@@ -70,6 +92,7 @@ export async function registerRoutes(
 
   app.get("/api/books/:id", async (req, res) => {
     try {
+      setContentApiCacheHeaders(res);
       const book = await storage.getBookWithVerseMeta(req.params.id);
       if (!book) {
         return res.status(404).json({ error: "Book not found" });
@@ -83,6 +106,7 @@ export async function registerRoutes(
 
   app.get("/api/verses/:id", async (req, res) => {
     try {
+      setContentApiCacheHeaders(res);
       const verse = await storage.getVerseById(req.params.id);
       if (!verse) {
         return res.status(404).json({ error: "Verse not found" });
@@ -106,6 +130,7 @@ export async function registerRoutes(
 
   app.get("/api/verses/:id/explanations", async (req, res) => {
     try {
+      setContentApiCacheHeaders(res);
       const explanations = await storage.getExplanationsByVerseId(req.params.id);
       res.json(explanations);
     } catch (error) {
@@ -116,6 +141,7 @@ export async function registerRoutes(
 
   app.get("/api/books/:id/chapter/:adhyayNumber/verses", async (req, res) => {
     try {
+      setContentApiCacheHeaders(res);
       const adhyayNumber = parseInt(req.params.adhyayNumber, 10);
       if (isNaN(adhyayNumber)) {
         return res.status(400).json({ error: "Invalid chapter number" });
@@ -130,6 +156,7 @@ export async function registerRoutes(
 
   app.get("/api/books/:id/commentary-options", async (req, res) => {
     try {
+      setContentApiCacheHeaders(res);
       const options = await storage.getCommentaryOptionsByBookId(req.params.id);
       res.json(options);
     } catch (error) {
@@ -590,12 +617,47 @@ export async function registerRoutes(
     res.json({ jobs: getAllPublishJobs() });
   });
 
+  // Strapi CMS webhook: call on entry publish/update/delete to refresh site content immediately.
+  // In Strapi Admin → Settings → Webhooks, point to POST /api/strapi/webhook and set the same secret as STRAPI_WEBHOOK_SECRET.
+  app.post("/api/strapi/webhook", async (req, res) => {
+    try {
+      if (!isWebhookAuthorized(req.headers, req.body)) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      let target = resolveCacheInvalidationFromWebhook(req.body);
+      if (target.verseId && !target.bookId) {
+        const verse = await strapiGetVerseById(target.verseId);
+        if (verse?.bookId) {
+          target = { ...target, bookId: verse.bookId };
+        }
+      }
+
+      const { invalidated } = applyCacheInvalidation(target);
+      if (invalidated.length === 0) {
+        console.log("[Strapi webhook] No cache target resolved; payload keys:", Object.keys(req.body || {}));
+      }
+
+      res.json({ ok: true, invalidated });
+    } catch (error: any) {
+      console.error("[Strapi webhook] Error:", error.message);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Clear the in-memory Strapi cache for a single book/grantha so freshly-edited
-  // CMS data shows up on the site without waiting for the 24-hour TTL.
+  // CMS data shows up on the site without waiting for the cache TTL.
   app.post("/api/strapi/cache/invalidate", async (req, res) => {
     try {
-      const { bookId } = req.body || {};
-      if (!bookId) return res.status(400).json({ error: "bookId required" });
+      if (!isStrapiCacheSecretValid(req)) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      const { bookId, all } = req.body || {};
+      if (all) {
+        invalidateAllStrapiCaches();
+        return res.json({ invalidated: true, all: true });
+      }
+      if (!bookId) return res.status(400).json({ error: "bookId required (or all: true)" });
       invalidateBookCache(bookId);
       res.json({ invalidated: true, bookId });
     } catch (error: any) {

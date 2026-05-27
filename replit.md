@@ -89,8 +89,11 @@ Preferred communication style: Simple, everyday language.
 - BookReader bottom nav: thin progress bar + "Mark complete" toggle + primary "Complete & next" button (auto-marks current verse and advances). All hooks are declared at the top of `BookReader` (above the `isLoading`/`error` early returns) to satisfy Rules of Hooks; only derived constants live further down.
 - Book cards in `welcome-screen.tsx` (sidebar tree + `GenericBookLanding`) show a `BookProgressBar` (% of verses completed). Hidden when not signed in, when `totalVerses` is 0, or when no verses are completed yet.
 
-### Manual Cache Invalidation
-- `POST /api/strapi/cache/invalidate { bookId }` clears all in-memory Strapi caches for one grantha (book detail, verse meta, individual verses, explanations, commentary options) so freshly-edited CMS data shows up without waiting for the 24-hour TTL or restarting the server. Use this after publishing/editing manthras in Strapi.
+### CMS cache refresh
+- Server Strapi cache TTL defaults to **5 minutes** (`STRAPI_CACHE_TTL_MS`). Publish/translate/transliterate jobs and `POST /api/strapi/webhook` clear caches immediately for the affected grantha.
+- **Strapi webhook:** In Strapi Admin → Settings → Webhooks, create a webhook on `entry.publish` / `entry.update` / `entry.delete` for `grantha`, `section`, and `manthra` pointing to `POST https://your-site/api/strapi/webhook` with header `x-strapi-webhook-secret` matching `STRAPI_WEBHOOK_SECRET` in `.env`.
+- **Manual:** `POST /api/strapi/cache/invalidate` with body `{ "bookId": "<grantha-documentId>" }` or `{ "all": true }` (same secret header if `STRAPI_WEBHOOK_SECRET` is set).
+- **Browser:** Book/verse React Query data refetches on window focus and every 30s stale window (`cmsContentQueryOptions` in `client/src/lib/queryClient.ts`).
 
 ### Strapi-Replaces-Local Promotion (Katha Upanishad)
 - The legacy PG Katha (slug `katha-upanishad-bhashya`) only had 26 verses in 1 adhyaya, starting with `sectionTitle="1.1.4"`. The sidebar's `verseLabelMap` re-labels verses by index, so vn=4 was mislabeled `1.1.1`, causing the user-visible bug "1.1.1 shows the 4th śloka".

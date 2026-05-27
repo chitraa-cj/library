@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { cmsContentQueryOptions } from "@/lib/queryClient";
 import { Globe, MessageSquare, Play, PanelRightClose, PanelRightOpen, User } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -90,11 +91,13 @@ function PanelContent({
 
   const { data: commentaryOptions } = useQuery<CommentaryOptions>({
     queryKey: ["/api/books", bookId, "commentary-options"],
+    ...cmsContentQueryOptions,
   });
 
   const { data: explanations = [], isLoading: explanationsLoading } = useQuery<Explanation[]>({
     queryKey: ["/api/verses", selectedVerseId, "explanations"],
     enabled: !!selectedVerseId,
+    ...cmsContentQueryOptions,
   });
 
   useEffect(() => {

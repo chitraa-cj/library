@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Switch, Route, useLocation } from "wouter";
-import { queryClient, apiRequest } from "./lib/queryClient";
+import { queryClient, apiRequest, cmsContentQueryOptions } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -107,6 +107,7 @@ function HomePageContent() {
 
   const { data: allBooks } = useQuery<Book[]>({
     queryKey: ["/api/books"],
+    ...cmsContentQueryOptions,
   });
 
   const { data: allLanguages } = useQuery<Language[]>({
@@ -116,6 +117,7 @@ function HomePageContent() {
   const { data: commentaryOptions } = useQuery<CommentaryOptions>({
     queryKey: ["/api/books", selectedBookId, "commentary-options"],
     enabled: !!selectedBookId,
+    ...cmsContentQueryOptions,
   });
 
   const readerChapters = useBookChapters(selectedBookId || undefined);

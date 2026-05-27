@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { BookOpen, Library, FolderOpen, Lock, ArrowLeft, ArrowRight, ChevronRight, ScrollText, Feather, Users, Heart, BookMarked, Music, Layers, Search, X, FileText, Archive, Sparkles } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { cmsContentQueryOptions } from "@/lib/queryClient";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -1176,6 +1177,7 @@ function useBookChapters(bookId: string | undefined) {
   const { data } = useQuery<any>({
     queryKey: ["/api/books", bookId],
     enabled: !!bookId,
+    ...cmsContentQueryOptions,
   });
 
   if (!data?.verses) return [];

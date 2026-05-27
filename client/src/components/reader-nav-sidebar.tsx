@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { cmsContentQueryOptions } from "@/lib/queryClient";
 import { BookOpen, Search, ChevronDown, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
@@ -22,6 +23,7 @@ export function useBookChapters(bookId: string | undefined): ChapterInfo[] {
   const { data } = useQuery<any>({
     queryKey: ["/api/books", bookId],
     enabled: !!bookId,
+    ...cmsContentQueryOptions,
   });
 
   return useMemo(() => {
@@ -115,6 +117,7 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
   const { data: bookData } = useQuery<any>({
     queryKey: ["/api/books", bookId],
     enabled: !!bookId,
+    ...cmsContentQueryOptions,
   });
   const introInfo = useMemo(() => {
     if (!bookData?.verses) return { hasIntro: false, label: "Sambandha Bhāṣyam" };

@@ -1,3 +1,5 @@
+import { invalidateBookCache, invalidateVerseCache } from "./strapi";
+
 const STRAPI_URL = process.env.STRAPI_URL || "";
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN || "";
 
@@ -210,6 +212,36 @@ async function runPublishJob(
   }
   progress.status = "completed";
   progress.completedAt = new Date().toISOString();
+  void invalidateCacheAfterPublish(progress);
+}
+
+async function invalidateCacheAfterPublish(progress: PublishProgress): Promise<void> {
+  try {
+    if (progress.scope === "grantha") {
+      invalidateBookCache(progress.targetId);
+      return;
+    }
+    if (progress.scope === "manthra") {
+      invalidateVerseCache(progress.targetId);
+      const r = await strapiGet<any>(`/manthras/${progress.targetId}`, {
+        "populate[0]": "Section.grantha",
+        "fields[0]": "documentId",
+      });
+      const bookId = r?.data?.Section?.grantha?.documentId;
+      if (bookId) invalidateBookCache(bookId);
+      return;
+    }
+    if (progress.scope === "section") {
+      const r = await strapiGet<any>(`/sections/${progress.targetId}`, {
+        "populate[0]": "grantha",
+        "fields[0]": "documentId",
+      });
+      const bookId = r?.data?.grantha?.documentId;
+      if (bookId) invalidateBookCache(bookId);
+    }
+  } catch (err: any) {
+    console.warn("[Publish] Cache invalidation after publish failed:", err.message);
+  }
 }
 
 export async function startPublishGrantha(granthaDocId: string): Promise<PublishProgress> {

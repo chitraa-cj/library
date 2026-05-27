@@ -52,7 +52,13 @@ interface CacheEntry<T> {
   timestamp: number;
 }
 
-const CACHE_TTL = 24 * 60 * 60 * 1000;
+/** Default 5 minutes; override with STRAPI_CACHE_TTL_MS (0 = always re-fetch Strapi). */
+const CACHE_TTL = (() => {
+  const raw = process.env.STRAPI_CACHE_TTL_MS;
+  if (raw === undefined || raw === "") return 5 * 60 * 1000;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 ? n : 5 * 60 * 1000;
+})();
 const bookDetailCache = new Map<string, CacheEntry<BookWithDetails>>();
 const bookVerseMetaCache = new Map<string, CacheEntry<BookWithVerseMeta>>();
 let bookListCacheEntry: CacheEntry<(Book & { bhashyamName?: string; teekasList?: { name: string; author: string }[] })[]> | null = null;
@@ -80,17 +86,47 @@ async function dedup<T>(key: string, fn: () => Promise<T>): Promise<T> {
   return promise;
 }
 
+export function invalidateVerseCache(verseId: string): void {
+  verseCache.delete(verseId);
+  explanationCache.delete(verseId);
+}
+
 export function invalidateBookCache(bookId: string): void {
+  const detailEntry = bookDetailCache.get(bookId);
+  if (detailEntry) {
+    for (const v of detailEntry.data.verses) {
+      verseCache.delete(v.id);
+      explanationCache.delete(v.id);
+    }
+  }
+
+  const metaEntry = bookVerseMetaCache.get(bookId);
+  if (metaEntry) {
+    for (const v of metaEntry.data.verses) {
+      verseCache.delete(v.id);
+      explanationCache.delete(v.id);
+    }
+  }
+
+  verseCache.delete(`${bookId}-intro`);
+  explanationCache.delete(`${bookId}-intro`);
+
   bookDetailCache.delete(bookId);
   bookVerseMetaCache.delete(bookId);
   bookListCacheEntry = null;
-  for (const key of verseCache.keys()) {
-    if (key.startsWith(bookId)) verseCache.delete(key);
-  }
-  for (const key of explanationCache.keys()) {
-    if (key.startsWith(bookId)) explanationCache.delete(key);
-  }
   commentaryOptionsCache.delete(bookId);
+
+  console.log(`[Strapi] Cache invalidated for grantha ${bookId}`);
+}
+
+export function invalidateAllStrapiCaches(): void {
+  bookDetailCache.clear();
+  bookVerseMetaCache.clear();
+  bookListCacheEntry = null;
+  verseCache.clear();
+  explanationCache.clear();
+  commentaryOptionsCache.clear();
+  console.log("[Strapi] All in-memory caches cleared");
 }
 
 interface StrapiResponse<T> {

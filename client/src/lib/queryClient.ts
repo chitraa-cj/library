@@ -41,6 +41,12 @@ export const getQueryFn: <T>(options: {
     return await res.json();
   };
 
+/** Books, verses, and commentary from Strapi — refetch after CMS edits or tab focus. */
+export const cmsContentQueryOptions = {
+  staleTime: 30_000,
+  refetchOnWindowFocus: true,
+} as const;
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

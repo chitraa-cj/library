@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { cmsContentQueryOptions } from "@/lib/queryClient";
 import { Search, BookOpen, Loader2, ChevronRight, ChevronDown, ChevronLeft, Home, Library, FolderOpen, Folder, Lock, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -242,11 +243,13 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
 
   const { data: books = [], isLoading } = useQuery<Book[]>({
     queryKey: ["/api/books"],
+    ...cmsContentQueryOptions,
   });
 
   const { data: selectedBookData } = useQuery<{ book: Book; verses: Verse[] }>({
     queryKey: ["/api/books", selectedBookId],
     enabled: !!selectedBookId,
+    ...cmsContentQueryOptions,
   });
 
   const hierarchy = useMemo(() => {

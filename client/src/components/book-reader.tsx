@@ -1,5 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { cmsContentQueryOptions } from "@/lib/queryClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,41 @@ const LANG_ALIASES: Record<string, string[]> = {
 function langMatches(langCode: string, target: string): boolean {
   const codes = LANG_ALIASES[target] || [target];
   return codes.includes(langCode);
+}
+
+function explanationMatchesLanguages(e: Explanation, languageCodes: string[]): boolean {
+  return languageCodes.some((l) => langMatches(e.languageCode, l));
+}
+
+/** Authors present on a specific verse (not the whole book). */
+function getVerseCommentaryAuthors(
+  explanations: Explanation[] | undefined,
+  filterFn: (e: Explanation) => boolean,
+  languageCodes: string[],
+  bookAuthors: CommentaryOption[],
+): CommentaryOption[] {
+  if (!explanations?.length) return [];
+
+  const seen = new Set<string>();
+  const onVerse: CommentaryOption[] = [];
+
+  for (const e of explanations) {
+    if (!filterFn(e) || !explanationMatchesLanguages(e, languageCodes) || seen.has(e.authorName)) {
+      continue;
+    }
+    seen.add(e.authorName);
+    const meta = bookAuthors.find((a) => a.authorName === e.authorName);
+    onVerse.push({
+      authorName: e.authorName,
+      authorTitle: e.authorTitle ?? meta?.authorTitle ?? null,
+      languageCodes: meta?.languageCodes ?? [e.languageCode],
+      commentaryType: (e as Explanation & { commentaryType?: "bhashya" | "teeka" }).commentaryType ?? meta?.commentaryType,
+    });
+  }
+
+  const order = new Map(bookAuthors.map((a, i) => [a.authorName, i]));
+  onVerse.sort((a, b) => (order.get(a.authorName) ?? 999) - (order.get(b.authorName) ?? 999));
+  return onVerse;
 }
 
 interface TOCAdhyay {
@@ -242,9 +278,14 @@ function VerseExplanation({
   const [showMoreCommentaries, setShowMoreCommentaries] = useState(false);
   const { data: explanations, isLoading } = useQuery<Explanation[]>({
     queryKey: ["/api/verses", verseId, "explanations"],
+    ...cmsContentQueryOptions,
   });
 
   const effectiveLanguages = languageCodes && languageCodes.length > 0 ? languageCodes : [languageCode];
+
+  useEffect(() => {
+    setShowMoreCommentaries(false);
+  }, [verseId, authorName]);
 
   if (isLoading) {
     return <Skeleton className="h-20 w-full mt-3" />;
@@ -255,18 +296,16 @@ function VerseExplanation({
     allForLanguages = allForLanguages.filter(e => filterFn(e));
   }
 
-  let effectiveAuthor = authorName;
-  if (!showAll && authorName && !allForLanguages.some(e => e.authorName === authorName) && allForLanguages.length > 0) {
-    effectiveAuthor = allForLanguages[0].authorName;
-  }
-
   const primaryExplanations = showAll
     ? allForLanguages
-    : allForLanguages.filter(e => !effectiveAuthor || e.authorName === effectiveAuthor);
+    : authorName
+      ? allForLanguages.filter((e) => e.authorName === authorName)
+      : allForLanguages;
 
-  const otherExplanations = !showAll && effectiveAuthor
-    ? allForLanguages.filter(e => e.authorName !== effectiveAuthor)
-    : [];
+  const otherExplanations =
+    !showAll && authorName && primaryExplanations.length > 0
+      ? allForLanguages.filter((e) => e.authorName !== authorName)
+      : [];
 
   if (primaryExplanations.length === 0 && otherExplanations.length === 0) {
     const notAvailableMsg = mode === "teeka" ? t("teekaNotAvailable") : t("bhashyamNotAvailable");
@@ -530,10 +569,12 @@ export function BookReader({
 
   const { data: book, isLoading, error } = useQuery<BookWithVerseMeta>({
     queryKey: ["/api/books", bookId],
+    ...cmsContentQueryOptions,
   });
 
   const { data: commentaryOptions } = useQuery<CommentaryOptions>({
     queryKey: ["/api/books", bookId, "commentary-options"],
+    ...cmsContentQueryOptions,
   });
 
   const verses = book?.verses || [];
@@ -555,16 +596,25 @@ export function BookReader({
   const { data: introExplanations } = useQuery<Explanation[]>({
     queryKey: ["/api/verses", introVerse?.id, "explanations"],
     enabled: !!introVerse?.id,
+    ...cmsContentQueryOptions,
   });
 
   const { data: currentVerseDetails, isLoading: isVerseLoading } = useQuery<VerseWithTranslations>({
     queryKey: ["/api/verses", currentVerseMeta?.id],
     enabled: !!currentVerseMeta?.id && chapterViewAdhyay == null,
+    ...cmsContentQueryOptions,
+  });
+
+  const { data: currentVerseExplanations } = useQuery<Explanation[]>({
+    queryKey: ["/api/verses", currentVerseMeta?.id, "explanations"],
+    enabled: !!currentVerseMeta?.id && chapterViewAdhyay == null,
+    ...cmsContentQueryOptions,
   });
 
   const { data: chapterVerses, isLoading: isChapterLoading } = useQuery<VerseWithTranslations[]>({
     queryKey: ["/api/books", bookId, "chapter", chapterViewAdhyay, "verses"],
     enabled: chapterViewAdhyay != null,
+    ...cmsContentQueryOptions,
   });
 
   useEffect(() => {
@@ -792,17 +842,56 @@ export function BookReader({
     return commentaryOptions.authors.filter(a => isTeekaAuthor(a));
   }, [commentaryOptions]);
 
-  useEffect(() => {
-    if (bhashyaAuthors.length > 0 && !selectedBhashyaAuthor) {
-      setSelectedBhashyaAuthor(bhashyaAuthors[0].authorName);
+  const commentaryLanguageCodes = useMemo(() => {
+    const codes = Array.from(selectedLanguages);
+    if (effectiveLang && !codes.includes(effectiveLang)) {
+      codes.push(effectiveLang);
     }
-  }, [bhashyaAuthors, selectedBhashyaAuthor]);
+    return codes.length > 0 ? codes : ["devanagari"];
+  }, [selectedLanguages, effectiveLang]);
+
+  const teekaFilterFn = useCallback(
+    (e: Explanation) =>
+      (e as Explanation & { commentaryType?: "bhashya" | "teeka" }).commentaryType
+        ? (e as Explanation & { commentaryType?: "bhashya" | "teeka" }).commentaryType === "teeka"
+        : isTeekaAuthorByName(e.authorName),
+    [],
+  );
+
+  const bhashyaFilterFn = useCallback(
+    (e: Explanation) =>
+      (e as Explanation & { commentaryType?: "bhashya" | "teeka" }).commentaryType
+        ? (e as Explanation & { commentaryType?: "bhashya" | "teeka" }).commentaryType === "bhashya"
+        : isBhashyaAuthorByName(e.authorName),
+    [],
+  );
+
+  const verseTeekaAuthors = useMemo(
+    () => getVerseCommentaryAuthors(currentVerseExplanations, teekaFilterFn, commentaryLanguageCodes, teekaAuthors),
+    [currentVerseExplanations, teekaFilterFn, commentaryLanguageCodes, teekaAuthors],
+  );
+
+  const verseBhashyaAuthors = useMemo(
+    () => getVerseCommentaryAuthors(currentVerseExplanations, bhashyaFilterFn, commentaryLanguageCodes, bhashyaAuthors),
+    [currentVerseExplanations, bhashyaFilterFn, commentaryLanguageCodes, bhashyaAuthors],
+  );
 
   useEffect(() => {
-    if (teekaAuthors.length > 0 && !selectedTeekaAuthor) {
-      setSelectedTeekaAuthor(teekaAuthors[0].authorName);
+    if (verseBhashyaAuthors.length === 0) return;
+    if (!selectedBhashyaAuthor || !verseBhashyaAuthors.some((a) => a.authorName === selectedBhashyaAuthor)) {
+      setSelectedBhashyaAuthor(verseBhashyaAuthors[0].authorName);
     }
-  }, [teekaAuthors, selectedTeekaAuthor]);
+  }, [currentVerseMeta?.id, verseBhashyaAuthors, selectedBhashyaAuthor]);
+
+  useEffect(() => {
+    if (verseTeekaAuthors.length === 0) {
+      setSelectedTeekaAuthor(null);
+      return;
+    }
+    if (!selectedTeekaAuthor || !verseTeekaAuthors.some((a) => a.authorName === selectedTeekaAuthor)) {
+      setSelectedTeekaAuthor(verseTeekaAuthors[0].authorName);
+    }
+  }, [currentVerseMeta?.id, verseTeekaAuthors, selectedTeekaAuthor]);
 
   if (isLoading) {
     return (
@@ -1836,9 +1925,9 @@ export function BookReader({
 
               {hasCommentaryOptions && (
                 <div className="space-y-4">
-                  {bhashyaAuthors.length > 1 && (
+                  {verseBhashyaAuthors.length > 1 && (
                     <div className="flex flex-wrap items-center gap-2" data-testid="bhashya-tabs-row">
-                      {bhashyaAuthors.map((author) => (
+                      {verseBhashyaAuthors.map((author) => (
                         <button
                           key={author.authorName}
                           className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
@@ -1905,16 +1994,16 @@ export function BookReader({
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
-                            {teekaAuthors.length > 1 && (
+                            {verseTeekaAuthors.length > 1 && (
                               <Select
-                                value={selectedTeekaAuthor || teekaAuthors[0]?.authorName || ""}
+                                value={selectedTeekaAuthor || verseTeekaAuthors[0]?.authorName || ""}
                                 onValueChange={setSelectedTeekaAuthor}
                               >
                                 <SelectTrigger className="h-7 w-auto min-w-[120px] max-w-[200px] text-[11px] border border-border/50 bg-background/60 shadow-none focus:ring-1 focus:ring-primary/30 px-2 rounded-md" data-testid="select-teeka-author">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {teekaAuthors.map((author) => (
+                                  {verseTeekaAuthors.map((author) => (
                                     <SelectItem key={author.authorName} value={author.authorName} data-testid={`option-teeka-${author.authorName.replace(/\s+/g, '-').toLowerCase()}`}>
                                       {tc(author.authorName, bookAuthorTranslations)}
                                       {author.authorTitle && (

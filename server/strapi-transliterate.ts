@@ -1,4 +1,5 @@
 import Sanscript from "@indic-transliteration/sanscript";
+import { invalidateBookCache } from "./strapi";
 
 const STRAPI_URL = process.env.STRAPI_URL || "";
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN || "";
@@ -345,6 +346,7 @@ async function transliterateGrantha(granthaDocId: string): Promise<void> {
     }
 
     progress.status = "done";
+    invalidateBookCache(granthaDocId);
     console.log(`[Translit] Completed ${granthaName}: ${progress.savedCount} saved, ${progress.skippedCount} skipped, ${progress.errors.length} errors`);
   } catch (e) {
     progress.status = "error";

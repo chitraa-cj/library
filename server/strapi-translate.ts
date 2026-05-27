@@ -1,5 +1,7 @@
 import { translateTextChunked } from "./gemini";
 
+import { invalidateBookCache } from "./strapi";
+
 const STRAPI_URL = process.env.STRAPI_URL || "";
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN || "";
 
@@ -731,6 +733,7 @@ export async function startTranslationJob(granthaDocId: string, targetLanguages?
       progress.processedManthras = manthras.length;
       progress.status = "completed";
       progress.completedAt = new Date().toISOString();
+      invalidateBookCache(granthaDocId);
       console.log(`[Translation] Completed "${granthaName}". Errors: ${progress.errors.length}, Skipped existing: ${progress.skippedExisting}`);
     } catch (err: any) {
       progress.status = "error";
