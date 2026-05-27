@@ -34,21 +34,46 @@ const allowlist = [
 ];
 
 async function buildAll() {
-  await rm("dist", { recursive: true, force: true });
+  await rm("dist", {
+    recursive: true,
+    force: true,
+  });
 
-  console.log("pushing database schema...");
-  execSync("npx drizzle-kit push", { stdio: "inherit" });
+  // DO NOT run schema push in production deploys
+  if (process.env.NODE_ENV !== "production") {
+    console.log("pushing database schema...");
+
+    try {
+      execSync("npx drizzle-kit push", {
+        stdio: "inherit",
+      });
+    } catch (err) {
+      console.warn(
+        "Database schema push failed — continuing build."
+      );
+      console.warn(err);
+    }
+  } else {
+    console.log("Skipping database schema push in production");
+  }
 
   console.log("building client...");
   await viteBuild();
 
   console.log("building server...");
-  const pkg = JSON.parse(await readFile("package.json", "utf-8"));
+
+  const pkg = JSON.parse(
+    await readFile("package.json", "utf-8")
+  );
+
   const allDeps = [
     ...Object.keys(pkg.dependencies || {}),
     ...Object.keys(pkg.devDependencies || {}),
   ];
-  const externals = allDeps.filter((dep) => !allowlist.includes(dep));
+
+  const externals = allDeps.filter(
+    (dep) => !allowlist.includes(dep)
+  );
 
   await esbuild({
     entryPoints: ["server/index.ts"],
@@ -56,11 +81,15 @@ async function buildAll() {
     bundle: true,
     format: "cjs",
     outfile: "dist/index.cjs",
+
     define: {
       "process.env.NODE_ENV": '"production"',
     },
+
     minify: true,
+
     external: externals,
+
     logLevel: "info",
   });
 }
