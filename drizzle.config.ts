@@ -1,13 +1,12 @@
 import { config as loadDotenv } from "dotenv";
 import { defineConfig } from "drizzle-kit";
-import { resolveDatabaseUrl } from "./server/database-url";
+import { resolveDatabaseUrl, resolvePgSsl } from "./server/database-url";
 
-loadDotenv({
-  path: ".env",
-  override: process.env.NODE_ENV !== "production",
-});
+// Always load .env for drizzle-kit CLI (deploy/migrate), even when NODE_ENV=production.
+loadDotenv({ path: ".env", override: true, quiet: true });
 
 const databaseUrl = resolveDatabaseUrl();
+const ssl = resolvePgSsl();
 
 export default defineConfig({
   out: "./migrations",
@@ -15,5 +14,6 @@ export default defineConfig({
   dialect: "postgresql",
   dbCredentials: {
     url: databaseUrl,
+    ...(ssl !== undefined ? { ssl } : {}),
   },
 });

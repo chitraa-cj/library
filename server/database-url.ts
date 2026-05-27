@@ -1,4 +1,7 @@
 import parse, { type ConnectionOptions } from "pg-connection-string";
+import type pg from "pg";
+
+export type PgSslConfig = pg.ConnectionConfig["ssl"];
 
 /**
  * Returns a trimmed DATABASE_URL and fails fast with actionable errors.
@@ -43,4 +46,37 @@ export function resolveDatabaseUrl(): string {
 
   process.env.DATABASE_URL = url;
   return url;
+}
+
+/**
+ * SSL for node-postgres. AWS RDS often fails strict cert verification in Node
+ * ("self-signed certificate in certificate chain"). Auto-relaxes for *.rds.amazonaws.com.
+ * Override with DATABASE_SSL=verify (strict) or DATABASE_SSL=false (local, no SSL).
+ */
+export function resolvePgSsl(): PgSslConfig | undefined {
+  const flag = (process.env.DATABASE_SSL ?? "").trim().toLowerCase();
+  if (flag === "false" || flag === "disable" || flag === "off") {
+    return undefined;
+  }
+
+  const url = process.env.DATABASE_URL ?? "";
+  const isRds = /rds\.amazonaws\.com/i.test(url);
+  const urlWantsSsl = /sslmode=(require|verify-full|verify-ca|prefer)/i.test(url);
+
+  if (flag === "verify" || flag === "strict") {
+    return true;
+  }
+
+  if (flag === "no-verify" || isRds || urlWantsSsl) {
+    return { rejectUnauthorized: false };
+  }
+
+  return undefined;
+}
+
+export function resolvePgPoolConfig(): pg.PoolConfig {
+  return {
+    connectionString: resolveDatabaseUrl(),
+    ssl: resolvePgSsl(),
+  };
 }
