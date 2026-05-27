@@ -145,7 +145,7 @@ const translations = {
     ekatmaDham: "Ekatma Dham",
     abodeOfOneness: "Abode of Oneness",
     advaitaVedantaDigitalLibrary: "Advaita Vedanta Digital Library",
-    eternalEchoOfNonDuality: "The Eternal Echo of Non-Duality",
+    eternalEchoOfNonDuality: "The Eternal Echo of NonDuality",
     welcomeDescription: "A sacred digital portal by the Acharya Shankar Sanskritik Ekta Nyas, dedicated to the preservation, digitalization, and global dissemination of Advaita Vedanta. Inspired by the legacy of Adi Shankaracharya, exploring the profound truth of Jiva-Brahma-Aikya: the essential oneness of the individual soul and the Supreme Reality.",
     treasuryOfWisdom: "The Treasury of Wisdom",
     treasuryIntro: "The Nyas has meticulously curated a vast collection of texts, spanning from the foundational \"Triple Canon\" (Prasthanatrayi) to the sophisticated dialectical works of the later Advaita masters. Our archives include:",
