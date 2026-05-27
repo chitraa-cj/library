@@ -3643,3 +3643,16 @@ If those files aren’t there, `cd` until they are, then run `npm run db:push` a
 | Typecheck | `npm run check` |
 
 If `db:push` fails, paste the full error output and we can narrow it down (bad URL, SSL, auth, etc.).
+
+---
+
+_**User**_
+
+in deployed website why is isavasya and bhagvad gita not visible they are web scrapped versions
+
+---
+
+_**Agent (default)**_
+
+<think><details><summary>Thought Process</summary>
+The user wants to know why the Isha Upanishad and Bhagavad Gita sections are not visible on the deployed website.</details></think>

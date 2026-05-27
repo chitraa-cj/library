@@ -662,11 +662,11 @@ const MANTRAS = [
 ];
 
 export async function seedDatabase() {
-  console.log("Checking if database needs seeding...");
+  console.log("Checking if Isha Upanishad needs seeding...");
 
-  const existingBooks = await db.select().from(books);
-  if (existingBooks.length > 0) {
-    console.log("Database already seeded, skipping...");
+  const existingIsha = await db.select().from(books).where(eq(books.slug, "isha-upanishad-bhashya"));
+  if (existingIsha.length > 0) {
+    console.log("Isha Upanishad already in database, skipping Isha seed...");
     return;
   }
 

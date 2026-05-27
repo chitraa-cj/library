@@ -15,6 +15,7 @@ import { seedKathaUpanishad } from "./seed-katha-upanishad";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 import { importTranslationDataFromFiles } from "./import-translation-data";
 import { syncSouthIndianBhashya } from "./sync-south-indian-bhashya";
+import { ensureCanonicalLocalBooks } from "./ensure-canonical-books";
 
 const app = express();
 const httpServer = createServer(app);
@@ -144,6 +145,7 @@ async function runSeedOperations() {
     await updateVerseSectionTitles().catch(console.error);
     await updateIshaUpanishadHierarchy().catch(console.error);
     await seedBhagavadGita().catch(console.error);
+    await ensureCanonicalLocalBooks().catch(console.error);
     await repairGitaSectionTitles().catch(console.error);
     await seedWordMeaningsFromFile().catch(console.error);
     await seedKathaUpanishad().catch(console.error);
