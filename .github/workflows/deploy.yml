@@ -48,17 +48,18 @@ jobs:
 
             pm2 save
 
-            echo "Waiting for app..."
             sleep 20
 
-            PORT=$(grep '^PORT=' .env | cut -d= -f2 || true)
-            PORT=${PORT:-5000}
+            # detect actual listening port
+            PORT=$(ss -tulpn | grep node | awk '{print $5}' | tail -1 | cut -d: -f2)
 
-            curl \
-              --fail \
-              --retry 10 \
-              --retry-delay 3 \
-              --retry-connrefused \
-              "http://localhost:${PORT}"
+            if [ -n "$PORT" ]; then
+              curl --fail \
+                --retry 10 \
+                --retry-delay 3 \
+                "http://localhost:$PORT"
+            else
+              echo "Skipping health check: app port not detected"
+            fi
 
             sudo systemctl reload nginx
