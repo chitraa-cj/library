@@ -24,26 +24,41 @@ jobs:
           script_stop: true
 
           script: |
-            set -e
+            set -euo pipefail
 
-            cd ~/library/library
+            APP_DIR=~/library/library
+            APP_NAME=sacred-script-hub
+
+            cd $APP_DIR
 
             git fetch origin
             git reset --hard origin/main
-            git clean -fd
 
             NPM_CONFIG_OMIT="" npm install --include=dev
 
             npm run build
 
-            if pm2 describe sacred-script-hub >/dev/null; then
-              pm2 restart sacred-script-hub --update-env
+            test -f dist/index.cjs
+
+            if pm2 describe $APP_NAME >/dev/null; then
+              pm2 restart $APP_NAME --update-env
             else
-              pm2 start dist/index.cjs --name sacred-script-hub
+              pm2 start dist/index.cjs --name $APP_NAME
             fi
 
             pm2 save
 
-            curl -f http://localhost:3000 >/dev/null
+            echo "Waiting for app..."
+            sleep 20
+
+            PORT=$(grep '^PORT=' .env | cut -d= -f2 || true)
+            PORT=${PORT:-5000}
+
+            curl \
+              --fail \
+              --retry 10 \
+              --retry-delay 3 \
+              --retry-connrefused \
+              "http://localhost:${PORT}"
 
             sudo systemctl reload nginx
