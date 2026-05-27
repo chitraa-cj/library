@@ -6,7 +6,7 @@ on:
       - main
 
 concurrency:
-  group: deploy-library-prod
+  group: library-prod
   cancel-in-progress: true
 
 jobs:
@@ -14,67 +14,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to EC2
+      - name: Deploy
         uses: appleboy/ssh-action@v1.2.0
 
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-
           script_stop: true
 
           script: |
-            set -euo pipefail
+            set -e
 
-            APP_DIR=~/library/library
-            APP_NAME=sacred-script-hub
+            cd ~/library/library
 
-            echo "Entering app directory..."
-            cd $APP_DIR
-
-            echo "Saving env..."
-            cp .env /tmp/library-env-backup
-
-            echo "Discarding local git changes..."
             git fetch origin
             git reset --hard origin/main
             git clean -fd
 
-            echo "Restoring env..."
-            cp /tmp/library-env-backup .env
-
-            echo "Clean install..."
-            rm -rf node_modules package-lock.json dist
-
             NPM_CONFIG_OMIT="" npm install --include=dev
 
-            echo "Verify build tools..."
-            test -f node_modules/.bin/tsx
-            test -d node_modules/vite
-            test -d node_modules/esbuild
-
-            echo "Build..."
             npm run build
 
-            echo "Validate build..."
-            test -f dist/index.cjs
-
-            echo "Restart app..."
-            if pm2 describe $APP_NAME > /dev/null; then
-              pm2 restart $APP_NAME --update-env
+            if pm2 describe sacred-script-hub >/dev/null; then
+              pm2 restart sacred-script-hub --update-env
             else
-              pm2 start dist/index.cjs --name $APP_NAME
+              pm2 start dist/index.cjs --name sacred-script-hub
             fi
 
             pm2 save
 
-            echo "Health check..."
-            sleep 10
+            curl -f http://localhost:3000 >/dev/null
 
-            curl -f http://localhost:3000 > /dev/null
-
-            echo "Reload nginx..."
             sudo systemctl reload nginx
-
-            echo "Deployment successful"
