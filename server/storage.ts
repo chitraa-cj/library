@@ -51,7 +51,12 @@ import {
   strapiGetWordMeaningsByVerseId,
   strapiGetChapterVerses,
 } from "./strapi";
-import { normalizeBookSlugForMerge, STRAPI_IDS_MERGE_DESPITE_SHARED_SLUG } from "./strapi-merge-policy";
+import {
+  normalizeBookSlugForMerge,
+  resolveBookSlugAlias,
+  resolveStrapiDocIdForLocalSlug,
+  STRAPI_IDS_MERGE_DESPITE_SHARED_SLUG,
+} from "./strapi-merge-policy";
 
 export interface CommentaryOption {
   authorName: string;
@@ -531,9 +536,22 @@ export class HybridStorage implements IStorage {
   }
 
   async getBookBySlug(slug: string): Promise<Book | undefined> {
+    const canonicalSlug = resolveBookSlugAlias(slug);
     return this.useStrapiFor(
-      () => strapiGetBookBySlug(slug),
-      () => this.db.getBookBySlug(slug),
+      async () => {
+        const strapiDocId = resolveStrapiDocIdForLocalSlug(slug);
+        if (strapiDocId) {
+          const byDoc = await strapiGetBookById(strapiDocId);
+          if (byDoc) return byDoc;
+        }
+        return (
+          (await strapiGetBookBySlug(canonicalSlug)) ??
+          (canonicalSlug !== slug ? strapiGetBookBySlug(slug) : undefined)
+        );
+      },
+      async () =>
+        (await this.db.getBookBySlug(slug)) ??
+        (canonicalSlug !== slug ? this.db.getBookBySlug(canonicalSlug) : undefined),
       "getBookBySlug"
     );
   }

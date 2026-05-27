@@ -6,7 +6,7 @@ import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
-import { resolveDatabaseUrl, resolvePgSsl } from "../../database-url";
+import { resolvePgDbCredentials } from "../../database-url";
 import { authStorage } from "./storage";
 
 const defaultIssuer = "https://replit.com/oidc";
@@ -26,10 +26,11 @@ const getOidcConfig = memoize(
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
+  const pgCreds = resolvePgDbCredentials();
   const sessionStore = new pgStore({
     conObject: {
-      connectionString: resolveDatabaseUrl(),
-      ssl: resolvePgSsl(),
+      connectionString: pgCreds.url,
+      ssl: pgCreds.ssl,
     },
     createTableIfMissing: false,
     ttl: sessionTtl,

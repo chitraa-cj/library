@@ -8,9 +8,9 @@ const ISHA_SLUG = "isha-upanishad-bhashya";
 const GITA_SLUG = "bhagavad-gita";
 
 /**
- * Postgres-scraped Gita and Isha must exist for the public site when Strapi
- * duplicates are hidden (see LOCAL_STRAPI_DUPLICATES). Production DBs that
- * already had other books never ran the original empty-DB-only Isha seed.
+ * Postgres-scraped Gita and Isha are kept as fallback when Strapi is unavailable
+ * (see STRAPI_REPLACES_LOCAL). Production DBs that already had other books never
+ * ran the original empty-DB-only Isha seed.
  */
 export async function ensureCanonicalLocalBooks(): Promise<void> {
   const [ishaRows, gitaRows] = await Promise.all([

@@ -1,7 +1,7 @@
 import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { LOCAL_STRAPI_DUPLICATES, STRAPI_REPLACES_LOCAL } from "./strapi-merge-policy";
+import { STRAPI_REPLACES_LOCAL } from "./strapi-merge-policy";
 import { testStrapiConnection, STRAPI_URL, invalidateBookCache, invalidateAllStrapiCaches, strapiGetVerseById } from "./strapi";
 import {
   applyCacheInvalidation,
@@ -69,7 +69,7 @@ export async function registerRoutes(
         }
       }
       const localBooks = books.filter(b => isLocalDb(b) && !hideLocalIds.has(b.id as string));
-      const strapiBooks = books.filter(b => !isLocalDb(b) && !LOCAL_STRAPI_DUPLICATES[b.id as string]);
+      const strapiBooks = books.filter(b => !isLocalDb(b));
       res.json([...localBooks, ...strapiBooks]);
     } catch (error) {
       console.error("Error fetching books:", error);

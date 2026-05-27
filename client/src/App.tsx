@@ -51,6 +51,8 @@ interface VerseBreadcrumb {
 
 const SLUG_ALIASES: Record<string, string> = {
   "katha-upanishad-bhashya": "kathopanishad",
+  "isha-upanishad-bhashya": "ishavasya-upanishad",
+  "bhagavad-gita": "srimad-bhagavad-gita",
 };
 
 function HomePageContent() {

@@ -74,9 +74,39 @@ export function resolvePgSsl(): PgSslConfig | undefined {
   return undefined;
 }
 
-export function resolvePgPoolConfig(): pg.PoolConfig {
+/** Remove sslmode from URL so node-postgres uses our `ssl` option (not verify-full from the query string). */
+function stripSslModeFromDatabaseUrl(url: string): string {
+  try {
+    const normalized = url.replace(/^postgresql:/i, "postgres:");
+    const u = new URL(normalized);
+    u.searchParams.delete("sslmode");
+    u.searchParams.delete("ssl");
+    const rebuilt = u.toString().replace(/^postgres:/i, "postgresql:");
+    return rebuilt.replace(/\?$/, "");
+  } catch {
+    return url
+      .replace(/([?&])sslmode=[^&]*(&|$)/i, (_, sep, tail) => (tail === "&" ? sep : ""))
+      .replace(/([?&])ssl=[^&]*(&|$)/i, (_, sep, tail) => (tail === "&" ? sep : ""))
+      .replace(/\?&/, "?")
+      .replace(/\?$/, "");
+  }
+}
+
+export function resolvePgDbCredentials(): { url: string; ssl?: PgSslConfig } {
+  const url = resolveDatabaseUrl();
+  const ssl = resolvePgSsl();
+  const useRelaxedSsl = ssl !== undefined && typeof ssl === "object" && ssl.rejectUnauthorized === false;
   return {
-    connectionString: resolveDatabaseUrl(),
-    ssl: resolvePgSsl(),
+    url: useRelaxedSsl ? stripSslModeFromDatabaseUrl(url) : url,
+    ...(ssl !== undefined ? { ssl } : {}),
+  };
+}
+
+export function resolvePgPoolConfig(): pg.PoolConfig {
+  const { url, ssl } = resolvePgDbCredentials();
+  return {
+    connectionString: url,
+    ssl,
+    connectionTimeoutMillis: 15_000,
   };
 }

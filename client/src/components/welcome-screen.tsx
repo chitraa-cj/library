@@ -222,6 +222,11 @@ export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, onSelectSu
 
   const prakaranaBookList: { title: string; author: string; slugs: string[] }[] = [
     { title: "Vivekachudamani", author: "Adi Shankaracharya", slugs: ["vivekachudamani", "viveka-chudamani"] },
+    {
+      title: "Sarva Vedanta Siddhanta Saar Sangraha",
+      author: "Sri Shankaracharya",
+      slugs: ["sarva-vedanta-siddhanta-saar-sangraha", "sarva-vedanta"],
+    },
     { title: "Upadesha Sahasri", author: "Adi Shankaracharya", slugs: ["upadesha-sahasri", "upadesa-sahasri"] },
     { title: "Atma Bodha", author: "Adi Shankaracharya", slugs: ["atma-bodha", "atmabodha"] },
     { title: "Tattva Bodha", author: "Adi Shankaracharya", slugs: ["tattva-bodha", "tattvabodha"] },
