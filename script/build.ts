@@ -40,7 +40,7 @@ async function buildAll() {
   });
 
   // DO NOT run schema push in production deploys
-  if (process.env.NODE_ENV !== "production") {
+  if (false) {
     console.log("pushing database schema...");
 
     try {
