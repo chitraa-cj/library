@@ -10,6 +10,7 @@ import { CATALOG_TREE, type CatalogCategory } from "@/components/app-sidebar";
 import { useTranslation } from "@/lib/translations";
 import { translateContent, bookTitleTranslations, bookAuthorTranslations, bookCategoryTranslations, bookDescriptionTranslations } from "@/lib/content-translations";
 import { useProgressSummary } from "@/hooks/use-progress";
+import { isTaittiriyaBook, TaittiriyaHeroLanding } from "@/components/taittiriya-hero-landing";
 
 import catImgPrasthana from "@assets/image_1770803826016.png";
 import catImgPrakarana from "@assets/image_1770803849999.png";
@@ -1682,7 +1683,7 @@ const PRINCIPAL_UPANISHADS: PrincipalUpanishad[] = [
     number: "07", devanagari: "तैत्तिरीय", devanagariLong: "तैत्तिरीयोपनिषद्", iast: "Taittirīya", iastFull: "Taittirīyopaniṣad",
     veda: "Krishna Yajur", slugMatch: "taittariya",
     quote: '"Satyam Jñānam Anantam Brahma — Brahman is Truth, Knowledge, Infinite."',
-    introText: "The Taittiriya Upanishad belongs to the Krishna Yajurveda and is structured in three sections (Vallis). It progresses from phonetics and ethics through the five sheaths (Pancha Kosha) to the ecstatic realization of Brahman as Ananda (bliss) — making it essential for understanding Advaita methodology.",
+    introText: "The Taittiriya Upanishad is one of the older, \"primary\" Upanishads, part of the Yajur Veda. It says that the highest goal is to know the Brahman, for that is truth. It is divided into three sections (Vallis), progressing from phonetics and ethics through the five sheaths (Pancha Kosha) to Bhrigu's realization of Brahman as Ananda (bliss).",
     structureTitle: "Three Vallis",
     structureItems: [
       { title: "Shiksha Valli", description: "The preparatory section — meditation on syllables, ethics of a student's life, and the fivefold meditations." },
@@ -1793,31 +1794,56 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
           sidebarTreeLabel: "Structure",
         };
 
+    const useHeroLanding = isTaittiriyaBook(selectedBook);
+
     return (
       <div className="flex-1 overflow-y-auto bg-background" data-testid="upanishad-detail-view">
-        <div className="px-4 sm:px-6 lg:px-8 pt-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSelectedUpanishadSlug(null)}
-            className="gap-1.5 text-xs text-muted-foreground mb-2"
-            data-testid="button-back-to-upanishads"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            All Upanishads
-          </Button>
-        </div>
-        <BookLandingPage
-          book={selectedBook}
-          landingData={landingData}
-          chapters={chapters}
-          onSelectBook={onSelectBook}
-          onSelectChapter={onSelectChapter}
-          onSelectPart={onSelectPart}
-          onSelectVerse={onSelectVerse}
-          t={(k: any) => k}
-          tc={(text) => text || ""}
-        />
+        {!useHeroLanding && (
+          <div className="px-4 sm:px-6 lg:px-8 pt-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedUpanishadSlug(null)}
+              className="gap-1.5 text-xs mb-2 text-muted-foreground"
+              data-testid="button-back-to-upanishads"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              All Upanishads
+            </Button>
+          </div>
+        )}
+        {useHeroLanding && selectedUp ? (
+          <TaittiriyaHeroLanding
+            onBack={() => setSelectedUpanishadSlug(null)}
+            book={selectedBook}
+            meta={{
+              iastTitle: selectedUp.iastFull,
+              devanagariTitle: selectedUp.devanagariLong,
+              authorIast: "Śrī Śaṅkarācārya",
+              verseCount: String(selectedBook.totalVerses || 54),
+              verseLabel: "Manthras",
+              introText: selectedUp.introText,
+              sidebarDescription: `${selectedUp.veda} Veda Upanishad with Shankara Bhashya.`,
+              structureItems: selectedUp.structureItems,
+            }}
+            chapters={chapters}
+            onSelectBook={onSelectBook}
+            onSelectChapter={onSelectChapter}
+            tc={(text) => text || ""}
+          />
+        ) : (
+          <BookLandingPage
+            book={selectedBook}
+            landingData={landingData}
+            chapters={chapters}
+            onSelectBook={onSelectBook}
+            onSelectChapter={onSelectChapter}
+            onSelectPart={onSelectPart}
+            onSelectVerse={onSelectVerse}
+            t={(k: any) => k}
+            tc={(text) => text || ""}
+          />
+        )}
       </div>
     );
   }
@@ -1840,14 +1866,26 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
           {books.map((book) => {
             const principalUp = PRINCIPAL_UPANISHADS.find(up => book.slug?.toLowerCase().startsWith(up.slugMatch));
             const slugKey = principalUp?.slugMatch || book.slug?.toLowerCase() || book.id;
+            const isTaittiriya = principalUp?.slugMatch === "taittariya";
             return (
               <Card
                 key={book.id}
-                className="p-4 border-border/60 bg-card hover:border-primary/40 hover:shadow-lg transition-all flex flex-col cursor-pointer group border-l-[3px] border-l-primary/50 hover:border-l-primary"
+                className={`overflow-hidden border-border/60 bg-card hover:border-primary/40 hover:shadow-lg transition-all flex flex-col cursor-pointer group border-l-[3px] border-l-primary/50 hover:border-l-primary ${isTaittiriya ? "p-0" : "p-4"}`}
                 onClick={() => setSelectedUpanishadSlug(slugKey)}
                 data-testid={`upanishad-card-${slugKey}`}
               >
-                <div className="flex items-start justify-between gap-2 mb-2">
+                {isTaittiriya && (
+                  <div className="relative aspect-[2/1] w-full overflow-hidden">
+                    <img
+                      src="/images/taittiriya-upanishad-hero.png"
+                      alt=""
+                      className="h-full w-full object-cover object-center"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
+                  </div>
+                )}
+                <div className={`flex items-start justify-between gap-2 mb-2 ${isTaittiriya ? "px-4 pt-3" : ""}`}>
                   <h3 className="font-semibold text-base text-foreground leading-snug" data-testid={`text-upanishad-title-${book.id}`}>
                     {book.title}
                   </h3>
@@ -1856,15 +1894,17 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
                     <span>Open Text</span>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground mb-2">
+                <p className={`text-xs text-muted-foreground mb-2 ${isTaittiriya ? "px-4" : ""}`}>
                   {book.author || "Sri Shankaracharya"}
                 </p>
                 {book.description && (
-                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 flex-1">
+                  <p className={`text-sm text-muted-foreground leading-relaxed line-clamp-3 flex-1 ${isTaittiriya ? "px-4" : ""}`}>
                     {book.description}
                   </p>
                 )}
-                <BookProgressBar bookId={book.id} totalVerses={book.totalVerses} alwaysShow />
+                <div className={isTaittiriya ? "px-4 pb-4" : ""}>
+                  <BookProgressBar bookId={book.id} totalVerses={book.totalVerses} alwaysShow />
+                </div>
               </Card>
             );
           })}
