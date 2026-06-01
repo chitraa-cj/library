@@ -10,7 +10,7 @@ import { CATALOG_TREE, type CatalogCategory } from "@/components/app-sidebar";
 import { useTranslation } from "@/lib/translations";
 import { translateContent, bookTitleTranslations, bookAuthorTranslations, bookCategoryTranslations, bookDescriptionTranslations } from "@/lib/content-translations";
 import { useProgressSummary } from "@/hooks/use-progress";
-import { isTaittiriyaBook, TaittiriyaHeroLanding } from "@/components/taittiriya-hero-landing";
+import { BookLandingCoverHero, resolveBookCoverImage } from "@/components/book-landing-cover-hero";
 
 import catImgPrasthana from "@assets/image_1770803826016.png";
 import catImgPrakarana from "@assets/image_1770803849999.png";
@@ -1230,30 +1230,31 @@ function useBookChapters(bookId: string | undefined) {
   return result;
 }
 
-function IntroSection({ title, cmsDescription, introText }: {
+function IntroSection({ title, cmsDescription, introText, compact = false }: {
   title: string;
   cmsDescription: string | null;
   introText: string;
   bookId?: string;
   languageCode?: string | null;
+  compact?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
 
   const primaryIntro = cmsDescription;
   const fullText = [primaryIntro, introText && (!primaryIntro || introText !== primaryIntro) ? introText : null].filter(Boolean).join("\n\n");
-  const previewLength = 200;
+  const previewLength = compact ? 100 : 200;
   const needsTruncation = fullText.length > previewLength;
   const displayText = !expanded && needsTruncation
     ? fullText.substring(0, previewLength).replace(/\s+\S*$/, "") + "..."
     : fullText;
 
   return (
-    <div>
-      <h3 className="font-serif text-sm sm:text-base font-bold text-foreground uppercase tracking-wider">
+    <div className={compact ? "min-h-0" : undefined}>
+      <h3 className={`font-serif font-bold text-foreground uppercase tracking-wider ${compact ? "text-xs" : "text-sm sm:text-base"}`}>
         {title}
       </h3>
       {displayText.split("\n\n").map((paragraph, idx) => (
-        <p key={idx} className="text-sm text-muted-foreground mt-3 leading-relaxed">
+        <p key={idx} className={`text-muted-foreground leading-relaxed ${compact ? "text-xs mt-1 line-clamp-2" : "text-sm mt-3"}`}>
           {paragraph}
         </p>
       ))}
@@ -1399,7 +1400,7 @@ function LandingNavSidebar({ book, chapters, landingData, onSelectBook, onSelect
   );
 }
 
-function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, t, tc, languageCode }: {
+function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, t, tc, languageCode, onBack, backLabel }: {
   book: Book;
   landingData: BookLandingData;
   chapters: ChapterInfo[];
@@ -1410,14 +1411,37 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
   t: (key: any) => string;
   tc: (text: string | null | undefined, map: Record<string, Record<string, string>>) => string;
   languageCode?: string | null;
+  onBack?: () => void;
+  backLabel?: string;
 }) {
-  return (
-    <div className="flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8" data-testid="book-landing-view">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex flex-col lg:flex-row gap-6">
+  const coverImage = resolveBookCoverImage(book);
+  const fitViewport = Boolean(coverImage);
 
-          <div className="lg:w-72 shrink-0">
-            <Card className="p-4 border-border/60 bg-card sticky top-4" data-testid="book-landing-sidebar">
+  return (
+    <div
+      className={`flex-1 bg-background px-3 sm:px-4 ${fitViewport ? "min-h-0 overflow-hidden py-2 sm:py-3 flex flex-col" : "overflow-y-auto py-4 sm:py-5"}`}
+      data-testid="book-landing-view"
+    >
+      <div className={`w-full max-w-7xl 2xl:max-w-[90rem] mx-auto ${fitViewport ? "flex flex-col flex-1 min-h-0" : ""}`}>
+        {onBack && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            className={`gap-1.5 text-xs w-fit text-muted-foreground -ml-2 shrink-0 ${fitViewport ? "mb-1 h-7" : "mb-3"}`}
+            data-testid="button-back-to-upanishads"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            {backLabel ?? "Back"}
+          </Button>
+        )}
+        <div className={`flex flex-col lg:flex-row ${fitViewport ? "flex-1 min-h-0 gap-3 lg:items-stretch" : "gap-4 lg:gap-5"}`}>
+
+          <div className={`lg:w-56 xl:w-60 shrink-0 ${fitViewport ? "min-h-0 lg:flex lg:flex-col" : ""}`}>
+            <Card
+              className={`p-3 sm:p-4 border-border/60 bg-card ${fitViewport ? "flex-1 min-h-0 overflow-y-auto" : "sticky top-4"}`}
+              data-testid="book-landing-sidebar"
+            >
               <h2 className="font-serif text-base font-semibold text-foreground mb-1" data-testid="text-landing-title">
                 {landingData.sidebarLabel}
               </h2>
@@ -1434,7 +1458,7 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
               <p className="text-[10px] font-semibold text-foreground uppercase tracking-wider mb-2">
                 {landingData.sidebarTreeLabel}
               </p>
-              <div className="max-h-[45vh] overflow-y-auto pr-0.5">
+              <div className={`overflow-y-auto pr-0.5 ${fitViewport ? "max-h-[min(10rem,22vh)]" : "max-h-[45vh]"}`}>
                 <LandingNavSidebar
                   book={book}
                   chapters={chapters}
@@ -1495,14 +1519,16 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
             </Card>
           </div>
 
-          <div className="flex-1 min-w-0" data-testid="book-landing-content">
-            <div className="border-l-[3px] border-l-primary/60 pl-6 sm:pl-8">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground leading-tight tracking-tight">
+          <div className={`flex-1 min-w-0 ${fitViewport ? "min-h-0 flex flex-col overflow-hidden" : ""}`} data-testid="book-landing-content">
+            <div className={`border-l-[3px] border-l-primary/60 pl-3 sm:pl-4 lg:pl-5 ${fitViewport ? "flex flex-col flex-1 min-h-0 gap-2 overflow-hidden" : ""}`}>
+              <div className="flex items-start justify-between gap-3 shrink-0">
+                <div className="min-w-0">
+                  <h1
+                    className={`font-serif font-bold text-foreground leading-tight tracking-tight ${fitViewport ? "text-xl sm:text-2xl lg:text-3xl" : "text-2xl sm:text-3xl lg:text-4xl"}`}
+                  >
                     {landingData.iastTitle}
                   </h1>
-                  <p className="font-serif text-lg sm:text-xl text-foreground/70 mt-1">
+                  <p className={`font-serif text-foreground/70 mt-0.5 ${fitViewport ? "text-base sm:text-lg" : "text-lg sm:text-xl"}`}>
                     {landingData.devanagariTitle}
                   </p>
                 </div>
@@ -1517,32 +1543,47 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
                 </Button>
               </div>
 
-              <p className="text-xs font-semibold text-primary/80 uppercase tracking-[0.15em] mt-3">
+              <p className={`text-xs font-semibold text-primary/80 uppercase tracking-[0.15em] shrink-0 ${fitViewport ? "mt-1.5" : "mt-3"}`}>
                 {landingData.authorIast} | {landingData.verseCount} {landingData.verseLabel}
               </p>
 
-              <blockquote className="border-l-2 border-primary/30 pl-4 mt-6 text-base sm:text-lg text-foreground/80 font-serif italic leading-relaxed">
-                {landingData.quote}
-              </blockquote>
+              {landingData.quote && !fitViewport ? (
+                <blockquote
+                  className="border-l-2 border-primary/30 pl-3 text-foreground/80 font-serif italic leading-snug shrink-0 mt-4 text-sm sm:text-base max-w-3xl"
+                >
+                  {landingData.quote}
+                </blockquote>
+              ) : null}
 
-              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-                <IntroSection
-                  title={landingData.introTitle}
-                  cmsDescription={book.description || null}
-                  introText={landingData.introText}
-                  bookId={book.id}
-                  languageCode={languageCode}
-                />
+              {coverImage && <BookLandingCoverHero coverImage={coverImage} fillViewport={fitViewport} />}
 
-                <div>
-                  <h3 className="font-serif text-sm sm:text-base font-bold text-foreground uppercase tracking-wider">
+              <div
+                className={
+                  fitViewport
+                    ? "shrink-0 grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[min(22vh,200px)] min-h-0 overflow-hidden border-t border-border/40 pt-2"
+                    : "mt-5 grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-5"
+                }
+              >
+                <div className={fitViewport ? "min-h-0 overflow-y-auto pr-0.5" : undefined}>
+                  <IntroSection
+                    title={landingData.introTitle}
+                    cmsDescription={book.description || null}
+                    introText={landingData.introText}
+                    bookId={book.id}
+                    languageCode={languageCode}
+                    compact={fitViewport}
+                  />
+                </div>
+
+                <div className={fitViewport ? "min-h-0 overflow-y-auto" : undefined}>
+                  <h3 className={`font-serif font-bold text-foreground uppercase tracking-wider ${fitViewport ? "text-xs" : "text-sm sm:text-base"}`}>
                     {landingData.structureTitle}
                   </h3>
-                  <div className="mt-3 space-y-3">
+                  <div className={fitViewport ? "mt-1.5 space-y-1.5" : "mt-3 space-y-3"}>
                     {landingData.structureItems.map((item, idx) => (
                       <button
                         key={idx}
-                        className="w-full text-left border-l-[3px] border-l-primary/50 bg-primary/[0.03] dark:bg-primary/[0.06] rounded-r-lg p-3 hover:bg-primary/[0.08] dark:hover:bg-primary/[0.12] transition-colors cursor-pointer"
+                        className={`w-full text-left border-l-[3px] border-l-primary/50 bg-primary/[0.03] dark:bg-primary/[0.06] rounded-r-lg hover:bg-primary/[0.08] dark:hover:bg-primary/[0.12] transition-colors cursor-pointer ${fitViewport ? "p-2" : "p-3"}`}
                         onClick={() => {
                           if (onSelectChapter && chapters[idx]) {
                             onSelectChapter(book.id, chapters[idx].number);
@@ -1552,10 +1593,10 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
                         }}
                         data-testid={`structure-item-${idx}`}
                       >
-                        <p className="text-xs font-bold text-primary uppercase tracking-wider">
+                        <p className="text-[10px] sm:text-xs font-bold text-primary uppercase tracking-wider">
                           {item.title}
                         </p>
-                        <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                        <p className={`text-muted-foreground mt-0.5 leading-snug ${fitViewport ? "text-[11px] sm:text-xs line-clamp-1" : "text-sm mt-1"}`}>
                           {item.description}
                         </p>
                       </button>
@@ -1564,7 +1605,7 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
                 </div>
               </div>
 
-              {landingData.extraSection && (
+              {landingData.extraSection && !fitViewport && (
                 <div className="mt-8">
                   <h3 className="font-serif text-sm sm:text-base font-bold text-foreground uppercase tracking-wider">
                     {landingData.extraSection.title}
@@ -1575,13 +1616,13 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
                 </div>
               )}
 
-              <div className="mt-8 pt-6 border-t border-border/40">
-                <div className="text-center">
-                  <div className="text-primary/25 text-xs tracking-widest font-serif">
+              {!fitViewport && (
+                <div className="mt-5 pt-4 border-t border-border/40">
+                  <p className="text-center text-primary/25 text-xs tracking-widest font-serif">
                     ॥ सर्वं खल्विदं ब्रह्म ॥
-                  </div>
+                  </p>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -1613,7 +1654,7 @@ interface PrincipalUpanishad {
 const PRINCIPAL_UPANISHADS: PrincipalUpanishad[] = [
   {
     number: "01", devanagari: "ईश", devanagariLong: "ईशावास्योपनिषद्", iast: "Īśa", iastFull: "Īśāvāsyopaniṣad",
-    veda: "Shukla Yajur", slugMatch: "isha", slugPatterns: ["isha", "ishavasya"],
+    veda: "Shukla Yajur", slugMatch: "isha", slugPatterns: ["isha", "ishavasya", "ishavasyopanishad"],
     quote: '"Īśā vāsyam idaṁ sarvaṁ — All this is pervaded by the Lord."',
     introText: "The Isha Upanishad, the opening chapter of the Shukla Yajurveda, is one of the shortest yet most profound Upanishads. In just 18 verses, it establishes the foundational vision of Advaita — that the entire universe is pervaded by Ishvara, and true renunciation lies in seeing the Self in all beings.",
     structureTitle: "Key Themes",
@@ -1625,7 +1666,7 @@ const PRINCIPAL_UPANISHADS: PrincipalUpanishad[] = [
   },
   {
     number: "02", devanagari: "केन", devanagariLong: "केनोपनिषद्", iast: "Kena", iastFull: "Kenopaniṣad",
-    veda: "Sama Veda", slugMatch: "kena", slugPatterns: ["kena", "kenopanishad"],
+    veda: "Sama Veda", slugMatch: "kena", slugPatterns: ["kena", "kenopanishad", "kenopani"],
     companionPatterns: ["padabhash", "pada-bhash", "padabhashyam"],
     quote: '"By whom directed does the mind go towards its objects? — Kena?"',
     introText: "The Kena Upanishad takes its name from its opening word 'Kena' (by whom?). Belonging to the Talavakara Brahmana of the Sama Veda, it inquires into the ultimate cause behind all perception and cognition — the Brahman that is the ear of the ear, the mind of the mind.",
@@ -1638,7 +1679,7 @@ const PRINCIPAL_UPANISHADS: PrincipalUpanishad[] = [
   },
   {
     number: "03", devanagari: "कठ", devanagariLong: "कठोपनिषद्", iast: "Kaṭha", iastFull: "Kaṭhopaniṣad",
-    veda: "Krishna Yajur", slugMatch: "katha", slugPatterns: ["katha", "katho", "kathopanishad"],
+    veda: "Krishna Yajur", slugMatch: "katha", slugPatterns: ["katha", "katho", "kathopanishad", "kathopani"],
     quote: '"The Self is not attained by discourse, nor by intellect, nor by much hearing."',
     introText: "The Katha Upanishad narrates the dialogue between the young Nachiketas and Yama, the lord of death. Nachiketas, through his unwavering resolve, receives the supreme teaching on the nature of the Self, death, and immortality — making this one of the most celebrated Upanishads.",
     structureTitle: "Structure",
@@ -1649,7 +1690,7 @@ const PRINCIPAL_UPANISHADS: PrincipalUpanishad[] = [
   },
   {
     number: "04", devanagari: "प्रश्न", devanagariLong: "प्रश्नोपनिषद्", iast: "Praśna", iastFull: "Praśnopaniṣad",
-    veda: "Atharva Veda", slugMatch: "prashna",
+    veda: "Atharva Veda", slugMatch: "prashna", slugPatterns: ["prashna", "prashnopanishad"],
     quote: '"Prana is born of the Self. As a shadow is cast by a person, so is Prana attached to the Self."',
     introText: "The Prashna Upanishad consists of six questions posed by six seekers to the sage Pippalada. Each question progressively deepens the inquiry — from the origin of creation to the nature of Prana, the states of consciousness, and ultimately the supreme Purusha with sixteen parts.",
     structureTitle: "The Six Questions",
@@ -1661,7 +1702,7 @@ const PRINCIPAL_UPANISHADS: PrincipalUpanishad[] = [
   },
   {
     number: "05", devanagari: "मुण्डक", devanagariLong: "मुण्डकोपनिषद्", iast: "Muṇḍaka", iastFull: "Muṇḍakopaniṣad",
-    veda: "Atharva Veda", slugMatch: "mundaka",
+    veda: "Atharva Veda", slugMatch: "mundaka", slugPatterns: ["mundaka", "mundakopanishad"],
     quote: '"Two birds, inseparable companions, perch on the same tree. One eats the fruit; the other looks on without eating."',
     introText: "The Mundaka Upanishad, belonging to the Atharva Veda, is famous for its distinction between Para Vidya (higher knowledge of Brahman) and Apara Vidya (lower knowledge of rituals). Through vivid imagery — two birds on a tree, sparks from fire — it guides the seeker from worldly knowledge to Self-realization.",
     structureTitle: "Three Mundakas",
@@ -1698,7 +1739,7 @@ const PRINCIPAL_UPANISHADS: PrincipalUpanishad[] = [
   },
   {
     number: "08", devanagari: "तैत्तिरीय", devanagariLong: "तैत्तिरीयोपनिषद्", iast: "Taittirīya", iastFull: "Taittirīyopaniṣad",
-    veda: "Krishna Yajur", slugMatch: "taittariya",
+    veda: "Krishna Yajur", slugMatch: "taittariya", slugPatterns: ["taittariya", "taittiriya", "taitiriya"],
     quote: '"Satyam Jñānam Anantam Brahma — Brahman is Truth, Knowledge, Infinite."',
     introText: "The Taittiriya Upanishad is one of the older, \"primary\" Upanishads, part of the Yajur Veda. It says that the highest goal is to know the Brahman, for that is truth. It is divided into three sections (Vallis), progressing from phonetics and ethics through the five sheaths (Pancha Kosha) to Bhrigu's realization of Brahman as Ananda (bliss).",
     structureTitle: "Three Vallis",
@@ -1722,7 +1763,7 @@ const PRINCIPAL_UPANISHADS: PrincipalUpanishad[] = [
   },
   {
     number: "10", devanagari: "बृहदारण्यक", devanagariLong: "बृहदारण्यकोपनिषद्", iast: "Bṛhadāraṇyaka", iastFull: "Bṛhadāraṇyakopaniṣad",
-    veda: "Shukla Yajur", slugMatch: "brihadaranyaka",
+    veda: "Shukla Yajur", slugMatch: "brihadaranyaka", slugPatterns: ["brihadaranyaka", "brihadaranyak", "brhadaranyaka"],
     quote: '"Aham Brahmāsmi — I am Brahman."',
     introText: "The Brihadaranyaka is the largest and arguably the most important Upanishad, belonging to the Shukla Yajurveda. It contains the Mahavakya 'Aham Brahmasmi' and Yajnavalkya's celebrated dialogues with Maitreyi and King Janaka — representing the pinnacle of Upanishadic wisdom on the nature of the Self.",
     structureTitle: "Three Kandas",
@@ -1828,7 +1869,8 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
   ]);
   /** Everything in the Upanishad catalog except principal texts and their companions */
   const otherBooks = books.filter((b) => !principalBookIds.has(b.id));
-  const catalogTextCount = principalEntries.length + otherBooks.length;
+  const catalogTextCount = books.length;
+  const principalCompanionCount = principalCompanionEntries.length;
 
   if (selectedBook) {
     const chapterStructure = chapters.length > 0
@@ -1875,60 +1917,24 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
           sidebarTreeLabel: "Structure",
         };
 
-    const useHeroLanding = isTaittiriyaBook(selectedBook);
-
     const categoryBackLabel =
       categoryView === "other" ? "Other Upanishads" : "Principal Upanishads";
 
     return (
-      <div className="flex-1 overflow-y-auto bg-background" data-testid="upanishad-detail-view">
-        {!useHeroLanding && (
-          <div className="px-4 sm:px-6 lg:px-8 pt-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectedUpanishadSlug(null)}
-              className="gap-1.5 text-xs w-fit text-muted-foreground"
-              data-testid="button-back-to-upanishads"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              {categoryBackLabel}
-            </Button>
-          </div>
-        )}
-        {useHeroLanding && selectedUp ? (
-          <TaittiriyaHeroLanding
-            onBack={() => setSelectedUpanishadSlug(null)}
-            backLabel={categoryBackLabel}
-            book={selectedBook}
-            meta={{
-              iastTitle: selectedUp.iastFull,
-              devanagariTitle: selectedUp.devanagariLong,
-              authorIast: "Śrī Śaṅkarācārya",
-              verseCount: String(selectedBook.totalVerses || 54),
-              verseLabel: "Manthras",
-              introText: selectedUp.introText,
-              sidebarDescription: `${selectedUp.veda} Veda Upanishad with Shankara Bhashya.`,
-              structureItems: selectedUp.structureItems,
-            }}
-            chapters={chapters}
-            onSelectBook={onSelectBook}
-            onSelectChapter={onSelectChapter}
-            tc={(text) => text || ""}
-          />
-        ) : (
-          <BookLandingPage
-            book={selectedBook}
-            landingData={landingData}
-            chapters={chapters}
-            onSelectBook={onSelectBook}
-            onSelectChapter={onSelectChapter}
-            onSelectPart={onSelectPart}
-            onSelectVerse={onSelectVerse}
-            t={(k: any) => k}
-            tc={(text) => text || ""}
-          />
-        )}
+      <div className="flex-1 min-h-0 overflow-hidden flex flex-col bg-background" data-testid="upanishad-detail-view">
+        <BookLandingPage
+          book={selectedBook}
+          landingData={landingData}
+          chapters={chapters}
+          onSelectBook={onSelectBook}
+          onSelectChapter={onSelectChapter}
+          onSelectPart={onSelectPart}
+          onSelectVerse={onSelectVerse}
+          onBack={() => setSelectedUpanishadSlug(null)}
+          backLabel={categoryBackLabel}
+          t={(k: any) => k}
+          tc={(text) => text || ""}
+        />
       </div>
     );
   }
@@ -1937,36 +1943,44 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
     book: Book,
     principalUp?: PrincipalUpanishad,
     catalogSection: "principal" | "other" = principalUp ? "principal" : "other",
+    isCompanion = false,
   ) => {
-    const slugKey = principalUp?.slugMatch || book.slug?.toLowerCase() || book.id;
-    const isTaittiriya = principalUp?.slugMatch === "taittariya";
-    const displayTitle = principalUp ? principalUp.iastFull : book.title;
+    const slugKey = isCompanion
+      ? book.slug?.toLowerCase() || book.id
+      : principalUp?.slugMatch || book.slug?.toLowerCase() || book.id;
+    const coverImage = resolveBookCoverImage(book);
+    const hasCover = Boolean(coverImage);
+    const displayTitle = isCompanion ? book.title : principalUp ? principalUp.iastFull : book.title;
 
     return (
       <Card
         key={book.id}
-        className={`overflow-hidden border-border/60 bg-card hover:border-primary/40 hover:shadow-lg transition-all flex flex-col cursor-pointer group border-l-[3px] border-l-primary/50 hover:border-l-primary ${isTaittiriya ? "p-0" : "p-4"}`}
+        className={`overflow-hidden border-border/60 bg-card hover:border-primary/40 hover:shadow-lg transition-all flex flex-col cursor-pointer group border-l-[3px] border-l-primary/50 hover:border-l-primary ${hasCover ? "p-0" : "p-4"}`}
         onClick={() => {
           setCategoryView(catalogSection);
           setSelectedUpanishadSlug(slugKey);
         }}
         data-testid={`upanishad-card-${slugKey}`}
       >
-        {isTaittiriya && (
-          <div className="relative aspect-[2/1] w-full overflow-hidden">
+        {coverImage && (
+          <div className="relative w-full overflow-hidden">
             <img
-              src="/images/taittiriya-upanishad-hero.png"
+              src={coverImage}
               alt=""
-              className="h-full w-full object-cover object-center"
+              className="block w-full h-auto max-h-36 object-cover object-center"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
           </div>
         )}
-        <div className={`flex items-start justify-between gap-2 mb-2 ${isTaittiriya ? "px-4 pt-3" : ""}`}>
+        <div className={`flex items-start justify-between gap-2 mb-2 ${hasCover ? "px-4 pt-3" : ""}`}>
           <div className="min-w-0 flex-1">
-            {principalUp && (
+            {principalUp && !isCompanion && (
               <span className="text-[10px] font-mono text-muted-foreground/80">{principalUp.number}</span>
+            )}
+            {isCompanion && principalUp && (
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-primary/80">
+                Related · {principalUp.iast}
+              </span>
             )}
             <h3
               className="font-semibold text-base text-foreground leading-snug"
@@ -1974,7 +1988,7 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
             >
               {displayTitle}
             </h3>
-            {principalUp && (
+            {principalUp && !isCompanion && (
               <p className="text-xs text-muted-foreground/80 mt-0.5 font-serif">{principalUp.devanagariLong}</p>
             )}
           </div>
@@ -1986,18 +2000,18 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
             <span>Open Text</span>
           </div>
         </div>
-        <p className={`text-xs text-muted-foreground mb-2 ${isTaittiriya ? "px-4" : ""}`}>
+        <p className={`text-xs text-muted-foreground mb-2 ${hasCover ? "px-4" : ""}`}>
           {book.author || "Sri Shankaracharya"}
           {principalUp ? ` · ${principalUp.veda} Veda` : ""}
         </p>
         {book.description && (
           <p
-            className={`text-sm text-muted-foreground leading-relaxed line-clamp-3 flex-1 ${isTaittiriya ? "px-4" : ""}`}
+            className={`text-sm text-muted-foreground leading-relaxed line-clamp-3 flex-1 ${hasCover ? "px-4" : ""}`}
           >
             {book.description}
           </p>
         )}
-        <div className={isTaittiriya ? "px-4 pb-4" : ""}>
+        <div className={hasCover ? "px-4 pb-4" : ""}>
           <BookProgressBar bookId={book.id} totalVerses={book.totalVerses} alwaysShow />
         </div>
       </Card>
@@ -2011,7 +2025,10 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
           <div className="mb-8 text-center sm:text-left">
             <h1 className="font-bold text-lg sm:text-xl text-foreground uppercase tracking-wide">Upanishad</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Choose a collection · {catalogTextCount} texts ({principalEntries.length} principal, {otherBooks.length} other)
+              Choose a collection · {catalogTextCount} texts (
+              {principalEntries.length} principal
+              {principalCompanionCount > 0 ? ` + ${principalCompanionCount} related` : ""}
+              , {otherBooks.length} other)
             </p>
           </div>
 
@@ -2033,7 +2050,8 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
                 Chāndogya, and Bṛhadāraṇyaka.
               </p>
               <Badge variant="secondary" className="mt-4 text-[10px]">
-                {principalEntries.length} of 10 available
+                {principalEntries.length} of 10 principal texts
+                {principalCompanionCount > 0 ? ` (+${principalCompanionCount} related)` : ""}
               </Badge>
             </Card>
 
@@ -2086,17 +2104,23 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
                 The ten classical Upanishads forming the core of Vedāntic inquiry.
               </p>
               <Badge variant="secondary" className="mt-2 text-[10px]">
-                {principalEntries.length} of 10 available
+                {principalEntries.length} of 10 principal texts
+                {principalCompanionCount > 0
+                  ? ` · ${principalCompanionCount} related ${principalCompanionCount === 1 ? "text" : "texts"}`
+                  : ""}
               </Badge>
             </div>
             <div
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
               data-testid="principal-upanishad-grid"
             >
-              {principalEntries.map(({ up, book }) => renderUpanishadCard(book, up))}
-              {principalCompanionEntries.map(({ book }) =>
-                renderUpanishadCard(book, undefined, "principal"),
-              )}
+              {principalEntries.flatMap(({ up, book }) => {
+                const companions = findCompanionBooksForPrincipal(up, books, book);
+                return [
+                  renderUpanishadCard(book, up),
+                  ...companions.map((companion) => renderUpanishadCard(companion, up, "principal", true)),
+                ];
+              })}
             </div>
           </section>
         ) : (
@@ -2224,19 +2248,25 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
   }
 
   if (landingData && primaryBook) {
+    const hasCoverHero = Boolean(resolveBookCoverImage(primaryBook));
     return (
-      <BookLandingPage
-        book={primaryBook}
-        landingData={landingData}
-        chapters={chapters}
-        onSelectBook={onSelectBook}
-        onSelectChapter={onSelectChapter}
-        onSelectPart={onSelectPart}
-        onSelectVerse={onSelectVerse}
-        t={t}
-        tc={tc}
-        languageCode={languageCode}
-      />
+      <div
+        className={hasCoverHero ? "flex flex-1 min-h-0 flex-col overflow-hidden bg-background" : "flex-1"}
+        data-testid="subcategory-book-landing"
+      >
+        <BookLandingPage
+          book={primaryBook}
+          landingData={landingData}
+          chapters={chapters}
+          onSelectBook={onSelectBook}
+          onSelectChapter={onSelectChapter}
+          onSelectPart={onSelectPart}
+          onSelectVerse={onSelectVerse}
+          t={t}
+          tc={tc}
+          languageCode={languageCode}
+        />
+      </div>
     );
   }
 
