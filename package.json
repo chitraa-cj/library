@@ -9,7 +9,8 @@
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
     "db:push": "drizzle-kit push",
-    "db:test": "tsx script/db-test.ts"
+    "db:test": "tsx script/db-test.ts",
+    "generate:upanishad-covers": "node scripts/generate-upanishad-cover-manifest.mjs"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

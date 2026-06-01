@@ -1,32 +1,4 @@
-/** Static covers in client/public/images/upanishads/{slug}.png — add files as designs are ready. */
-const LOCAL_UPANISHAD_COVERS: { match: (slug: string, title: string) => boolean; src: string }[] = [
-  {
-    match: (slug, title) =>
-      slug.startsWith("taittariya") || slug.includes("taittiriya") || title.includes("taittiriya"),
-    src: "/images/upanishads/taittiriya.png",
-  },
-];
-
-function resolveLocalUpanishadCover(slug: string, title: string): string | null {
-  for (const entry of LOCAL_UPANISHAD_COVERS) {
-    if (entry.match(slug, title)) return entry.src;
-  }
-  return null;
-}
-
-/** Local bundled art takes precedence; then CMS coverImage from Strapi. */
-export function resolveBookCoverImage(book: {
-  slug?: string | null;
-  title?: string | null;
-  coverImage?: string | null;
-}): string | null {
-  const slug = (book.slug || "").toLowerCase();
-  const title = (book.title || "").toLowerCase();
-  const local = resolveLocalUpanishadCover(slug, title);
-  if (local) return local;
-  if (book.coverImage) return book.coverImage;
-  return null;
-}
+export { resolveBookCoverImage } from "@/lib/upanishad-cover-images";
 
 interface BookLandingCoverHeroProps {
   coverImage: string;
