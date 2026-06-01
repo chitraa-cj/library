@@ -1599,6 +1599,8 @@ interface PrincipalUpanishad {
   iastFull: string;
   veda: string;
   slugMatch: string;
+  /** Extra slug/title fragments when CMS slug differs (e.g. kathopanishad vs katha). */
+  slugPatterns?: string[];
   quote: string;
   introText: string;
   structureTitle: string;
@@ -1609,7 +1611,7 @@ interface PrincipalUpanishad {
 const PRINCIPAL_UPANISHADS: PrincipalUpanishad[] = [
   {
     number: "01", devanagari: "ईश", devanagariLong: "ईशावास्योपनिषद्", iast: "Īśa", iastFull: "Īśāvāsyopaniṣad",
-    veda: "Shukla Yajur", slugMatch: "isha",
+    veda: "Shukla Yajur", slugMatch: "isha", slugPatterns: ["isha", "ishavasya"],
     quote: '"Īśā vāsyam idaṁ sarvaṁ — All this is pervaded by the Lord."',
     introText: "The Isha Upanishad, the opening chapter of the Shukla Yajurveda, is one of the shortest yet most profound Upanishads. In just 18 verses, it establishes the foundational vision of Advaita — that the entire universe is pervaded by Ishvara, and true renunciation lies in seeing the Self in all beings.",
     structureTitle: "Key Themes",
@@ -1621,7 +1623,7 @@ const PRINCIPAL_UPANISHADS: PrincipalUpanishad[] = [
   },
   {
     number: "02", devanagari: "केन", devanagariLong: "केनोपनिषद्", iast: "Kena", iastFull: "Kenopaniṣad",
-    veda: "Sama Veda", slugMatch: "kena",
+    veda: "Sama Veda", slugMatch: "kena", slugPatterns: ["kena", "kenopanishad"],
     quote: '"By whom directed does the mind go towards its objects? — Kena?"',
     introText: "The Kena Upanishad takes its name from its opening word 'Kena' (by whom?). Belonging to the Talavakara Brahmana of the Sama Veda, it inquires into the ultimate cause behind all perception and cognition — the Brahman that is the ear of the ear, the mind of the mind.",
     structureTitle: "Structure",
@@ -1633,7 +1635,7 @@ const PRINCIPAL_UPANISHADS: PrincipalUpanishad[] = [
   },
   {
     number: "03", devanagari: "कठ", devanagariLong: "कठोपनिषद्", iast: "Kaṭha", iastFull: "Kaṭhopaniṣad",
-    veda: "Krishna Yajur", slugMatch: "katha",
+    veda: "Krishna Yajur", slugMatch: "katha", slugPatterns: ["katha", "katho", "kathopanishad"],
     quote: '"The Self is not attained by discourse, nor by intellect, nor by much hearing."',
     introText: "The Katha Upanishad narrates the dialogue between the young Nachiketas and Yama, the lord of death. Nachiketas, through his unwavering resolve, receives the supreme teaching on the nature of the Self, death, and immortality — making this one of the most celebrated Upanishads.",
     structureTitle: "Structure",
@@ -1680,19 +1682,7 @@ const PRINCIPAL_UPANISHADS: PrincipalUpanishad[] = [
     ],
   },
   {
-    number: "07", devanagari: "तैत्तिरीय", devanagariLong: "तैत्तिरीयोपनिषद्", iast: "Taittirīya", iastFull: "Taittirīyopaniṣad",
-    veda: "Krishna Yajur", slugMatch: "taittariya",
-    quote: '"Satyam Jñānam Anantam Brahma — Brahman is Truth, Knowledge, Infinite."',
-    introText: "The Taittiriya Upanishad is one of the older, \"primary\" Upanishads, part of the Yajur Veda. It says that the highest goal is to know the Brahman, for that is truth. It is divided into three sections (Vallis), progressing from phonetics and ethics through the five sheaths (Pancha Kosha) to Bhrigu's realization of Brahman as Ananda (bliss).",
-    structureTitle: "Three Vallis",
-    structureItems: [
-      { title: "Shiksha Valli", description: "The preparatory section — meditation on syllables, ethics of a student's life, and the fivefold meditations." },
-      { title: "Brahmananda Valli", description: "The Pancha Kosha analysis — Annamaya to Anandamaya — leading to the definition: Satyam Jñānam Anantam Brahma." },
-      { title: "Bhrigu Valli", description: "Bhrigu's progressive realization through tapas — from food to bliss — culminating in Brahman-knowledge." },
-    ],
-  },
-  {
-    number: "08", devanagari: "ऐतरेय", devanagariLong: "ऐतरेयोपनिषद्", iast: "Aitareya", iastFull: "Aitareyopaniṣad",
+    number: "07", devanagari: "ऐतरेय", devanagariLong: "ऐतरेयोपनिषद्", iast: "Aitareya", iastFull: "Aitareyopaniṣad",
     veda: "Rig Veda", slugMatch: "aitareya",
     quote: '"Prajñānam Brahma — Consciousness is Brahman."',
     introText: "The Aitareya Upanishad belongs to the Rig Veda and contains one of the four Mahavakyas: 'Prajñānam Brahma.' It describes the creation of the universe from the Self, the entry of the Self into creation, and the three births of the individual — providing a complete cosmological and spiritual framework.",
@@ -1701,6 +1691,18 @@ const PRINCIPAL_UPANISHADS: PrincipalUpanishad[] = [
       { title: "Chapter I", description: "Cosmogony — how the Self (Atman) created the worlds, the cosmic person, and the elements." },
       { title: "Chapter II", description: "The three births — physical birth, the birth of the Self into the body, and the birth into immortality." },
       { title: "Chapter III", description: "The nature of the Self as pure consciousness (Prajñāna) — the Mahavakya: Prajñānam Brahma." },
+    ],
+  },
+  {
+    number: "08", devanagari: "तैत्तिरीय", devanagariLong: "तैत्तिरीयोपनिषद्", iast: "Taittirīya", iastFull: "Taittirīyopaniṣad",
+    veda: "Krishna Yajur", slugMatch: "taittariya",
+    quote: '"Satyam Jñānam Anantam Brahma — Brahman is Truth, Knowledge, Infinite."',
+    introText: "The Taittiriya Upanishad is one of the older, \"primary\" Upanishads, part of the Yajur Veda. It says that the highest goal is to know the Brahman, for that is truth. It is divided into three sections (Vallis), progressing from phonetics and ethics through the five sheaths (Pancha Kosha) to Bhrigu's realization of Brahman as Ananda (bliss).",
+    structureTitle: "Three Vallis",
+    structureItems: [
+      { title: "Shiksha Valli", description: "The preparatory section — meditation on syllables, ethics of a student's life, and the fivefold meditations." },
+      { title: "Brahmananda Valli", description: "The Pancha Kosha analysis — Annamaya to Anandamaya — leading to the definition: Satyam Jñānam Anantam Brahma." },
+      { title: "Bhrigu Valli", description: "Bhrigu's progressive realization through tapas — from food to bliss — culminating in Brahman-knowledge." },
     ],
   },
   {
@@ -1729,6 +1731,33 @@ const PRINCIPAL_UPANISHADS: PrincipalUpanishad[] = [
   },
 ];
 
+function getSlugPatterns(up: PrincipalUpanishad): string[] {
+  return up.slugPatterns ?? [up.slugMatch];
+}
+
+function bookMatchesPrincipalPattern(book: Book, pattern: string): boolean {
+  const slug = book.slug?.toLowerCase() || "";
+  const title = book.title?.toLowerCase() || "";
+  if (!pattern) return false;
+
+  // Slug segment match (avoids "isha" matching inside "upanishad")
+  if (slug.startsWith(pattern)) return true;
+  if (new RegExp(`(^|-)${pattern}(-|$)`).test(slug)) return true;
+
+  // Title: word-boundary match for principal names only
+  if (new RegExp(`\\b${pattern}\\b`).test(title)) return true;
+
+  return false;
+}
+
+function findBookForPrincipal(up: PrincipalUpanishad, books: Book[]): Book | undefined {
+  for (const pattern of getSlugPatterns(up)) {
+    const book = books.find((b) => bookMatchesPrincipalPattern(b, pattern));
+    if (book) return book;
+  }
+  return undefined;
+}
+
 function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, languageCode }: {
   books: Book[];
   onSelectBook: (bookId: string) => void;
@@ -1738,16 +1767,32 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
   languageCode?: string | null;
 }) {
   const [selectedUpanishadSlug, setSelectedUpanishadSlug] = useState<string | null>(null);
-
-  const findBook = (slugMatch: string) =>
-    books.find(b => b.slug?.toLowerCase().startsWith(slugMatch)) ||
-    books.find(b => b.slug?.toLowerCase() === slugMatch);
+  /** null = two category boxes; principal | other = show that section's grid */
+  const [categoryView, setCategoryView] = useState<"principal" | "other" | null>(null);
 
   const selectedUp = selectedUpanishadSlug
-    ? PRINCIPAL_UPANISHADS.find(u => u.slugMatch === selectedUpanishadSlug)
+    ? PRINCIPAL_UPANISHADS.find((u) => u.slugMatch === selectedUpanishadSlug)
     : null;
-  const selectedBook = selectedUpanishadSlug ? findBook(selectedUpanishadSlug) : null;
+  const selectedBook = selectedUpanishadSlug
+    ? selectedUp
+      ? findBookForPrincipal(selectedUp, books)
+      : books.find(
+          (b) =>
+            b.slug?.toLowerCase() === selectedUpanishadSlug ||
+            b.id === selectedUpanishadSlug,
+        )
+    : null;
   const chapters = useBookChapters(selectedBook?.id);
+
+  const principalEntries = PRINCIPAL_UPANISHADS.map((up) => {
+    const book = findBookForPrincipal(up, books);
+    return book ? { up, book } : null;
+  }).filter((entry): entry is { up: PrincipalUpanishad; book: Book } => entry != null);
+
+  const principalBookIds = new Set(principalEntries.map((e) => e.book.id));
+  /** Everything in the Upanishad catalog except the one canonical book per principal text */
+  const otherBooks = books.filter((b) => !principalBookIds.has(b.id));
+  const catalogTextCount = principalEntries.length + otherBooks.length;
 
   if (selectedBook) {
     const chapterStructure = chapters.length > 0
@@ -1796,6 +1841,9 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
 
     const useHeroLanding = isTaittiriyaBook(selectedBook);
 
+    const categoryBackLabel =
+      categoryView === "other" ? "Other Upanishads" : "Principal Upanishads";
+
     return (
       <div className="flex-1 overflow-y-auto bg-background" data-testid="upanishad-detail-view">
         {!useHeroLanding && (
@@ -1804,17 +1852,18 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
               variant="ghost"
               size="sm"
               onClick={() => setSelectedUpanishadSlug(null)}
-              className="gap-1.5 text-xs mb-2 text-muted-foreground"
+              className="gap-1.5 text-xs w-fit text-muted-foreground"
               data-testid="button-back-to-upanishads"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              All Upanishads
+              {categoryBackLabel}
             </Button>
           </div>
         )}
         {useHeroLanding && selectedUp ? (
           <TaittiriyaHeroLanding
             onBack={() => setSelectedUpanishadSlug(null)}
+            backLabel={categoryBackLabel}
             book={selectedBook}
             meta={{
               iastTitle: selectedUp.iastFull,
@@ -1848,67 +1897,189 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
     );
   }
 
+  const renderUpanishadCard = (book: Book, principalUp?: PrincipalUpanishad) => {
+    const slugKey = principalUp?.slugMatch || book.slug?.toLowerCase() || book.id;
+    const isTaittiriya = principalUp?.slugMatch === "taittariya";
+    const displayTitle = principalUp ? principalUp.iastFull : book.title;
+
+    return (
+      <Card
+        key={book.id}
+        className={`overflow-hidden border-border/60 bg-card hover:border-primary/40 hover:shadow-lg transition-all flex flex-col cursor-pointer group border-l-[3px] border-l-primary/50 hover:border-l-primary ${isTaittiriya ? "p-0" : "p-4"}`}
+        onClick={() => {
+          setCategoryView(principalUp ? "principal" : "other");
+          setSelectedUpanishadSlug(slugKey);
+        }}
+        data-testid={`upanishad-card-${slugKey}`}
+      >
+        {isTaittiriya && (
+          <div className="relative aspect-[2/1] w-full overflow-hidden">
+            <img
+              src="/images/taittiriya-upanishad-hero.png"
+              alt=""
+              className="h-full w-full object-cover object-center"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
+          </div>
+        )}
+        <div className={`flex items-start justify-between gap-2 mb-2 ${isTaittiriya ? "px-4 pt-3" : ""}`}>
+          <div className="min-w-0 flex-1">
+            {principalUp && (
+              <span className="text-[10px] font-mono text-muted-foreground/80">{principalUp.number}</span>
+            )}
+            <h3
+              className="font-semibold text-base text-foreground leading-snug"
+              data-testid={`text-upanishad-title-${book.id}`}
+            >
+              {displayTitle}
+            </h3>
+            {principalUp && (
+              <p className="text-xs text-muted-foreground/80 mt-0.5 font-serif">{principalUp.devanagariLong}</p>
+            )}
+          </div>
+          <div
+            className="flex items-center gap-1 text-[10px] text-primary font-semibold uppercase tracking-wider shrink-0 opacity-70 group-hover:opacity-100 transition-opacity pt-0.5"
+            data-testid={`button-open-text-${book.id}`}
+          >
+            <BookOpen className="h-3.5 w-3.5" />
+            <span>Open Text</span>
+          </div>
+        </div>
+        <p className={`text-xs text-muted-foreground mb-2 ${isTaittiriya ? "px-4" : ""}`}>
+          {book.author || "Sri Shankaracharya"}
+          {principalUp ? ` · ${principalUp.veda} Veda` : ""}
+        </p>
+        {book.description && (
+          <p
+            className={`text-sm text-muted-foreground leading-relaxed line-clamp-3 flex-1 ${isTaittiriya ? "px-4" : ""}`}
+          >
+            {book.description}
+          </p>
+        )}
+        <div className={isTaittiriya ? "px-4 pb-4" : ""}>
+          <BookProgressBar bookId={book.id} totalVerses={book.totalVerses} alwaysShow />
+        </div>
+      </Card>
+    );
+  };
+
+  if (categoryView === null) {
+    return (
+      <div className="flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8" data-testid="upanishad-landing-view">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8 text-center sm:text-left">
+            <h1 className="font-bold text-lg sm:text-xl text-foreground uppercase tracking-wide">Upanishad</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Choose a collection · {catalogTextCount} texts ({principalEntries.length} principal, {otherBooks.length} other)
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6" data-testid="upanishad-category-boxes">
+            <Card
+              className="group p-6 sm:p-8 border-border/60 bg-card hover:border-primary/50 hover:shadow-xl transition-all cursor-pointer border-l-[4px] border-l-primary"
+              onClick={() => setCategoryView("principal")}
+              data-testid="box-principal-upanishads"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <ScrollText className="h-8 w-8 text-primary shrink-0" />
+                <ChevronRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+              </div>
+              <h2 className="font-serif text-xl sm:text-2xl font-semibold text-foreground mt-4">
+                Principal Upanishads
+              </h2>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                The ten classical Upanishads — Īśa, Kena, Kaṭha, Praśna, Muṇḍaka, Māṇḍūkya, Aitareya, Taittirīya,
+                Chāndogya, and Bṛhadāraṇyaka.
+              </p>
+              <Badge variant="secondary" className="mt-4 text-[10px]">
+                {principalEntries.length} of 10 available
+              </Badge>
+            </Card>
+
+            <Card
+              className="group p-6 sm:p-8 border-border/60 bg-card hover:border-primary/50 hover:shadow-xl transition-all cursor-pointer border-l-[4px] border-l-primary/60"
+              onClick={() => setCategoryView("other")}
+              data-testid="box-other-upanishads"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <Library className="h-8 w-8 text-primary/80 shrink-0" />
+                <ChevronRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+              </div>
+              <h2 className="font-serif text-xl sm:text-2xl font-semibold text-foreground mt-4">
+                Other Upanishads
+              </h2>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                Additional Upanishads with Śaṅkara bhāṣya and related commentaries beyond the principal ten.
+              </p>
+              <Badge variant="secondary" className="mt-4 text-[10px]">
+                {otherBooks.length} {otherBooks.length === 1 ? "text" : "texts"}
+              </Badge>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8" data-testid="upanishad-landing-view">
       <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <h1 className="font-bold text-lg sm:text-xl text-foreground uppercase tracking-wide">
-              Upanishad
-            </h1>
-          </div>
-          <span className="text-sm text-muted-foreground">
-            {books.length} texts
-          </span>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setCategoryView(null)}
+          className="gap-1.5 text-xs mb-4 text-muted-foreground -ml-2"
+          data-testid="button-back-to-upanishad-categories"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Upanishad collections
+        </Button>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-testid="upanishad-grid">
-          {books.map((book) => {
-            const principalUp = PRINCIPAL_UPANISHADS.find(up => book.slug?.toLowerCase().startsWith(up.slugMatch));
-            const slugKey = principalUp?.slugMatch || book.slug?.toLowerCase() || book.id;
-            const isTaittiriya = principalUp?.slugMatch === "taittariya";
-            return (
-              <Card
-                key={book.id}
-                className={`overflow-hidden border-border/60 bg-card hover:border-primary/40 hover:shadow-lg transition-all flex flex-col cursor-pointer group border-l-[3px] border-l-primary/50 hover:border-l-primary ${isTaittiriya ? "p-0" : "p-4"}`}
-                onClick={() => setSelectedUpanishadSlug(slugKey)}
-                data-testid={`upanishad-card-${slugKey}`}
+        {categoryView === "principal" ? (
+          <section data-testid="principal-upanishads-section">
+            <div className="mb-5">
+              <h2 className="font-serif text-xl sm:text-2xl font-semibold text-foreground">
+                Principal Upanishads
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+                The ten classical Upanishads forming the core of Vedāntic inquiry.
+              </p>
+              <Badge variant="secondary" className="mt-2 text-[10px]">
+                {principalEntries.length} of 10 available
+              </Badge>
+            </div>
+            <div
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+              data-testid="principal-upanishad-grid"
+            >
+              {principalEntries.map(({ up, book }) => renderUpanishadCard(book, up))}
+            </div>
+          </section>
+        ) : (
+          <section data-testid="other-upanishads-section">
+            <div className="mb-5">
+              <h2 className="font-serif text-xl sm:text-2xl font-semibold text-foreground">
+                Other Upanishads
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+                Additional Upanishads with Śaṅkara bhāṣya and related commentaries.
+              </p>
+            </div>
+            {otherBooks.length > 0 ? (
+              <div
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                data-testid="other-upanishad-grid"
               >
-                {isTaittiriya && (
-                  <div className="relative aspect-[2/1] w-full overflow-hidden">
-                    <img
-                      src="/images/taittiriya-upanishad-hero.png"
-                      alt=""
-                      className="h-full w-full object-cover object-center"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
-                  </div>
-                )}
-                <div className={`flex items-start justify-between gap-2 mb-2 ${isTaittiriya ? "px-4 pt-3" : ""}`}>
-                  <h3 className="font-semibold text-base text-foreground leading-snug" data-testid={`text-upanishad-title-${book.id}`}>
-                    {book.title}
-                  </h3>
-                  <div className="flex items-center gap-1 text-[10px] text-primary font-semibold uppercase tracking-wider shrink-0 opacity-70 group-hover:opacity-100 transition-opacity pt-0.5" data-testid={`button-open-text-${book.id}`}>
-                    <BookOpen className="h-3.5 w-3.5" />
-                    <span>Open Text</span>
-                  </div>
-                </div>
-                <p className={`text-xs text-muted-foreground mb-2 ${isTaittiriya ? "px-4" : ""}`}>
-                  {book.author || "Sri Shankaracharya"}
-                </p>
-                {book.description && (
-                  <p className={`text-sm text-muted-foreground leading-relaxed line-clamp-3 flex-1 ${isTaittiriya ? "px-4" : ""}`}>
-                    {book.description}
-                  </p>
-                )}
-                <div className={isTaittiriya ? "px-4 pb-4" : ""}>
-                  <BookProgressBar bookId={book.id} totalVerses={book.totalVerses} alwaysShow />
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+                {otherBooks.map((book) => renderUpanishadCard(book))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground italic py-8 text-center">
+                No other Upanishads available yet.
+              </p>
+            )}
+          </section>
+        )}
       </div>
     </div>
   );

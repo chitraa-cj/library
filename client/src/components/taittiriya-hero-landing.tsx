@@ -46,6 +46,7 @@ interface TaittiriyaHeroLandingProps {
   onSelectBook: (bookId: string) => void;
   onSelectChapter?: (bookId: string, adhyayNumber: number) => void;
   onBack?: () => void;
+  backLabel?: string;
   tc?: (text: string | null | undefined, map: Record<string, Record<string, string>>) => string;
 }
 
@@ -56,6 +57,7 @@ export function TaittiriyaHeroLanding({
   onSelectBook,
   onSelectChapter,
   onBack,
+  backLabel = "All Upanishads",
   tc = (text) => text || "",
 }: TaittiriyaHeroLandingProps) {
   const [introExpanded, setIntroExpanded] = useState(false);
@@ -116,11 +118,11 @@ export function TaittiriyaHeroLanding({
               variant="ghost"
               size="sm"
               onClick={onBack}
-              className="gap-1.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+              className="gap-1.5 text-xs w-fit text-muted-foreground hover:bg-accent hover:text-foreground"
               data-testid="button-back-to-upanishads"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              All Upanishads
+              {backLabel}
             </Button>
           </div>
         )}
