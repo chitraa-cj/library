@@ -1778,7 +1778,7 @@ export function BookReader({
       onKeyDown={handleKeyDown}
     >
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-6">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden px-4 sm:px-6 py-4 sm:py-6">
           {selectionPopup && onAddNoteWithText && (
             <div
               className="fixed z-50 animate-in fade-in slide-in-from-bottom-1 duration-150"
@@ -1798,7 +1798,7 @@ export function BookReader({
               </Button>
             </div>
           )}
-          <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl w-full mx-auto">
+          <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl w-full mx-auto flex flex-col flex-1 min-h-0">
             {isVerseLoading || !currentVerseDetails ? (
               <div className="space-y-4 py-8">
                 <Skeleton className="h-6 w-32 mx-auto" />
@@ -1807,12 +1807,13 @@ export function BookReader({
               </div>
             ) : (
             <div 
-              className="py-2"
+              className="py-2 flex flex-col flex-1 min-h-0"
               data-testid={`verse-${currentVerse.verseNumber}`}
               onMouseUp={handleTextSelect}
               onTouchEnd={handleTextSelect}
             >
-              <div className="flex items-center justify-between gap-4 mb-4" data-testid="reader-book-header">
+              <div className="shrink-0 space-y-4">
+              <div className="flex items-center justify-between gap-4" data-testid="reader-book-header">
                 <h1 className="font-serif text-xl sm:text-2xl text-primary/90 italic tracking-tight truncate" data-testid="reader-book-title">
                   {tc(book.title, bookTitleTranslations)}
                 </h1>
@@ -1880,7 +1881,7 @@ export function BookReader({
               </div>
 
               {availableTranslations.length > 0 && (
-                <div className="mb-5" data-testid="meaning-section">
+                <div data-testid="meaning-section">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs uppercase tracking-widest font-bold text-primary">{t("meaning") || "MEANING"}</span>
                     <div className="h-px flex-1 bg-primary/15"></div>
@@ -1922,11 +1923,12 @@ export function BookReader({
                   })}
                 </div>
               )}
+              </div>
 
               {hasCommentaryOptions && (
-                <div className="space-y-4">
+                <div className="flex flex-col flex-1 min-h-0 gap-4 mt-2">
                   {verseBhashyaAuthors.length > 1 && (
-                    <div className="flex flex-wrap items-center gap-2" data-testid="bhashya-tabs-row">
+                    <div className="shrink-0 flex flex-wrap items-center gap-2" data-testid="bhashya-tabs-row">
                       {verseBhashyaAuthors.map((author) => (
                         <button
                           key={author.authorName}
@@ -1949,9 +1951,14 @@ export function BookReader({
                     </div>
                   )}
 
-                  <div className={`grid gap-4 ${showTeekas && teekaAuthors.length > 0 ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"}`}>
-                    <div className="rounded-xl border border-border/60 bg-card/80 dark:bg-card/50 overflow-hidden shadow-sm" data-testid="bhashya-content-card">
-                      <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-border/40 bg-muted/30">
+                  <div
+                    className={`grid flex-1 min-h-0 gap-4 ${showTeekas && teekaAuthors.length > 0 ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"}`}
+                  >
+                    <div
+                      className="flex flex-col min-h-0 max-h-[min(52vh,28rem)] lg:max-h-none lg:flex-1 lg:min-h-[10rem] rounded-xl border border-border/60 bg-card/80 dark:bg-card/50 overflow-hidden shadow-sm"
+                      data-testid="bhashya-content-card"
+                    >
+                      <div className="flex shrink-0 items-center justify-between gap-2 px-4 py-2.5 border-b border-border/40 bg-muted/30">
                         <div className="flex items-center gap-2">
                           <Feather className="h-3.5 w-3.5 text-primary/70" />
                           <span className="text-xs font-bold uppercase tracking-wider text-foreground/80">
@@ -1969,7 +1976,7 @@ export function BookReader({
                           </button>
                         )}
                       </div>
-                      <div className="p-4">
+                      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4">
                         {commentaryExpanded && effectiveLang && (
                           <VerseExplanation 
                             verseId={currentVerse.id} 
@@ -1985,8 +1992,11 @@ export function BookReader({
                     </div>
 
                     {showTeekas && teekaAuthors.length > 0 && (
-                      <div className="rounded-xl border border-border/60 bg-card/80 dark:bg-card/50 overflow-hidden shadow-sm" data-testid="teeka-content-card">
-                        <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-border/40 bg-muted/30">
+                      <div
+                        className="flex flex-col min-h-0 max-h-[min(52vh,28rem)] lg:max-h-none lg:flex-1 lg:min-h-[10rem] rounded-xl border border-border/60 bg-card/80 dark:bg-card/50 overflow-hidden shadow-sm"
+                        data-testid="teeka-content-card"
+                      >
+                        <div className="flex shrink-0 items-center justify-between gap-2 px-4 py-2.5 border-b border-border/40 bg-muted/30">
                           <div className="flex items-center gap-2">
                             <ScrollText className="h-3.5 w-3.5 text-primary/70" />
                             <span className="text-xs font-bold uppercase tracking-wider text-foreground/80">
@@ -2024,7 +2034,7 @@ export function BookReader({
                             </button>
                           </div>
                         </div>
-                        <div className="p-4">
+                        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4">
                           {effectiveLang && (
                             <VerseExplanation 
                               verseId={currentVerse.id} 

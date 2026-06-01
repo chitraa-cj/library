@@ -527,12 +527,44 @@ export class HybridStorage implements IStorage {
     );
   }
 
+  private strapiBookDetailsToVerseMeta(book: BookWithDetails): BookWithVerseMeta {
+    return {
+      ...book,
+      titles: book.titles ?? [],
+      verses: book.verses.map((v) => ({
+        id: v.id,
+        bookId: v.bookId,
+        verseNumber: v.verseNumber,
+        sectionTitle: v.sectionTitle,
+        adhyayNumber: v.adhyayNumber ?? null,
+        adhyayTitle: v.adhyayTitle ?? null,
+        khandaNumber: v.khandaNumber ?? null,
+        khandaTitle: v.khandaTitle ?? null,
+      })),
+      totalVerses: book.totalVerses ?? book.verses.length,
+    };
+  }
+
   async getBookWithVerseMeta(id: string): Promise<BookWithVerseMeta | undefined> {
-    return this.useStrapiFor(
-      () => strapiGetBookWithVerseMeta(id),
-      () => this.db.getBookWithVerseMeta(id),
-      "getBookWithVerseMeta"
-    );
+    if (await this.isStrapiAvailable()) {
+      try {
+        const meta = await strapiGetBookWithVerseMeta(id);
+        if (meta) return meta;
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn("[Strapi] getBookWithVerseMeta failed, trying full book load:", msg);
+      }
+      try {
+        const full = await strapiGetBookById(id);
+        if (full?.verses?.length) {
+          return this.strapiBookDetailsToVerseMeta(full);
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn("[Strapi] getBookById fallback for verse meta failed:", msg);
+      }
+    }
+    return this.db.getBookWithVerseMeta(id);
   }
 
   async getBookBySlug(slug: string): Promise<Book | undefined> {

@@ -33,16 +33,36 @@ const strapiUserAgent =
   process.env.STRAPI_USER_AGENT?.trim() ||
   "Sacred-Script-Hub/1.0 (server; Strapi REST client)";
 
+function isStrapiTimeoutError(e: unknown): boolean {
+  const err = e as Error & { cause?: Error };
+  const msg = `${err?.message || ""} ${err?.cause?.message || ""}`.toLowerCase();
+  return msg.includes("timeout") || msg.includes("aborted");
+}
+
 async function strapiHttpFetch(
   url: string,
   headers: Record<string, string>,
   timeoutMs: number,
 ): Promise<Response> {
-  return undiciFetch(url, {
-    headers: { "User-Agent": strapiUserAgent, ...headers },
-    signal: AbortSignal.timeout(timeoutMs),
-    ...(strapiTlsAgent ? { dispatcher: strapiTlsAgent } : {}),
-  } as RequestInit);
+  const maxRetries = Math.max(0, Math.min(3, Number(process.env.STRAPI_FETCH_RETRIES ?? 2)));
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await undiciFetch(url, {
+        headers: { "User-Agent": strapiUserAgent, ...headers },
+        signal: AbortSignal.timeout(timeoutMs),
+        ...(strapiTlsAgent ? { dispatcher: strapiTlsAgent } : {}),
+      } as RequestInit);
+    } catch (e: unknown) {
+      lastError = e;
+      if (attempt < maxRetries && isStrapiTimeoutError(e)) {
+        await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw lastError;
 }
 
 let loggedStrapiReachabilityFailure = false;
@@ -147,6 +167,20 @@ function richTextToString(blocks: RichTextBlock[] | null | undefined): string {
     .trim();
 }
 
+function resolveStrapiTimeoutMs(endpoint: string): number {
+  const base = Number(process.env.STRAPI_TIMEOUT_MS || 60000);
+  const heavy = Number(process.env.STRAPI_HEAVY_TIMEOUT_MS || 120000);
+  // Full grantha loads and manthra pages are slow on large texts (e.g. Brahma Sutra, Chandogya).
+  if (
+    endpoint.includes("/manthras") ||
+    endpoint.includes("/sections") ||
+    /^\/granthas\/[^/]+$/.test(endpoint)
+  ) {
+    return Math.max(base, Number.isFinite(heavy) && heavy > 0 ? heavy : 120000);
+  }
+  return Number.isFinite(base) && base > 0 ? base : 60000;
+}
+
 async function strapiFetch<T = any>(endpoint: string, params: Record<string, string> = {}): Promise<T> {
   const url = new URL(`/api${endpoint}`, STRAPI_URL);
   for (const [key, value] of Object.entries(params)) {
@@ -158,7 +192,7 @@ async function strapiFetch<T = any>(endpoint: string, params: Record<string, str
     headers["Authorization"] = `Bearer ${STRAPI_API_TOKEN}`;
   }
 
-  const timeoutMs = Number(process.env.STRAPI_TIMEOUT_MS || 15000);
+  const timeoutMs = resolveStrapiTimeoutMs(endpoint);
   let response: Response;
   try {
     response = await strapiHttpFetch(url.toString(), headers, timeoutMs);
@@ -639,30 +673,27 @@ function isManthraNonEmpty(m: any): boolean {
   return false;
 }
 
-// Lightweight query that returns the docIds of all manthras under a grantha that
-// have at least one non-empty content component. Used by the verse-meta path
-// (which doesn't deep-populate manthras when fetching sections).
-async function fetchNonEmptyManthraDocIds(granthaDocId: string): Promise<Set<string>> {
-  const results: any[] = await strapiFetchAll("/manthras", {
-    "filters[Section][grantha][documentId]": granthaDocId,
-    "fields[0]": "documentId",
-    "populate[0]": "ShlokaManthraEntry",
-    "populate[1]": "BhashyamEntry",
-    "populate[2]": "Teekas.TeekaEntry",
-    "populate[3]": "ShlokaManthraEntry.OtherTranslations",
-    "populate[4]": "BhashyamEntry.OtherTranslations",
-    "populate[5]": "Teekas.TeekaEntry.OtherTranslations",
+/** Skip empty CMS rows only when section manthras include populated content (shallow refs are kept). */
+function shouldSkipEmptyManthra(m: any): boolean {
+  const hasInspectableContent =
+    m.ShlokaManthraEntry != null ||
+    m.BhashyamEntry != null ||
+    (Array.isArray(m.Teekas) && m.Teekas.length > 0);
+  if (!hasInspectableContent) return false;
+  return !isManthraNonEmpty(m);
+}
+
+async function fetchSectionsForGranthaVerseMeta(granthaDocId: string): Promise<StrapiSection[]> {
+  return strapiFetchAll("/sections", {
+    "filters[grantha][documentId]": granthaDocId,
+    "populate[0]": "parent",
+    "populate[1]": "sub_sections",
+    "populate[2]": "manthras.ShlokaManthraEntry",
+    "populate[3]": "manthras.BhashyamEntry",
+    "populate[4]": "manthras.Teekas.TeekaEntry",
     "sort[0]": "order:asc",
     "sort[1]": "id:asc",
   });
-  const set = new Set<string>();
-  for (const m of results) {
-    if (isManthraNonEmpty(m)) {
-      const id = m.documentId || String(m.id);
-      set.add(id);
-    }
-  }
-  return set;
 }
 
 export async function strapiGetBookById(id: string): Promise<BookWithDetails | undefined> {
@@ -767,7 +798,10 @@ async function _strapiGetBookByIdUncached(id: string): Promise<BookWithDetails |
       }
     }
 
-    const CONCURRENCY = 8;
+    const sectionFetchConcurrency = Math.max(
+      1,
+      Math.min(8, Number(process.env.STRAPI_SECTION_FETCH_CONCURRENCY || 4)),
+    );
     const taskResults: { task: LeafTask; manthras: any[] }[] = new Array(leafTasks.length);
     let nextIdx = 0;
     async function worker() {
@@ -779,7 +813,9 @@ async function _strapiGetBookByIdUncached(id: string): Promise<BookWithDetails |
         taskResults[i] = { task, manthras };
       }
     }
-    await Promise.all(Array.from({ length: Math.min(CONCURRENCY, leafTasks.length) }, () => worker()));
+    await Promise.all(
+      Array.from({ length: Math.min(sectionFetchConcurrency, leafTasks.length) }, () => worker()),
+    );
 
     let globalIndex = 0;
     const seenManthraDocIds = new Set<string>();
@@ -849,10 +885,7 @@ async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWith
     const grantha = result.data;
     const book = mapGranthaToBook(grantha);
 
-    const [allSections, nonEmptyManthraIds] = await Promise.all([
-      fetchSectionsForGrantha(grantha.documentId),
-      fetchNonEmptyManthraDocIds(grantha.documentId),
-    ]);
+    const allSections = await fetchSectionsForGrantha(grantha.documentId);
     const sectionTree = buildSectionTree(allSections);
 
     const verses: VerseMeta[] = [];
@@ -892,10 +925,8 @@ async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWith
         droppedDuplicates++;
         return;
       }
-      if (!nonEmptyManthraIds.has(docId)) {
+      if (shouldSkipEmptyManthra(m)) {
         droppedEmpty++;
-        // Intentionally NOT adding to seen* sets so a non-empty duplicate
-        // appearing later can still win over an earlier empty one.
         return;
       }
       seenManthraDocIds.add(docId);
@@ -958,6 +989,9 @@ async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWith
 
     if (droppedDuplicates > 0) {
       console.warn(`[Strapi] Grantha ${id} (verse-meta): dropped ${droppedDuplicates} duplicate manthra(s). Clean up duplicates in CMS.`);
+    }
+    if (droppedEmpty > 0) {
+      console.warn(`[Strapi] Grantha ${id} (verse-meta): dropped ${droppedEmpty} empty manthra row(s).`);
     }
 
     return { ...book, titles: [], verses, totalVerses: verses.length };

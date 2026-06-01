@@ -167,7 +167,10 @@ async function prewarmAllBookCaches() {
     const books = await strapiGetAllBooks();
     log(`[Pre-warm] Loading ${books.length} granthas into cache...`);
     let done = 0;
-    const CONCURRENCY = 3;
+    const CONCURRENCY = Math.max(
+      1,
+      Math.min(3, Number(process.env.STRAPI_PREWARM_CONCURRENCY || 1)),
+    );
     let nextIdx = 0;
     async function worker() {
       while (true) {
