@@ -795,6 +795,7 @@ function HomePageContent() {
                     />
                   </div>
                 )}
+                <div className="flex flex-1 flex-col min-w-0 min-h-0 h-full overflow-hidden">
                 <BookReader
                   bookId={selectedBookId}
                   onVerseSelect={handleVerseSelect}
@@ -832,6 +833,7 @@ function HomePageContent() {
                     }
                   }}
                 />
+                </div>
                 <TranslationPanel
                   bookId={selectedBookId}
                   selectedVerseId={selectedVerseId}

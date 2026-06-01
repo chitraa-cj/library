@@ -1601,6 +1601,8 @@ interface PrincipalUpanishad {
   slugMatch: string;
   /** Extra slug/title fragments when CMS slug differs (e.g. kathopanishad vs katha). */
   slugPatterns?: string[];
+  /** Related texts shown in the principal grid (e.g. Kena Pādabhashyam). */
+  companionPatterns?: string[];
   quote: string;
   introText: string;
   structureTitle: string;
@@ -1624,6 +1626,7 @@ const PRINCIPAL_UPANISHADS: PrincipalUpanishad[] = [
   {
     number: "02", devanagari: "केन", devanagariLong: "केनोपनिषद्", iast: "Kena", iastFull: "Kenopaniṣad",
     veda: "Sama Veda", slugMatch: "kena", slugPatterns: ["kena", "kenopanishad"],
+    companionPatterns: ["padabhash", "pada-bhash", "padabhashyam"],
     quote: '"By whom directed does the mind go towards its objects? — Kena?"',
     introText: "The Kena Upanishad takes its name from its opening word 'Kena' (by whom?). Belonging to the Talavakara Brahmana of the Sama Veda, it inquires into the ultimate cause behind all perception and cognition — the Brahman that is the ear of the ear, the mind of the mind.",
     structureTitle: "Structure",
@@ -1750,12 +1753,38 @@ function bookMatchesPrincipalPattern(book: Book, pattern: string): boolean {
   return false;
 }
 
+function bookMatchesCompanionPattern(book: Book, pattern: string): boolean {
+  const slug = book.slug?.toLowerCase() || "";
+  const title = book.title?.toLowerCase() || "";
+  return slug.includes(pattern) || title.includes(pattern);
+}
+
+function isCompanionOfPrincipal(book: Book, up: PrincipalUpanishad): boolean {
+  const patterns = up.companionPatterns;
+  if (!patterns?.length) return false;
+  return patterns.some((p) => bookMatchesCompanionPattern(book, p));
+}
+
 function findBookForPrincipal(up: PrincipalUpanishad, books: Book[]): Book | undefined {
-  for (const pattern of getSlugPatterns(up)) {
-    const book = books.find((b) => bookMatchesPrincipalPattern(b, pattern));
-    if (book) return book;
-  }
-  return undefined;
+  const candidates = books.filter((b) =>
+    getSlugPatterns(up).some((pattern) => bookMatchesPrincipalPattern(b, pattern)),
+  );
+  if (!candidates.length) return undefined;
+  const primary = candidates.find((b) => !isCompanionOfPrincipal(b, up));
+  return primary ?? candidates[0];
+}
+
+function findCompanionBooksForPrincipal(
+  up: PrincipalUpanishad,
+  books: Book[],
+  primaryBook?: Book,
+): Book[] {
+  if (!up.companionPatterns?.length) return [];
+  return books.filter((b) => {
+    if (primaryBook && b.id === primaryBook.id) return false;
+    if (!isCompanionOfPrincipal(b, up)) return false;
+    return getSlugPatterns(up).some((pattern) => bookMatchesPrincipalPattern(b, pattern));
+  });
 }
 
 function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, languageCode }: {
@@ -1789,8 +1818,15 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
     return book ? { up, book } : null;
   }).filter((entry): entry is { up: PrincipalUpanishad; book: Book } => entry != null);
 
-  const principalBookIds = new Set(principalEntries.map((e) => e.book.id));
-  /** Everything in the Upanishad catalog except the one canonical book per principal text */
+  const principalCompanionEntries = principalEntries.flatMap(({ up, book }) =>
+    findCompanionBooksForPrincipal(up, books, book).map((companion) => ({ up, book: companion })),
+  );
+
+  const principalBookIds = new Set([
+    ...principalEntries.map((e) => e.book.id),
+    ...principalCompanionEntries.map((e) => e.book.id),
+  ]);
+  /** Everything in the Upanishad catalog except principal texts and their companions */
   const otherBooks = books.filter((b) => !principalBookIds.has(b.id));
   const catalogTextCount = principalEntries.length + otherBooks.length;
 
@@ -1897,7 +1933,11 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
     );
   }
 
-  const renderUpanishadCard = (book: Book, principalUp?: PrincipalUpanishad) => {
+  const renderUpanishadCard = (
+    book: Book,
+    principalUp?: PrincipalUpanishad,
+    catalogSection: "principal" | "other" = principalUp ? "principal" : "other",
+  ) => {
     const slugKey = principalUp?.slugMatch || book.slug?.toLowerCase() || book.id;
     const isTaittiriya = principalUp?.slugMatch === "taittariya";
     const displayTitle = principalUp ? principalUp.iastFull : book.title;
@@ -1907,7 +1947,7 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
         key={book.id}
         className={`overflow-hidden border-border/60 bg-card hover:border-primary/40 hover:shadow-lg transition-all flex flex-col cursor-pointer group border-l-[3px] border-l-primary/50 hover:border-l-primary ${isTaittiriya ? "p-0" : "p-4"}`}
         onClick={() => {
-          setCategoryView(principalUp ? "principal" : "other");
+          setCategoryView(catalogSection);
           setSelectedUpanishadSlug(slugKey);
         }}
         data-testid={`upanishad-card-${slugKey}`}
@@ -2010,7 +2050,7 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
                 Other Upanishads
               </h2>
               <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                Additional Upanishads with Śaṅkara bhāṣya and related commentaries beyond the principal ten.
+                Additional Upanishads with advaita bhāṣyas and related commentaries.
               </p>
               <Badge variant="secondary" className="mt-4 text-[10px]">
                 {otherBooks.length} {otherBooks.length === 1 ? "text" : "texts"}
@@ -2054,6 +2094,9 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
               data-testid="principal-upanishad-grid"
             >
               {principalEntries.map(({ up, book }) => renderUpanishadCard(book, up))}
+              {principalCompanionEntries.map(({ book }) =>
+                renderUpanishadCard(book, undefined, "principal"),
+              )}
             </div>
           </section>
         ) : (
@@ -2063,7 +2106,7 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
                 Other Upanishads
               </h2>
               <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-                Additional Upanishads with Śaṅkara bhāṣya and related commentaries.
+                Additional Upanishads with advaita bhāṣyas and related commentaries.
               </p>
             </div>
             {otherBooks.length > 0 ? (

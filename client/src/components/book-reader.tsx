@@ -161,6 +161,12 @@ const bookMediaConfig: Record<string, { videoId?: string; videoTitle?: string }>
   },
 };
 
+/** Fixed ~one-screen commentary panels; content scrolls inside the box. */
+const COMMENTARY_PANEL_SHELL_CLASS =
+  "flex flex-col h-[calc(100dvh-11rem)] min-h-[20rem] max-h-[calc(100dvh-11rem)] overflow-hidden rounded-xl border border-border/60 bg-card/80 dark:bg-card/50 shadow-sm";
+const COMMENTARY_PANEL_BODY_CLASS =
+  "flex-1 min-h-0 overflow-y-auto overscroll-contain p-4";
+
 interface CommentaryOption {
   authorName: string;
   authorTitle: string | null;
@@ -1773,12 +1779,15 @@ export function BookReader({
 
   return (
     <div 
-      className="flex-1 flex flex-col min-w-0 focus:outline-none" 
+      className="grid grid-rows-[minmax(0,1fr)_auto] h-full min-h-0 flex-1 min-w-0 overflow-hidden focus:outline-none" 
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <div className="flex-1 flex flex-col min-h-0 overflow-hidden px-4 sm:px-6 py-4 sm:py-6">
+      <div
+        className="min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain"
+        data-testid="reader-scroll-area"
+      >
+        <div className="px-4 sm:px-6 py-4 sm:py-6 pb-8">
           {selectionPopup && onAddNoteWithText && (
             <div
               className="fixed z-50 animate-in fade-in slide-in-from-bottom-1 duration-150"
@@ -1798,7 +1807,7 @@ export function BookReader({
               </Button>
             </div>
           )}
-          <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl w-full mx-auto flex flex-col flex-1 min-h-0">
+          <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl w-full mx-auto">
             {isVerseLoading || !currentVerseDetails ? (
               <div className="space-y-4 py-8">
                 <Skeleton className="h-6 w-32 mx-auto" />
@@ -1807,7 +1816,7 @@ export function BookReader({
               </div>
             ) : (
             <div 
-              className="py-2 flex flex-col flex-1 min-h-0"
+              className="py-2 space-y-4"
               data-testid={`verse-${currentVerse.verseNumber}`}
               onMouseUp={handleTextSelect}
               onTouchEnd={handleTextSelect}
@@ -1926,7 +1935,7 @@ export function BookReader({
               </div>
 
               {hasCommentaryOptions && (
-                <div className="flex flex-col flex-1 min-h-0 gap-4 mt-2">
+                <div className="flex flex-col gap-4">
                   {verseBhashyaAuthors.length > 1 && (
                     <div className="shrink-0 flex flex-wrap items-center gap-2" data-testid="bhashya-tabs-row">
                       {verseBhashyaAuthors.map((author) => (
@@ -1952,10 +1961,10 @@ export function BookReader({
                   )}
 
                   <div
-                    className={`grid flex-1 min-h-0 gap-4 ${showTeekas && teekaAuthors.length > 0 ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"}`}
+                    className={`grid gap-4 ${showTeekas && teekaAuthors.length > 0 ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"}`}
                   >
                     <div
-                      className="flex flex-col min-h-0 max-h-[min(52vh,28rem)] lg:max-h-none lg:flex-1 lg:min-h-[10rem] rounded-xl border border-border/60 bg-card/80 dark:bg-card/50 overflow-hidden shadow-sm"
+                      className={COMMENTARY_PANEL_SHELL_CLASS}
                       data-testid="bhashya-content-card"
                     >
                       <div className="flex shrink-0 items-center justify-between gap-2 px-4 py-2.5 border-b border-border/40 bg-muted/30">
@@ -1976,7 +1985,7 @@ export function BookReader({
                           </button>
                         )}
                       </div>
-                      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4">
+                      <div className={COMMENTARY_PANEL_BODY_CLASS}>
                         {commentaryExpanded && effectiveLang && (
                           <VerseExplanation 
                             verseId={currentVerse.id} 
@@ -1993,7 +2002,7 @@ export function BookReader({
 
                     {showTeekas && teekaAuthors.length > 0 && (
                       <div
-                        className="flex flex-col min-h-0 max-h-[min(52vh,28rem)] lg:max-h-none lg:flex-1 lg:min-h-[10rem] rounded-xl border border-border/60 bg-card/80 dark:bg-card/50 overflow-hidden shadow-sm"
+                        className={COMMENTARY_PANEL_SHELL_CLASS}
                         data-testid="teeka-content-card"
                       >
                         <div className="flex shrink-0 items-center justify-between gap-2 px-4 py-2.5 border-b border-border/40 bg-muted/30">
@@ -2034,7 +2043,7 @@ export function BookReader({
                             </button>
                           </div>
                         </div>
-                        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4">
+                        <div className={COMMENTARY_PANEL_BODY_CLASS}>
                           {effectiveLang && (
                             <VerseExplanation 
                               verseId={currentVerse.id} 
@@ -2055,9 +2064,22 @@ export function BookReader({
             </div>
             )}
           </div>
-        </div>
 
-        <div className="shrink-0 border-t border-border/50 px-4 sm:px-8 py-2 sm:py-3">
+          {book?.slug && bookMediaConfig[book.slug]?.videoId && (
+            <div className="border-t border-border mt-6 px-0 py-2">
+              <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto flex items-center justify-center">
+                <VideoPopup
+                  videoId={bookMediaConfig[book.slug].videoId!}
+                  title={bookMediaConfig[book.slug].videoTitle || t("introductionVideo")}
+                  buttonLabel={t("watchVideo")}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+        <div className="border-t border-border/50 bg-background px-4 sm:px-8 py-2 sm:py-3">
           <div className="max-w-4xl xl:max-w-5xl mx-auto space-y-2">
             {progressAuthed && verseTotal > 0 && (
               <div className="flex items-center gap-2" data-testid="reader-progress-bar">
@@ -2137,19 +2159,6 @@ export function BookReader({
             </div>
           </div>
         </div>
-
-        {book?.slug && bookMediaConfig[book.slug]?.videoId && (
-          <div className="border-t border-border px-3 sm:px-8 py-2 bg-background/80">
-            <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto flex items-center justify-center">
-              <VideoPopup 
-                videoId={bookMediaConfig[book.slug].videoId!}
-                title={bookMediaConfig[book.slug].videoTitle || t("introductionVideo")}
-                buttonLabel={t("watchVideo")}
-              />
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
