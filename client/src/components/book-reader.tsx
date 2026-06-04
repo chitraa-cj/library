@@ -1029,8 +1029,8 @@ export function BookReader({
 
   if (showCoverPage && book && !isLoading && chapterViewAdhyay == null) {
     return (
-      <div className="flex-1 flex flex-col min-w-0 focus:outline-none">
-        <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden focus:outline-none">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain">
           <div className="p-4 sm:p-6 max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto">
             <div className="py-4 sm:py-6">
               <div className="flex flex-col items-center text-center mb-4 sm:mb-5">
@@ -1430,7 +1430,7 @@ export function BookReader({
       : chapterTitle;
 
     return (
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
         {onExitChapterView && (
           <div className="border-b border-border/50 px-4 sm:px-8 py-1.5 shrink-0">
             <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto flex justify-end">
@@ -1448,7 +1448,7 @@ export function BookReader({
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain">
           <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-8 py-4 sm:py-6">
             {isChapterLoading ? (
               <div className="space-y-6">
@@ -1636,8 +1636,8 @@ export function BookReader({
     };
     const introCommentaryContext = introSanskrit || "";
     return (
-      <div className="flex-1 flex flex-col min-w-0 focus:outline-none" tabIndex={0} onKeyDown={handleKeyDown}>
-        <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden focus:outline-none" tabIndex={0} onKeyDown={handleKeyDown}>
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain">
           <div
             className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-8 py-6 sm:py-10"
             onMouseUp={handleTextSelect}

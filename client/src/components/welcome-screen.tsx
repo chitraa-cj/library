@@ -925,12 +925,14 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onSelectSu
   }
 
   return (
-    <div className="flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8" data-testid="category-detail-view">
+    <div className="flex flex-1 min-h-0 flex-col overflow-hidden bg-background" data-testid="category-detail-view">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-4 sm:p-6 lg:p-8">
       <div className="max-w-5xl mx-auto">
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-6 lg:items-start">
 
-          <div className="lg:w-72 shrink-0">
-            <Card className="p-5 border-border/60 bg-card sticky top-4" data-testid="category-overview-panel">
+          <div className="lg:w-72 shrink-0 lg:sticky lg:top-4 lg:self-start">
+            <Card className="p-5 border-border/60 bg-card flex flex-col max-h-[calc(100dvh-5.5rem)] min-h-0" data-testid="category-overview-panel">
+              <div className="shrink-0">
               <h2 className="font-serif text-lg font-semibold text-foreground" data-testid="text-category-title">
                 {getTranslatedLabel(category, t)}
               </h2>
@@ -947,7 +949,8 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onSelectSu
               <p className="text-xs font-semibold text-foreground uppercase tracking-wider" data-testid="label-texts-chapters">
                 {t("textsAndChapters")}
               </p>
-              <div className="mt-3 space-y-1" data-testid="scripture-tree">
+              </div>
+              <div className="mt-3 flex-1 min-h-0 overflow-y-auto overscroll-y-contain space-y-1 pr-0.5" data-testid="scripture-tree">
                 {category.children ? (
                   category.children.map(sub => {
                     const subBooks = booksBySubCategory[sub.id] ?? [];
@@ -1093,6 +1096,7 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onSelectSu
           </div>
 
         </div>
+      </div>
       </div>
     </div>
   );
@@ -1419,10 +1423,10 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
 
   return (
     <div
-      className={`flex-1 bg-background px-3 sm:px-4 ${fitViewport ? "min-h-0 overflow-hidden py-2 sm:py-3 flex flex-col" : "overflow-y-auto py-4 sm:py-5"}`}
+      className={`flex-1 bg-background px-2 sm:px-3 lg:px-4 xl:px-5 ${fitViewport ? "min-h-0 overflow-hidden py-2 sm:py-3 flex flex-col" : "overflow-y-auto py-3 sm:py-4"}`}
       data-testid="book-landing-view"
     >
-      <div className={`w-full max-w-7xl 2xl:max-w-[90rem] mx-auto ${fitViewport ? "flex flex-col flex-1 min-h-0" : ""}`}>
+      <div className={`w-full mx-auto ${fitViewport ? "max-w-[min(99vw,140rem)] flex flex-col flex-1 min-h-0" : "max-w-[min(98vw,124rem)]"}`}>
         {onBack && (
           <Button
             variant="ghost"
@@ -1435,11 +1439,11 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
             {backLabel ?? "Back"}
           </Button>
         )}
-        <div className={`flex flex-col lg:flex-row ${fitViewport ? "flex-1 min-h-0 gap-3 lg:items-stretch" : "gap-4 lg:gap-5"}`}>
+        <div className={`flex flex-col lg:flex-row ${fitViewport ? "flex-1 min-h-0 gap-2 lg:gap-3 lg:items-stretch" : "gap-3 lg:gap-4"}`}>
 
-          <div className={`lg:w-56 xl:w-60 shrink-0 ${fitViewport ? "min-h-0 lg:flex lg:flex-col" : ""}`}>
+          <div className={`lg:w-[clamp(13rem,18vw,17rem)] shrink-0 ${fitViewport ? "min-h-0 lg:flex lg:flex-col" : "lg:sticky lg:top-4 lg:self-start"}`}>
             <Card
-              className={`p-3 sm:p-4 border-border/60 bg-card ${fitViewport ? "flex-1 min-h-0 overflow-y-auto" : "sticky top-4"}`}
+              className={`p-3 sm:p-4 border-border/70 bg-card/90 backdrop-blur-sm shadow-[0_10px_30px_-20px_hsl(var(--foreground)/0.45)] flex flex-col min-h-0 ${fitViewport ? "flex-1 max-h-full overflow-y-auto" : "max-h-[calc(100dvh-5.5rem)]"}`}
               data-testid="book-landing-sidebar"
             >
               <h2 className="font-serif text-base font-semibold text-foreground mb-1" data-testid="text-landing-title">
@@ -1458,7 +1462,7 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
               <p className="text-[10px] font-semibold text-foreground uppercase tracking-wider mb-2">
                 {landingData.sidebarTreeLabel}
               </p>
-              <div className={`overflow-y-auto pr-0.5 ${fitViewport ? "max-h-[min(10rem,22vh)]" : "max-h-[45vh]"}`}>
+              <div className={`flex-1 min-h-0 overflow-y-auto overscroll-y-contain pr-0.5 ${fitViewport ? "max-h-[min(14rem,28vh)]" : ""}`}>
                 <LandingNavSidebar
                   book={book}
                   chapters={chapters}
@@ -1520,7 +1524,10 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
           </div>
 
           <div className={`flex-1 min-w-0 ${fitViewport ? "min-h-0 flex flex-col overflow-hidden" : ""}`} data-testid="book-landing-content">
-            <div className={`border-l-[3px] border-l-primary/60 pl-3 sm:pl-4 lg:pl-5 ${fitViewport ? "flex flex-col flex-1 min-h-0 gap-2 overflow-hidden" : ""}`}>
+            <div className={`relative border-l-[3px] border-l-primary/60 pl-3 sm:pl-4 lg:pl-5 ${fitViewport ? "flex flex-col flex-1 min-h-0 gap-2 overflow-hidden" : ""}`}>
+              {fitViewport && (
+                <div className="pointer-events-none absolute inset-0 -z-10 rounded-xl bg-gradient-to-br from-primary/[0.06] via-transparent to-primary/[0.03]" />
+              )}
               <div className="flex items-start justify-between gap-3 shrink-0">
                 <div className="min-w-0">
                   <h1
@@ -1534,7 +1541,7 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
                 </div>
                 <Button
                   variant="outline"
-                  className="shrink-0 gap-2 border-primary/30 text-primary hover:bg-primary/5 font-semibold uppercase text-xs tracking-wider"
+                  className="shrink-0 gap-2 border-primary/40 bg-background/85 text-primary hover:bg-primary/10 hover:border-primary/60 font-semibold uppercase text-xs tracking-wider shadow-sm"
                   onClick={() => onSelectBook(book.id)}
                   data-testid="button-open-text-landing"
                 >
@@ -1560,8 +1567,8 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
               <div
                 className={
                   fitViewport
-                    ? "shrink-0 grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[min(22vh,200px)] min-h-0 overflow-hidden border-t border-border/40 pt-2"
-                    : "mt-5 grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-5"
+                    ? "shrink-0 grid grid-cols-1 xl:grid-cols-2 gap-2 max-h-[clamp(9rem,24dvh,15rem)] min-h-0 overflow-hidden border-t border-border/40 pt-2"
+                    : "mt-4 grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4"
                 }
               >
                 <div className={fitViewport ? "min-h-0 overflow-y-auto pr-0.5" : undefined}>
@@ -1579,11 +1586,11 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
                   <h3 className={`font-serif font-bold text-foreground uppercase tracking-wider ${fitViewport ? "text-xs" : "text-sm sm:text-base"}`}>
                     {landingData.structureTitle}
                   </h3>
-                  <div className={fitViewport ? "mt-1.5 space-y-1.5" : "mt-3 space-y-3"}>
+                  <div className={fitViewport ? "mt-1.5 space-y-1.5" : "mt-2.5 space-y-2.5"}>
                     {landingData.structureItems.map((item, idx) => (
                       <button
                         key={idx}
-                        className={`w-full text-left border-l-[3px] border-l-primary/50 bg-primary/[0.03] dark:bg-primary/[0.06] rounded-r-lg hover:bg-primary/[0.08] dark:hover:bg-primary/[0.12] transition-colors cursor-pointer ${fitViewport ? "p-2" : "p-3"}`}
+                        className={`w-full text-left border-l-[3px] border-l-primary/50 bg-primary/[0.03] dark:bg-primary/[0.06] rounded-r-lg hover:bg-primary/[0.10] dark:hover:bg-primary/[0.14] transition-colors cursor-pointer ${fitViewport ? "p-2" : "p-3"}`}
                         onClick={() => {
                           if (onSelectChapter && chapters[idx]) {
                             onSelectChapter(book.id, chapters[idx].number);
@@ -1596,7 +1603,7 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
                         <p className="text-[10px] sm:text-xs font-bold text-primary uppercase tracking-wider">
                           {item.title}
                         </p>
-                        <p className={`text-muted-foreground mt-0.5 leading-snug ${fitViewport ? "text-[11px] sm:text-xs line-clamp-1" : "text-sm mt-1"}`}>
+                        <p className={`text-muted-foreground mt-0.5 leading-snug ${fitViewport ? "text-[11px] sm:text-xs line-clamp-2" : "text-sm mt-1 line-clamp-2"}`}>
                           {item.description}
                         </p>
                       </button>
@@ -1955,24 +1962,30 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
     return (
       <Card
         key={book.id}
-        className={`overflow-hidden border-border/60 bg-card hover:border-primary/40 hover:shadow-lg transition-all flex flex-col cursor-pointer group border-l-[3px] border-l-primary/50 hover:border-l-primary ${hasCover ? "p-0" : "p-4"}`}
+        className={`h-full overflow-hidden border-border/60 bg-card hover:border-primary/40 hover:shadow-md transition-all flex flex-col cursor-pointer group border-l-[3px] border-l-primary/50 hover:border-l-primary ${hasCover ? "p-0" : "p-0"}`}
         onClick={() => {
           setCategoryView(catalogSection);
           setSelectedUpanishadSlug(slugKey);
         }}
         data-testid={`upanishad-card-${slugKey}`}
       >
-        {coverImage && (
-          <div className="relative w-full overflow-hidden">
+        {coverImage ? (
+          <div className="relative w-full overflow-hidden shrink-0">
             <img
               src={coverImage}
               alt=""
-              className="block w-full h-auto max-h-36 object-cover object-center"
+              className="block w-full h-[clamp(7rem,14vw,11rem)] object-cover object-center"
               loading="lazy"
             />
           </div>
+        ) : (
+          <div className="relative w-full shrink-0 h-[clamp(5.5rem,10vw,8rem)] bg-gradient-to-br from-primary/12 via-primary/5 to-transparent border-b border-border/50 flex items-end px-4 pb-3">
+            {principalUp && !isCompanion && (
+              <span className="font-serif text-3xl text-primary/25 leading-none">{principalUp.devanagari}</span>
+            )}
+          </div>
         )}
-        <div className={`flex items-start justify-between gap-2 mb-2 ${hasCover ? "px-4 pt-3" : ""}`}>
+        <div className={`flex items-start justify-between gap-2 mb-1.5 px-3 sm:px-4 pt-3`}>
           <div className="min-w-0 flex-1">
             {principalUp && !isCompanion && (
               <span className="text-[10px] font-mono text-muted-foreground/80">{principalUp.number}</span>
@@ -2000,19 +2013,17 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
             <span>Open Text</span>
           </div>
         </div>
-        <p className={`text-xs text-muted-foreground mb-2 ${hasCover ? "px-4" : ""}`}>
+        <p className="text-xs text-muted-foreground mb-1.5 px-3 sm:px-4">
           {book.author || "Sri Shankaracharya"}
           {principalUp ? ` · ${principalUp.veda} Veda` : ""}
         </p>
         {book.description && (
-          <p
-            className={`text-sm text-muted-foreground leading-relaxed line-clamp-3 flex-1 ${hasCover ? "px-4" : ""}`}
-          >
+          <p className="text-sm text-muted-foreground leading-snug line-clamp-2 flex-1 px-3 sm:px-4">
             {book.description}
           </p>
         )}
-        <div className={hasCover ? "px-4 pb-4" : ""}>
-          <BookProgressBar bookId={book.id} totalVerses={book.totalVerses} alwaysShow />
+        <div className="px-3 sm:px-4 pb-3 pt-2 mt-auto">
+          <BookProgressBar bookId={book.id} totalVerses={book.totalVerses} alwaysShow compact />
         </div>
       </Card>
     );
@@ -2020,9 +2031,12 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
 
   if (categoryView === null) {
     return (
-      <div className="flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8" data-testid="upanishad-landing-view">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-8 text-center sm:text-left">
+      <div
+        className="flex-1 overflow-y-auto bg-gradient-to-b from-muted/25 via-background to-background px-3 sm:px-5 lg:px-8 py-4 sm:py-5"
+        data-testid="upanishad-landing-view"
+      >
+        <div className="w-full max-w-[min(100%,144rem)] mx-auto">
+          <div className="mb-4 sm:mb-5">
             <h1 className="font-bold text-lg sm:text-xl text-foreground uppercase tracking-wide">Upanishad</h1>
             <p className="text-sm text-muted-foreground mt-1">
               Choose a collection · {catalogTextCount} texts (
@@ -2032,9 +2046,12 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6" data-testid="upanishad-category-boxes">
+          <div
+            className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5 w-full"
+            data-testid="upanishad-category-boxes"
+          >
             <Card
-              className="group p-6 sm:p-8 border-border/60 bg-card hover:border-primary/50 hover:shadow-xl transition-all cursor-pointer border-l-[4px] border-l-primary"
+              className="group flex flex-col min-h-[min(42vh,22rem)] p-5 sm:p-6 lg:p-7 border-border/60 bg-card/95 hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer border-l-[4px] border-l-primary"
               onClick={() => setCategoryView("principal")}
               data-testid="box-principal-upanishads"
             >
@@ -2045,18 +2062,18 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
               <h2 className="font-serif text-xl sm:text-2xl font-semibold text-foreground mt-4">
                 Principal Upanishads
               </h2>
-              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed flex-1">
                 The ten classical Upanishads — Īśa, Kena, Kaṭha, Praśna, Muṇḍaka, Māṇḍūkya, Aitareya, Taittirīya,
                 Chāndogya, and Bṛhadāraṇyaka.
               </p>
-              <Badge variant="secondary" className="mt-4 text-[10px]">
+              <Badge variant="secondary" className="mt-3 w-fit text-[10px]">
                 {principalEntries.length} of 10 principal texts
                 {principalCompanionCount > 0 ? ` (+${principalCompanionCount} related)` : ""}
               </Badge>
             </Card>
 
             <Card
-              className="group p-6 sm:p-8 border-border/60 bg-card hover:border-primary/50 hover:shadow-xl transition-all cursor-pointer border-l-[4px] border-l-primary/60"
+              className="group flex flex-col min-h-[min(42vh,22rem)] p-5 sm:p-6 lg:p-7 border-border/60 bg-card/95 hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer border-l-[4px] border-l-primary/60"
               onClick={() => setCategoryView("other")}
               data-testid="box-other-upanishads"
             >
@@ -2067,10 +2084,10 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
               <h2 className="font-serif text-xl sm:text-2xl font-semibold text-foreground mt-4">
                 Other Upanishads
               </h2>
-              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed flex-1">
                 Additional Upanishads with advaita bhāṣyas and related commentaries.
               </p>
-              <Badge variant="secondary" className="mt-4 text-[10px]">
+              <Badge variant="secondary" className="mt-3 w-fit text-[10px]">
                 {otherBooks.length} {otherBooks.length === 1 ? "text" : "texts"}
               </Badge>
             </Card>
@@ -2081,13 +2098,16 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
   }
 
   return (
-    <div className="flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8" data-testid="upanishad-landing-view">
-      <div className="max-w-6xl mx-auto">
+    <div
+      className="flex-1 overflow-y-auto bg-gradient-to-b from-muted/25 via-background to-background px-3 sm:px-5 lg:px-8 py-4 sm:py-5"
+      data-testid="upanishad-landing-view"
+    >
+      <div className="w-full max-w-[min(100%,144rem)] mx-auto">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setCategoryView(null)}
-          className="gap-1.5 text-xs mb-4 text-muted-foreground -ml-2"
+          className="gap-1.5 text-xs mb-3 text-muted-foreground -ml-2"
           data-testid="button-back-to-upanishad-categories"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
@@ -2096,11 +2116,11 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
 
         {categoryView === "principal" ? (
           <section data-testid="principal-upanishads-section">
-            <div className="mb-5">
+            <div className="mb-3 sm:mb-4">
               <h2 className="font-serif text-xl sm:text-2xl font-semibold text-foreground">
                 Principal Upanishads
               </h2>
-              <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+              <p className="text-sm text-muted-foreground mt-1">
                 The ten classical Upanishads forming the core of Vedāntic inquiry.
               </p>
               <Badge variant="secondary" className="mt-2 text-[10px]">
@@ -2111,7 +2131,7 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
               </Badge>
             </div>
             <div
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 items-stretch"
               data-testid="principal-upanishad-grid"
             >
               {principalEntries.flatMap(({ up, book }) => {
@@ -2125,17 +2145,17 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
           </section>
         ) : (
           <section data-testid="other-upanishads-section">
-            <div className="mb-5">
+            <div className="mb-3 sm:mb-4">
               <h2 className="font-serif text-xl sm:text-2xl font-semibold text-foreground">
                 Other Upanishads
               </h2>
-              <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+              <p className="text-sm text-muted-foreground mt-1">
                 Additional Upanishads with advaita bhāṣyas and related commentaries.
               </p>
             </div>
             {otherBooks.length > 0 ? (
               <div
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 items-stretch"
                 data-testid="other-upanishad-grid"
               >
                 {otherBooks.map((book) => renderUpanishadCard(book))}
@@ -2271,12 +2291,14 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
   }
 
   return (
-    <div className="flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8" data-testid="subcategory-detail-view">
+    <div className="flex flex-1 min-h-0 flex-col overflow-hidden bg-background" data-testid="subcategory-detail-view">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-4 sm:p-6 lg:p-8">
       <div className="max-w-5xl mx-auto">
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-6 lg:items-start">
 
-          <div className="lg:w-72 shrink-0">
-            <Card className="p-5 border-border/60 bg-card sticky top-4" data-testid="subcat-overview-panel">
+          <div className="lg:w-72 shrink-0 lg:sticky lg:top-4 lg:self-start">
+            <Card className="p-5 border-border/60 bg-card flex flex-col max-h-[calc(100dvh-5.5rem)] min-h-0" data-testid="subcat-overview-panel">
+              <div className="shrink-0">
               <h2 className="font-serif text-lg font-semibold text-foreground" data-testid="text-subcat-title">
                 {getTranslatedLabel(subCategory, t)}
               </h2>
@@ -2293,7 +2315,8 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
               <p className="text-xs font-semibold text-foreground uppercase tracking-wider" data-testid="label-subcat-texts">
                 {t("textsAndChapters")}
               </p>
-              <div className="mt-3 space-y-1" data-testid="subcat-scripture-tree">
+              </div>
+              <div className="mt-3 flex-1 min-h-0 overflow-y-auto overscroll-y-contain space-y-1 pr-0.5" data-testid="subcat-scripture-tree">
                 {subBooks.map(book => (
                   <button
                     key={book.id}
@@ -2337,6 +2360,7 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
           </div>
 
         </div>
+      </div>
       </div>
     </div>
   );

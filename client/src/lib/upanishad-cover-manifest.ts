@@ -3,6 +3,7 @@ export const UPANISHAD_COVER_STEMS = new Set<string>([
   "aitareya",
   "brihadaranyaka",
   "chandogya",
+  "isha",
   "katha",
   "mundaka",
   "prashna",
