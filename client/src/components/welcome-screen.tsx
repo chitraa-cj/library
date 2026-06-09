@@ -1258,7 +1258,7 @@ function IntroSection({ title, cmsDescription, introText, compact = false }: {
         {title}
       </h3>
       {displayText.split("\n\n").map((paragraph, idx) => (
-        <p key={idx} className={`text-muted-foreground leading-relaxed ${compact ? "text-xs mt-1 line-clamp-2" : "text-sm mt-3"}`}>
+        <p key={idx} className={`text-muted-foreground leading-relaxed ${compact ? `text-xs mt-1 ${expanded ? "" : "line-clamp-2"}` : "text-sm mt-3"}`}>
           {paragraph}
         </p>
       ))}
@@ -1404,7 +1404,7 @@ function LandingNavSidebar({ book, chapters, landingData, onSelectBook, onSelect
   );
 }
 
-function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, t, tc, languageCode, onBack, backLabel }: {
+function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, t, tc, languageCode, onBack, backLabel, onCoverBookChange }: {
   book: Book;
   landingData: BookLandingData;
   chapters: ChapterInfo[];
@@ -1417,9 +1417,17 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
   languageCode?: string | null;
   onBack?: () => void;
   backLabel?: string;
+  onCoverBookChange?: (info: { bookId: string; title: string } | null) => void;
 }) {
   const coverImage = resolveBookCoverImage(book);
   const fitViewport = Boolean(coverImage);
+
+  const coverTitle = landingData.iastTitle || book.title || "";
+  useEffect(() => {
+    onCoverBookChange?.({ bookId: book.id, title: coverTitle });
+    return () => onCoverBookChange?.(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [book.id, coverTitle]);
 
   return (
     <div
@@ -1835,13 +1843,14 @@ function findCompanionBooksForPrincipal(
   });
 }
 
-function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, languageCode }: {
+function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, languageCode, onCoverBookChange }: {
   books: Book[];
   onSelectBook: (bookId: string) => void;
   onSelectChapter?: (bookId: string, adhyayNumber: number) => void;
   onSelectPart?: (bookId: string, adhyayNumber: number, khandaNumber: number) => void;
   onSelectVerse?: (bookId: string, verseNumber: number) => void;
   languageCode?: string | null;
+  onCoverBookChange?: (info: { bookId: string; title: string } | null) => void;
 }) {
   const [selectedUpanishadSlug, setSelectedUpanishadSlug] = useState<string | null>(null);
   /** null = two category boxes; principal | other = show that section's grid */
@@ -1941,6 +1950,7 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
           backLabel={categoryBackLabel}
           t={(k: any) => k}
           tc={(text) => text || ""}
+          onCoverBookChange={onCoverBookChange}
         />
       </div>
     );
@@ -2237,9 +2247,10 @@ interface SubCategoryDetailViewProps {
   onSelectVerse?: (bookId: string, verseNumber: number) => void;
   onGoBack: () => void;
   languageCode?: string | null;
+  onCoverBookChange?: (info: { bookId: string; title: string } | null) => void;
 }
 
-export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, onGoBack, languageCode }: SubCategoryDetailViewProps) {
+export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, onGoBack, languageCode, onCoverBookChange }: SubCategoryDetailViewProps) {
   const category = CATALOG_TREE.find(c => c.id === categoryId);
   const subCategory = category?.children?.find(s => s.id === subCategoryId);
   if (!category || !subCategory) return null;
@@ -2263,6 +2274,7 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
         onSelectPart={onSelectPart}
         onSelectVerse={onSelectVerse}
         languageCode={languageCode}
+        onCoverBookChange={onCoverBookChange}
       />
     );
   }
@@ -2285,6 +2297,7 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
           t={t}
           tc={tc}
           languageCode={languageCode}
+          onCoverBookChange={onCoverBookChange}
         />
       </div>
     );

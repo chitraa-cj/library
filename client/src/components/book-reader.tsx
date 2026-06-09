@@ -108,6 +108,11 @@ interface TOCKhanda {
   verses: VerseMeta[];
 }
 
+/** Collapse accidental consecutive duplicate words in CMS titles, e.g. "Mantra Mantra 3.5" -> "Mantra 3.5". */
+function dedupeTitleWords(title: string): string {
+  return title.replace(/\b(\w+)(\s+\1\b)+/gi, "$1");
+}
+
 function buildTOCHierarchy(verses: VerseMeta[], t?: (key: string) => string): { type: "three-level" | "two-level" | "flat"; groups: TOCAdhyay[] } {
   const hasThreeLevel = verses.some(v => v.adhyayNumber != null && v.khandaNumber != null);
   const hasTwoLevel = verses.some(v => v.adhyayNumber != null);
@@ -515,6 +520,7 @@ export function BookReader({
   const [currentPage, setCurrentPage] = useState(0);
   const [initialized, setInitialized] = useState(false);
   const hasNavigatedRef = useRef(false);
+  const consumedNavigateRef = useRef<number | null>(null);
   const [commentaryExpanded, setCommentaryExpanded] = useState(true);
   const [commentaryMode, setCommentaryMode] = useState<"bhashyam" | "teeka">("bhashyam");
   const [selectionPopup, setSelectionPopup] = useState<{ text: string; x: number; y: number } | null>(null);
@@ -583,7 +589,13 @@ export function BookReader({
     ...cmsContentQueryOptions,
   });
 
-  const verses = book?.verses || [];
+  const verses = useMemo(
+    () =>
+      (book?.verses || []).map((v) =>
+        v.sectionTitle ? { ...v, sectionTitle: dedupeTitleWords(v.sectionTitle) } : v
+      ),
+    [book]
+  );
   const currentVerseMeta = verses[currentPage] || null;
 
   const isIntroSection = (title?: string | null) => {
@@ -688,6 +700,7 @@ export function BookReader({
   useEffect(() => {
     setShowCoverPage(false);
     hasNavigatedRef.current = false;
+    consumedNavigateRef.current = null;
     setExpandedTOCAdhyays(new Set());
     setExpandedTOCKhandas(new Set());
     setLocalLanguage(selectedCommentaryLanguage);
@@ -702,20 +715,32 @@ export function BookReader({
         hasNavigatedRef.current = true;
       }
     } else if (verses.length > 0 && !hasNavigatedRef.current) {
+      // Opening the text fresh: land on the Sambandha Bhāṣyam (intro) when present,
+      // otherwise fall back to the first non-intro verse.
+      const introIdx = verses.findIndex(v => v.verseNumber === 0 && isIntroSection(v.sectionTitle));
       const firstNonIntro = verses.findIndex(v => v.verseNumber !== 0 || !isIntroSection(v.sectionTitle));
-      setCurrentPage(firstNonIntro >= 0 ? firstNonIntro : 0);
+      const startIdx = introIdx >= 0 ? introIdx : firstNonIntro;
+      setCurrentPage(startIdx >= 0 ? startIdx : 0);
       hasNavigatedRef.current = true;
     }
   }, [chapterViewAdhyay, navigateToVerse, verses]);
 
   useEffect(() => {
     if (!onVerseChange || !currentVerse || showCoverPage || isCurrentVerseIntro) return;
-    if (
+    // While a navigation request is still settling on its target, suppress stale
+    // reports from the in-between page. Once the target page is reached we mark it
+    // consumed, so subsequent manual Next/Prev (which move off the target) report
+    // normally and the side nav stays in sync.
+    const navPending =
       navigateToVerse !== null &&
       navigateToVerse !== undefined &&
-      currentVerse.verseNumber !== navigateToVerse
-    ) {
+      consumedNavigateRef.current !== navigateToVerse &&
+      currentVerse.verseNumber !== navigateToVerse;
+    if (navPending) {
       return;
+    }
+    if (navigateToVerse !== null && navigateToVerse !== undefined && currentVerse.verseNumber === navigateToVerse) {
+      consumedNavigateRef.current = navigateToVerse;
     }
     onVerseChange(currentVerse.verseNumber);
   }, [currentPage, currentVerse, onVerseChange, showCoverPage, isCurrentVerseIntro, navigateToVerse]);

@@ -96,6 +96,7 @@ function HomePageContent() {
     return typeof window !== 'undefined' && window.innerWidth < 1024;
   });
   const [verseBreadcrumb, setVerseBreadcrumb] = useState<VerseBreadcrumb | null>(null);
+  const [coverBook, setCoverBook] = useState<{ bookId: string; title: string } | null>(null);
   const [pendingNoteText, setPendingNoteText] = useState<string | null>(null);
   const [urlInitialized, setUrlInitialized] = useState(false);
   const [mobileInitialPanelShown, setMobileInitialPanelShown] = useState(false);
@@ -675,6 +676,8 @@ function HomePageContent() {
                       crumbs.push({ label: verseBreadcrumb.verseLabel });
                     }
                   }
+                } else if (coverBook) {
+                  crumbs.push({ label: coverBook.title });
                 }
 
                 return crumbs.map((crumb, idx) => (
@@ -862,6 +865,7 @@ function HomePageContent() {
                   setSelectedSubCategoryId(null);
                 }}
                 languageCode={selectedCommentaryLanguage}
+                onCoverBookChange={setCoverBook}
               />
             ) : selectedCategoryId ? (
               <CategoryDetailView
