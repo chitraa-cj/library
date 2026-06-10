@@ -100,7 +100,13 @@ export interface BookWithDetails extends Book {
   verses: VerseWithTranslations[];
 }
 
-export type VerseMeta = Pick<Verse, 'id' | 'verseNumber' | 'sectionTitle' | 'adhyayNumber' | 'adhyayTitle' | 'khandaNumber' | 'khandaTitle' | 'bookId'>;
+export type VerseMeta = Pick<Verse, 'id' | 'verseNumber' | 'sectionTitle' | 'adhyayNumber' | 'adhyayTitle' | 'khandaNumber' | 'khandaTitle' | 'bookId'> & {
+  // Raw Strapi section `type` for each captured level (e.g. "adhyay", "khanda",
+  // "valli", "vakhya"). Lets the reader label the hierarchy from the CMS instead
+  // of guessing the level name from titles. Null when the grantha doesn't define one.
+  adhyayType?: string | null;
+  khandaType?: string | null;
+};
 
 export interface BookWithVerseMeta extends Book {
   titles: BookTitle[];

@@ -9,6 +9,7 @@ export interface KhandaInfo {
   title: string;
   count: number;
   verseNumbers: number[];
+  type?: string | null;
 }
 
 export interface ChapterInfo {
@@ -17,6 +18,7 @@ export interface ChapterInfo {
   verseCount: number;
   khandas?: KhandaInfo[];
   verseNumbers: number[];
+  type?: string | null;
 }
 
 export function useBookChapters(bookId: string | undefined): ChapterInfo[] {
@@ -40,6 +42,7 @@ export function useBookChapters(bookId: string | undefined): ChapterInfo[] {
           title: v.adhyayTitle || `Chapter ${adhyay}`,
           verseCount: 0,
           verseNumbers: [],
+          type: v.adhyayType ?? null,
         });
       }
       const ch = chapterMap.get(adhyay)!;
@@ -58,6 +61,7 @@ export function useBookChapters(bookId: string | undefined): ChapterInfo[] {
             title: v.khandaTitle || `Part ${v.khandaNumber}`,
             count: 1,
             verseNumbers: [v.verseNumber],
+            type: v.khandaType ?? null,
           });
         }
       }
@@ -82,26 +86,82 @@ function getChapterLabel(title: string) {
   return t || title;
 }
 
+// Known Strapi section `type` slugs -> properly diacriticised display labels.
+// Keys are normalised (lower-case, no spaces/underscores/hyphens).
+const SECTION_TYPE_LABELS: Record<string, string> = {
+  adhyay: "Adhyāya", adhyaya: "Adhyāya",
+  khanda: "Khaṇḍa", kanda: "Kāṇḍa",
+  valli: "Vallī",
+  anuvaka: "Anuvāka",
+  prashna: "Praśna", prasna: "Praśna",
+  mundaka: "Muṇḍaka",
+  pada: "Pāda",
+  vakhya: "Vākya", vakhyaa: "Vākya", vakya: "Vākya",
+  sarga: "Sarga",
+  brahmana: "Brāhmaṇa",
+  pariccheda: "Pariccheda", parichcheda: "Pariccheda",
+  section: "Section",
+  chapter: "Chapter",
+};
+
+// Turn a raw Strapi section `type` into a display label. Falls back to
+// title-casing unknown CMS values so a new grantha type still renders sensibly.
+function humanizeSectionType(type?: string | null): string | null {
+  if (!type) return null;
+  const key = type.toLowerCase().trim().replace(/[\s_-]+/g, "");
+  if (!key) return null;
+  if (SECTION_TYPE_LABELS[key]) return SECTION_TYPE_LABELS[key];
+  return type.trim().replace(/(^|\s)\S/g, (c) => c.toUpperCase());
+}
+
+// Loose stem patterns for guessing a level name from a section *title* when the
+// CMS hasn't set a `type`. Ordered most-specific first; stems are written to
+// tolerate diacritics and spelling variants (e.g. "parichchedha" ~ "pariccheda").
+const TITLE_LEVEL_PATTERNS: [RegExp, string][] = [
+  [/parichched|pariccheda/i, "Pariccheda"],
+  [/anuv[aā]ka/i, "Anuvāka"],
+  [/vall[iī]/i, "Vallī"],
+  [/mu[nṇ][dḍ]aka/i, "Muṇḍaka"],
+  [/pra[sś]na/i, "Praśna"],
+  [/br[aā]hma[nṇ]a/i, "Brāhmaṇa"],
+  [/kha[nṇ][dḍ]a/i, "Khaṇḍa"],
+  [/v[aā]kya/i, "Vākya"],
+  [/sarga/i, "Sarga"],
+  [/p[aā]da/i, "Pāda"],
+  [/adhy[aā]ya?/i, "Adhyāya"],
+  [/chapter/i, "Chapter"],
+  [/section/i, "Section"],
+];
+
+function labelFromTitle(title?: string | null): string | null {
+  if (!title) return null;
+  for (const [re, label] of TITLE_LEVEL_PATTERNS) {
+    if (re.test(title)) return label;
+  }
+  return null;
+}
+
 function detectLabels(chapters: ChapterInfo[]): { chapterLabel: string; khandaLabel: string; mantraLabel: string } {
-  const firstTitle = chapters[0]?.title?.toLowerCase() || "";
-  const hasKhandas = chapters.some(ch => ch.khandas && ch.khandas.length > 0);
-  const firstKhandaTitle = hasKhandas ? chapters.find(ch => ch.khandas?.length)?.khandas?.[0]?.title?.toLowerCase() || "" : "";
+  const firstKhanda = chapters.find(ch => ch.khandas?.length)?.khandas?.[0];
 
-  let chapterLabel = "Adhyāya";
-  if (firstTitle.includes("valli") || firstTitle.includes("vallī")) chapterLabel = "Valli";
-  else if (firstTitle.includes("mundaka") || firstTitle.includes("muṇḍaka")) chapterLabel = "Muṇḍaka";
-  else if (firstTitle.includes("prashna") || firstTitle.includes("praśna")) chapterLabel = "Praśna";
-  else if (firstTitle.includes("chapter")) chapterLabel = "Chapter";
-  else if (firstTitle.includes("adhyay") || firstTitle.includes("adhyāy")) chapterLabel = "Adhyāya";
-  else if (firstTitle.includes("pada") || firstTitle.includes("pāda")) chapterLabel = "Pāda";
+  // Prefer the level name straight from Strapi's section `type`; fall back to
+  // guessing from the title when the CMS hasn't set one (e.g. legacy books or
+  // sections imported without a type), and only then to a generic default.
+  const chapterLabel =
+    humanizeSectionType(chapters[0]?.type) || labelFromTitle(chapters[0]?.title) || "Adhyāya";
+  const khandaFromCms = humanizeSectionType(firstKhanda?.type);
+  let khandaLabel = khandaFromCms || labelFromTitle(firstKhanda?.title) || "Khaṇḍa";
+  let mantraLabel = "Mantra";
 
-  let khandaLabel = "Khaṇḍa";
-  if (firstKhandaTitle.includes("anuvaka") || firstKhandaTitle.includes("anuvāka")) khandaLabel = "Anuvāka";
-  else if (firstKhandaTitle.includes("valli") || firstKhandaTitle.includes("vallī")) khandaLabel = "Valli";
-  else if (firstKhandaTitle.includes("khanda") || firstKhandaTitle.includes("khaṇḍa")) khandaLabel = "Khaṇḍa";
-  else if (firstKhandaTitle.includes("section")) khandaLabel = "Section";
+  // Pariccheda-based prose works (e.g. Vedānta Paribhāṣā) aren't divided into
+  // khaṇḍas/mantras: their sub-sections are subject-topics (viṣaya) and the leaf
+  // prose passages are viṣayā. A CMS `type` on the sub-level still wins if set.
+  if (chapterLabel === "Pariccheda") {
+    if (!khandaFromCms) khandaLabel = "Viṣaya";
+    mantraLabel = "Viṣayā";
+  }
 
-  return { chapterLabel, khandaLabel, mantraLabel: "Mantra" };
+  return { chapterLabel, khandaLabel, mantraLabel };
 }
 
 type NavTab = "chapter" | "khanda" | "mantra";

@@ -905,6 +905,8 @@ async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWith
         adhyayTitle: null,
         khandaNumber: null,
         khandaTitle: null,
+        adhyayType: null,
+        khandaType: null,
       });
     }
 
@@ -914,6 +916,8 @@ async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWith
       adhyayTitle: string | null,
       khandaNum: number | null,
       khandaTitle: string | null,
+      adhyayType: string | null,
+      khandaType: string | null,
     ) {
       const docId = m.documentId || String(m.id);
       if (seenManthraDocIds.has(docId)) {
@@ -941,6 +945,8 @@ async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWith
         adhyayTitle,
         khandaNumber: khandaNum,
         khandaTitle,
+        adhyayType,
+        khandaType,
       });
     }
 
@@ -950,17 +956,22 @@ async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWith
       adhyayTitle: string | null,
       khandaNum: number | null,
       khandaTitle: string | null,
+      adhyayType: string | null,
+      khandaType: string | null,
     ) {
       const subs = (section.sub_sections || []).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
       if (subs.length > 0) {
         for (const sub of subs) {
-          collectVersesFromLeafSections(sub, adhyayNum, adhyayTitle, khandaNum || sub.order, khandaTitle || sub.title);
+          collectVersesFromLeafSections(
+            sub, adhyayNum, adhyayTitle,
+            khandaNum || sub.order, khandaTitle || sub.title, adhyayType, khandaType || sub.type || null,
+          );
         }
       } else {
         const manthraDocs = section.manthras || [];
         const sortedManthras = [...manthraDocs].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
         for (const m of sortedManthras) {
-          pushManthra(m, adhyayNum, adhyayTitle, khandaNum, khandaTitle);
+          pushManthra(m, adhyayNum, adhyayTitle, khandaNum, khandaTitle, adhyayType, khandaType);
         }
       }
     }
@@ -968,6 +979,7 @@ async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWith
     for (const adhyay of sectionTree) {
       const adhyayNum = adhyay.order ?? null;
       const adhyayTitle = adhyay.title || null;
+      const adhyayType = adhyay.type || null;
 
       const khandas = (adhyay.sub_sections || []).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
 
@@ -975,14 +987,15 @@ async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWith
         for (const khanda of khandas) {
           const khandaNum = khanda.order ?? null;
           const khandaTitle = khanda.title || null;
-          collectVersesFromLeafSections(khanda, adhyayNum, adhyayTitle, khandaNum, khandaTitle);
+          const khandaType = khanda.type || null;
+          collectVersesFromLeafSections(khanda, adhyayNum, adhyayTitle, khandaNum, khandaTitle, adhyayType, khandaType);
         }
       } else {
         const manthraDocs = adhyay.manthras || [];
         const sortedManthras = [...manthraDocs].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
 
         for (const m of sortedManthras) {
-          pushManthra(m, adhyayNum, adhyayTitle, null, null);
+          pushManthra(m, adhyayNum, adhyayTitle, null, null, adhyayType, null);
         }
       }
     }
