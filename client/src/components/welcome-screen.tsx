@@ -1799,8 +1799,9 @@ function bookMatchesPrincipalPattern(book: Book, pattern: string): boolean {
   const title = book.title?.toLowerCase() || "";
   if (!pattern) return false;
 
-  // Slug segment match (avoids "isha" matching inside "upanishad")
-  if (slug.startsWith(pattern)) return true;
+  // Slug segment match (avoids "isha" matching inside "upanishad",
+  // and "katha" matching inside "katharudra")
+  if (slug === pattern || slug.startsWith(`${pattern}-`)) return true;
   if (new RegExp(`(^|-)${pattern}(-|$)`).test(slug)) return true;
 
   // Title: word-boundary match for principal names only
