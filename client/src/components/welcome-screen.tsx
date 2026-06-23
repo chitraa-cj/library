@@ -1451,7 +1451,7 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
 
           <div className={`lg:w-[clamp(13rem,18vw,17rem)] shrink-0 ${fitViewport ? "min-h-0 lg:flex lg:flex-col" : "lg:sticky lg:top-4 lg:self-start"}`}>
             <Card
-              className={`p-3 sm:p-4 border-border/70 bg-card/90 backdrop-blur-sm shadow-[0_10px_30px_-20px_hsl(var(--foreground)/0.45)] flex flex-col min-h-0 ${fitViewport ? "flex-1 max-h-full overflow-y-auto" : "max-h-[calc(100dvh-5.5rem)]"}`}
+              className={`p-3 sm:p-4 border-border/70 bg-card/90 backdrop-blur-sm shadow-[0_10px_30px_-20px_hsl(var(--foreground)/0.45)] flex flex-col min-h-0 ${fitViewport ? "flex-1 max-h-full overflow-y-auto" : "max-h-[calc(100dvh-5.5rem)] overflow-y-auto overscroll-y-contain"}`}
               data-testid="book-landing-sidebar"
             >
               <h2 className="font-serif text-base font-semibold text-foreground mb-1" data-testid="text-landing-title">
@@ -1470,7 +1470,7 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
               <p className="text-[10px] font-semibold text-foreground uppercase tracking-wider mb-2">
                 {landingData.sidebarTreeLabel}
               </p>
-              <div className={`flex-1 min-h-0 overflow-y-auto overscroll-y-contain pr-0.5 ${fitViewport ? "max-h-[min(14rem,28vh)]" : ""}`}>
+              <div className={`pr-0.5 ${fitViewport ? "flex-1 min-h-0 overflow-y-auto overscroll-y-contain max-h-[min(14rem,28vh)]" : ""}`}>
                 <LandingNavSidebar
                   book={book}
                   chapters={chapters}
@@ -1903,7 +1903,7 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
       ? {
           iastTitle: selectedUp.iastFull,
           devanagariTitle: selectedUp.devanagariLong,
-          authorIast: "Śrī Śaṅkarācārya",
+          authorIast: selectedBook.author || "Śrī Śaṅkarācārya",
           verseCount: String(selectedBook.totalVerses || 0),
           verseLabel: "Manthras",
           quote: selectedUp.quote,
@@ -1914,7 +1914,7 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
           extraSection: selectedUp.extraSection,
           ctaLabel: "Open Text",
           sidebarLabel: selectedUp.iastFull,
-          sidebarDescription: `${selectedUp.veda} Veda Upanishad with Shankara Bhashya.`,
+          sidebarDescription: `${selectedUp.veda} Veda Upanishad with ${selectedBook.bhashyamName || "Shankara Bhashya"}.`,
           sidebarTreeLabel: "Structure",
         }
       : {
