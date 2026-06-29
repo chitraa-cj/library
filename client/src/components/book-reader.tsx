@@ -530,6 +530,16 @@ export function BookReader({
   const [showTeekas, setShowTeekas] = useState(false);
   const [selectedBhashyaAuthor, setSelectedBhashyaAuthor] = useState<string | null>(null);
   const [selectedTeekaAuthor, setSelectedTeekaAuthor] = useState<string | null>(null);
+  // Remember the user's explicitly chosen commentary author across page/verse changes.
+  // The selection state above can momentarily reset while a new verse's commentaries
+  // load, so these refs preserve the preference and let us restore it when available.
+  const preferredBhashyaAuthorRef = useRef<string | null>(null);
+  const preferredTeekaAuthorRef = useRef<string | null>(null);
+
+  const handleSelectTeekaAuthor = useCallback((authorName: string) => {
+    preferredTeekaAuthorRef.current = authorName;
+    setSelectedTeekaAuthor(authorName);
+  }, []);
 
   const handleTextSelect = useCallback(() => {
     const selection = window.getSelection();
@@ -910,7 +920,11 @@ export function BookReader({
   useEffect(() => {
     if (verseBhashyaAuthors.length === 0) return;
     if (!selectedBhashyaAuthor || !verseBhashyaAuthors.some((a) => a.authorName === selectedBhashyaAuthor)) {
-      setSelectedBhashyaAuthor(verseBhashyaAuthors[0].authorName);
+      const preferred = preferredBhashyaAuthorRef.current;
+      const next = preferred && verseBhashyaAuthors.some((a) => a.authorName === preferred)
+        ? preferred
+        : verseBhashyaAuthors[0].authorName;
+      setSelectedBhashyaAuthor(next);
     }
   }, [currentVerseMeta?.id, verseBhashyaAuthors, selectedBhashyaAuthor]);
 
@@ -920,7 +934,11 @@ export function BookReader({
       return;
     }
     if (!selectedTeekaAuthor || !verseTeekaAuthors.some((a) => a.authorName === selectedTeekaAuthor)) {
-      setSelectedTeekaAuthor(verseTeekaAuthors[0].authorName);
+      const preferred = preferredTeekaAuthorRef.current;
+      const next = preferred && verseTeekaAuthors.some((a) => a.authorName === preferred)
+        ? preferred
+        : verseTeekaAuthors[0].authorName;
+      setSelectedTeekaAuthor(next);
     }
   }, [currentVerseMeta?.id, verseTeekaAuthors, selectedTeekaAuthor]);
 
@@ -1972,6 +1990,7 @@ export function BookReader({
                               : "bg-card border border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/30"
                           }`}
                           onClick={() => {
+                            preferredBhashyaAuthorRef.current = author.authorName;
                             setSelectedBhashyaAuthor(author.authorName);
                             handleAuthorChange(author.authorName);
                             setCommentaryMode("bhashyam");
@@ -2041,7 +2060,7 @@ export function BookReader({
                             {verseTeekaAuthors.length > 1 && (
                               <Select
                                 value={selectedTeekaAuthor || verseTeekaAuthors[0]?.authorName || ""}
-                                onValueChange={setSelectedTeekaAuthor}
+                                onValueChange={handleSelectTeekaAuthor}
                               >
                                 <SelectTrigger className="h-7 w-auto min-w-[120px] max-w-[200px] text-[11px] border border-border/50 bg-background/60 shadow-none focus:ring-1 focus:ring-primary/30 px-2 rounded-md" data-testid="select-teeka-author">
                                   <SelectValue />
