@@ -2238,6 +2238,157 @@ function GenericBookLanding({ book, onSelectBook, t, tc }: {
   );
 }
 
+interface GitaChapter {
+  num: number;
+  name: string;
+  transliteration: string;
+  meaning: string;
+  verses: number;
+}
+
+const GITA_CHAPTERS: GitaChapter[] = [
+  { num: 1, name: "अर्जुनविषादयोग", transliteration: "Arjun Viṣhād Yog", meaning: "Arjuna's Dilemma", verses: 47 },
+  { num: 2, name: "सांख्ययोग", transliteration: "Sānkhya Yog", meaning: "The Yoga of Knowledge", verses: 72 },
+  { num: 3, name: "कर्मयोग", transliteration: "Karm Yog", meaning: "The Yoga of Action", verses: 43 },
+  { num: 4, name: "ज्ञानकर्मसंन्यासयोग", transliteration: "Jñāna Karm Sanyās Yog", meaning: "The Yoga of Knowledge and Action", verses: 42 },
+  { num: 5, name: "कर्मसंन्यासयोग", transliteration: "Karm Sanyās Yog", meaning: "The Yoga of Renunciation", verses: 29 },
+  { num: 6, name: "ध्यानयोग", transliteration: "Dhyān Yog", meaning: "The Yoga of Meditation", verses: 47 },
+  { num: 7, name: "ज्ञानविज्ञानयोग", transliteration: "Jñāna Vijñāna Yog", meaning: "The Yoga of Knowledge and Wisdom", verses: 30 },
+  { num: 8, name: "अक्षरब्रह्मयोग", transliteration: "Akṣhar Brahma Yog", meaning: "The Yoga of the Imperishable Brahman", verses: 28 },
+  { num: 9, name: "राजविद्याराजगुह्ययोग", transliteration: "Rāja Vidyā Yog", meaning: "The Yoga of Royal Knowledge", verses: 34 },
+  { num: 10, name: "विभूतियोग", transliteration: "Vibhūti Yog", meaning: "The Yoga of Divine Glories", verses: 42 },
+  { num: 11, name: "विश्वरूपदर्शनयोग", transliteration: "Viśhwarūp Darśhan Yog", meaning: "The Yoga of the Universal Form", verses: 55 },
+  { num: 12, name: "भक्तियोग", transliteration: "Bhakti Yog", meaning: "The Yoga of Devotion", verses: 20 },
+  { num: 13, name: "क्षेत्र-क्षेत्रज्ञविभागयोग", transliteration: "Kṣhetra Kṣhetrajña Vibhāg Yog", meaning: "The Yoga of the Field and the Knower", verses: 35 },
+  { num: 14, name: "गुणत्रयविभागयोग", transliteration: "Guṇa Traya Vibhāg Yog", meaning: "The Yoga of the Three Gunas", verses: 27 },
+  { num: 15, name: "पुरुषोत्तमयोग", transliteration: "Puruṣhottam Yog", meaning: "The Yoga of the Supreme Person", verses: 20 },
+  { num: 16, name: "दैवासुरसम्पद्विभागयोग", transliteration: "Daivāsura Sampad Vibhāg Yog", meaning: "The Yoga of Divine and Demoniac Natures", verses: 24 },
+  { num: 17, name: "श्रद्धात्रयविभागयोग", transliteration: "Śhraddhā Traya Vibhāg Yog", meaning: "The Yoga of the Three Divisions of Faith", verses: 28 },
+  { num: 18, name: "मोक्षसंन्यासयोग", transliteration: "Mokṣha Sanyās Yog", meaning: "The Yoga of Liberation through Renunciation", verses: 78 },
+];
+
+// Per-chapter cover images. Empty for now — drop entries keyed by chapter number
+// (e.g. `1: chapter1Img`) here as artwork becomes available and tiles will use them.
+const GITA_CHAPTER_IMAGES: Record<number, string> = {};
+
+function GitaChapterGrid({ book, chapters, onSelectBook, onSelectChapter, onGoBack, landingData, t, tc, languageCode }: {
+  book: Book;
+  chapters: ChapterInfo[];
+  onSelectBook: (bookId: string) => void;
+  onSelectChapter?: (bookId: string, adhyayNumber: number) => void;
+  onGoBack: () => void;
+  landingData?: BookLandingData;
+  t: (key: any) => string;
+  tc: (text: string | null | undefined, map: Record<string, Record<string, string>>) => string;
+  languageCode?: string | null;
+}) {
+  const verseCountFor = (num: number) =>
+    chapters.find(c => c.number === num)?.verseCount ?? GITA_CHAPTERS.find(c => c.num === num)?.verses ?? 0;
+
+  const handleOpen = (num: number) => {
+    if (onSelectChapter) onSelectChapter(book.id, num);
+    else onSelectBook(book.id);
+  };
+
+  return (
+    <div className="flex flex-1 min-h-0 flex-col overflow-hidden bg-background" data-testid="gita-chapter-grid-view">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-4 sm:p-6 lg:p-8">
+        <div className="max-w-6xl mx-auto">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onGoBack}
+            className="gap-1.5 text-xs w-fit text-muted-foreground -ml-2 mb-3"
+            data-testid="button-back-gita-chapters"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back
+          </Button>
+
+          <div className="flex items-start justify-between gap-3 border-l-[3px] border-l-primary/60 pl-3 sm:pl-4 mb-5">
+            <div className="min-w-0">
+              <h1 className="font-serif text-2xl sm:text-3xl font-bold text-foreground leading-tight tracking-tight">
+                {landingData?.iastTitle ?? tc(book.title, bookTitleTranslations)}
+              </h1>
+              {landingData?.devanagariTitle && (
+                <p className="font-serif text-lg sm:text-xl text-foreground/70 mt-0.5">
+                  {landingData.devanagariTitle}
+                </p>
+              )}
+              <p className="text-xs font-semibold text-primary/80 uppercase tracking-[0.15em] mt-2">
+                {t("chapterFull")} 1–{GITA_CHAPTERS.length} · {book.totalVerses ?? 701} {t("verses")}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              className="shrink-0 gap-2 border-primary/40 bg-background/85 text-primary hover:bg-primary/10 hover:border-primary/60 font-semibold uppercase text-xs tracking-wider shadow-sm"
+              onClick={() => onSelectBook(book.id)}
+              data-testid="button-open-full-text-gita"
+            >
+              <BookOpen className="h-4 w-4" />
+              {landingData?.ctaLabel ?? t("openText")}
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-testid="gita-chapters-grid">
+            {GITA_CHAPTERS.map(ch => {
+              const img = GITA_CHAPTER_IMAGES[ch.num];
+              return (
+                <Card
+                  key={ch.num}
+                  className="group relative flex flex-col border-border/60 bg-card hover:border-primary/40 hover:shadow-lg transition-all cursor-pointer overflow-hidden border-l-[3px] border-l-primary/50 hover:border-l-primary"
+                  onClick={() => handleOpen(ch.num)}
+                  data-testid={`card-gita-chapter-${ch.num}`}
+                >
+                  <div className="relative aspect-[16/9] w-full overflow-hidden bg-gradient-to-br from-primary/15 via-primary/5 to-accent/20">
+                    {img ? (
+                      <img
+                        src={img}
+                        alt={ch.transliteration}
+                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="font-serif text-3xl sm:text-4xl text-foreground/70" data-testid={`gita-chapter-devanagari-${ch.num}`}>
+                          {ch.name}
+                        </span>
+                      </div>
+                    )}
+                    <span className="absolute top-2 left-2 inline-flex items-center justify-center min-w-7 h-7 px-2 rounded-full bg-background/85 backdrop-blur-sm text-primary text-xs font-bold tabular-nums shadow-sm">
+                      {ch.num}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-1 flex-col p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] font-semibold text-primary/70 uppercase tracking-wider">
+                          {t("chapterFull")} {ch.num}
+                        </p>
+                        <h3 className="font-serif text-base font-semibold text-foreground leading-snug mt-0.5">
+                          {ch.transliteration}
+                        </h3>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed line-clamp-2">
+                      {ch.meaning}
+                    </p>
+                    <div className="mt-auto pt-3 flex items-center gap-1 text-xs text-muted-foreground">
+                      <BookOpen className="h-3 w-3" />
+                      <span>{verseCountFor(ch.num)} {t("verses")}</span>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface SubCategoryDetailViewProps {
   categoryId: string;
   subCategoryId: string;
@@ -2276,6 +2427,22 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
         onSelectVerse={onSelectVerse}
         languageCode={languageCode}
         onCoverBookChange={onCoverBookChange}
+      />
+    );
+  }
+
+  if (subCategoryId === "pt-gita" && primaryBook) {
+    return (
+      <GitaChapterGrid
+        book={primaryBook}
+        chapters={chapters}
+        onSelectBook={onSelectBook}
+        onSelectChapter={onSelectChapter}
+        onGoBack={onGoBack}
+        landingData={landingData}
+        t={t}
+        tc={tc}
+        languageCode={languageCode}
       />
     );
   }
