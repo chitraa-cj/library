@@ -899,6 +899,8 @@ function HomePageContent() {
               <WelcomeScreen
                 books={allBooks || []}
                 onSelectBook={handleBookSelect}
+                onSelectVerse={handleReaderNavSelectVerse}
+                onSelectChapter={handleLandingSelectChapter}
                 onBrowseLibrary={() => setShowLibraryCatalog(true)}
                 onSelectSubCategory={(categoryId, subCategoryId) => {
                   setSelectedCategoryId(categoryId);

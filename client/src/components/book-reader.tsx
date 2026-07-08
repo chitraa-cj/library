@@ -1,10 +1,10 @@
-import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef, type MouseEvent as ReactMouseEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { cmsContentQueryOptions } from "@/lib/queryClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareText, StickyNote, List, Globe, Languages, Sparkles, Feather, ScrollText, Check, Lock } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareText, StickyNote, List, Globe, Languages, Sparkles, Feather, ScrollText, Check, Lock, Copy, Share2, Bookmark, Volume2, VolumeX, ArrowLeftRight, Sun, Maximize2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoPopup } from "@/components/video-popup";
 import { WordTooltip } from "@/components/word-tooltip";
@@ -15,6 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import { translateContent, bookTitleTranslations, bookAuthorTranslations, bookCategoryTranslations, bookDescriptionTranslations, chapterTitleTranslations, sectionTitleTranslations, verseSectionTitleTranslations } from "@/lib/content-translations";
 import type { BookWithVerseMeta, VerseMeta, VerseTranslation, Explanation, VerseWithTranslations } from "@shared/schema";
 import shankaracharyaImg from "@assets/image_1770455528511.png";
+import mantraMandalaImg from "@assets/mantra-mandala.png";
+import readerIllustration from "@assets/reader-shankaracharya-standing.jpg";
 
 const LANG_ALIASES: Record<string, string[]> = {
   "english": ["english", "en"],
@@ -443,8 +445,167 @@ function VerseExplanation({
   );
 }
 
-export function BookReader({ 
-  bookId, 
+/** Strip HTML tags / collapse whitespace so text can be read aloud, copied, or shared cleanly. */
+function toPlainText(s: string | null | undefined): string {
+  return (s || "").replace(/<[^>]*>/g, "").replace(/ /g, " ").replace(/\s+/g, " ").trim();
+}
+
+/** Mandala image used to decorate the mantra card corners. */
+function MandalaCorner({ className }: { className?: string }) {
+  return (
+    <img src={mantraMandalaImg} alt="" aria-hidden="true" className={className} draggable={false} />
+  );
+}
+
+/** Small circular icon button used across the mantra/commentary toolbars. */
+function IconAction({ icon: Icon, label, onClick, active = false, className = "" }: {
+  icon: typeof Copy;
+  label: string;
+  onClick?: (e: ReactMouseEvent) => void;
+  active?: boolean;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      onClick={onClick}
+      className={`inline-flex items-center justify-center h-8 w-8 rounded-lg border transition-colors ${active ? "border-primary/40 bg-primary/10 text-primary" : "border-border/60 bg-card/70 text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5"} ${className}`}
+    >
+      <Icon className="h-4 w-4" />
+    </button>
+  );
+}
+
+/** Reads the given text aloud via the Web Speech API (no backend needed). */
+function ListenButton({ text }: { text: string }) {
+  const [speaking, setSpeaking] = useState(false);
+  useEffect(() => () => { try { window.speechSynthesis?.cancel(); } catch { /* noop */ } }, []);
+  const toggle = () => {
+    const synth = typeof window !== "undefined" ? window.speechSynthesis : undefined;
+    if (!synth) return;
+    if (speaking) { synth.cancel(); setSpeaking(false); return; }
+    const plain = toPlainText(text);
+    if (!plain) return;
+    const utter = new SpeechSynthesisUtterance(plain);
+    utter.lang = "hi-IN";
+    utter.rate = 0.82;
+    utter.onend = () => setSpeaking(false);
+    utter.onerror = () => setSpeaking(false);
+    synth.cancel();
+    synth.speak(utter);
+    setSpeaking(true);
+  };
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={speaking ? "Stop" : "Listen"}
+      className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold shadow-sm hover:bg-primary/90 transition-colors"
+      data-testid="button-listen"
+    >
+      {speaking ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+      {speaking ? "Stop" : "Listen"}
+    </button>
+  );
+}
+
+/** Bookmark toggle persisted in localStorage (no auth required). */
+function BookmarkButton({ verseId, variant = "plain" }: { verseId: string; variant?: "plain" | "action" }) {
+  const KEY = "ssh:bookmarks";
+  const [marked, setMarked] = useState(false);
+  useEffect(() => {
+    try { setMarked((JSON.parse(localStorage.getItem(KEY) || "[]") as string[]).includes(verseId)); }
+    catch { setMarked(false); }
+  }, [verseId]);
+  const toggle = (e?: ReactMouseEvent) => {
+    e?.stopPropagation();
+    try {
+      const set = new Set<string>(JSON.parse(localStorage.getItem(KEY) || "[]"));
+      if (set.has(verseId)) set.delete(verseId); else set.add(verseId);
+      localStorage.setItem(KEY, JSON.stringify(Array.from(set)));
+      setMarked(set.has(verseId));
+    } catch { /* ignore */ }
+  };
+  if (variant === "action") {
+    return (
+      <button
+        type="button"
+        title={marked ? "Remove bookmark" : "Bookmark"}
+        aria-label="Bookmark"
+        onClick={toggle}
+        className={`inline-flex items-center justify-center h-8 w-8 rounded-lg border transition-colors ${marked ? "border-primary/40 bg-primary/10 text-primary" : "border-border/60 bg-card/70 text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5"}`}
+        data-testid="button-bookmark"
+      >
+        <Bookmark className={`h-4 w-4 ${marked ? "fill-current" : ""}`} />
+      </button>
+    );
+  }
+  return (
+    <button type="button" onClick={toggle} aria-label="Bookmark" className="shrink-0 text-muted-foreground/60 hover:text-primary transition-colors" data-testid="button-bookmark">
+      <Bookmark className={`h-3.5 w-3.5 ${marked ? "fill-primary text-primary" : ""}`} />
+    </button>
+  );
+}
+
+/** Multi-language checkbox popover (Devanagari always on). Reused for the header + commentary. */
+function LanguagePopover({ languages, selected, onToggle, label, align = "right" }: {
+  languages: { code: string; name: string }[];
+  selected: Set<string>;
+  onToggle: (code: string) => void;
+  label: string;
+  align?: "left" | "right";
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1.5 h-9 px-3 text-xs sm:text-sm border border-border/60 bg-card hover:bg-accent/50 rounded-lg transition-colors"
+        data-testid="button-language-selector"
+      >
+        <Languages className="h-4 w-4 text-muted-foreground" />
+        <span className="text-foreground/80">{label}</span>
+        <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className={`absolute top-full mt-1.5 z-50 w-60 max-h-80 overflow-y-auto rounded-lg border border-border bg-card shadow-lg p-2 ${align === "right" ? "right-0" : "left-0"}`} data-testid="language-checkbox-panel">
+          {languages.map((l) => {
+            const norm = l.code === "hi" ? "hindi" : l.code === "en" ? "english" : l.code;
+            const isDeva = norm === "devanagari" || norm === "sa";
+            const checked = isDeva || selected.has(norm);
+            return (
+              <button
+                key={norm}
+                type="button"
+                onClick={() => !isDeva && onToggle(norm)}
+                className={`flex items-center gap-2 w-full px-2 py-1.5 text-sm rounded-md transition-colors ${isDeva ? "opacity-70 cursor-default" : "hover:bg-accent cursor-pointer"}`}
+              >
+                <span className={`flex items-center justify-center h-4 w-4 rounded border shrink-0 ${checked ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground/40"}`}>
+                  {checked && <Check className="h-3 w-3" />}
+                </span>
+                <span className="flex-1 text-left text-foreground/90">{l.name}</span>
+                {isDeva && <Lock className="h-3 w-3 text-muted-foreground" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function BookReader({
+  bookId,
   onVerseSelect,
   selectedVerseId,
   selectedAuthor,
@@ -1820,9 +1981,39 @@ export function BookReader({
     );
   }
 
+  const mantraLabel = currentNumericLabel || (currentVerse ? String(currentVerse.verseNumber) : "");
+  const mantraPlain = toPlainText(originalDevanagari);
+  const shareTitle = `${tc(book.title, bookTitleTranslations)} — ${t("mantra") || "Mantra"} ${mantraLabel}`;
+  const shareBody = [
+    mantraPlain,
+    verseTransliteration ? toPlainText(verseTransliteration) : "",
+    availableTranslations[0]?.content ? toPlainText(availableTranslations[0].content) : "",
+  ].filter(Boolean).join("\n\n");
+  const copyMantra = async () => {
+    try { await navigator.clipboard.writeText(`${shareTitle}\n\n${shareBody}`); toast({ title: "Copied to clipboard" }); }
+    catch { /* clipboard unavailable */ }
+  };
+  const shareMantra = async () => {
+    try {
+      if (typeof navigator !== "undefined" && (navigator as any).share) {
+        await (navigator as any).share({ title: shareTitle, text: shareBody });
+      } else {
+        await navigator.clipboard.writeText(`${shareTitle}\n\n${shareBody}`);
+        toast({ title: "Copied to clipboard" });
+      }
+    } catch { /* share dismissed */ }
+  };
+  const readingLangCount = Math.max(0, selectedLanguages.size - 1);
+  const readingLangLabel = readingLangCount > 0 ? `Sanskrit +${readingLangCount}` : "Sanskrit";
+  const teekaAvailable = verseTeekaAuthors.length > 0;
+  const activeCommentaryMode = commentaryMode === "teeka" && teekaAvailable ? "teeka" : "bhashyam";
+  const commentaryLanguageList = commentaryOptions?.languages ?? [];
+  // The illustration showcase layout is reserved for Independent Advaita Works (Prakarana Grantha) only.
+  const isIndependentAdvaitaWork = (book?.category || "").trim().toLowerCase() === "prakarana grantha";
+
   return (
-    <div 
-      className="grid grid-rows-[minmax(0,1fr)_auto] h-full min-h-0 flex-1 min-w-0 overflow-hidden focus:outline-none" 
+    <div
+      className="grid grid-rows-[minmax(0,1fr)_auto] h-full min-h-0 flex-1 min-w-0 overflow-hidden focus:outline-none"
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
@@ -1864,53 +2055,162 @@ export function BookReader({
               onMouseUp={handleTextSelect}
               onTouchEnd={handleTextSelect}
             >
-              <div className="shrink-0 space-y-4">
-              <div className="flex items-center justify-between gap-4" data-testid="reader-book-header">
-                <h1 className="font-serif text-xl sm:text-2xl text-primary/90 italic tracking-tight truncate" data-testid="reader-book-title">
-                  {tc(book.title, bookTitleTranslations)}
-                </h1>
-                {commentaryOptions && commentaryOptions.languages.length > 0 && (
-                  <div className="relative flex items-center gap-2 shrink-0" ref={langPanelRef} data-testid="book-language-selector">
-                    <button
-                      onClick={() => setShowLanguagePanel(prev => !prev)}
-                      className="flex items-center gap-1.5 h-8 px-3 text-xs border border-border/50 bg-card/50 hover:bg-card/80 rounded-md transition-colors"
-                      data-testid="button-language-selector"
-                    >
-                      <Languages className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-foreground/80">{t("languages") || "Languages"}</span>
-                      <Badge variant="secondary" className="h-4 min-w-[16px] px-1 text-[10px] no-default-hover-elevate no-default-active-elevate">{selectedLanguages.size}</Badge>
-                      <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform ${showLanguagePanel ? "rotate-180" : ""}`} />
-                    </button>
-                  {showLanguagePanel && (
-                    <div className="absolute top-full right-0 mt-1 z-50 w-64 max-h-80 overflow-y-auto rounded-lg border border-border bg-card shadow-lg p-2" data-testid="language-checkbox-panel">
-                      {commentaryOptions.languages.map((lang) => {
-                        const normCode = lang.code === "hi" ? "hindi" : lang.code === "en" ? "english" : lang.code;
-                        const isDevanagari = normCode === "devanagari" || normCode === "sa";
-                        const isChecked = isDevanagari || selectedLanguages.has(normCode);
-                        return (
-                          <button
-                            key={normCode}
-                            onClick={() => !isDevanagari && toggleLanguage(normCode)}
-                            className={`flex items-center gap-2 w-full px-2 py-1.5 text-sm rounded-md transition-colors ${isDevanagari ? "opacity-70 cursor-default" : "hover:bg-accent cursor-pointer"}`}
-                            data-testid={`checkbox-lang-${normCode}`}
-                          >
-                            <div className={`flex items-center justify-center h-4 w-4 rounded border shrink-0 ${isChecked ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground/40"}`}>
-                              {isChecked && <Check className="h-3 w-3" />}
-                            </div>
-                            <span className="flex-1 text-left text-foreground/90">{lang.name}</span>
-                            {isDevanagari && <Lock className="h-3 w-3 text-muted-foreground" />}
-                          </button>
-                        );
-                      })}
+              <div className="shrink-0 space-y-5">
+                {/* Decorative header with Shankaracharya portraits */}
+                <div className="flex items-center justify-center gap-3 sm:gap-6" data-testid="reader-book-header">
+                  <img src={shankaracharyaImg} alt="" className="hidden sm:block h-16 lg:h-20 w-auto object-contain shrink-0 opacity-90" aria-hidden="true" />
+                  <div className="text-center min-w-0">
+                    <div className="flex items-center justify-center gap-2.5">
+                      <span className="text-primary/40 text-sm hidden sm:inline">❖</span>
+                      <h1 className="font-serif text-2xl sm:text-3xl lg:text-[2rem] font-bold text-primary tracking-tight leading-none truncate" data-testid="reader-book-title">
+                        {tc(book.title, bookTitleTranslations)}
+                      </h1>
+                      <span className="text-primary/40 text-sm hidden sm:inline">❖</span>
                     </div>
+                    <p className="mt-1.5 text-sm text-muted-foreground tracking-wide">
+                      {(t("mantra") || "Mantra")} {mantraLabel}
+                    </p>
+                  </div>
+                  <img src={shankaracharyaImg} alt="" className="hidden sm:block h-16 lg:h-20 w-auto object-contain shrink-0 opacity-90 -scale-x-100" aria-hidden="true" />
+                </div>
+
+                {/* Toolbar: Add Note + Language */}
+                <div className="flex items-center justify-between gap-3">
+                  {onAddNoteWithText ? (
+                    <button
+                      type="button"
+                      onClick={() => onAddNoteWithText("")}
+                      className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg border border-dashed border-primary/50 text-primary text-sm font-medium hover:bg-primary/5 transition-colors"
+                      data-testid="button-add-note"
+                    >
+                      <StickyNote className="h-4 w-4" />
+                      Add Note
+                    </button>
+                  ) : <span />}
+                  {commentaryLanguageList.length > 0 && (
+                    <LanguagePopover
+                      languages={commentaryLanguageList}
+                      selected={selectedLanguages}
+                      onToggle={toggleLanguage}
+                      label="Language"
+                      align="right"
+                    />
                   )}
                 </div>
-              )}
-              </div>
 
-              <div className="rounded-xl border border-primary/20 bg-primary/5 dark:bg-primary/10 p-4 sm:p-6 mb-4" data-testid="verse-card">
-                <div 
-                  className="font-serif text-lg sm:text-xl leading-relaxed sm:leading-loose text-center"
+              {isIndependentAdvaitaWork ? (
+              <div className="relative overflow-hidden rounded-2xl border-2 border-primary/40 bg-gradient-to-b from-primary/[0.07] to-primary/[0.03] p-2.5 sm:p-3.5 lg:p-4" data-testid="mantra-showcase">
+                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)] gap-3 sm:gap-4 items-stretch">
+                  {/* Left: contemplative illustration spanning the full height */}
+                  <div className="relative rounded-xl overflow-hidden border border-primary/20 bg-primary/5 min-h-[300px] lg:min-h-0" data-testid="mantra-illustration">
+                    <img
+                      src={readerIllustration}
+                      alt=""
+                      aria-hidden="true"
+                      className="absolute inset-0 h-full w-full object-cover"
+                      draggable={false}
+                    />
+                  </div>
+
+                  {/* Right: mantra card + meaning stacked */}
+                  <div className="flex flex-col gap-3 sm:gap-4 min-w-0">
+                    <div className="relative overflow-hidden rounded-xl border border-primary/25 bg-[#fdf7ec] dark:bg-card px-4 sm:px-7 py-5 sm:py-7 flex flex-col justify-center flex-1" data-testid="verse-card">
+                      <MandalaCorner className="pointer-events-none absolute -bottom-6 -left-6 h-24 w-24 opacity-[0.18] dark:opacity-[0.26]" />
+                      <MandalaCorner className="pointer-events-none absolute -bottom-6 -right-6 h-24 w-24 opacity-[0.18] dark:opacity-[0.26]" />
+                      <div className="relative flex items-start justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-1.5">
+                          <IconAction icon={Copy} label="Copy" onClick={copyMantra} />
+                          <IconAction icon={Share2} label="Share" onClick={shareMantra} />
+                          <BookmarkButton verseId={currentVerse.id} variant="action" />
+                        </div>
+                        <ListenButton text={mantraPlain} />
+                      </div>
+                      <div
+                        className="relative font-serif text-xl sm:text-2xl lg:text-[1.7rem] leading-relaxed sm:leading-loose text-center text-primary"
+                        data-testid={`text-original-${currentVerse.verseNumber}`}
+                      >
+                        <WordTooltip
+                          content={originalDevanagari}
+                          commentaryContent={commentaryContext}
+                          sourceLanguage="devanagari"
+                          verseId={currentVerse.id}
+                          globalLanguage={lang}
+                        />
+                      </div>
+
+                      {verseTransliteration && (
+                        <div
+                          className="relative font-serif text-sm sm:text-base leading-relaxed text-center text-primary/60 dark:text-primary/50 italic whitespace-pre-line mt-3 pt-3 border-t border-primary/15"
+                          data-testid={`text-transliteration-${currentVerse.verseNumber}`}
+                        >
+                          {verseTransliteration}
+                        </div>
+                      )}
+                    </div>
+
+                    {availableTranslations.length > 0 && (
+                      <div className="rounded-xl border border-border/50 bg-[#fdf7ec]/70 dark:bg-muted/10 px-4 sm:px-6 py-4" data-testid="meaning-section">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Sun className="h-4 w-4 text-primary" />
+                          <span className="text-xs uppercase tracking-widest font-bold text-primary">{t("meaning") || "MEANING"}</span>
+                        </div>
+                        {availableTranslations.map((translation: VerseTranslation, idx: number) => {
+                          const MEANING_LANG_NAMES: Record<string, string> = {
+                            english: "English", en: "English",
+                            hindi: "हिन्दी", hi: "हिन्दी",
+                            kannada: "ಕನ್ನಡ", kn: "ಕನ್ನಡ",
+                            telugu: "తెలుగు", te: "తెలుగు",
+                            tamil: "தமிழ்", ta: "தமிழ்",
+                            malayalam: "മലയാളം", ml: "മലയാളം",
+                            bengali: "বাংলা", bn: "বাংলা",
+                            gujarati: "ગુજરાતી", gu: "ગુજરાতী",
+                            marathi: "मराठी", mr: "मराठी",
+                          };
+                          const showLangLabel = selectedLanguages.size > 2 || (selectedLanguages.size === 2 && !selectedLanguages.has("english"));
+                          return (
+                            <div key={translation.id} className={idx > 0 ? "mt-3 pt-3 border-t border-border/20" : ""}>
+                              {showLangLabel && (
+                                <span className="text-[10px] uppercase tracking-wider font-semibold text-primary/60 mb-1 block">
+                                  {MEANING_LANG_NAMES[translation.languageCode] || translation.languageCode}
+                                </span>
+                              )}
+                              <div
+                                className="text-sm sm:text-base leading-relaxed text-foreground/80 font-serif"
+                                data-testid={`text-translation-${translation.languageCode}-${currentVerse.verseNumber}`}
+                              >
+                                <WordTooltip
+                                  content={translation.content}
+                                  commentaryContent={commentaryContext}
+                                  sourceLanguage={translation.languageCode}
+                                  verseId={currentVerse.id}
+                                  globalLanguage={lang}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              ) : (
+              <>
+              <div className="relative overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-b from-primary/[0.10] via-primary/[0.05] to-primary/[0.09] px-4 sm:px-8 py-6 sm:py-8" data-testid="verse-card">
+                <MandalaCorner className="pointer-events-none absolute -top-8 -left-8 h-28 w-28 opacity-20 dark:opacity-[0.28]" />
+                <MandalaCorner className="pointer-events-none absolute -top-8 -right-8 h-28 w-28 opacity-20 dark:opacity-[0.28]" />
+                <MandalaCorner className="pointer-events-none absolute -bottom-8 -left-8 h-28 w-28 opacity-20 dark:opacity-[0.28]" />
+                <MandalaCorner className="pointer-events-none absolute -bottom-8 -right-8 h-28 w-28 opacity-20 dark:opacity-[0.28]" />
+                <div className="relative flex items-start justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-1.5">
+                    <IconAction icon={Copy} label="Copy" onClick={copyMantra} />
+                    <IconAction icon={Share2} label="Share" onClick={shareMantra} />
+                    <BookmarkButton verseId={currentVerse.id} variant="action" />
+                  </div>
+                  <ListenButton text={mantraPlain} />
+                </div>
+                <div
+                  className="relative font-serif text-xl sm:text-2xl lg:text-[1.7rem] leading-relaxed sm:leading-loose text-center text-foreground"
                   data-testid={`text-original-${currentVerse.verseNumber}`}
                 >
                   <WordTooltip
@@ -1921,10 +2221,9 @@ export function BookReader({
                     globalLanguage={lang}
                   />
                 </div>
-
                 {verseTransliteration && (
                   <div
-                    className="font-serif text-sm sm:text-base leading-relaxed sm:leading-loose text-center text-primary/60 dark:text-primary/50 italic whitespace-pre-line mt-3 pt-3 border-t border-primary/10"
+                    className="relative font-serif text-sm sm:text-base leading-relaxed text-center text-primary/60 dark:text-primary/50 italic whitespace-pre-line mt-3 pt-3 border-t border-primary/15"
                     data-testid={`text-transliteration-${currentVerse.verseNumber}`}
                   >
                     {verseTransliteration}
@@ -1933,10 +2232,10 @@ export function BookReader({
               </div>
 
               {availableTranslations.length > 0 && (
-                <div data-testid="meaning-section">
+                <div className="rounded-2xl border border-border/60 bg-muted/30 dark:bg-muted/10 px-4 sm:px-5 py-4" data-testid="meaning-section">
                   <div className="flex items-center gap-2 mb-2">
+                    <Sun className="h-4 w-4 text-primary" />
                     <span className="text-xs uppercase tracking-widest font-bold text-primary">{t("meaning") || "MEANING"}</span>
-                    <div className="h-px flex-1 bg-primary/15"></div>
                   </div>
                   {availableTranslations.map((translation: VerseTranslation, idx: number) => {
                     const MEANING_LANG_NAMES: Record<string, string> = {
@@ -1958,7 +2257,7 @@ export function BookReader({
                             {MEANING_LANG_NAMES[translation.languageCode] || translation.languageCode}
                           </span>
                         )}
-                        <div 
+                        <div
                           className="text-sm sm:text-base leading-relaxed text-foreground/80 font-serif"
                           data-testid={`text-translation-${translation.languageCode}-${currentVerse.verseNumber}`}
                         >
@@ -1975,122 +2274,104 @@ export function BookReader({
                   })}
                 </div>
               )}
+              </>
+              )}
               </div>
 
               {hasCommentaryOptions && (
-                <div className="flex flex-col gap-4">
-                  {verseBhashyaAuthors.length > 1 && (
-                    <div className="shrink-0 flex flex-wrap items-center gap-2" data-testid="bhashya-tabs-row">
-                      {verseBhashyaAuthors.map((author) => (
-                        <button
-                          key={author.authorName}
-                          className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
-                            selectedBhashyaAuthor === author.authorName
-                              ? "bg-primary text-primary-foreground shadow-sm"
-                              : "bg-card border border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/30"
-                          }`}
-                          onClick={() => {
-                            preferredBhashyaAuthorRef.current = author.authorName;
-                            setSelectedBhashyaAuthor(author.authorName);
-                            handleAuthorChange(author.authorName);
-                            setCommentaryMode("bhashyam");
-                            setCommentaryExpanded(true);
-                          }}
-                          data-testid={`tab-bhashya-${author.authorName.replace(/\s+/g, '-').toLowerCase()}`}
-                        >
-                          {tc(author.authorName, bookAuthorTranslations)}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  <div
-                    className={`grid gap-4 ${showTeekas && teekaAuthors.length > 0 ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"}`}
-                  >
-                    <div
-                      className={COMMENTARY_PANEL_SHELL_CLASS}
-                      data-testid="bhashya-content-card"
-                    >
-                      <div className="flex shrink-0 items-center justify-between gap-2 px-4 py-2.5 border-b border-border/40 bg-muted/30">
-                        <div className="flex items-center gap-2">
-                          <Feather className="h-3.5 w-3.5 text-primary/70" />
-                          <span className="text-xs font-bold uppercase tracking-wider text-foreground/80">
-                            {t("bhashyam")}
-                          </span>
-                        </div>
-                        {teekaAuthors.length > 0 && !showTeekas && (
-                          <button
-                            className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1 bg-background/60 border border-border/60 text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5"
-                            onClick={() => setShowTeekas(true)}
-                            data-testid="button-toggle-teekas"
-                          >
-                            <ScrollText className="h-3 w-3" />
-                            {t("readTeekas") || "Read Tīkās"}
-                          </button>
-                        )}
-                      </div>
-                      <div className={COMMENTARY_PANEL_BODY_CLASS}>
-                        {commentaryExpanded && effectiveLang && (
-                          <VerseExplanation 
-                            verseId={currentVerse.id} 
-                            languageCode={effectiveLang}
-                            languageCodes={Array.from(selectedLanguages)}
-                            authorName={selectedBhashyaAuthor}
-                            showAll={false}
-                            filterFn={(e: any) => e.commentaryType ? e.commentaryType === "bhashya" : isBhashyaAuthorByName(e.authorName)}
-                            mode="bhashyam"
-                          />
-                        )}
-                      </div>
-                    </div>
-
-                    {showTeekas && teekaAuthors.length > 0 && (
-                      <div
-                        className={COMMENTARY_PANEL_SHELL_CLASS}
-                        data-testid="teeka-content-card"
+                <div className="rounded-2xl border border-border/60 bg-card overflow-hidden" data-testid="commentary-section">
+                  {/* Tab bar */}
+                  <div className="flex items-center justify-between gap-2 border-b border-border/50 px-2 sm:px-3">
+                    <div className="flex items-center">
+                      <button
+                        type="button"
+                        onClick={() => { setCommentaryMode("bhashyam"); setShowTeekas(false); setCommentaryExpanded(true); }}
+                        className={`relative px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold uppercase tracking-wide transition-colors ${!showTeekas && activeCommentaryMode === "bhashyam" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                        data-testid="tab-bhashyam"
                       >
-                        <div className="flex shrink-0 items-center justify-between gap-2 px-4 py-2.5 border-b border-border/40 bg-muted/30">
-                          <div className="flex items-center gap-2">
-                            <ScrollText className="h-3.5 w-3.5 text-primary/70" />
-                            <span className="text-xs font-bold uppercase tracking-wider text-foreground/80">
-                              {t("teeka")}
-                            </span>
+                        <span className="inline-flex items-center gap-1.5"><Feather className="h-4 w-4" />{t("bhashyam")}</span>
+                        {!showTeekas && activeCommentaryMode === "bhashyam" && <span className="absolute left-2 right-2 bottom-0 h-0.5 bg-primary rounded-full" />}
+                      </button>
+                      {teekaAvailable && (
+                        <button
+                          type="button"
+                          onClick={() => { setCommentaryMode("teeka"); setShowTeekas(false); setCommentaryExpanded(true); }}
+                          className={`relative px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold uppercase tracking-wide transition-colors ${!showTeekas && activeCommentaryMode === "teeka" ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                          data-testid="tab-teeka"
+                        >
+                          <span className="inline-flex items-center gap-1.5"><ScrollText className="h-4 w-4" />{t("teeka")}</span>
+                          {!showTeekas && activeCommentaryMode === "teeka" && <span className="absolute left-2 right-2 bottom-0 h-0.5 bg-primary rounded-full" />}
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5 py-1.5">
+                      <IconAction icon={Copy} label="Copy" onClick={copyMantra} />
+                      <IconAction icon={Share2} label="Share" onClick={shareMantra} />
+                      <BookmarkButton verseId={currentVerse.id} variant="action" />
+                      {teekaAvailable && (
+                        <button
+                          type="button"
+                          onClick={() => setShowTeekas((v) => !v)}
+                          className={`inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg border text-xs font-medium transition-colors ${showTeekas ? "border-primary/40 bg-primary/10 text-primary" : "border-border/60 bg-card/70 text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5"}`}
+                          data-testid="button-pair-mode"
+                          title="Pair Mode — show Bhāṣyam and Ṭīkā together"
+                        >
+                          <ArrowLeftRight className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">Pair Mode</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Body */}
+                  <div className="p-4 sm:p-6">
+                    {(showTeekas && teekaAvailable) ? (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" data-testid="commentary-pair">
+                        <div data-testid="bhashya-content-card">
+                          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                            <div className="flex items-center gap-2">
+                              <img src={shankaracharyaImg} alt="" className="h-7 w-7 object-contain shrink-0" aria-hidden="true" />
+                              <h3 className="font-serif text-base sm:text-lg font-bold text-foreground">
+                                {tc(selectedBhashyaAuthor || (verseBhashyaAuthors[0]?.authorName ?? ""), bookAuthorTranslations)} Bhāṣya
+                              </h3>
+                            </div>
+                            <LanguagePopover languages={commentaryLanguageList} selected={selectedLanguages} onToggle={toggleLanguage} label={readingLangLabel} align="right" />
                           </div>
-                          <div className="flex items-center gap-2">
+                          {effectiveLang && (
+                            <VerseExplanation
+                              verseId={currentVerse.id}
+                              languageCode={effectiveLang}
+                              languageCodes={Array.from(selectedLanguages)}
+                              authorName={selectedBhashyaAuthor}
+                              showAll={false}
+                              filterFn={(e: any) => e.commentaryType ? e.commentaryType === "bhashya" : isBhashyaAuthorByName(e.authorName)}
+                              mode="bhashyam"
+                            />
+                          )}
+                        </div>
+                        <div className="border-t border-border/40 pt-4 lg:border-t-0 lg:pt-0 lg:border-l lg:border-border/40 lg:pl-6" data-testid="teeka-content-card">
+                          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                            <h3 className="font-serif text-base sm:text-lg font-bold text-foreground">
+                              {tc(selectedTeekaAuthor || (verseTeekaAuthors[0]?.authorName ?? ""), bookAuthorTranslations)} Ṭīkā
+                            </h3>
                             {verseTeekaAuthors.length > 1 && (
-                              <Select
-                                value={selectedTeekaAuthor || verseTeekaAuthors[0]?.authorName || ""}
-                                onValueChange={handleSelectTeekaAuthor}
-                              >
-                                <SelectTrigger className="h-7 w-auto min-w-[120px] max-w-[200px] text-[11px] border border-border/50 bg-background/60 shadow-none focus:ring-1 focus:ring-primary/30 px-2 rounded-md" data-testid="select-teeka-author">
+                              <Select value={selectedTeekaAuthor || verseTeekaAuthors[0]?.authorName || ""} onValueChange={handleSelectTeekaAuthor}>
+                                <SelectTrigger className="h-8 w-auto min-w-[120px] max-w-[200px] text-[11px] border border-border/50 bg-card px-2 rounded-lg" data-testid="select-teeka-author">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {verseTeekaAuthors.map((author) => (
-                                    <SelectItem key={author.authorName} value={author.authorName} data-testid={`option-teeka-${author.authorName.replace(/\s+/g, '-').toLowerCase()}`}>
+                                    <SelectItem key={author.authorName} value={author.authorName}>
                                       {tc(author.authorName, bookAuthorTranslations)}
-                                      {author.authorTitle && (
-                                        <span className="text-muted-foreground ml-1">— {author.authorTitle}</span>
-                                      )}
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
                             )}
-                            <button
-                              className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all flex items-center gap-1 bg-primary/10 border border-primary/30 text-primary hover:bg-primary/15"
-                              onClick={() => setShowTeekas(false)}
-                              data-testid="button-toggle-teekas"
-                            >
-                              <ScrollText className="h-3 w-3" />
-                              {t("hideTeekas") || "Hide Tīkās"}
-                            </button>
                           </div>
-                        </div>
-                        <div className={COMMENTARY_PANEL_BODY_CLASS}>
                           {effectiveLang && (
-                            <VerseExplanation 
-                              verseId={currentVerse.id} 
+                            <VerseExplanation
+                              verseId={currentVerse.id}
                               languageCode={effectiveLang}
                               languageCodes={Array.from(selectedLanguages)}
                               authorName={selectedTeekaAuthor}
@@ -2100,6 +2381,84 @@ export function BookReader({
                             />
                           )}
                         </div>
+                      </div>
+                    ) : activeCommentaryMode === "teeka" ? (
+                      <div data-testid="teeka-content-card">
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                          <h3 className="font-serif text-base sm:text-lg font-bold text-foreground">
+                            {tc(selectedTeekaAuthor || (verseTeekaAuthors[0]?.authorName ?? ""), bookAuthorTranslations)} Ṭīkā
+                          </h3>
+                          <div className="flex items-center gap-2">
+                            {verseTeekaAuthors.length > 1 && (
+                              <Select value={selectedTeekaAuthor || verseTeekaAuthors[0]?.authorName || ""} onValueChange={handleSelectTeekaAuthor}>
+                                <SelectTrigger className="h-8 w-auto min-w-[120px] max-w-[200px] text-[11px] border border-border/50 bg-card px-2 rounded-lg" data-testid="select-teeka-author">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {verseTeekaAuthors.map((author) => (
+                                    <SelectItem key={author.authorName} value={author.authorName}>
+                                      {tc(author.authorName, bookAuthorTranslations)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                            <LanguagePopover languages={commentaryLanguageList} selected={selectedLanguages} onToggle={toggleLanguage} label={readingLangLabel} align="right" />
+                          </div>
+                        </div>
+                        {effectiveLang && (
+                          <VerseExplanation
+                            verseId={currentVerse.id}
+                            languageCode={effectiveLang}
+                            languageCodes={Array.from(selectedLanguages)}
+                            authorName={selectedTeekaAuthor}
+                            showAll={false}
+                            filterFn={(e: any) => e.commentaryType ? e.commentaryType === "teeka" : isTeekaAuthorByName(e.authorName)}
+                            mode="teeka"
+                          />
+                        )}
+                      </div>
+                    ) : (
+                      <div data-testid="bhashya-content-card">
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                          <div className="flex items-center gap-2">
+                            <img src={shankaracharyaImg} alt="" className="h-7 w-7 object-contain shrink-0" aria-hidden="true" />
+                            <h3 className="font-serif text-base sm:text-lg font-bold text-foreground">
+                              {tc(selectedBhashyaAuthor || (verseBhashyaAuthors[0]?.authorName ?? ""), bookAuthorTranslations)} Bhāṣya
+                            </h3>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {verseBhashyaAuthors.length > 1 && (
+                              <Select
+                                value={selectedBhashyaAuthor || verseBhashyaAuthors[0]?.authorName || ""}
+                                onValueChange={(v) => { preferredBhashyaAuthorRef.current = v; setSelectedBhashyaAuthor(v); handleAuthorChange(v); }}
+                              >
+                                <SelectTrigger className="h-8 w-auto min-w-[120px] max-w-[200px] text-[11px] border border-border/50 bg-card px-2 rounded-lg" data-testid="select-bhashya-author">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {verseBhashyaAuthors.map((author) => (
+                                    <SelectItem key={author.authorName} value={author.authorName}>
+                                      {tc(author.authorName, bookAuthorTranslations)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                            <LanguagePopover languages={commentaryLanguageList} selected={selectedLanguages} onToggle={toggleLanguage} label={readingLangLabel} align="right" />
+                          </div>
+                        </div>
+                        {commentaryExpanded && effectiveLang && (
+                          <VerseExplanation
+                            verseId={currentVerse.id}
+                            languageCode={effectiveLang}
+                            languageCodes={Array.from(selectedLanguages)}
+                            authorName={selectedBhashyaAuthor}
+                            showAll={false}
+                            filterFn={(e: any) => e.commentaryType ? e.commentaryType === "bhashya" : isBhashyaAuthorByName(e.authorName)}
+                            mode="bhashyam"
+                          />
+                        )}
                       </div>
                     )}
                   </div>
@@ -2141,65 +2500,35 @@ export function BookReader({
             )}
             <div className="flex items-center justify-between gap-2">
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={goToPrevPage}
                 disabled={currentPage === 0}
-                className="gap-1"
+                className="gap-1.5 rounded-lg border-primary/40 text-primary hover:bg-primary/5 hover:text-primary disabled:opacity-40"
                 data-testid="button-prev-page"
+                title={currentVerseIsCompleted ? "Completed" : undefined}
               >
                 <ChevronLeft className="h-4 w-4" />
-                <span className="hidden sm:inline">{t("previous")}</span>
+                <span>{t("previous") || "Previous"}</span>
+                <span className="hidden sm:inline">{t("mantra") || "Mantra"}</span>
               </Button>
 
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={currentVerseIsCompleted ? "secondary" : "outline"}
-                  size="sm"
-                  onClick={handleToggleComplete}
-                  disabled={!currentVerse || markCompleteMutation.isPending || unmarkCompleteMutation.isPending}
-                  className="gap-1.5"
-                  data-testid="button-toggle-complete"
-                  title={currentVerseIsCompleted ? "Mark as not read" : "Mark as completed"}
-                >
-                  <Check className={`h-4 w-4 ${currentVerseIsCompleted ? "text-primary" : "text-muted-foreground"}`} />
-                  <span className="hidden sm:inline text-xs">
-                    {currentVerseIsCompleted ? "Completed" : "Mark complete"}
-                  </span>
-                </Button>
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {currentPage + 1} / {totalPages}
-                </span>
-              </div>
+              <span className="text-xs sm:text-sm text-muted-foreground tabular-nums text-center px-2" data-testid="text-reader-position">
+                {(t("mantra") || "Mantra")} {currentPage + 1} of {totalPages}
+              </span>
 
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={goToNextPage}
-                  disabled={currentPage === totalPages - 1}
-                  className="gap-1"
-                  data-testid="button-next-page"
-                >
-                  <span className="hidden sm:inline">{t("next")}</span>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={handleMarkCompleteAndNext}
-                  disabled={currentPage === totalPages - 1 || markCompleteMutation.isPending}
-                  className="gap-1.5 hidden md:inline-flex"
-                  data-testid="button-mark-complete-next"
-                  title="Mark this verse complete and continue to the next"
-                >
-                  <Check className="h-4 w-4" />
-                  <span className="text-xs whitespace-nowrap">
-                    {currentVerseIsCompleted ? "Next" : "Complete & next"}
-                  </span>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => { if (progressAuthed && currentVerse && !currentVerseIsCompleted) { handleToggleComplete(); } goToNextPage(); }}
+                disabled={currentPage === totalPages - 1 || markCompleteMutation.isPending}
+                className="gap-1.5 rounded-lg disabled:opacity-40"
+                data-testid="button-next-page"
+              >
+                <span>{t("next") || "Next"}</span>
+                <span className="hidden sm:inline">{t("mantra") || "Mantra"}</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>

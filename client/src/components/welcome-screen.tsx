@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useMemo } from "react";
-import { BookOpen, Library, FolderOpen, Lock, ArrowLeft, ArrowRight, ChevronRight, ScrollText, Feather, Users, Heart, BookMarked, Music, Layers, Search, X, FileText, Archive, Sparkles } from "lucide-react";
+import { useState, useRef, useEffect, useMemo, type MouseEvent as ReactMouseEvent } from "react";
+import { BookOpen, Library, FolderOpen, Lock, ArrowLeft, ArrowRight, ChevronRight, ChevronUp, ChevronDown, ScrollText, Feather, Users, Heart, BookMarked, Music, Layers, Search, X, FileText, Archive, Sparkles, Bookmark, Share2, Cloud, LayoutGrid, List, Globe, Languages, ShieldCheck, PenLine, Quote } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { cmsContentQueryOptions } from "@/lib/queryClient";
 import { Card } from "@/components/ui/card";
@@ -10,13 +10,20 @@ import { CATALOG_TREE, type CatalogCategory } from "@/components/app-sidebar";
 import { useTranslation } from "@/lib/translations";
 import { translateContent, bookTitleTranslations, bookAuthorTranslations, bookCategoryTranslations, bookDescriptionTranslations } from "@/lib/content-translations";
 import { useProgressSummary } from "@/hooks/use-progress";
-import { BookLandingCoverHero, resolveBookCoverImage } from "@/components/book-landing-cover-hero";
+import { resolveBookCoverImage } from "@/components/book-landing-cover-hero";
 
-import catImgPrasthana from "@assets/image_1770803826016.png";
-import catImgPrakarana from "@assets/image_1770803849999.png";
-import catImgShlokas from "@assets/image_1770803820218.png";
+import catImgPrasthana from "@assets/cat-prasthana-thraya.png";
+import catImgPrakarana from "@assets/cat-prakarana-granthas.png";
+import catImgShlokas from "@assets/cat-advaita-traditions.png";
+import upanishadPrincipalImg from "@assets/upanishad-principal.png";
+import upanishadAdditionalImg from "@assets/upanishad-additional.png";
+import shankaracharyaPortrait from "@assets/image_1770455528511.png";
+import homeAdvaiticTree from "@assets/home-advaitic-tree.png";
+import homeCollectionsShankara from "@assets/home-collections-shankara.jpg";
+import homeMandala from "@assets/mantra-mandala.png";
+import homeAdiShankara from "@assets/home-adi-shankara-figure.png";
 
-function BookProgressBar({ bookId, totalVerses, compact = false, alwaysShow = false }: { bookId: string; totalVerses: number | null | undefined; compact?: boolean; alwaysShow?: boolean }) {
+function BookProgressBar({ bookId, totalVerses, compact = false, alwaysShow = false, unitLabel }: { bookId: string; totalVerses: number | null | undefined; compact?: boolean; alwaysShow?: boolean; unitLabel?: string }) {
   const { data: summary } = useProgressSummary();
   const total = totalVerses ?? 0;
   if (total <= 0) return null;
@@ -32,10 +39,17 @@ function BookProgressBar({ bookId, totalVerses, compact = false, alwaysShow = fa
         />
       </div>
       <span className="text-[10px] text-muted-foreground tabular-nums shrink-0" data-testid={`progress-pct-${bookId}`}>
-        {completed}/{total}
+        {completed} / {total}{unitLabel ? ` ${unitLabel}` : ""}
       </span>
     </div>
   );
+}
+
+/** Appends "Veda" only when the source string doesn't already end with it (avoids "Sama Veda Veda"). */
+function formatVeda(veda?: string | null): string {
+  if (!veda) return "";
+  const trimmed = veda.trim();
+  return /veda$/i.test(trimmed) ? trimmed : `${trimmed} Veda`;
 }
 
 const categoryImages: Record<string, string> = {
@@ -66,6 +80,8 @@ interface Book {
 interface WelcomeScreenProps {
   books: Book[];
   onSelectBook: (bookId: string) => void;
+  onSelectVerse?: (bookId: string, verseNumber: number) => void;
+  onSelectChapter?: (bookId: string, adhyayNumber: number) => void;
   onBrowseLibrary: () => void;
   onSelectSubCategory?: (categoryId: string, subCategoryId: string) => void;
   languageCode?: string | null;
@@ -193,7 +209,398 @@ function HomeSearchBar({ books, onSelectBook, languageCode }: { books: Book[]; o
   );
 }
 
-export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, onSelectSubCategory, languageCode }: WelcomeScreenProps) {
+/** "Jump to a Specific Text" — miller-column navigator (Book → Adhyaya → Khanda → Mantra). */
+function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }: { books: Book[]; onSelectBook: (bookId: string) => void; onSelectVerse?: (bookId: string, verseNumber: number) => void; languageCode?: string | null }) {
+  const welcomeLang = languageCode || "en";
+  const tc = (text: string | null | undefined) => translateContent(text, bookTitleTranslations, welcomeLang);
+
+  const CATS = [
+    { id: "principal", label: "Principal Upanishads", icon: BookOpen },
+    { id: "other", label: "Other Upanishads", icon: BookMarked },
+    { id: "gita", label: "Bhagavad Gita", icon: Layers },
+    { id: "brahma", label: "Brahma Sutras", icon: FileText },
+    { id: "others", label: "Others", icon: FolderOpen },
+  ] as const;
+
+  const [cat, setCat] = useState<string>("principal");
+  const [bookId, setBookId] = useState<string | null>(null);
+  const [adhyay, setAdhyay] = useState<number | null>(null);
+  const [khanda, setKhanda] = useState<number | null>(null);
+  const [verse, setVerse] = useState<number | null>(null);
+  const [qBook, setQBook] = useState("");
+  const [qAdh, setQAdh] = useState("");
+  const [qKh, setQKh] = useState("");
+  const [qMan, setQMan] = useState("");
+
+  const chapters = useBookChapters(bookId || undefined);
+
+  const catBooks = useMemo(() => {
+    const ups = books.filter(b => b.category === "Upanishad" || b.category === "Upanishad Bhashya");
+    const principalIds = new Set<string>();
+    for (const up of PRINCIPAL_UPANISHADS) {
+      const b = findBookForPrincipal(up, books);
+      if (b) principalIds.add(b.id);
+    }
+    switch (cat) {
+      case "principal": return ups.filter(b => principalIds.has(b.id));
+      case "other": return ups.filter(b => !principalIds.has(b.id));
+      case "gita": return books.filter(b => b.category === "Gita" || b.category === "Bhagavad Gita");
+      case "brahma": return books.filter(b => b.category === "Brahma Sutra");
+      default: return books.filter(b => !["Upanishad", "Upanishad Bhashya", "Gita", "Bhagavad Gita", "Brahma Sutra"].includes(b.category || ""));
+    }
+  }, [books, cat]);
+
+  const selectedChapter = chapters.find(c => c.number === adhyay);
+  const khandaList = selectedChapter?.khandas || [];
+  const mantraNums = (khanda != null ? khandaList.find(k => k.number === khanda)?.verseNumbers : selectedChapter?.verseNumbers) || [];
+
+  const selectedBook = books.find(b => b.id === bookId);
+  const reset = (level: "cat" | "book" | "adhyay" | "khanda") => {
+    if (level === "cat" || level === "book") { setAdhyay(null); setKhanda(null); setVerse(null); }
+    if (level === "adhyay") { setKhanda(null); setVerse(null); }
+    if (level === "khanda") { setVerse(null); }
+  };
+
+  const colBox = "flex flex-col min-w-0 border-r border-border/50 last:border-r-0 px-3 sm:px-4 first:pl-0 last:pr-0";
+  const colHead = "flex items-center gap-2 mb-3";
+  const searchBox = "relative mb-2";
+  const searchInput = "w-full h-8 rounded-md border border-border/60 bg-background pl-8 pr-2 text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary/50";
+  const rowBase = "w-full flex items-center justify-between gap-1.5 text-left rounded-md px-2.5 py-2 text-sm transition-colors";
+  const rowActive = "bg-primary/10 text-primary font-semibold";
+  const rowIdle = "text-foreground/80 hover:bg-muted/60";
+
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card shadow-sm p-5 sm:p-7" data-testid="home-text-navigator">
+      <div className="flex items-center gap-2.5 mb-1.5">
+        <BookOpen className="h-6 w-6 text-primary" />
+        <h2 className="font-serif text-xl sm:text-2xl font-bold text-foreground">Jump to a Specific Text</h2>
+      </div>
+      <p className="text-sm text-muted-foreground mb-4">Search and navigate directly to any scripture, chapter, or mantra</p>
+
+      <div className="relative mb-5">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+        <input
+          className="w-full h-11 rounded-xl border border-border/60 bg-muted/40 pl-11 pr-3 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary/50 focus:bg-background"
+          placeholder="Search any scripture, chapter, mantra..."
+          value={qBook}
+          onChange={(e) => setQBook(e.target.value)}
+          data-testid="input-navigator-search"
+        />
+      </div>
+
+      <p className="text-xs font-semibold text-foreground mb-2.5">Browse by Category</p>
+      <div className="flex flex-wrap gap-2 mb-5">
+        {CATS.map(c => {
+          const Icon = c.icon;
+          const active = cat === c.id;
+          return (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => { setCat(c.id); setBookId(null); reset("cat"); }}
+              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors ${active ? "border-primary bg-primary/5 text-primary font-semibold" : "border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/40"}`}
+              data-testid={`navigator-cat-${c.id}`}
+            >
+              <Icon className="h-4 w-4" /> {c.label}
+              <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-4 border-t border-border/50 pt-4">
+        {/* Column 1: Books */}
+        <div className={colBox}>
+          <div className={colHead}><BookOpen className="h-4 w-4 text-primary" /><span className="text-sm font-semibold">1. Text</span></div>
+          <div className={searchBox}><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" /><input className={searchInput} placeholder="Search texts..." value={qBook} onChange={e => setQBook(e.target.value)} /></div>
+          <div className="flex-1 overflow-y-auto max-h-72 pr-1 space-y-0.5">
+            {catBooks.filter(b => tc(b.title).toLowerCase().includes(qBook.toLowerCase())).map(b => (
+              <button key={b.id} type="button" onClick={() => { setBookId(b.id); reset("book"); }} className={`${rowBase} ${bookId === b.id ? rowActive : rowIdle}`}>
+                <span className="truncate">{tc(b.title)}</span><ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" />
+              </button>
+            ))}
+            {catBooks.length === 0 && <p className="text-xs text-muted-foreground/60 px-2.5 py-2">No texts here yet.</p>}
+          </div>
+        </div>
+
+        {/* Column 2: Adhyaya */}
+        <div className={colBox}>
+          <div className={colHead}><Layers className="h-4 w-4 text-primary" /><span className="text-sm font-semibold">2. Adhyāya</span></div>
+          <div className={searchBox}><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" /><input className={searchInput} placeholder="Search adhyāyas..." value={qAdh} onChange={e => setQAdh(e.target.value)} /></div>
+          <div className="flex-1 overflow-y-auto max-h-72 pr-1 space-y-0.5">
+            {chapters.filter(c => `adhyaya ${c.number} ${c.title || ""}`.toLowerCase().includes(qAdh.toLowerCase())).map(c => (
+              <button key={c.number} type="button" onClick={() => { setAdhyay(c.number); reset("adhyay"); }} className={`${rowBase} ${adhyay === c.number ? rowActive : rowIdle}`}>
+                <span className="truncate">Adhyāya {c.number}</span><ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" />
+              </button>
+            ))}
+            {bookId && chapters.length === 0 && <p className="text-xs text-muted-foreground/60 px-2.5 py-2">Loading…</p>}
+            {!bookId && <p className="text-xs text-muted-foreground/50 px-2.5 py-2">Select a text first.</p>}
+          </div>
+        </div>
+
+        {/* Column 3: Khanda */}
+        <div className={colBox}>
+          <div className={colHead}><Bookmark className="h-4 w-4 text-primary" /><span className="text-sm font-semibold">3. Khaṇḍa</span></div>
+          <div className={searchBox}><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" /><input className={searchInput} placeholder="Search khaṇḍas..." value={qKh} onChange={e => setQKh(e.target.value)} /></div>
+          <div className="flex-1 overflow-y-auto max-h-72 pr-1 space-y-0.5">
+            {khandaList.filter(k => `khanda ${k.number}`.toLowerCase().includes(qKh.toLowerCase())).map(k => (
+              <button key={k.number} type="button" onClick={() => { setKhanda(k.number); reset("khanda"); }} className={`${rowBase} ${khanda === k.number ? rowActive : rowIdle}`}>
+                <span className="truncate">Khaṇḍa {k.number}</span><ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" />
+              </button>
+            ))}
+            {adhyay != null && khandaList.length === 0 && <p className="text-xs text-muted-foreground/50 px-2.5 py-2">No khaṇḍas — pick a mantra.</p>}
+            {adhyay == null && <p className="text-xs text-muted-foreground/50 px-2.5 py-2">Select an adhyāya.</p>}
+          </div>
+        </div>
+
+        {/* Column 4: Mantra */}
+        <div className={colBox}>
+          <div className={colHead}><List className="h-4 w-4 text-primary" /><span className="text-sm font-semibold">4. Mantra</span></div>
+          <div className={searchBox}><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" /><input className={searchInput} placeholder="Search mantras..." value={qMan} onChange={e => setQMan(e.target.value)} /></div>
+          <div className="flex-1 overflow-y-auto max-h-72 pr-1 space-y-0.5">
+            {mantraNums.filter((_, i) => `mantra ${i + 1}`.toLowerCase().includes(qMan.toLowerCase())).map((vn, i) => (
+              <button key={vn} type="button" onClick={() => setVerse(vn)} className={`${rowBase} ${verse === vn ? rowActive : rowIdle}`}>
+                <span className="truncate">Mantra {i + 1}</span>
+              </button>
+            ))}
+            {adhyay != null && mantraNums.length === 0 && <p className="text-xs text-muted-foreground/50 px-2.5 py-2">Select an adhyāya.</p>}
+          </div>
+        </div>
+      </div>
+
+      {/* Selection breadcrumb + open */}
+      <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-muted/40 border border-border/50 px-3 py-2.5">
+        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"><Library className="h-3.5 w-3.5" /> Your Selection</span>
+        {selectedBook && <span className="inline-flex items-center gap-1 rounded-md bg-background border border-border/60 px-2 py-1 text-xs text-foreground/80">{tc(selectedBook.title)}</span>}
+        {adhyay != null && <><ChevronRight className="h-3 w-3 text-muted-foreground/50" /><span className="rounded-md bg-background border border-border/60 px-2 py-1 text-xs text-foreground/80">Adhyāya {adhyay}</span></>}
+        {khanda != null && <><ChevronRight className="h-3 w-3 text-muted-foreground/50" /><span className="rounded-md bg-background border border-border/60 px-2 py-1 text-xs text-foreground/80">Khaṇḍa {khanda}</span></>}
+        {verse != null && <><ChevronRight className="h-3 w-3 text-muted-foreground/50" /><span className="rounded-md bg-background border border-border/60 px-2 py-1 text-xs text-foreground/80">Mantra {mantraNums.indexOf(verse) + 1}</span></>}
+        <Button
+          className="ml-auto gap-2"
+          disabled={!bookId}
+          onClick={() => {
+            if (!bookId) return;
+            if (verse != null && onSelectVerse) onSelectVerse(bookId, verse);
+            else onSelectBook(bookId);
+          }}
+          data-testid="button-navigator-open"
+        >
+          Open Text <ArrowRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/** "Wisdom Without Language Barriers" — sample verse + language-meaning widget. */
+function LanguageMeaningWidget() {
+  const MEANINGS: Record<string, string> = {
+    English: "All this, whatever moves in this world — is pervaded by the Lord. Enjoy through renunciation. Do not covet what belongs to others.",
+    "हिन्दी": "इस संसार में जो कुछ भी है, वह सब ईश्वर से व्याप्त है। त्याग के साथ भोग करो, किसी के धन का लोभ मत करो।",
+  };
+  const [lang, setLang] = useState("English");
+  const chips = ["हिन्दी", "Malayalam", "Deutsch", "Français", "日本語", "Español"];
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 rounded-2xl overflow-hidden border border-primary/30 shadow-sm" data-testid="language-widget">
+      {/* Left: original Sanskrit */}
+      <div className="relative bg-gradient-to-br from-primary to-primary/85 text-primary-foreground p-6 sm:p-10 flex flex-col justify-center overflow-hidden">
+        <img src={homeMandala} alt="" aria-hidden="true" className="pointer-events-none absolute -top-8 -right-8 h-40 w-40 opacity-20" />
+        <img src={homeMandala} alt="" aria-hidden="true" className="pointer-events-none absolute -bottom-10 -left-10 h-44 w-44 opacity-20" />
+        <p className="relative text-[11px] uppercase tracking-[0.25em] text-primary-foreground/70 mb-5 text-center">Original Sanskrit</p>
+        <p className="relative font-serif text-xl sm:text-2xl leading-relaxed text-center">
+          ईशावास्यमिदं सर्वं यत्किञ्च जगत्यां जगत् ।<br />तेन त्यक्तेन भुञ्जीथा मा गृधः कस्यस्विद्धनम् ॥
+        </p>
+        <p className="relative text-sm text-primary-foreground/70 text-center mt-4 font-serif">— ईशावास्य उपनिषद् १</p>
+      </div>
+      {/* Right: translation widget */}
+      <div className="bg-card p-6 sm:p-8">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <span className="text-[11px] uppercase tracking-[0.15em] font-semibold text-foreground/70">See the meaning in your language</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 text-[10px] font-semibold text-primary-foreground"><Languages className="h-3 w-3" /> 60+ Languages</span>
+        </div>
+        <div className="relative mb-4">
+          <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <select
+            value={lang}
+            onChange={(e) => setLang(e.target.value)}
+            className="w-full h-11 rounded-lg border border-border/60 bg-background pl-10 pr-3 text-sm appearance-none focus:outline-none focus:border-primary/50"
+            data-testid="select-widget-language"
+          >
+            {Object.keys(MEANINGS).map(l => <option key={l} value={l}>{l}</option>)}
+          </select>
+          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+        </div>
+        <div className="rounded-xl border border-primary/25 bg-primary/[0.04] p-4">
+          <Quote className="h-5 w-5 text-primary/60 mb-1.5" />
+          <p className="text-sm sm:text-base leading-relaxed text-foreground/90">{MEANINGS[lang]}</p>
+          <p className="text-xs text-primary/80 italic mt-3">— Isha Vasyopanishad 1</p>
+        </div>
+        <p className="text-[11px] uppercase tracking-[0.15em] font-semibold text-muted-foreground mt-5 mb-2.5">Some of the languages we support</p>
+        <div className="flex flex-wrap gap-2">
+          {chips.map(c => <span key={c} className="rounded-md border border-border/60 bg-background px-2.5 py-1 text-xs text-foreground/80">{c}</span>)}
+          <span className="rounded-md bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground">+54 More</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** "Quick Access to Library Collections" — tabbed collections with per-category content. */
+function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary, onSelectSubCategory, languageCode }: {
+  books: Book[];
+  onSelectBook: (bookId: string) => void;
+  onSelectChapter?: (bookId: string, adhyayNumber: number) => void;
+  onBrowseLibrary: () => void;
+  onSelectSubCategory?: (categoryId: string, subCategoryId: string) => void;
+  languageCode?: string | null;
+}) {
+  const [tab, setTab] = useState("Upanishads");
+  const [q, setQ] = useState("");
+
+  const findBySlug = (slugs: string[]) => {
+    for (const s of slugs) { const b = books.find(x => x.slug?.toLowerCase() === s); if (b) return b; }
+    for (const s of slugs) { const b = books.find(x => x.slug?.toLowerCase().startsWith(s)); if (b) return b; }
+    return null;
+  };
+  const gitaBook = books.find(b => b.category === "Gita" || b.category === "Bhagavad Gita");
+  const brahmaBook = books.find(b => b.category === "Brahma Sutra");
+  const openGita = () => (gitaBook ? onSelectBook(gitaBook.id) : onBrowseLibrary());
+  const openBrahma = () => (brahmaBook ? onSelectBook(brahmaBook.id) : onBrowseLibrary());
+  const openUps = () => onSelectSubCategory?.("prasthana-thraya", "pt-upanishad");
+  const openPrakarana = () => onSelectSubCategory?.("prakarana-granthas", "pg-independent");
+  const openBook = (slugs: string[], fallback: () => void) => () => { const b = findBySlug(slugs); b ? onSelectBook(b.id) : fallback(); };
+  const openGitaCh = (num: number) => () => (gitaBook && onSelectChapter ? onSelectChapter(gitaBook.id, num) : openGita());
+  const openBrahmaCh = (num: number) => () => (brahmaBook && onSelectChapter ? onSelectChapter(brahmaBook.id, num) : openBrahma());
+  // Open a specific Upanishad by its principal entry (reliable slug match), else the collection.
+  const openPrincipal = (up: PrincipalUpanishad) => { const b = findBookForPrincipal(up, books); return b ? () => onSelectBook(b.id) : openUps; };
+  // Open a Upanishad/text by fuzzy name match, else fall back.
+  const openNamed = (name: string, fallback: () => void) => () => {
+    const norm = (s?: string | null) => (s || "").toLowerCase().replace(/upani[sṣ]ad|upanishad|upanishat|opanishad|opanisad|opaniṣad/g, "").replace(/[^a-z0-9]/g, "");
+    const key = norm(name);
+    const b = key ? books.find(x => { const tt = norm(x.title); const sl = norm(x.slug); return (tt && (tt.includes(key) || key.includes(tt))) || (sl && (sl.includes(key) || key.includes(sl))); }) : null;
+    b ? onSelectBook(b.id) : fallback();
+  };
+
+  type Item = { label: string; onClick: () => void };
+  type Card = { kicker: string; title: string; desc: string; items: Item[] };
+  const TABS: Record<string, Card[]> = {
+    Popular: [
+      { kicker: "Most Read", title: "Popular Texts", desc: "Frequently studied scriptures across the library.", items: [
+        { label: "Bhagavad Gita", onClick: openGita },
+        { label: "Īśāvāsyopaniṣad", onClick: openNamed("ishavasya isha", openUps) },
+        { label: "Kenopaniṣad", onClick: openNamed("kena", openUps) },
+        { label: "Brahma Sutras", onClick: openBrahma },
+        { label: "Vivekachudamani", onClick: openBook(["vivekachudamani", "viveka-chudamani"], openPrakarana) },
+      ] },
+      { kicker: "Begin Here", title: "For Beginners", desc: "Gentle entry points into Advaita Vedanta.", items: [
+        { label: "Tattva Bodha", onClick: openBook(["tattva-bodha", "tattvabodha"], openPrakarana) },
+        { label: "Atma Bodha", onClick: openBook(["atma-bodha", "atmabodha"], openPrakarana) },
+        { label: "Īśāvāsyopaniṣad", onClick: openNamed("ishavasya isha", openUps) },
+        { label: "Bhaja Govindam", onClick: onBrowseLibrary },
+      ] },
+    ],
+    Upanishads: [
+      { kicker: "Foundational Collection", title: "Principal Upanishads", desc: "The ten classical Upanishads that form the foundation of Vedantic inquiry.", items: PRINCIPAL_UPANISHADS.map(u => ({ label: u.iastFull, onClick: openPrincipal(u) })) },
+      { kicker: "Extended Collection", title: "Other Upanishads", desc: "Additional Upanishads with profound teachings and Advaita commentaries.", items: ["Advaitopanishad", "Atharvashira Upanishad", "Ekaksharaopanoshad", "Amritha Nadopanishad", "Atharvashika Upanishad", "Kaivalya Upanishad", "Kalagnirudropanishat", "Aatmopanishad", "Adhvaithabhavanopanishad"].map(n => ({ label: n, onClick: openNamed(n, openUps) })) },
+    ],
+    "Bhagavad Gita": [
+      { kicker: "Chapters 1–9", title: "Bhagavad Gita", desc: "The eternal dialogue of Krishna and Arjuna — first half.", items: GITA_CHAPTERS.slice(0, 9).map(c => ({ label: `${c.num}. ${c.transliteration}`, onClick: openGitaCh(c.num) })) },
+      { kicker: "Chapters 10–18", title: "Bhagavad Gita", desc: "From the Divine Glories to Liberation — second half.", items: GITA_CHAPTERS.slice(9).map(c => ({ label: `${c.num}. ${c.transliteration}`, onClick: openGitaCh(c.num) })) },
+    ],
+    "Brahma Sutras": [
+      { kicker: "Nyāya Prasthāna", title: "Brahma Sutras", desc: "The logical systematization of Vedanta across four adhyāyas.", items: [
+        { label: "1. Samanvaya Adhyāya", onClick: openBrahmaCh(1) },
+        { label: "2. Avirodha Adhyāya", onClick: openBrahmaCh(2) },
+        { label: "3. Sādhana Adhyāya", onClick: openBrahmaCh(3) },
+        { label: "4. Phala Adhyāya", onClick: openBrahmaCh(4) },
+      ] },
+    ],
+    "Prakarana Granthas": [
+      { kicker: "Introductory Treatises", title: "Prakarana Granthas", desc: "Foundational texts by Acharyas explaining the core tenets of Advaita.", items: [
+        { label: "Vivekachudamani", onClick: openBook(["vivekachudamani", "viveka-chudamani"], openPrakarana) },
+        { label: "Upadesha Sahasri", onClick: openBook(["upadesha-sahasri", "upadesa-sahasri"], openPrakarana) },
+        { label: "Atma Bodha", onClick: openBook(["atma-bodha", "atmabodha"], openPrakarana) },
+        { label: "Tattva Bodha", onClick: openBook(["tattva-bodha", "tattvabodha"], openPrakarana) },
+        { label: "Panchikaranam", onClick: openBook(["panchikaranam", "panchikarana"], openPrakarana) },
+        { label: "Drig Drishya Viveka", onClick: openBook(["drig-drishya-viveka", "drk-drsya-viveka"], openPrakarana) },
+      ] },
+    ],
+    Bhakti: [
+      { kicker: "Devotional Hymns", title: "Bhakti Stotras", desc: "Hymns of Shankaracharya and the devotional tradition of Advaita.", items: ["Bhaja Govindam", "Soundarya Lahari", "Shivananda Lahari", "Kanakadhara Stotram", "Dakshinamurthy Stotram", "Nirvana Shatakam"].map(n => ({ label: n, onClick: onBrowseLibrary })) },
+    ],
+    Acharyas: [
+      { kicker: "The Lineage", title: "Acharyas", desc: "The great masters who carried the Advaita vision forward.", items: ["Adi Shankaracharya", "Sureshvaracharya", "Padmapadacharya", "Hastamalakacharya", "Totakacharya", "Vidyaranya Swami", "Vachaspati Misra", "Appayya Dikshita"].map(n => ({ label: n, onClick: onBrowseLibrary })) },
+    ],
+    "Regional Traditions": [
+      { kicker: "Across Bhārat", title: "Regional Luminaries", desc: "Peethams, mathas, and masters spread across the land.", items: ["Sringeri Peetham", "Kanchi Peetham", "Uttaradi Math", "Nirmohi Akhada", "Sri Bellamkonda Rama Raya", "Shrimad Bodhendra Saraswati"].map(n => ({ label: n, onClick: onBrowseLibrary })) },
+    ],
+  };
+  const TAB_KEYS = ["Popular", "Upanishads", "Bhagavad Gita", "Brahma Sutras", "Prakarana Granthas", "Bhakti", "Acharyas", "Regional Traditions"];
+  const cards = TABS[tab] || TABS.Upanishads;
+  const single = cards.length === 1;
+  const ql = q.trim().toLowerCase();
+
+  const renderCard = (card: Card) => {
+    const items = ql ? card.items.filter(i => i.label.toLowerCase().includes(ql)) : card.items;
+    return (
+      <div key={card.title + card.kicker} className="rounded-2xl bg-[#fdf6ee] p-5 flex flex-col min-w-0">
+        <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground text-center font-semibold">{card.kicker}</p>
+        <h3 className="font-serif text-2xl font-bold text-primary text-center mt-1">{card.title}</h3>
+        <p className="text-center text-primary/40 text-sm">— ◇ —</p>
+        <p className="text-sm text-muted-foreground text-center mt-1 mb-4">{card.desc}</p>
+        <div className="space-y-1.5 overflow-y-auto max-h-72 pr-1">
+          {items.map((it, i) => (
+            <button key={it.label + i} type="button" onClick={it.onClick} className="w-full flex items-center gap-2 rounded-lg bg-card border border-border/50 px-3 py-2.5 text-left text-sm font-serif text-foreground hover:border-primary/40 hover:text-primary transition-colors">
+              <Sparkles className="h-3.5 w-3.5 text-primary/40 shrink-0" /><span className="truncate">{it.label}</span>
+            </button>
+          ))}
+          {items.length === 0 && <p className="text-xs text-muted-foreground/60 px-2 py-3 text-center">No matches.</p>}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
+      <div className="flex items-center gap-2.5 mb-5">
+        <BookOpen className="h-6 w-6 text-primary" />
+        <h2 className="font-serif text-2xl sm:text-3xl font-bold text-foreground">Quick Access to <span className="text-primary">Library Collections</span></h2>
+      </div>
+      <div className="relative mb-5">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+        <input value={q} onChange={e => setQ(e.target.value)} className="w-full h-11 rounded-xl border border-border/60 bg-muted/40 pl-11 pr-3 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary/50 focus:bg-background" placeholder="Search books, scriptures, acharyas, or traditions..." />
+      </div>
+      <div className="flex flex-wrap gap-2 mb-5">
+        {TAB_KEYS.map((k) => {
+          const active = tab === k;
+          return (
+            <button
+              key={k}
+              type="button"
+              onClick={() => { setTab(k); setQ(""); }}
+              className={`rounded-lg border px-3.5 py-2 text-sm transition-colors ${active ? "border-primary bg-primary text-primary-foreground font-semibold" : "border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/40"}`}
+              data-testid={`collection-tab-${k.toLowerCase().replace(/\s+/g, "-")}`}
+            >
+              {k}
+            </button>
+          );
+        })}
+      </div>
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/90 to-primary" data-testid="collections-panel">
+        {/* Right imagery: landscape backdrop + Adi Shankaracharya figure */}
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-[38%] hidden lg:block">
+          <img src={homeCollectionsShankara} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-left opacity-80" />
+          <img src={homeAdiShankara} alt="Adi Shankaracharya" className="absolute bottom-0 right-6 h-[92%] w-auto object-contain object-bottom drop-shadow-2xl" />
+        </div>
+        <div className={`relative grid gap-4 sm:gap-5 p-4 sm:p-6 lg:pr-[40%] ${single ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"}`}>
+          {cards.map(renderCard)}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChapter, onBrowseLibrary, onSelectSubCategory, languageCode }: WelcomeScreenProps) {
   const { t } = useTranslation(languageCode ?? null);
 
   const upanishadBooks = useMemo(
@@ -303,286 +710,246 @@ export function WelcomeScreen({ books, onSelectBook, onBrowseLibrary, onSelectSu
     },
   ];
 
+  const guidanceQuestions = [
+    "Who am I?",
+    "What is the truth of life & experience?",
+    "Can I become free from my sense of limitations?",
+  ];
+
+  const featureStrip = [
+    { icon: PenLine, title: "Rare & Hidden Tikas", desc: "Bringing unknown commentaries into the digital age." },
+    { icon: BookOpen, title: "From Scripture to Interpretation", desc: "Connecting every layer of Advaita knowledge." },
+    { icon: ShieldCheck, title: "Built on Authentic Sources", desc: "Carefully curated from trusted traditional references." },
+    { icon: Languages, title: "Advaita Across Languages", desc: "Translated into 50+ world languages, making the wisdom of Advaita available to all humanity in its purest form." },
+  ];
+
+  const langStats = [
+    { icon: Globe, title: "60+ Languages", sub: "INDIAN & GLOBAL" },
+    { icon: FileText, title: "Complete Structure", sub: "MANTRA, MEANING, BHASHYA" },
+    { icon: Users, title: "For Every Seeker", sub: "ACROSS CULTURES & GENERATIONS" },
+  ];
+
+
   return (
-    <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-background relative overflow-y-auto">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
-        <div className="absolute top-16 left-12 text-[14rem] text-primary/[0.015] dark:text-primary/[0.02] font-serif">ॐ</div>
-        <div className="absolute bottom-24 right-16 text-[10rem] text-primary/[0.015] dark:text-primary/[0.02] font-serif rotate-12">ॐ</div>
-        <div className="absolute top-1/2 right-1/3 text-[7rem] text-primary/[0.01] dark:text-primary/[0.015] font-serif -rotate-6">श्री</div>
+    <div className="flex-1 flex flex-col bg-background relative overflow-y-auto">
+      {/* ===== HERO ===== */}
+      <section className="relative shrink-0 overflow-hidden bg-gradient-to-b from-[#fbeddc] via-[#fdf5ea] to-background px-4 pt-14 pb-12 sm:pt-16 sm:pb-14 text-center">
+        {/* subtle mandala watermark pattern */}
+        <div
+          className="absolute inset-0 pointer-events-none select-none opacity-[0.05]"
+          style={{ backgroundImage: `url(${homeMandala})`, backgroundSize: "150px", backgroundRepeat: "repeat" }}
+        />
+        {/* warm radial glow behind the title */}
+        <div
+          className="absolute inset-x-0 top-0 h-[70%] pointer-events-none select-none"
+          style={{ background: "radial-gradient(ellipse 55% 60% at 50% 38%, rgba(193,94,42,0.16) 0%, transparent 70%)" }}
+        />
+        <div className="relative max-w-4xl mx-auto space-y-6">
+          <img src="/favicon.png" alt="Advaita Vaaridhi" className="h-20 sm:h-24 w-auto object-contain mx-auto" />
+          <h1 className="font-serif text-4xl sm:text-6xl lg:text-[4.25rem] font-bold text-primary tracking-tight leading-[1.05]">
+            Advaita Vedanta Digital Library
+          </h1>
+          <p className="font-serif text-lg sm:text-2xl text-primary/70 tracking-wide">
+            ब्रह्म सत्यं जगन्मिथ्या जीवो ब्रह्मैव नापरः
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
+            <Button onClick={onBrowseLibrary} className="gap-2 h-12 px-7 text-base font-serif shadow-md" data-testid="button-hero-browse">
+              <BookOpen className="h-5 w-5" /> Browse the Library
+            </Button>
+            <Button variant="outline" onClick={onBrowseLibrary} className="gap-2 h-12 px-7 text-base font-serif border-primary/40 text-primary hover:bg-primary/5 bg-background" data-testid="button-hero-resume">
+              Resume Study <ChevronDown className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 sm:mt-8 relative z-10">
+        <HomeTextNavigator books={books} onSelectBook={onSelectBook} onSelectVerse={onSelectVerse} languageCode={languageCode} />
       </div>
 
-      <div className="max-w-6xl w-full relative z-10 py-4 sm:py-8 space-y-6 sm:space-y-8">
-        <div className="text-center space-y-3 relative">
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none">
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/[0.06] dark:border-primary/[0.10]" style={{ width: 600, height: 600 }}></div>
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/[0.08] dark:border-primary/[0.14]" style={{ width: 400, height: 400 }}></div>
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/[0.10] dark:border-primary/[0.18]" style={{ width: 240, height: 240 }}></div>
+      {/* ===== EXPRESSIONS OF ADVAITIC VISION ===== */}
+      <section className="bg-[#fdf1ec] dark:bg-primary/[0.04] mt-14 sm:mt-20 py-14 sm:py-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+          <div className="flex justify-center">
+            <img src={homeAdvaiticTree} alt="The literary dimensions of Advaita — from Shruti to Bhakti" className="w-full max-w-sm object-contain" draggable={false} />
           </div>
-          <div className="relative inline-block">
-            <div className="absolute -inset-4 bg-primary/5 dark:bg-primary/15 rounded-full blur-xl"></div>
-            <img
-              src="https://oneness.org.in/assets/img/favicon.png"
-              alt="Advaita Vaaridhi"
-              className="h-16 sm:h-20 w-16 sm:w-20 object-contain mx-auto relative"
-            />
-          </div>
-          <div className="relative flex items-center justify-center gap-2 sm:gap-3">
-            <span className="text-xl sm:text-2xl text-primary/50 font-serif">ॐ</span>
-            <h1 className="font-serif text-xl sm:text-3xl font-semibold tracking-tight text-primary">
-              {t("advaitaVedantaDigitalLibrary")}
-            </h1>
-            <span className="text-xl sm:text-2xl text-primary/50 font-serif">ॐ</span>
-          </div>
-          <p className="relative text-[10px] sm:text-xs uppercase tracking-[0.25em] text-muted-foreground">
-            {t("eternalEchoOfNonDuality")}
-          </p>
-          <p className="relative text-xs sm:text-sm text-muted-foreground max-w-2xl mx-auto leading-relaxed mt-2">
-            {t("welcomeDescription")}
-          </p>
-        </div>
-
-        <div className="flex justify-center">
-          <Button
-            variant="default"
-            onClick={onBrowseLibrary}
-            className="gap-2 font-serif"
-            data-testid="button-browse-library"
-          >
-            <Library className="h-4 w-4" />
-            {t("browseTheLibrary")}
-          </Button>
-        </div>
-
-        <HomeSearchBar books={books} onSelectBook={onSelectBook} languageCode={languageCode ?? null} />
-
-        <div className="space-y-6 sm:space-y-8">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <ScrollText className="h-5 w-5 text-primary shrink-0" />
-              <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground">Prasthanatrayi — The Triple Canon</h2>
-              <div className="h-px flex-1 bg-primary/15"></div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pl-0 sm:pl-8" data-testid="triple-canon-grid">
-              {tripleCanon.map((c) => (
-                <button
-                  key={c.key}
-                  type="button"
-                  onClick={() => onSelectSubCategory?.("prasthana-thraya", c.subId)}
-                  className="group flex flex-col items-center text-center p-5 rounded-xl bg-card/70 dark:bg-card/40 border border-border/60 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5 transition-all"
-                  data-testid={`triple-canon-${c.key}`}
-                >
-                  <div className="h-12 w-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
-                    <span className="text-xl text-primary font-serif leading-none">{c.symbol}</span>
-                  </div>
-                  <div className="font-serif text-base font-semibold text-foreground leading-snug">{c.title}</div>
-                  <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/80 mt-1">{c.subtitle}</div>
-                  <div className="mt-3 inline-flex items-center gap-1 text-xs text-primary font-medium px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20">
-                    <span>{c.count} {c.countLabel}</span>
-                    <ArrowRight className="h-3 w-3" />
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-5">
-            <div className="flex items-center gap-3">
-              <BookMarked className="h-5 w-5 text-primary shrink-0" />
-              <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground">{t("treasuryOfWisdom")}</h2>
-              <div className="h-px flex-1 bg-primary/15"></div>
-            </div>
-            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed pl-8">
-              The Nyas has meticulously curated a vast collection spanning from the foundational Triple Canon to the sophisticated dialectical works of later Advaita masters — commentaries, introductory monographs, scholastic debates, and rare regional masterpieces.
-            </p>
-
-            <div className="space-y-3 pl-0 sm:pl-8">
-              <div className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-primary font-semibold">
-                Prakarana Granthas — Introductory Monographs
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5" data-testid="prakarana-list">
-                {prakaranaBookList.map((p) => {
-                  const book = findBookBySlug(p.slugs);
-                  return (
-                    <button
-                      key={p.title}
-                      type="button"
-                      disabled={!book}
-                      onClick={() => book && onSelectBook(book.id)}
-                      className="group flex items-center justify-between gap-3 p-3 rounded-lg bg-card/60 dark:bg-card/40 border border-border/60 hover:border-primary/40 hover:bg-card/90 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
-                      data-testid={`prakarana-item-${p.title.toLowerCase().replace(/\s+/g, "-")}`}
-                    >
-                      <div className="min-w-0">
-                        <div className="font-serif text-sm font-semibold text-foreground truncate">{p.title}</div>
-                        <div className="text-[11px] text-muted-foreground truncate">{p.author}</div>
-                      </div>
-                      <ArrowRight className="h-3.5 w-3.5 text-primary/70 shrink-0 group-hover:translate-x-0.5 transition-transform" />
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="space-y-3 pl-0 sm:pl-8">
-              <div className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-primary font-semibold">
-                The Scholastic Tradition — Two Schools
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" data-testid="two-schools-grid">
-                {twoSchools.map((s) => (
-                  <div
-                    key={s.name}
-                    className={`p-3.5 rounded-lg bg-card/60 dark:bg-card/40 border border-border/60 border-l-[3px] ${s.colorClass}`}
-                    data-testid={`school-${s.name.toLowerCase().replace(/\s+/g, "-")}`}
-                  >
-                    <div className="font-serif text-sm font-semibold text-foreground mb-1">{s.name}</div>
-                    <div className="text-[11px] text-muted-foreground">{s.members.join(" · ")}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-3 pl-0 sm:pl-8">
-              <div className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-primary font-semibold">
-                Regional Luminaries
-              </div>
-              <div className="flex flex-wrap gap-2" data-testid="regional-luminaries">
-                {regionalLuminaries.map((name) => (
-                  <span
-                    key={name}
-                    className="px-3 py-1 rounded-full bg-card/70 dark:bg-card/40 border border-border/60 text-[11px] text-foreground/80"
-                    data-testid={`luminary-${name.toLowerCase().replace(/\s+/g, "-")}`}
-                  >
-                    {name}
-                  </span>
-                ))}
-                <button
-                  type="button"
-                  onClick={onBrowseLibrary}
-                  className="px-3 py-1 rounded-full bg-card/70 dark:bg-card/40 border border-border/60 text-[11px] text-primary hover:bg-primary/5 transition-colors inline-flex items-center gap-1"
-                  data-testid="luminary-view-all"
-                >
-                  View all
-                  <ArrowRight className="h-3 w-3" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Users className="h-5 w-5 text-primary shrink-0" />
-              <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground">Manifestations Across Traditions</h2>
-              <div className="h-px flex-1 bg-primary/15"></div>
-            </div>
-            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed pl-8">
-              Non-dual wisdom does not belong to Sanskrit alone. It pours through the abhangas of Maharashtra, the padas of Rajasthan, the Gurbani of the Sikhs, and the Tiruvachakam of Tamil Nadu — each a different shore of the same boundless ocean.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pl-0 sm:pl-8" data-testid="manifestations-grid">
-              {manifestations.map((m) => (
-                <div
-                  key={m.title}
-                  className={`p-4 rounded-xl bg-card/60 dark:bg-card/40 border border-border/60 border-t-[3px] ${m.borderClass}`}
-                  data-testid={`manifestation-${m.title.toLowerCase().replace(/\s+/g, "-")}`}
-                >
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {m.tags.map(tag => (
-                      <span key={tag} className={`px-2 py-0.5 rounded-full text-[9px] font-semibold tracking-wider ${m.tagClass}`}>
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="font-serif text-sm font-semibold text-foreground mb-1">{m.title}</div>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">{m.description}</p>
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.25em] text-primary/70 font-semibold mb-3">Immerse in Non-Dual Nectar</p>
+            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-foreground mb-6">
+              Expressions of <span className="text-primary">Advaitic Vision</span>
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-7">
+              {guidanceQuestions.map((q) => (
+                <div key={q} className="relative overflow-hidden rounded-xl border border-primary/20 bg-card px-3 py-4 text-center shadow-sm">
+                  <p className="text-sm font-semibold text-primary leading-snug">{q}</p>
                 </div>
               ))}
             </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <Heart className="h-5 w-5 text-primary shrink-0" />
-              <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground">{t("ourVisionSanskritikEkta")}</h2>
-              <div className="h-px flex-1 bg-primary/15"></div>
+            <p className="font-serif text-lg sm:text-xl text-foreground text-center border-y border-primary/15 py-3 mb-6">
+              <span className="text-primary font-bold">Shastras</span> are the direct means to know the truth of existence.
+            </p>
+            <div className="space-y-3 text-sm sm:text-base text-muted-foreground leading-relaxed">
+              <p>The vision of oneness finds expression through scriptures, commentaries, philosophical works, devotional literature, and generations of teaching traditions.</p>
+              <p>Over centuries, great Acharyas expanded and enriched this wisdom through diverse literary dimensions, each illuminating the same truth from a unique perspective.</p>
+              <p>Together, they form a vast compendium of Advaita wisdom.</p>
             </div>
-            <div className="text-xs sm:text-sm text-muted-foreground leading-relaxed pl-8">
-              <p>{t("visionDescription")}</p>
-            </div>
-            <blockquote className="text-center font-serif text-sm sm:text-base text-primary/70 italic py-2">
-              {t("brahmanQuote")}
-            </blockquote>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Library className="h-5 w-5 text-primary shrink-0" />
-              <h2 className="font-serif text-base sm:text-lg font-semibold text-foreground">{t("featuresOfDigitalLibrary")}</h2>
-              <div className="h-px flex-1 bg-primary/15"></div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pl-0 sm:pl-8" data-testid="features-grid">
-              {[
-                { icon: FileText, labelKey: "authenticTranscriptionsLabel", descKey: "authenticTranscriptionsDesc" },
-                { icon: Archive, labelKey: "manuscriptPreservationLabel", descKey: "manuscriptPreservationDesc" },
-                { icon: Search, labelKey: "scholarlySearchLabel", descKey: "scholarlySearchDesc" },
-              ].map(({ icon: Icon, labelKey, descKey }) => (
-                <div
-                  key={labelKey}
-                  className="p-4 rounded-xl bg-card/60 dark:bg-card/40 border border-border/60 hover:border-primary/40 hover:shadow-md transition-all"
-                  data-testid={`feature-card-${labelKey}`}
-                >
-                  <div className="h-9 w-9 rounded-lg bg-primary/10 border border-primary/15 flex items-center justify-center mb-3">
-                    <Icon className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="font-serif text-sm font-semibold text-foreground leading-snug mb-1.5">
-                    {t(labelKey as any).replace(/:\s*$/, "")}
-                  </div>
-                  <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
-                    {t(descKey as any)}
-                  </p>
-                </div>
-              ))}
+            <div className="mt-6 border-l-2 border-primary/50 pl-4 text-sm sm:text-base text-muted-foreground leading-relaxed">
+              <span className="text-primary font-semibold">Advaita Vaaridhi</span> brings together this rich compendium of Advaita wisdom in one place, making it easier to explore, understand, and preserve for future generations. As a living tradition, the library also embraces modern thought and contemporary contributions that continue to carry the Advaitic vision forward.
             </div>
           </div>
+        </div>
+      </section>
 
-          <div className="text-center pt-2">
-            <div className="mx-auto h-px w-16 bg-primary/20 mb-3"></div>
-            <blockquote className="font-serif text-base sm:text-lg text-primary/80 italic leading-relaxed">
-              {t("saVidyaQuote")}
-            </blockquote>
-          </div>
+      {/* ===== FEATURE STRIP ===== */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+        <div className="rounded-2xl border border-primary/20 bg-[#fdf6ee] dark:bg-primary/[0.04] px-6 sm:px-10 py-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {featureStrip.map(({ icon: Icon, title, desc }) => (
+            <div key={title} className="text-center">
+              <div className="mx-auto mb-4 h-14 w-14 rounded-full border border-primary/25 bg-primary/[0.06] flex items-center justify-center">
+                <Icon className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="font-serif text-lg font-bold text-primary leading-snug mb-2">{title}</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
-          <p className="text-xs text-center text-muted-foreground/70">
-            {t("invitationText")}
-          </p>
-          <p className="text-[10px] text-center text-muted-foreground/50 italic">
-            {t("managedByNyas")}
+      {/* ===== QUICK ACCESS TO LIBRARY COLLECTIONS ===== */}
+      <HomeCollections books={books} onSelectBook={onSelectBook} onSelectChapter={onSelectChapter} onBrowseLibrary={onBrowseLibrary} onSelectSubCategory={onSelectSubCategory} languageCode={languageCode} />
+
+      {/* ===== WISDOM WITHOUT LANGUAGE BARRIERS ===== */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
+        <div className="text-center max-w-2xl mx-auto mb-8">
+          <p className="text-[11px] uppercase tracking-[0.25em] text-amber-700/70 font-semibold mb-3">— Ancient Truths, Modern Access —</p>
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-foreground">
+            <span className="text-primary">Wisdom</span> Without Language Barriers
+          </h2>
+          <p className="text-sm sm:text-base text-muted-foreground mt-4 leading-relaxed">
+            We make Advaita accessible in <span className="text-primary font-semibold">60+ Indian</span> and global languages so that every seeker, regardless of where they are or what language they speak, can study, understand and live this wisdom.
           </p>
         </div>
-
-        {books.some(b => bookVideoConfig[b.slug]) && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-center gap-2">
-              <div className="h-px w-8 bg-primary/30"></div>
-              <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider" data-testid="heading-explanatory-videos">
-                {t("watchIntroduction")}
-              </h2>
-              <div className="h-px w-8 bg-primary/30"></div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-y border-border/50 py-6 mb-10">
+          {langStats.map(({ icon: Icon, title, sub }) => (
+            <div key={title} className="flex items-center gap-3 justify-center sm:justify-start">
+              <div className="h-11 w-11 rounded-xl border border-border/60 bg-muted/40 flex items-center justify-center shrink-0">
+                <Icon className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-serif text-base font-bold text-foreground leading-tight">{title}</p>
+                <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{sub}</p>
+              </div>
             </div>
-            {books.filter(b => bookVideoConfig[b.slug]).map(b => (
-              <VideoInline
-                key={b.slug}
-                videoId={bookVideoConfig[b.slug].videoId}
-                title={bookVideoConfig[b.slug].videoTitle}
-                className="max-w-xl mx-auto rounded-xl overflow-hidden border border-primary/20"
+          ))}
+        </div>
+        <LanguageMeaningWidget />
+      </section>
+
+      {/* ===== MANIFESTATIONS ACROSS TRADITIONS ===== */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+        <div className="flex items-center gap-2.5 mb-4">
+          <Users className="h-6 w-6 text-primary" />
+          <h2 className="font-serif text-2xl sm:text-3xl font-bold text-foreground">Manifestations Across <span className="text-primary">Traditions</span></h2>
+        </div>
+        <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-7 max-w-4xl">
+          Non-dual wisdom does not belong to Sanskrit alone. It pours through the abhangas of Maharashtra, the padas of Rajasthan, the Gurbani of the Sikhs, and the Tiruvachakam of Tamil Nadu — each a different shore of the same boundless ocean.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+          {manifestations.map((m) => (
+            <div key={m.title} className="relative overflow-hidden rounded-xl border border-border/60 bg-card p-5 shadow-sm">
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {m.tags.map((tag) => (
+                  <span key={tag} className="rounded-full bg-primary/10 text-primary px-2 py-0.5 text-[9px] font-semibold tracking-wider">{tag}</span>
+                ))}
+              </div>
+              <h3 className="font-serif text-lg font-bold text-foreground mb-1.5">{m.title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{m.description}</p>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-[11px] uppercase tracking-[0.2em] text-primary font-semibold mb-3">The Scholastic Tradition — Two Schools</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 rounded-xl border border-border/60 bg-card overflow-hidden mb-10">
+          {twoSchools.map((s, i) => (
+            <div key={s.name} className={`p-6 ${i === 0 ? "sm:border-r border-border/60 sm:text-left" : "sm:text-right"} text-center`}>
+              <h3 className="font-serif text-xl font-bold text-foreground mb-1">{s.name}</h3>
+              <p className="text-sm text-muted-foreground">{s.members.join(" · ")}</p>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-[11px] uppercase tracking-[0.2em] text-primary font-semibold mb-3">Regional Luminaries</p>
+        <div className="flex flex-wrap gap-2.5">
+          {regionalLuminaries.map((name) => (
+            <span key={name} className="rounded-full border border-border/60 bg-card px-4 py-2 text-sm text-foreground/80">{name}</span>
+          ))}
+        </div>
+        <button type="button" onClick={onBrowseLibrary} className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary hover:gap-1.5 transition-all">
+          View all <ArrowRight className="h-3.5 w-3.5" />
+        </button>
+      </section>
+
+      {/* ===== OUR VISION: SANSKRITIK EKTA ===== */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-8 sm:p-12">
+          <img src={homeMandala} alt="" aria-hidden="true" className="pointer-events-none absolute -top-10 -right-10 h-56 w-56 opacity-15" />
+          <div className="relative grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-8 lg:gap-10 items-end">
+            <div className="space-y-6">
+              <div>
+                <h2 className="font-serif text-3xl sm:text-4xl font-bold mb-5">Our Vision: Sanskritik Ekta</h2>
+                <p className="text-sm sm:text-base leading-relaxed text-primary-foreground/85 italic">
+                  In alignment with the mission of Acharya Shankar Sanskritik Ekta Nyas, this library is more than a repository of books; it is a tool for universal harmony. By making the Advaita philosophy accessible to all, we aim to dissolve the boundaries of "otherness" and reveal the underlying unity of all existence.
+                </p>
+              </div>
+              <div className="rounded-xl border border-primary-foreground/25 bg-primary-foreground/[0.08] p-6 text-center">
+                <p className="font-serif text-lg sm:text-xl leading-relaxed">
+                  "Brahman is the Only Truth, the World is an appearance, and the Individual Self is none other than Brahman."
+                </p>
+              </div>
+            </div>
+            {/* Adi Shankaracharya standing figure */}
+            <div className="flex justify-center lg:justify-end items-end -mb-8 sm:-mb-12">
+              <img
+                src={homeAdiShankara}
+                alt="Adi Shankaracharya"
+                className="h-64 sm:h-72 lg:h-[22rem] w-auto object-contain object-bottom drop-shadow-2xl"
+                draggable={false}
               />
-            ))}
-          </div>
-        )}
-
-        <div className="text-center pb-4">
-          <div className="text-primary/25 text-xs tracking-widest font-serif">
-            ॥ सर्वं खल्विदं ब्रह्म ॥
+            </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* ===== FEATURES OF THE DIGITAL LIBRARY ===== */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+        <div className="flex items-center gap-2.5 mb-6">
+          <LayoutGrid className="h-6 w-6 text-primary" />
+          <h2 className="font-serif text-2xl sm:text-3xl font-bold text-foreground">Features of the <span className="text-primary">Digital Library</span></h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[
+            { title: "Authentic Transcriptions", desc: "Accurately digitized Sanskrit texts with corrected formatting for modern readers." },
+            { title: "Manuscript Preservation", desc: "High-resolution scans of rare editions to ensure the longevity of our heritage." },
+            { title: "Scholarly Search", desc: "Navigate by author, period, or specific philosophical sub-topic." },
+          ].map((f) => (
+            <div key={f.title} className="rounded-xl border border-border/60 bg-card p-6 shadow-sm hover:border-primary/40 hover:shadow-md transition-all">
+              <h3 className="font-serif text-lg font-bold text-primary mb-2">{f.title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ===== CLOSING ===== */}
+      <section className="text-center px-4 pb-16">
+        <blockquote className="font-serif text-xl sm:text-2xl text-primary/90 leading-relaxed mb-4">
+          "Knowledge is that which liberates." <span className="text-foreground/70">— सा विद्या या विमुक्तये</span>
+        </blockquote>
+        <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+          We invite you to explore this ocean of knowledge. May the grace of Acharya Shankar guide your inquiry from the transient to the Eternal.
+        </p>
+        <div className="mt-10 text-primary/25 text-xs tracking-widest font-serif">॥ सर्वं खल्विदं ब्रह्म ॥</div>
+      </section>
     </div>
   );
 }
@@ -630,6 +997,28 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
   const { t } = useTranslation(languageCode ?? null);
   const welcomeLang = languageCode || "en";
   const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, welcomeLang);
+  const [showGuidance, setShowGuidance] = useState(true);
+
+  const guidanceColumns = [
+    {
+      categoryId: "prasthana-thraya",
+      heading: "New to Vedanta?",
+      body: "Begin with Prasthanatrayi, the foundational scriptures.",
+      cta: "Go to Prasthanatrayi",
+    },
+    {
+      categoryId: "prakarana-granthas",
+      heading: "Looking to understand Vedantic concepts?",
+      body: "Explore Prakarana Granthas, teaching texts by Acharyas.",
+      cta: "Go to Prakarana Granthas",
+    },
+    {
+      categoryId: "other-texts",
+      heading: "Seeking devotional & contemplative literature?",
+      body: "Browse Advaita Traditions, devotional works and more.",
+      cta: "Go to Advaita Traditions",
+    },
+  ];
 
   return (
     <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-background relative overflow-y-auto">
@@ -655,51 +1044,116 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
             <h1 className="font-serif text-lg sm:text-2xl font-semibold text-primary" data-testid="heading-browse-library">
               {t("browseTheLibrary")}
             </h1>
-            <div className="h-px flex-1 bg-border"></div>
+            <div className="h-px flex-1 bg-gradient-to-r from-primary/50 via-primary/25 to-transparent"></div>
           </div>
         </div>
+
+        {/* Guidance banner */}
+        {showGuidance ? (
+          <div className="relative flex flex-col sm:flex-row items-start gap-4 sm:gap-6 rounded-2xl border border-primary/15 bg-[#fdf4ea] dark:bg-primary/[0.06] px-4 sm:px-6 py-4 sm:py-5" data-testid="library-guidance">
+            <img
+              src={shankaracharyaPortrait}
+              alt=""
+              aria-hidden="true"
+              className="h-16 sm:h-20 w-auto object-contain shrink-0"
+              draggable={false}
+            />
+            <div className="flex-1 min-w-0 w-full">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <h2 className="font-serif text-lg sm:text-2xl font-semibold text-primary leading-tight">
+                  Need help choosing?
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setShowGuidance(false)}
+                  className="flex items-center gap-1 text-xs sm:text-sm text-primary/70 hover:text-primary transition-colors shrink-0"
+                  data-testid="button-hide-guidance-library"
+                >
+                  Hide Guidance <ChevronUp className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                {guidanceColumns.map((col) => (
+                  <div key={col.categoryId}>
+                    <h3 className="text-sm font-semibold text-foreground leading-snug">{col.heading}</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1.5 leading-relaxed">{col.body}</p>
+                    <button
+                      type="button"
+                      onClick={() => onSelectCategory?.(col.categoryId)}
+                      className="mt-2.5 inline-flex items-center gap-1 text-sm font-medium text-primary hover:gap-1.5 transition-all"
+                      data-testid={`link-guidance-${col.categoryId}`}
+                    >
+                      {col.cta} <ArrowRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowGuidance(true)}
+            className="flex items-center gap-1 text-sm text-primary/80 hover:text-primary transition-colors"
+            data-testid="button-show-guidance-library"
+          >
+            Show Guidance <ChevronDown className="h-4 w-4" />
+          </button>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5" data-testid="catalog-tree">
           {CATALOG_TREE.map(cat => {
             const catBooks = getBooksForCategory(books, cat);
-            const IconComponent = categoryIcons[cat.id] || Library;
+            const catImage = categoryImages[cat.id];
 
             return (
               <Card
                 key={cat.id}
-                className="p-0 overflow-hidden border-primary/20 bg-card/90 backdrop-blur-sm flex flex-col hover:shadow-xl hover:border-primary/40 hover:-translate-y-1 transition-all rounded-xl"
+                className="group p-0 overflow-hidden border-primary/20 bg-card/90 backdrop-blur-sm flex flex-col hover:shadow-xl hover:border-primary/40 hover:-translate-y-1 transition-all rounded-xl"
                 data-testid={`card-category-${cat.id}`}
               >
                 <div
-                  className="px-5 sm:px-6 pt-5 sm:pt-6 pb-4 cursor-pointer"
+                  className="relative cursor-pointer"
                   onClick={() => onSelectCategory?.(cat.id)}
                   data-testid={`button-category-${cat.id}`}
                 >
-                  <div className="p-2.5 rounded-lg bg-primary/10 border border-primary/20 w-fit mb-4">
-                    <IconComponent className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                  {/* Product-image header on a warm parchment gradient */}
+                  <div className="relative h-40 sm:h-44 overflow-hidden bg-gradient-to-br from-[#f6ead7] via-[#f3e2ca] to-[#efd9b8] flex items-center justify-center">
+                    {catImage ? (
+                      <img
+                        src={catImage}
+                        alt={getTranslatedLabel(cat, t)}
+                        className="h-full w-full object-contain p-3 mix-blend-multiply transition-transform duration-500 group-hover:scale-105"
+                        draggable={false}
+                      />
+                    ) : null}
+                    {catBooks.length > 0 && (
+                      <span
+                        className="absolute top-3 left-3 rounded-md border border-primary/40 bg-background/85 backdrop-blur-sm px-2 py-0.5 text-[10px] font-medium text-primary shadow-sm"
+                        data-testid={`badge-count-${cat.id}`}
+                      >
+                        {catBooks.length} {catBooks.length === 1 ? t("textSingular") : t("textPlural")}
+                      </span>
+                    )}
                   </div>
 
-                  <h3 className="font-serif text-lg sm:text-xl font-bold text-foreground leading-tight">
-                    {getTranslatedLabel(cat, t)}
-                  </h3>
+                  <div className="px-5 sm:px-6 pt-4 pb-3">
+                    <h3 className="font-serif text-lg sm:text-xl font-bold text-foreground leading-tight">
+                      {getTranslatedLabel(cat, t)}
+                    </h3>
 
-                  {cat.subtitle && (
-                    <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-primary/70 font-medium mt-1.5">
-                      {getTranslatedSubtitle(cat, t)}
-                    </p>
-                  )}
+                    {cat.subtitle && (
+                      <p className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-primary/70 font-medium mt-1.5">
+                        {getTranslatedSubtitle(cat, t)}
+                      </p>
+                    )}
 
-                  {cat.description && (
-                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-3">
-                      {getTranslatedDescription(cat, t)}
-                    </p>
-                  )}
-
-                  {catBooks.length > 0 && (
-                    <Badge variant="secondary" className="text-[10px] mt-3">
-                      {catBooks.length} {catBooks.length === 1 ? t("textSingular") : t("textPlural")}
-                    </Badge>
-                  )}
+                    {cat.description && (
+                      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mt-3">
+                        {getTranslatedDescription(cat, t)}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="border-t border-primary/10 flex-1 px-4 sm:px-5 py-3 sm:py-4 space-y-1">
@@ -1108,6 +1562,7 @@ interface BookLandingData {
   authorIast: string;
   verseCount: string;
   verseLabel: string;
+  veda?: string;
   quote: string;
   introTitle: string;
   introText: string;
@@ -1404,7 +1859,7 @@ function LandingNavSidebar({ book, chapters, landingData, onSelectBook, onSelect
   );
 }
 
-function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, t, tc, languageCode, onBack, backLabel, onCoverBookChange }: {
+function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, t, tc, languageCode, onBack, backLabel, hierarchyLegend, onCoverBookChange }: {
   book: Book;
   landingData: BookLandingData;
   chapters: ChapterInfo[];
@@ -1417,10 +1872,10 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
   languageCode?: string | null;
   onBack?: () => void;
   backLabel?: string;
+  hierarchyLegend?: { label: string; dotClass: string }[];
   onCoverBookChange?: (info: { bookId: string; title: string } | null) => void;
 }) {
   const coverImage = resolveBookCoverImage(book);
-  const fitViewport = Boolean(coverImage);
 
   const coverTitle = landingData.iastTitle || book.title || "";
   useEffect(() => {
@@ -1429,48 +1884,64 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [book.id, coverTitle]);
 
+  const chapterCount = chapters.length;
+  const commentators = [
+    ...(book.author
+      ? [{
+          name: book.author,
+          role: "Bhāṣyakāra (Commentator)",
+          sub: book.bhashyamName,
+          icon: Users,
+          primary: true,
+        }]
+      : []),
+    ...((book.teekasList ?? []).map((teeka) => ({
+      name: teeka.author || teeka.name,
+      role: "Ṭīkākāras (Sub-commentators)",
+      sub: teeka.author && teeka.name ? teeka.name : undefined,
+      icon: Feather,
+      primary: false,
+    }))),
+  ];
+
   return (
     <div
-      className={`flex-1 bg-background px-2 sm:px-3 lg:px-4 xl:px-5 ${fitViewport ? "min-h-0 overflow-hidden py-2 sm:py-3 flex flex-col" : "overflow-y-auto py-3 sm:py-4"}`}
+      className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain bg-background"
       data-testid="book-landing-view"
     >
-      <div className={`w-full mx-auto ${fitViewport ? "max-w-[min(99vw,140rem)] flex flex-col flex-1 min-h-0" : "max-w-[min(98vw,124rem)]"}`}>
-        {onBack && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBack}
-            className={`gap-1.5 text-xs w-fit text-muted-foreground -ml-2 shrink-0 ${fitViewport ? "mb-1 h-7" : "mb-3"}`}
-            data-testid="button-back-to-upanishads"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            {backLabel ?? "Back"}
-          </Button>
-        )}
-        <div className={`flex flex-col lg:flex-row ${fitViewport ? "flex-1 min-h-0 gap-2 lg:gap-3 lg:items-stretch" : "gap-3 lg:gap-4"}`}>
+      <div className="w-full mx-auto max-w-[min(98vw,88rem)] px-3 sm:px-5 lg:px-7 py-4 sm:py-5">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-7 lg:items-start">
 
-          <div className={`lg:w-[clamp(13rem,18vw,17rem)] shrink-0 ${fitViewport ? "min-h-0 lg:flex lg:flex-col" : "lg:sticky lg:top-4 lg:self-start"}`}>
+          {/* Sidebar */}
+          <aside className="lg:w-[clamp(13rem,19vw,17.5rem)] shrink-0 lg:sticky lg:top-4 lg:self-start">
             <Card
-              className={`p-3 sm:p-4 border-border/70 bg-card/90 backdrop-blur-sm shadow-[0_10px_30px_-20px_hsl(var(--foreground)/0.45)] flex flex-col min-h-0 ${fitViewport ? "flex-1 max-h-full overflow-y-auto" : "max-h-[calc(100dvh-5.5rem)] overflow-y-auto overscroll-y-contain"}`}
+              className="p-3 sm:p-4 border-border/70 bg-card/90 backdrop-blur-sm shadow-[0_10px_30px_-20px_hsl(var(--foreground)/0.45)] flex flex-col max-h-[calc(100dvh-5.5rem)] overflow-y-auto overscroll-y-contain"
               data-testid="book-landing-sidebar"
             >
-              <h2 className="font-serif text-base font-semibold text-foreground mb-1" data-testid="text-landing-title">
+              {onBack && (
+                <button
+                  onClick={onBack}
+                  className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-muted-foreground hover:text-primary transition-colors mb-3 -ml-0.5"
+                  data-testid="button-back-to-upanishads"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  {backLabel ?? "Back"}
+                </button>
+              )}
+
+              <h2 className="font-serif text-lg font-semibold text-foreground leading-tight" data-testid="text-landing-title">
                 {landingData.sidebarLabel}
               </h2>
-
-              <p className="text-[10px] font-semibold text-primary uppercase tracking-wider">
-                {t("categoryOverview")}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
                 {landingData.sidebarDescription}
               </p>
 
-              <div className="h-px bg-border my-3"></div>
+              <div className="h-px bg-border my-3.5"></div>
 
-              <p className="text-[10px] font-semibold text-foreground uppercase tracking-wider mb-2">
+              <p className="text-[10px] font-semibold text-foreground uppercase tracking-[0.15em] mb-2">
                 {landingData.sidebarTreeLabel}
               </p>
-              <div className={`pr-0.5 ${fitViewport ? "flex-1 min-h-0 overflow-y-auto overscroll-y-contain max-h-[min(14rem,28vh)]" : ""}`}>
+              <div className="pr-0.5">
                 <LandingNavSidebar
                   book={book}
                   chapters={chapters}
@@ -1483,164 +1954,186 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
                 />
               </div>
 
-              {(book.author || (book.teekasList && book.teekasList.length > 0)) && (
+              {hierarchyLegend && hierarchyLegend.length > 0 && (
                 <>
-                  <div className="h-px bg-border my-3"></div>
-
-                  {book.author && (
-                    <div data-testid="landing-bhashyakara">
-                      <p className="text-[10px] font-semibold text-primary/70 uppercase tracking-[0.15em]">
-                        Bhāṣyakāra (Commentator)
-                      </p>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                          <Users className="h-3 w-3 text-primary/70" />
-                        </div>
-                        <span className="text-sm font-medium text-foreground">{book.author}</span>
+                  <div className="h-px bg-border my-3.5"></div>
+                  <div className="space-y-2" data-testid="landing-hierarchy-legend">
+                    {hierarchyLegend.map((item) => (
+                      <div key={item.label} className="flex items-center gap-2.5">
+                        <span className={`h-2 w-2 rounded-full shrink-0 ${item.dotClass}`} />
+                        <span className="text-[11px] text-muted-foreground">{item.label}</span>
                       </div>
-                      {book.bhashyamName && (
-                        <p className="text-xs text-muted-foreground mt-1 ml-8 italic">{book.bhashyamName}</p>
-                      )}
-                    </div>
-                  )}
-
-                  {book.teekasList && book.teekasList.length > 0 && (
-                    <div className="mt-3" data-testid="landing-teekakaras">
-                      <p className="text-[10px] font-semibold text-primary/70 uppercase tracking-[0.15em]">
-                        Ṭīkākāras (Sub-commentators)
-                      </p>
-                      <div className="mt-1.5 space-y-1.5">
-                        {book.teekasList.map((teeka, idx) => (
-                          <div key={idx} className="flex items-start gap-2">
-                            <div className="w-6 h-6 rounded-full bg-accent/60 flex items-center justify-center shrink-0 mt-0.5">
-                              <Feather className="h-3 w-3 text-muted-foreground" />
-                            </div>
-                            <div className="min-w-0">
-                              <span className="text-sm font-medium text-foreground">{teeka.author || teeka.name}</span>
-                              {teeka.author && teeka.name && (
-                                <p className="text-xs text-muted-foreground italic truncate">{teeka.name}</p>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                    ))}
+                  </div>
                 </>
               )}
             </Card>
-          </div>
+          </aside>
 
-          <div className={`flex-1 min-w-0 ${fitViewport ? "min-h-0 flex flex-col overflow-hidden" : ""}`} data-testid="book-landing-content">
-            <div className={`relative border-l-[3px] border-l-primary/60 pl-3 sm:pl-4 lg:pl-5 ${fitViewport ? "flex flex-col flex-1 min-h-0 gap-2 overflow-hidden" : ""}`}>
-              {fitViewport && (
-                <div className="pointer-events-none absolute inset-0 -z-10 rounded-xl bg-gradient-to-br from-primary/[0.06] via-transparent to-primary/[0.03]" />
-              )}
-              <div className="flex items-start justify-between gap-3 shrink-0">
-                <div className="min-w-0">
-                  <h1
-                    className={`font-serif font-bold text-foreground leading-tight tracking-tight ${fitViewport ? "text-xl sm:text-2xl lg:text-3xl" : "text-2xl sm:text-3xl lg:text-4xl"}`}
-                  >
-                    {landingData.iastTitle}
-                  </h1>
-                  <p className={`font-serif text-foreground/70 mt-0.5 ${fitViewport ? "text-base sm:text-lg" : "text-lg sm:text-xl"}`}>
+          {/* Main content */}
+          <div className="flex-1 min-w-0" data-testid="book-landing-content">
+
+            <div className="flex items-start justify-between gap-3 sm:gap-4">
+              <div className="min-w-0">
+                <h1 className="font-serif font-bold text-foreground leading-tight tracking-tight text-3xl sm:text-4xl lg:text-[2.75rem]">
+                  {landingData.iastTitle}
+                </h1>
+                {landingData.devanagariTitle && (
+                  <p className="font-serif text-foreground/60 mt-1 text-lg sm:text-xl">
                     {landingData.devanagariTitle}
                   </p>
-                </div>
-                <Button
-                  variant="outline"
-                  className="shrink-0 gap-2 border-primary/40 bg-background/85 text-primary hover:bg-primary/10 hover:border-primary/60 font-semibold uppercase text-xs tracking-wider shadow-sm"
-                  onClick={() => onSelectBook(book.id)}
-                  data-testid="button-open-text-landing"
-                >
-                  <BookOpen className="h-4 w-4" />
-                  {landingData.ctaLabel}
-                </Button>
+                )}
               </div>
-
-              <p className={`text-xs font-semibold text-primary/80 uppercase tracking-[0.15em] shrink-0 ${fitViewport ? "mt-1.5" : "mt-3"}`}>
-                {landingData.authorIast} | {landingData.verseCount} {landingData.verseLabel}
-              </p>
-
-              {landingData.quote && !fitViewport ? (
-                <blockquote
-                  className="border-l-2 border-primary/30 pl-3 text-foreground/80 font-serif italic leading-snug shrink-0 mt-4 text-sm sm:text-base max-w-3xl"
-                >
-                  {landingData.quote}
-                </blockquote>
-              ) : null}
-
-              {coverImage && <BookLandingCoverHero coverImage={coverImage} fillViewport={fitViewport} />}
-
-              <div
-                className={
-                  fitViewport
-                    ? "shrink-0 grid grid-cols-1 xl:grid-cols-2 gap-2 max-h-[clamp(9rem,24dvh,15rem)] min-h-0 overflow-hidden border-t border-border/40 pt-2"
-                    : "mt-4 grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4"
-                }
+              <Button
+                variant="outline"
+                className="shrink-0 gap-2 border-primary/40 bg-background/85 text-primary hover:bg-primary/10 hover:border-primary/60 font-semibold uppercase text-xs tracking-wider shadow-sm"
+                onClick={() => onSelectBook(book.id)}
+                data-testid="button-open-text-landing"
               >
-                <div className={fitViewport ? "min-h-0 overflow-y-auto pr-0.5" : undefined}>
-                  <IntroSection
-                    title={landingData.introTitle}
-                    cmsDescription={book.description || null}
-                    introText={landingData.introText}
-                    bookId={book.id}
-                    languageCode={languageCode}
-                    compact={fitViewport}
-                  />
-                </div>
+                <BookOpen className="h-4 w-4" />
+                {landingData.ctaLabel}
+              </Button>
+            </div>
 
-                <div className={fitViewport ? "min-h-0 overflow-y-auto" : undefined}>
-                  <h3 className={`font-serif font-bold text-foreground uppercase tracking-wider ${fitViewport ? "text-xs" : "text-sm sm:text-base"}`}>
-                    {landingData.structureTitle}
-                  </h3>
-                  <div className={fitViewport ? "mt-1.5 space-y-1.5" : "mt-2.5 space-y-2.5"}>
-                    {landingData.structureItems.map((item, idx) => (
-                      <button
-                        key={idx}
-                        className={`w-full text-left border-l-[3px] border-l-primary/50 bg-primary/[0.03] dark:bg-primary/[0.06] rounded-r-lg hover:bg-primary/[0.10] dark:hover:bg-primary/[0.14] transition-colors cursor-pointer ${fitViewport ? "p-2" : "p-3"}`}
-                        onClick={() => {
-                          if (onSelectChapter && chapters[idx]) {
-                            onSelectChapter(book.id, chapters[idx].number);
-                          } else {
-                            onSelectBook(book.id);
-                          }
-                        }}
-                        data-testid={`structure-item-${idx}`}
-                      >
-                        <p className="text-[10px] sm:text-xs font-bold text-primary uppercase tracking-wider">
-                          {item.title}
-                        </p>
-                        <p className={`text-muted-foreground mt-0.5 leading-snug ${fitViewport ? "text-[11px] sm:text-xs line-clamp-2" : "text-sm mt-1 line-clamp-2"}`}>
-                          {item.description}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {landingData.extraSection && !fitViewport && (
-                <div className="mt-8">
-                  <h3 className="font-serif text-sm sm:text-base font-bold text-foreground uppercase tracking-wider">
-                    {landingData.extraSection.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
-                    {landingData.extraSection.text}
-                  </p>
-                </div>
+            {/* Meta row */}
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-4 text-xs sm:text-sm text-muted-foreground" data-testid="landing-meta-row">
+              {landingData.veda && (
+                <span className="inline-flex items-center gap-1.5">
+                  <BookMarked className="h-3.5 w-3.5 text-primary/70" />
+                  {formatVeda(landingData.veda)}
+                </span>
               )}
-
-              {!fitViewport && (
-                <div className="mt-5 pt-4 border-t border-border/40">
-                  <p className="text-center text-primary/25 text-xs tracking-widest font-serif">
-                    ॥ सर्वं खल्विदं ब्रह्म ॥
-                  </p>
-                </div>
+              {chapterCount > 0 && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Layers className="h-3.5 w-3.5 text-primary/70" />
+                  {chapterCount} {chapterCount === 1 ? "Chapter" : "Chapters"}
+                </span>
+              )}
+              {landingData.verseCount && landingData.verseCount !== "0" && (
+                <span className="inline-flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5 text-primary/70" />
+                  {landingData.verseCount} {landingData.verseLabel}
+                </span>
               )}
             </div>
-          </div>
 
+            {/* Commentarial tradition */}
+            {commentators.length > 0 && (
+              <div className="mt-5" data-testid="landing-commentarial-tradition">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.18em] mb-3">
+                  Commentarial Tradition
+                </p>
+                <div className="flex flex-wrap items-center gap-x-7 gap-y-3">
+                  {commentators.map((c, idx) => {
+                    const Icon = c.icon;
+                    return (
+                      <div key={idx} className="relative flex items-center gap-2.5">
+                        {idx > 0 && (
+                          <span className="hidden sm:block absolute -left-[1.125rem] top-1/2 -translate-y-1/2 h-1 w-1 rounded-full bg-border" />
+                        )}
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${c.primary ? "bg-primary/10" : "bg-accent/70"}`}>
+                          <Icon className={`h-4 w-4 ${c.primary ? "text-primary/80" : "text-muted-foreground"}`} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className={`text-sm font-semibold leading-tight ${c.primary ? "text-primary" : "text-foreground"}`}>
+                            {c.name}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                            {c.role}
+                          </p>
+                          {c.sub && <p className="text-[11px] text-muted-foreground italic leading-tight">{c.sub}</p>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Cover image + Introduction */}
+            <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-7 items-start">
+              <div className="rounded-xl overflow-hidden border border-border/60 shadow-sm bg-gradient-to-br from-primary/10 via-primary/5 to-transparent aspect-[16/10]">
+                {coverImage ? (
+                  <img
+                    src={coverImage}
+                    alt={landingData.iastTitle}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span className="font-serif text-5xl text-primary/25">ॐ</span>
+                  </div>
+                )}
+              </div>
+              <div>
+                <IntroSection
+                  title={landingData.introTitle}
+                  cmsDescription={book.description || null}
+                  introText={landingData.introText}
+                  bookId={book.id}
+                  languageCode={languageCode}
+                />
+              </div>
+            </div>
+
+            {/* Key themes */}
+            {landingData.structureItems.length > 0 && (
+              <div className="mt-8">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.18em] mb-3">
+                  {landingData.structureTitle}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                  {landingData.structureItems.map((item, idx) => (
+                    <button
+                      key={idx}
+                      className="text-left rounded-xl border border-border/60 bg-card hover:border-primary/40 hover:shadow-md transition-all p-4 flex flex-col cursor-pointer group"
+                      onClick={() => {
+                        if (onSelectChapter && chapters[idx]) {
+                          onSelectChapter(book.id, chapters[idx].number);
+                        } else {
+                          onSelectBook(book.id);
+                        }
+                      }}
+                      data-testid={`structure-item-${idx}`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-serif font-bold text-foreground leading-snug text-[15px] pt-0.5">
+                          {item.title}
+                        </p>
+                        <span className="w-9 h-9 rounded-md bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
+                          <span className="font-serif text-lg text-primary/80 leading-none">ॐ</span>
+                        </span>
+                      </div>
+                      <p className="text-[13px] text-muted-foreground mt-2 leading-relaxed line-clamp-4">
+                        {item.description}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Extra section (e.g. Brahma Sutra commentary note) */}
+            {landingData.extraSection && (
+              <div className="mt-8">
+                <h3 className="font-serif text-sm sm:text-base font-bold text-foreground uppercase tracking-wider">
+                  {landingData.extraSection.title}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-3 leading-relaxed max-w-3xl">
+                  {landingData.extraSection.text}
+                </p>
+              </div>
+            )}
+
+            {/* Closing verse */}
+            <div className="mt-9 pt-5 border-t border-border/40">
+              <p className="text-center text-primary/60 text-sm tracking-[0.35em] font-serif">
+                ॥ सर्वं खल्विदं ब्रह्म ॥
+              </p>
+            </div>
+
+          </div>
         </div>
       </div>
     </div>
@@ -1844,18 +2337,21 @@ function findCompanionBooksForPrincipal(
   });
 }
 
-function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, languageCode, onCoverBookChange }: {
+function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, onGoBack, languageCode, onCoverBookChange }: {
   books: Book[];
   onSelectBook: (bookId: string) => void;
   onSelectChapter?: (bookId: string, adhyayNumber: number) => void;
   onSelectPart?: (bookId: string, adhyayNumber: number, khandaNumber: number) => void;
   onSelectVerse?: (bookId: string, verseNumber: number) => void;
+  onGoBack?: () => void;
   languageCode?: string | null;
   onCoverBookChange?: (info: { bookId: string; title: string } | null) => void;
 }) {
   const [selectedUpanishadSlug, setSelectedUpanishadSlug] = useState<string | null>(null);
   /** null = two category boxes; principal | other = show that section's grid */
   const [categoryView, setCategoryView] = useState<"principal" | "other" | null>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [showGuidance, setShowGuidance] = useState(true);
 
   const selectedUp = selectedUpanishadSlug
     ? PRINCIPAL_UPANISHADS.find((u) => u.slugMatch === selectedUpanishadSlug)
@@ -1886,7 +2382,6 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
   ]);
   /** Everything in the Upanishad catalog except principal texts and their companions */
   const otherBooks = books.filter((b) => !principalBookIds.has(b.id));
-  const catalogTextCount = books.length;
   const principalCompanionCount = principalCompanionEntries.length;
 
   if (selectedBook) {
@@ -1905,7 +2400,8 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
           devanagariTitle: selectedUp.devanagariLong,
           authorIast: selectedBook.author || "Śrī Śaṅkarācārya",
           verseCount: String(selectedBook.totalVerses || 0),
-          verseLabel: "Manthras",
+          verseLabel: "Mantras",
+          veda: selectedUp.veda,
           quote: selectedUp.quote,
           introTitle: "Introduction",
           introText: selectedUp.introText,
@@ -1915,23 +2411,23 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
           ctaLabel: "Open Text",
           sidebarLabel: selectedUp.iastFull,
           sidebarDescription: `${selectedUp.veda} Veda Upanishad with ${selectedBook.bhashyamName || "Shankara Bhashya"}.`,
-          sidebarTreeLabel: "Structure",
+          sidebarTreeLabel: "Text Structure",
         }
       : {
           iastTitle: selectedBook.title || "Upanishad",
           devanagariTitle: (selectedBook as any).titleDevanagari || selectedBook.title || "",
           authorIast: selectedBook.author || "Śrī Śaṅkarācārya",
           verseCount: String(selectedBook.totalVerses || 0),
-          verseLabel: "Manthras",
+          verseLabel: "Mantras",
           quote: "",
           introTitle: "Introduction",
           introText: selectedBook.description || "",
-          structureTitle: chapterStructure.length > 0 ? "Structure" : "",
+          structureTitle: chapterStructure.length > 0 ? "Key Themes" : "",
           structureItems: chapterStructure,
           ctaLabel: "Open Text",
           sidebarLabel: selectedBook.title || "Upanishad",
           sidebarDescription: selectedBook.description || "Upanishad text with commentary.",
-          sidebarTreeLabel: "Structure",
+          sidebarTreeLabel: "Text Structure",
         };
 
     const categoryBackLabel =
@@ -1949,6 +2445,11 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
           onSelectVerse={onSelectVerse}
           onBack={() => setSelectedUpanishadSlug(null)}
           backLabel={categoryBackLabel}
+          hierarchyLegend={[
+            { label: "Adhyaya (Chapter)", dotClass: "bg-primary" },
+            { label: "Khanda (Section)", dotClass: "bg-primary/45" },
+            { label: "Mantra (Line)", dotClass: "bg-muted-foreground/40" },
+          ]}
           t={(k: any) => k}
           tc={(text) => text || ""}
           onCoverBookChange={onCoverBookChange}
@@ -1962,214 +2463,439 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
     principalUp?: PrincipalUpanishad,
     catalogSection: "principal" | "other" = principalUp ? "principal" : "other",
     isCompanion = false,
+    layout: "grid" | "list" = "grid",
   ) => {
     const slugKey = isCompanion
       ? book.slug?.toLowerCase() || book.id
       : principalUp?.slugMatch || book.slug?.toLowerCase() || book.id;
     const coverImage = resolveBookCoverImage(book);
-    const hasCover = Boolean(coverImage);
     const displayTitle = isCompanion ? book.title : principalUp ? principalUp.iastFull : book.title;
+    const isList = layout === "list";
+    const openCard = () => {
+      setCategoryView(catalogSection);
+      setSelectedUpanishadSlug(slugKey);
+    };
+    const stop = (e: ReactMouseEvent) => e.stopPropagation();
 
-    return (
-      <Card
-        key={book.id}
-        className={`h-full overflow-hidden border-border/60 bg-card hover:border-primary/40 hover:shadow-md transition-all flex flex-col cursor-pointer group border-l-[3px] border-l-primary/50 hover:border-l-primary ${hasCover ? "p-0" : "p-0"}`}
-        onClick={() => {
-          setCategoryView(catalogSection);
-          setSelectedUpanishadSlug(slugKey);
-        }}
-        data-testid={`upanishad-card-${slugKey}`}
-      >
+    const metaLine = isCompanion
+      ? `${book.author || "Sri Shankaracharya"}${principalUp ? ` · ${formatVeda(principalUp.veda)}` : ""}`
+      : principalUp
+        ? formatVeda(principalUp.veda)
+        : book.author || "Sri Shankaracharya";
+
+    const actionButtons = (
+      <div className="flex items-center gap-1">
+        <button
+          onClick={stop}
+          title="Bookmark"
+          aria-label="Bookmark"
+          className="w-6 h-6 rounded-md bg-background/85 backdrop-blur-sm flex items-center justify-center text-muted-foreground hover:text-primary shadow-sm transition-colors"
+        >
+          <Bookmark className="h-3.5 w-3.5" />
+        </button>
+        <button
+          onClick={stop}
+          title="Share"
+          aria-label="Share"
+          className="w-6 h-6 rounded-md bg-background/85 backdrop-blur-sm flex items-center justify-center text-muted-foreground hover:text-primary shadow-sm transition-colors"
+        >
+          <Share2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    );
+
+    const footer = (
+      <div className="mt-auto border-t border-border/50 px-3.5 py-2.5 flex items-center justify-between">
+        <span
+          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-primary uppercase tracking-wide"
+          data-testid={`button-open-text-${book.id}`}
+        >
+          <BookOpen className="h-3.5 w-3.5" />
+          Open Text
+        </span>
+        <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+          <Cloud className="h-3 w-3" />
+          Available Offline
+        </span>
+      </div>
+    );
+
+    // Badge over the cover: commentary label for companions, sequence number for principals.
+    const badge = isCompanion ? (
+      <span className="absolute top-2 left-2 h-6 px-2 rounded-md bg-primary text-primary-foreground text-[10px] font-semibold uppercase tracking-wide flex items-center justify-center shadow-sm group-hover:bg-background group-hover:text-primary transition-colors">
+        {principalUp ? `${principalUp.iast} Commentary` : "Commentary"}
+      </span>
+    ) : principalUp ? (
+      <span className="absolute top-2 left-2 min-w-[1.6rem] h-6 px-1.5 rounded-md bg-background/85 backdrop-blur-sm text-[11px] font-mono font-semibold text-foreground/80 flex items-center justify-center shadow-sm">
+        {principalUp.number}
+      </span>
+    ) : null;
+
+    const cover = (
+      <div className={`relative overflow-hidden shrink-0 ${isList ? "w-32 sm:w-44 self-stretch" : "w-full"}`}>
         {coverImage ? (
-          <div className="relative w-full overflow-hidden shrink-0">
-            <img
-              src={coverImage}
-              alt=""
-              className="block w-full h-[clamp(7rem,14vw,11rem)] object-cover object-center"
-              loading="lazy"
-            />
-          </div>
+          <img
+            src={coverImage}
+            alt=""
+            className={`block object-cover object-center transition-transform duration-300 group-hover:scale-[1.05] ${isList ? "absolute inset-0 h-full w-full" : "w-full h-[clamp(7rem,13vw,10rem)]"}`}
+            loading="lazy"
+          />
         ) : (
-          <div className="relative w-full shrink-0 h-[clamp(5.5rem,10vw,8rem)] bg-gradient-to-br from-primary/12 via-primary/5 to-transparent border-b border-border/50 flex items-end px-4 pb-3">
-            {principalUp && !isCompanion && (
-              <span className="font-serif text-3xl text-primary/25 leading-none">{principalUp.devanagari}</span>
+          <div className={`bg-gradient-to-br from-primary/15 via-primary/5 to-transparent flex items-end px-4 pb-3 ${isList ? "h-full w-full min-h-[9rem]" : "w-full h-[clamp(7rem,13vw,10rem)]"}`}>
+            {principalUp && (
+              <span className="font-serif text-4xl text-primary/25 leading-none">{principalUp.devanagari}</span>
             )}
           </div>
         )}
-        <div className={`flex items-start justify-between gap-2 mb-1.5 px-3 sm:px-4 pt-3`}>
-          <div className="min-w-0 flex-1">
-            {principalUp && !isCompanion && (
-              <span className="text-[10px] font-mono text-muted-foreground/80">{principalUp.number}</span>
-            )}
-            {isCompanion && principalUp && (
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-primary/80">
-                Related · {principalUp.iast}
-              </span>
-            )}
+        {badge}
+        {/* In list mode the actions live in the title row so they don't crowd the narrow cover. */}
+        {!isList && <div className="absolute top-2 right-2">{actionButtons}</div>}
+      </div>
+    );
+
+    const body = (
+      <div className={`flex flex-col flex-1 min-w-0 px-3.5 ${isList ? "py-3" : "pt-3"}`}>
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
             <h3
-              className="font-semibold text-base text-foreground leading-snug"
+              className="font-serif font-bold text-[17px] text-foreground leading-snug group-hover:text-primary transition-colors"
               data-testid={`text-upanishad-title-${book.id}`}
             >
               {displayTitle}
             </h3>
             {principalUp && !isCompanion && (
-              <p className="text-xs text-muted-foreground/80 mt-0.5 font-serif">{principalUp.devanagariLong}</p>
+              <p className="text-xs text-primary/70 font-serif mt-0.5">{principalUp.devanagariLong}</p>
             )}
           </div>
-          <div
-            className="flex items-center gap-1 text-[10px] text-primary font-semibold uppercase tracking-wider shrink-0 opacity-70 group-hover:opacity-100 transition-opacity pt-0.5"
-            data-testid={`button-open-text-${book.id}`}
-          >
-            <BookOpen className="h-3.5 w-3.5" />
-            <span>Open Text</span>
-          </div>
+          {isList && (
+            <div className="flex items-center gap-0.5 shrink-0 -mr-1">
+              <button
+                onClick={stop}
+                title="Bookmark"
+                aria-label="Bookmark"
+                className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+              >
+                <Bookmark className="h-4 w-4" />
+              </button>
+              <button
+                onClick={stop}
+                title="Share"
+                aria-label="Share"
+                className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+              >
+                <Share2 className="h-4 w-4" />
+              </button>
+            </div>
+          )}
         </div>
-        <p className="text-xs text-muted-foreground mb-1.5 px-3 sm:px-4">
-          {book.author || "Sri Shankaracharya"}
-          {principalUp ? ` · ${principalUp.veda} Veda` : ""}
-        </p>
+        <p className="text-[11px] text-muted-foreground mt-1.5">{metaLine}</p>
         {book.description && (
-          <p className="text-sm text-muted-foreground leading-snug line-clamp-2 flex-1 px-3 sm:px-4">
+          <p className={`text-[13px] text-muted-foreground leading-snug mt-1.5 flex-1 ${isList ? "line-clamp-2 sm:line-clamp-3" : "line-clamp-2"}`}>
             {book.description}
           </p>
         )}
-        <div className="px-3 sm:px-4 pb-3 pt-2 mt-auto">
-          <BookProgressBar bookId={book.id} totalVerses={book.totalVerses} alwaysShow compact />
+        <div className={isList ? "mt-2" : "pb-2.5"}>
+          <BookProgressBar bookId={book.id} totalVerses={book.totalVerses} alwaysShow compact unitLabel="Mantras" />
+        </div>
+      </div>
+    );
+
+    // Same structure for every grantha; on hover a padding-frame turns orange
+    // (echoing the Kena padabhashyam commentary treatment) around a white inner panel.
+    return (
+      <Card
+        key={book.id}
+        className="group relative h-full p-[5px] rounded-2xl border border-border/60 bg-card cursor-pointer overflow-hidden flex transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:border-primary hover:bg-gradient-to-br hover:from-primary hover:to-primary/90"
+        onClick={openCard}
+        data-testid={`upanishad-card-${slugKey}`}
+      >
+        <div className={`relative rounded-xl bg-card overflow-hidden flex-1 min-w-0 flex group-hover:shadow-md ${isList ? "flex-row items-stretch" : "flex-col"}`}>
+          {cover}
+          <div className="flex flex-col flex-1 min-w-0">
+            {body}
+            {footer}
+          </div>
         </div>
       </Card>
     );
   };
 
   if (categoryView === null) {
+    const shortenUpanishad = (title: string) =>
+      (title || "").replace(/\s*Upani[sṣ]ad.*$/i, "").replace(/[’']s$/i, "").trim() || title;
+    const principalChips = principalEntries.slice(0, 5).map(({ up }) => up.iast);
+    const principalMore = Math.max(0, principalEntries.length - principalChips.length);
+    const otherChips = otherBooks.slice(0, 4).map((b) => shortenUpanishad(b.title));
+    const otherMore = Math.max(0, otherBooks.length - otherChips.length);
+    const collectionCards = [
+      {
+        key: "principal" as const,
+        image: upanishadPrincipalImg,
+        icon: BookOpen,
+        title: "Principal Upanishads",
+        description: "The ten classical Upanishads traditionally studied in Vedanta.",
+        chips: principalChips,
+        more: principalMore,
+        count: principalEntries.length,
+      },
+      {
+        key: "other" as const,
+        image: upanishadAdditionalImg,
+        icon: FileText,
+        title: "Additional Upanishads",
+        description: "Specialized Upanishadic literature with Advaita bhāṣyas & commentaries.",
+        chips: otherChips,
+        more: otherMore,
+        count: otherBooks.length,
+      },
+    ];
     return (
       <div
         className="flex-1 overflow-y-auto bg-gradient-to-b from-muted/25 via-background to-background px-3 sm:px-5 lg:px-8 py-4 sm:py-5"
         data-testid="upanishad-landing-view"
       >
-        <div className="w-full max-w-[min(100%,144rem)] mx-auto">
-          <div className="mb-4 sm:mb-5">
-            <h1 className="font-bold text-lg sm:text-xl text-foreground uppercase tracking-wide">Upanishad</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Choose a collection · {catalogTextCount} texts (
-              {principalEntries.length} principal
-              {principalCompanionCount > 0 ? ` + ${principalCompanionCount} related` : ""}
-              , {otherBooks.length} other)
-            </p>
+        <div className="w-full max-w-6xl mx-auto space-y-6 sm:space-y-7">
+          {/* Header: back + title + divider */}
+          <div className="space-y-3">
+            {onGoBack && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onGoBack}
+                className="gap-1.5 text-xs text-muted-foreground -ml-2"
+                data-testid="button-upanishad-back"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Back to Home
+              </Button>
+            )}
+            <div className="flex items-center gap-3">
+              <Library className="h-6 w-6 text-primary shrink-0" />
+              <h1 className="font-serif text-xl sm:text-2xl font-semibold text-primary" data-testid="heading-upanishad">
+                Upanishad
+              </h1>
+              <div className="h-px flex-1 bg-gradient-to-r from-primary/50 via-primary/25 to-transparent"></div>
+            </div>
           </div>
+
+          {/* Guidance banner */}
+          {showGuidance ? (
+            <div className="relative flex items-start gap-4 sm:gap-5 rounded-2xl border border-primary/15 bg-[#fdf4ea] dark:bg-primary/[0.06] px-4 sm:px-6 py-4 sm:py-5" data-testid="upanishad-guidance">
+              <img
+                src={shankaracharyaPortrait}
+                alt=""
+                aria-hidden="true"
+                className="h-14 sm:h-16 w-auto object-contain shrink-0"
+                draggable={false}
+              />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-3">
+                  <h2 className="font-serif text-lg sm:text-2xl font-semibold text-primary leading-tight">
+                    Not sure where to begin?
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setShowGuidance(false)}
+                    className="flex items-center gap-1 text-xs sm:text-sm text-primary/70 hover:text-primary transition-colors shrink-0"
+                    data-testid="button-hide-guidance"
+                  >
+                    Hide Guidance <ChevronUp className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+                  Start with the Principal Upanishads, the ten classical Upanishads traditionally studied in Vedanta.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowGuidance(true)}
+              className="flex items-center gap-1 text-sm text-primary/80 hover:text-primary transition-colors"
+              data-testid="button-show-guidance"
+            >
+              Show Guidance <ChevronDown className="h-4 w-4" />
+            </button>
+          )}
 
           <div
             className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5 w-full"
             data-testid="upanishad-category-boxes"
           >
-            <Card
-              className="group flex flex-col min-h-[min(42vh,22rem)] p-5 sm:p-6 lg:p-7 border-border/60 bg-card/95 hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer border-l-[4px] border-l-primary"
-              onClick={() => setCategoryView("principal")}
-              data-testid="box-principal-upanishads"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <ScrollText className="h-8 w-8 text-primary shrink-0" />
-                <ChevronRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-              </div>
-              <h2 className="font-serif text-xl sm:text-2xl font-semibold text-foreground mt-4">
-                Principal Upanishads
-              </h2>
-              <p className="text-sm text-muted-foreground mt-2 leading-relaxed flex-1">
-                The ten classical Upanishads — Īśa, Kena, Kaṭha, Praśna, Muṇḍaka, Māṇḍūkya, Aitareya, Taittirīya,
-                Chāndogya, and Bṛhadāraṇyaka.
-              </p>
-              <Badge variant="secondary" className="mt-3 w-fit text-[10px]">
-                {principalEntries.length} of 10 principal texts
-                {principalCompanionCount > 0 ? ` (+${principalCompanionCount} related)` : ""}
-              </Badge>
-            </Card>
+            {collectionCards.map((card) => {
+              const Icon = card.icon;
+              return (
+                <Card
+                  key={card.key}
+                  className="group flex flex-col p-0 overflow-hidden border-border/60 bg-card hover:border-primary/50 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer rounded-2xl"
+                  onClick={() => setCategoryView(card.key)}
+                  data-testid={`box-${card.key}-upanishads`}
+                >
+                  {/* Icon + product image header */}
+                  <div className="relative flex items-start justify-between gap-3 px-5 sm:px-6 pt-5 sm:pt-6">
+                    <div className="p-2.5 rounded-xl bg-[#f6ead7] dark:bg-primary/10 border border-primary/15 shrink-0 z-10">
+                      <Icon className="h-5 w-5 text-primary/80" />
+                    </div>
+                    <img
+                      src={card.image}
+                      alt=""
+                      aria-hidden="true"
+                      className="pointer-events-none -mt-2 -mr-2 h-28 sm:h-32 w-auto max-w-[55%] object-contain mix-blend-multiply dark:mix-blend-normal"
+                      style={{
+                        maskImage: "radial-gradient(ellipse 82% 82% at 68% 42%, #000 46%, transparent 84%)",
+                        WebkitMaskImage: "radial-gradient(ellipse 82% 82% at 68% 42%, #000 46%, transparent 84%)",
+                      }}
+                      draggable={false}
+                    />
+                  </div>
 
-            <Card
-              className="group flex flex-col min-h-[min(42vh,22rem)] p-5 sm:p-6 lg:p-7 border-border/60 bg-card/95 hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer border-l-[4px] border-l-primary/60"
-              onClick={() => setCategoryView("other")}
-              data-testid="box-other-upanishads"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <Library className="h-8 w-8 text-primary/80 shrink-0" />
-                <ChevronRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-              </div>
-              <h2 className="font-serif text-xl sm:text-2xl font-semibold text-foreground mt-4">
-                Other Upanishads
-              </h2>
-              <p className="text-sm text-muted-foreground mt-2 leading-relaxed flex-1">
-                Additional Upanishads with advaita bhāṣyas and related commentaries.
-              </p>
-              <Badge variant="secondary" className="mt-3 w-fit text-[10px]">
-                {otherBooks.length} {otherBooks.length === 1 ? "text" : "texts"}
-              </Badge>
-            </Card>
+                  <div className="flex flex-col flex-1 px-5 sm:px-6 pb-5 sm:pb-6 pt-2">
+                    <h2 className="font-serif text-xl sm:text-2xl font-semibold text-foreground">
+                      {card.title}
+                    </h2>
+                    <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                      {card.description}
+                    </p>
+
+                    <div className="mt-4">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-primary/70 font-semibold mb-2">
+                        Includes
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {card.chips.map((chip, i) => (
+                          <span
+                            key={i}
+                            className="rounded-md border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-foreground/80"
+                          >
+                            {chip}
+                          </span>
+                        ))}
+                        {card.more > 0 && (
+                          <span className="rounded-md px-2 py-0.5 text-[11px] text-muted-foreground">
+                            + {card.more} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-auto pt-5 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <BookOpen className="h-3.5 w-3.5" /> {card.count} {card.count === 1 ? "text" : "texts"}
+                      </span>
+                      <span className="flex items-center gap-1 text-sm font-medium text-primary transition-all group-hover:gap-2">
+                        Explore Collection <ArrowRight className="h-4 w-4" />
+                      </span>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </div>
     );
   }
 
+  const isPrincipal = categoryView === "principal";
+  const headerTitle = isPrincipal ? "Principal Upanishad" : "Other Upanishads";
+  const headerSubtitle = isPrincipal
+    ? "The ten foundational Upanishads forming the core of Vedāntic inquiry."
+    : "Additional Upanishads with advaita bhāṣyas and related commentaries.";
+  const sectionCount = isPrincipal ? principalEntries.length : otherBooks.length;
+  const gridClass =
+    viewMode === "list"
+      ? "grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch max-w-4xl xl:max-w-none mx-auto"
+      : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-4 items-stretch";
+
   return (
     <div
       className="flex-1 overflow-y-auto bg-gradient-to-b from-muted/25 via-background to-background px-3 sm:px-5 lg:px-8 py-4 sm:py-5"
       data-testid="upanishad-landing-view"
     >
-      <div className="w-full max-w-[min(100%,144rem)] mx-auto">
-        <Button
-          variant="ghost"
-          size="sm"
+      <div className="w-full max-w-[min(100%,120rem)] mx-auto">
+        <button
           onClick={() => setCategoryView(null)}
-          className="gap-1.5 text-xs mb-3 text-muted-foreground -ml-2"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
           data-testid="button-back-to-upanishad-categories"
         >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Upanishad collections
-        </Button>
+          <ArrowLeft className="h-4 w-4" />
+          Back to collections
+        </button>
 
-        {categoryView === "principal" ? (
-          <section data-testid="principal-upanishads-section">
-            <div className="mb-3 sm:mb-4">
-              <h2 className="font-serif text-xl sm:text-2xl font-semibold text-foreground">
-                Principal Upanishads
-              </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                The ten classical Upanishads forming the core of Vedāntic inquiry.
-              </p>
-              <Badge variant="secondary" className="mt-2 text-[10px]">
-                {principalEntries.length} of 10 principal texts
-                {principalCompanionCount > 0
-                  ? ` · ${principalCompanionCount} related ${principalCompanionCount === 1 ? "text" : "texts"}`
-                  : ""}
-              </Badge>
+        {/* Section header */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 shrink-0">
+            <ScrollText className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-primary leading-none">
+              {headerTitle}
+            </h1>
+          </div>
+          <div className="h-px flex-1 bg-gradient-to-r from-primary/40 via-primary/15 to-transparent" />
+        </div>
+        <p className="text-sm sm:text-base text-muted-foreground mt-2.5">{headerSubtitle}</p>
+
+        {/* Summary pills */}
+        <div className="flex flex-wrap items-center gap-2.5 mt-3">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/[0.04] px-3 py-1 text-xs font-medium text-foreground/80">
+            <BookOpen className="h-3.5 w-3.5 text-primary/70" />
+            {sectionCount} Upanishad{sectionCount === 1 ? "" : "s"}
+          </span>
+          {isPrincipal && principalCompanionCount > 0 && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/[0.04] px-3 py-1 text-xs font-medium text-foreground/80">
+              <Users className="h-3.5 w-3.5 text-primary/70" />
+              {principalCompanionCount} Related Commentar{principalCompanionCount === 1 ? "y" : "ies"}
+            </span>
+          )}
+        </div>
+
+        {/* Count + view toggle */}
+        <div className="flex items-center justify-between gap-3 mt-5 mb-3.5">
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground">{sectionCount} Upanishad{sectionCount === 1 ? "" : "s"}</span>
+            {isPrincipal ? `  ·  ${principalEntries.length} of 10 principal texts` : ""}
+          </p>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground hidden sm:inline">View:</span>
+            <div className="flex items-center rounded-lg border border-border/60 overflow-hidden">
+              <button
+                onClick={() => setViewMode("grid")}
+                title="Grid view"
+                aria-label="Grid view"
+                className={`flex items-center justify-center h-8 w-8 transition-colors ${viewMode === "grid" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:text-foreground"}`}
+                data-testid="button-view-grid"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                title="List view"
+                aria-label="List view"
+                className={`flex items-center justify-center h-8 w-8 border-l border-border/60 transition-colors ${viewMode === "list" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:text-foreground"}`}
+                data-testid="button-view-list"
+              >
+                <List className="h-4 w-4" />
+              </button>
             </div>
-            <div
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 items-stretch"
-              data-testid="principal-upanishad-grid"
-            >
+          </div>
+        </div>
+
+        {isPrincipal ? (
+          <section data-testid="principal-upanishads-section">
+            <div className={gridClass} data-testid="principal-upanishad-grid">
               {principalEntries.flatMap(({ up, book }) => {
                 const companions = findCompanionBooksForPrincipal(up, books, book);
                 return [
-                  renderUpanishadCard(book, up),
-                  ...companions.map((companion) => renderUpanishadCard(companion, up, "principal", true)),
+                  renderUpanishadCard(book, up, "principal", false, viewMode),
+                  ...companions.map((companion) => renderUpanishadCard(companion, up, "principal", true, viewMode)),
                 ];
               })}
             </div>
           </section>
         ) : (
           <section data-testid="other-upanishads-section">
-            <div className="mb-3 sm:mb-4">
-              <h2 className="font-serif text-xl sm:text-2xl font-semibold text-foreground">
-                Other Upanishads
-              </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Additional Upanishads with advaita bhāṣyas and related commentaries.
-              </p>
-            </div>
             {otherBooks.length > 0 ? (
-              <div
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 items-stretch"
-                data-testid="other-upanishad-grid"
-              >
-                {otherBooks.map((book) => renderUpanishadCard(book))}
+              <div className={gridClass} data-testid="other-upanishad-grid">
+                {otherBooks.map((book) => renderUpanishadCard(book, undefined, "other", false, viewMode))}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground italic py-8 text-center">
@@ -2267,9 +2993,10 @@ const GITA_CHAPTERS: GitaChapter[] = [
   { num: 18, name: "मोक्षसंन्यासयोग", transliteration: "Mokṣha Sanyās Yog", meaning: "The Yoga of Liberation through Renunciation", verses: 78 },
 ];
 
-// Per-chapter cover images. Empty for now — drop entries keyed by chapter number
-// (e.g. `1: chapter1Img`) here as artwork becomes available and tiles will use them.
-const GITA_CHAPTER_IMAGES: Record<number, string> = {};
+// Per-chapter cover art served from public/images/gita-chapters/{num}.jpg (chapters 1–18).
+const GITA_CHAPTER_IMAGES: Record<number, string> = Object.fromEntries(
+  GITA_CHAPTERS.map((ch) => [ch.num, `/images/gita-chapters/${ch.num}.jpg`]),
+);
 
 function GitaChapterGrid({ book, chapters, onSelectBook, onSelectChapter, onGoBack, landingData, t, tc, languageCode }: {
   book: Book;
@@ -2425,6 +3152,7 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
         onSelectChapter={onSelectChapter}
         onSelectPart={onSelectPart}
         onSelectVerse={onSelectVerse}
+        onGoBack={onGoBack}
         languageCode={languageCode}
         onCoverBookChange={onCoverBookChange}
       />
