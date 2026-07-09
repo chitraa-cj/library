@@ -32,6 +32,7 @@ import upanishadPrincipalDark from "@assets/upanishad-principal-dark.png";
 import upanishadAdditionalDark from "@assets/upanishad-additional-dark.png";
 import homeAdvaiticTreeDark from "@assets/home-advaitic-tree-dark.png";
 import homeMandalaDark from "@assets/mantra-mandala-dark.png";
+import quickAccessMandala from "@assets/quick-access-mandala.png";
 
 function BookProgressBar({ bookId, totalVerses, compact = false, alwaysShow = false, unitLabel }: { bookId: string; totalVerses: number | null | undefined; compact?: boolean; alwaysShow?: boolean; unitLabel?: string }) {
   const { data: summary } = useProgressSummary();
@@ -638,13 +639,10 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
           );
         })}
       </div>
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/90 to-primary dark:from-[#1e130c] dark:to-[#140c07] dark:border dark:border-primary/15" data-testid="collections-panel">
-        {/* Right imagery: landscape backdrop + Adi Shankaracharya figure */}
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-[38%] hidden lg:block">
-          <img src={homeCollectionsShankara} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-left opacity-80 dark:opacity-25" />
-          <img src={homeAdiShankara} alt="Adi Shankaracharya" className="absolute bottom-0 right-6 h-[92%] w-auto object-contain object-bottom drop-shadow-2xl" />
-        </div>
-        <div className={`relative grid gap-4 sm:gap-5 p-4 sm:p-6 lg:pr-[40%] ${single ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"}`}>
+      <div className="relative overflow-hidden rounded-2xl bg-primary dark:bg-[#1e130c] dark:border dark:border-primary/15" data-testid="collections-panel">
+        {/* Mandala watermark filling the entire panel background */}
+        <img src={quickAccessMandala} alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-80 dark:opacity-30" />
+        <div className={`relative grid gap-4 sm:gap-5 p-4 sm:p-6 ${single ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"}`}>
           {cards.map(renderCard)}
         </div>
       </div>
@@ -788,7 +786,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
   return (
     <div className="flex-1 flex flex-col bg-background relative overflow-y-auto">
       {/* ===== HERO ===== */}
-      <section className="relative shrink-0 overflow-hidden bg-gradient-to-b from-[#fbeddc] via-[#fdf5ea] to-background dark:from-[#241610] dark:via-[#160d08] dark:to-background px-4 pt-14 pb-12 sm:pt-16 sm:pb-14 text-center">
+      <section className="relative shrink-0 overflow-hidden bg-background px-4 pt-14 pb-12 sm:pt-16 sm:pb-14 text-center">
         {/* subtle mandala watermark pattern */}
         <div
           className="absolute inset-0 pointer-events-none select-none opacity-[0.05]"
