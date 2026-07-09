@@ -36,6 +36,8 @@ import quickAccessMandala from "@assets/quick-access-mandala.png";
 import quickAccessScene from "@assets/quick-access-scene.png";
 import visionMandala from "@assets/vision-mandala.png";
 import traditionMandala from "@assets/tradition-mandala.png";
+import heroBgLight from "@assets/hero-bg-light.png";
+import heroBgDark from "@assets/hero-bg-dark.png";
 
 function BookProgressBar({ bookId, totalVerses, compact = false, alwaysShow = false, unitLabel }: { bookId: string; totalVerses: number | null | undefined; compact?: boolean; alwaysShow?: boolean; unitLabel?: string }) {
   const { data: summary } = useProgressSummary();
@@ -821,10 +823,15 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
     <div className="flex-1 flex flex-col bg-background relative overflow-y-auto">
       {/* ===== HERO ===== */}
       <section className="relative shrink-0 overflow-hidden bg-background px-4 pt-14 pb-12 sm:pt-16 sm:pb-14 text-center">
-        {/* ornate mandala pattern filling the hero (Image #15) */}
+        {/* Home hero background art (theme-specific) */}
         <div
-          className="absolute inset-0 pointer-events-none select-none opacity-[0.08] dark:opacity-[0.14]"
-          style={{ backgroundImage: `url(${traditionMandala})`, backgroundSize: "300px auto", backgroundRepeat: "repeat" }}
+          className="absolute inset-0 pointer-events-none select-none"
+          style={{
+            backgroundImage: `url(${theme === "dark" ? heroBgDark : heroBgLight})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
         />
         {/* warm radial glow behind the title — kept prominent in dark mode so the hero background stays */}
         <div
