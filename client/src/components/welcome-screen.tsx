@@ -879,8 +879,15 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-7">
               {guidanceQuestions.map((q) => (
-                <div key={q} className="relative overflow-hidden rounded-xl border border-primary/20 bg-card px-3 py-4 text-center shadow-sm">
-                  <p className="text-sm font-semibold text-primary leading-snug">{q}</p>
+                <div key={q} className="relative overflow-hidden rounded-xl border border-primary/20 bg-card px-3 pt-7 pb-14 text-center shadow-sm">
+                  <p className="relative z-10 text-sm font-semibold text-primary leading-snug">{q}</p>
+                  {/* Mandala arcing up from the bottom edge */}
+                  <img
+                    src={traditionMandala}
+                    alt=""
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 h-24 w-24 object-contain opacity-50 dark:opacity-40 select-none"
+                  />
                 </div>
               ))}
             </div>
