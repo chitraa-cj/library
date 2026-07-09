@@ -582,7 +582,7 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
   const renderCard = (card: Card) => {
     const items = ql ? card.items.filter(i => i.label.toLowerCase().includes(ql)) : card.items;
     return (
-      <div key={card.title + card.kicker} className="rounded-2xl bg-[#fdf6ee] p-5 flex flex-col min-w-0">
+      <div key={card.title + card.kicker} className="rounded-2xl bg-[#fdf6ee] dark:bg-primary/[0.06] dark:border dark:border-primary/15 p-5 flex flex-col min-w-0">
         <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground text-center font-semibold">{card.kicker}</p>
         <h3 className="font-serif text-2xl font-bold text-primary text-center mt-1">{card.title}</h3>
         <p className="text-center text-primary/40 text-sm">— ◇ —</p>
@@ -625,10 +625,10 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
           );
         })}
       </div>
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/90 to-primary" data-testid="collections-panel">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/90 to-primary dark:from-[#1e130c] dark:to-[#140c07] dark:border dark:border-primary/15" data-testid="collections-panel">
         {/* Right imagery: landscape backdrop + Adi Shankaracharya figure */}
         <div className="pointer-events-none absolute right-0 top-0 h-full w-[38%] hidden lg:block">
-          <img src={homeCollectionsShankara} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-left opacity-80" />
+          <img src={homeCollectionsShankara} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-left opacity-80 dark:opacity-25" />
           <img src={homeAdiShankara} alt="Adi Shankaracharya" className="absolute bottom-0 right-6 h-[92%] w-auto object-contain object-bottom drop-shadow-2xl" />
         </div>
         <div className={`relative grid gap-4 sm:gap-5 p-4 sm:p-6 lg:pr-[40%] ${single ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"}`}>
@@ -775,7 +775,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
   return (
     <div className="flex-1 flex flex-col bg-background relative overflow-y-auto">
       {/* ===== HERO ===== */}
-      <section className="relative shrink-0 overflow-hidden bg-gradient-to-b from-[#fbeddc] via-[#fdf5ea] to-background px-4 pt-14 pb-12 sm:pt-16 sm:pb-14 text-center">
+      <section className="relative shrink-0 overflow-hidden bg-gradient-to-b from-[#fbeddc] via-[#fdf5ea] to-background dark:from-[#241610] dark:via-[#160d08] dark:to-background px-4 pt-14 pb-12 sm:pt-16 sm:pb-14 text-center">
         {/* subtle mandala watermark pattern */}
         <div
           className="absolute inset-0 pointer-events-none select-none opacity-[0.05]"
@@ -810,7 +810,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
       </div>
 
       {/* ===== EXPRESSIONS OF ADVAITIC VISION ===== */}
-      <section className="bg-[#fdf1ec] dark:bg-primary/[0.04] mt-14 sm:mt-20 py-14 sm:py-20">
+      <section className="bg-[#fdf1ec] dark:bg-[#170c07] mt-14 sm:mt-20 py-14 sm:py-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           <div className="flex justify-center">
             <img src={advaiticTreeImg} alt="The literary dimensions of Advaita — from Shruti to Bhakti" className="w-full max-w-sm object-contain" draggable={false} />
@@ -1161,7 +1161,7 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
                   data-testid={`button-category-${cat.id}`}
                 >
                   {/* Product-image header on a warm parchment gradient */}
-                  <div className="relative h-40 sm:h-44 overflow-hidden bg-gradient-to-br from-[#f6ead7] via-[#f3e2ca] to-[#efd9b8] flex items-center justify-center">
+                  <div className="relative h-40 sm:h-44 overflow-hidden bg-gradient-to-br from-[#f6ead7] via-[#f3e2ca] to-[#efd9b8] dark:from-[#1c130d] dark:via-[#160f0a] dark:to-[#120b07] flex items-center justify-center">
                     {catImage ? (
                       <img
                         src={catImage}
