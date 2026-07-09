@@ -795,15 +795,20 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
     <div className="flex-1 flex flex-col bg-background relative overflow-y-auto">
       {/* ===== HERO ===== */}
       <section className="relative shrink-0 overflow-hidden bg-background px-4 pt-14 pb-12 sm:pt-16 sm:pb-14 text-center">
-        {/* subtle mandala watermark pattern */}
+        {/* subtle mandala watermark pattern — a touch stronger in dark so the hero keeps texture */}
         <div
-          className="absolute inset-0 pointer-events-none select-none opacity-[0.05]"
+          className="absolute inset-0 pointer-events-none select-none opacity-[0.05] dark:opacity-[0.08]"
           style={{ backgroundImage: `url(${mandalaImg})`, backgroundSize: "150px", backgroundRepeat: "repeat" }}
         />
-        {/* warm radial glow behind the title */}
+        {/* warm radial glow behind the title — kept prominent in dark mode so the hero background stays */}
         <div
-          className="absolute inset-x-0 top-0 h-[70%] pointer-events-none select-none"
-          style={{ background: "radial-gradient(ellipse 55% 60% at 50% 38%, rgba(193,94,42,0.16) 0%, transparent 70%)" }}
+          className="absolute inset-x-0 top-0 h-[80%] pointer-events-none select-none"
+          style={{
+            background:
+              theme === "dark"
+                ? "radial-gradient(ellipse 62% 65% at 50% 34%, rgba(230,81,0,0.32) 0%, rgba(230,81,0,0.10) 42%, transparent 74%)"
+                : "radial-gradient(ellipse 55% 60% at 50% 38%, rgba(230,81,0,0.15) 0%, transparent 70%)",
+          }}
         />
         <div className="relative max-w-4xl mx-auto space-y-6">
           <img src="/favicon.png" alt="Advaita Vaaridhi" className="h-20 sm:h-24 w-auto object-contain mx-auto" />
