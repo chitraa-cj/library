@@ -980,13 +980,23 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
         </div>
 
         <p className="text-[11px] uppercase tracking-[0.2em] text-primary font-semibold mb-3">The Scholastic Tradition — Two Schools</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 rounded-xl border border-border/60 bg-card overflow-hidden mb-10">
+        <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6 mb-10">
           {twoSchools.map((s, i) => (
-            <div key={s.name} className={`p-6 ${i === 0 ? "sm:border-r border-border/60 sm:text-left" : "sm:text-right"} text-center`}>
-              <h3 className="font-serif text-xl font-bold text-foreground mb-1">{s.name}</h3>
+            <div
+              key={s.name}
+              className={`rounded-2xl border border-border/60 bg-card p-6 sm:p-8 text-center ${i === 0 ? "sm:text-left sm:pr-20" : "sm:text-right sm:pl-20"}`}
+            >
+              <h3 className="font-serif text-xl sm:text-2xl font-bold text-foreground mb-1.5">{s.name}</h3>
               <p className="text-sm text-muted-foreground">{s.members.join(" · ")}</p>
             </div>
           ))}
+          {/* Gold mandala centerpiece straddling the two cards */}
+          <img
+            src={traditionMandala}
+            alt=""
+            aria-hidden="true"
+            className="hidden sm:block pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-28 w-28 object-contain z-10 select-none"
+          />
         </div>
 
         <p className="text-[11px] uppercase tracking-[0.2em] text-primary font-semibold mb-3">Regional Luminaries</p>
