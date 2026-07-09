@@ -155,7 +155,9 @@ export type VerseWordMeaning = typeof verseWordMeanings.$inferSelect;
 export const notes = pgTable("notes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(),
-  verseId: varchar("verse_id").notNull().references(() => verses.id),
+  // No FK to verses: verse content is served from Strapi, so a note's verseId is
+  // an opaque reference (Strapi doc id) that need not exist in the local verses table.
+  verseId: varchar("verse_id").notNull(),
   content: text("content").notNull(),
   selectedText: text("selected_text"),
   createdAt: timestamp("created_at").defaultNow(),
