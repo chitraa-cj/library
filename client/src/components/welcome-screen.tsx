@@ -33,6 +33,7 @@ import upanishadAdditionalDark from "@assets/upanishad-additional-dark.png";
 import homeAdvaiticTreeDark from "@assets/home-advaitic-tree-dark.png";
 import homeMandalaDark from "@assets/mantra-mandala-dark.png";
 import quickAccessMandala from "@assets/quick-access-mandala.png";
+import quickAccessScene from "@assets/quick-access-scene.png";
 
 function BookProgressBar({ bookId, totalVerses, compact = false, alwaysShow = false, unitLabel }: { bookId: string; totalVerses: number | null | undefined; compact?: boolean; alwaysShow?: boolean; unitLabel?: string }) {
   const { data: summary } = useProgressSummary();
@@ -640,9 +641,15 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
         })}
       </div>
       <div className="relative overflow-hidden rounded-2xl bg-primary dark:bg-[#1e130c] dark:border dark:border-primary/15" data-testid="collections-panel">
-        {/* Mandala watermark filling the entire panel background */}
-        <img src={quickAccessMandala} alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-80 dark:opacity-30" />
-        <div className={`relative grid gap-4 sm:gap-5 p-4 sm:p-6 ${single ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"}`}>
+        {/* Subtle mandala texture across the whole panel */}
+        <img src={quickAccessMandala} alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-40 dark:opacity-20" />
+        {/* Adi Shankaracharya scene — shown complete, figure kept clear on the right (desktop) */}
+        <img
+          src={quickAccessScene}
+          alt="Adi Shankaracharya"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center lg:object-contain lg:object-right"
+        />
+        <div className={`relative grid gap-4 sm:gap-5 p-4 sm:p-6 lg:pr-[42%] ${single ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"}`}>
           {cards.map(renderCard)}
         </div>
       </div>
