@@ -671,12 +671,12 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
           );
         })}
       </div>
-      <div className="relative overflow-hidden rounded-2xl bg-primary dark:bg-[#160d07] dark:border dark:border-primary/15" data-testid="collections-panel">
+      <div className="relative overflow-hidden rounded-2xl bg-primary dark:bg-[#dd5401] dark:border dark:border-primary/25" data-testid="collections-panel">
         {/* Adi Shankaracharya scene — shown complete, figure kept clear on the right (desktop) */}
         <img
           src={quickAccessScene}
           alt="Adi Shankaracharya"
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center lg:object-contain lg:object-right dark:opacity-90"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center lg:object-contain lg:object-right"
         />
         <div key={tab} className={`relative grid gap-4 sm:gap-5 p-4 sm:p-6 lg:pr-[42%] animate-in fade-in-0 duration-300 ${single ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"}`}>
           {cards.map(renderCard)}
