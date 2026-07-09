@@ -8,6 +8,7 @@ import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareTe
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoPopup } from "@/components/video-popup";
 import { WordTooltip } from "@/components/word-tooltip";
+import { HintTooltip } from "@/components/ui/hint-tooltip";
 import { useTranslation } from "@/lib/translations";
 import { useAuth } from "@/hooks/use-auth";
 import { useBookProgress, useMarkVerseComplete, useUnmarkVerseComplete } from "@/hooks/use-progress";
@@ -260,7 +261,7 @@ function EnglishTranslationToggle({ englishContent }: { englishContent: string }
       </button>
       {showTranslation && (
         <div className="mt-2 p-3 rounded-md bg-muted/50 border border-border/30">
-          <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/80 font-serif" data-testid="text-english-translation">
+          <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/80 font-body" data-testid="text-english-translation">
             {englishContent}
           </p>
         </div>
@@ -399,7 +400,7 @@ function VerseExplanation({
                   </Badge>
                 </div>
               )}
-              <div className="font-serif text-base leading-relaxed whitespace-pre-wrap break-words text-foreground/90 pl-6" data-testid={`commentary-text-${explanation.languageCode}-${idx}`}>
+              <div className="font-body text-base leading-relaxed whitespace-pre-wrap break-words text-foreground/90 pl-6" data-testid={`commentary-text-${explanation.languageCode}-${idx}`}>
                 <WordTooltip
                   content={explanation.content}
                   sourceLanguage={explanation.languageCode}
@@ -466,20 +467,21 @@ function IconAction({ icon: Icon, label, onClick, active = false, className = ""
   className?: string;
 }) {
   return (
-    <button
-      type="button"
-      title={label}
-      aria-label={label}
-      onClick={onClick}
-      className={`inline-flex items-center justify-center h-8 w-8 rounded-lg border transition-colors ${active ? "border-primary/40 bg-primary/10 text-primary" : "border-border/60 bg-card/70 text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5"} ${className}`}
-    >
-      <Icon className="h-4 w-4" />
-    </button>
+    <HintTooltip label={label}>
+      <button
+        type="button"
+        aria-label={label}
+        onClick={onClick}
+        className={`inline-flex items-center justify-center h-8 w-8 rounded-lg border transition-colors ${active ? "border-primary/40 bg-primary/10 text-primary" : "border-border/60 bg-card/70 text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5"} ${className}`}
+      >
+        <Icon className="h-4 w-4" />
+      </button>
+    </HintTooltip>
   );
 }
 
 /** Reads the given text aloud via the Web Speech API (no backend needed). */
-function ListenButton({ text }: { text: string }) {
+function ListenButton({ text, hint, stopHint }: { text: string; hint?: string; stopHint?: string }) {
   const [speaking, setSpeaking] = useState(false);
   useEffect(() => () => { try { window.speechSynthesis?.cancel(); } catch { /* noop */ } }, []);
   const toggle = () => {
@@ -498,21 +500,23 @@ function ListenButton({ text }: { text: string }) {
     setSpeaking(true);
   };
   return (
-    <button
-      type="button"
-      onClick={toggle}
-      aria-label={speaking ? "Stop" : "Listen"}
-      className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold shadow-sm hover:bg-primary/90 transition-colors"
-      data-testid="button-listen"
-    >
-      {speaking ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-      {speaking ? "Stop" : "Listen"}
-    </button>
+    <HintTooltip label={speaking ? stopHint : hint}>
+      <button
+        type="button"
+        onClick={toggle}
+        aria-label={speaking ? "Stop" : "Listen"}
+        className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold shadow-sm hover:bg-primary/90 transition-colors"
+        data-testid="button-listen"
+      >
+        {speaking ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+        {speaking ? "Stop" : "Listen"}
+      </button>
+    </HintTooltip>
   );
 }
 
 /** Bookmark toggle persisted in localStorage (no auth required). */
-function BookmarkButton({ verseId, variant = "plain" }: { verseId: string; variant?: "plain" | "action" }) {
+function BookmarkButton({ verseId, variant = "plain", hint, removeHint }: { verseId: string; variant?: "plain" | "action"; hint?: string; removeHint?: string }) {
   const KEY = "ssh:bookmarks";
   const [marked, setMarked] = useState(false);
   useEffect(() => {
@@ -528,34 +532,39 @@ function BookmarkButton({ verseId, variant = "plain" }: { verseId: string; varia
       setMarked(set.has(verseId));
     } catch { /* ignore */ }
   };
+  const tip = marked ? removeHint : hint;
   if (variant === "action") {
     return (
-      <button
-        type="button"
-        title={marked ? "Remove bookmark" : "Bookmark"}
-        aria-label="Bookmark"
-        onClick={toggle}
-        className={`inline-flex items-center justify-center h-8 w-8 rounded-lg border transition-colors ${marked ? "border-primary/40 bg-primary/10 text-primary" : "border-border/60 bg-card/70 text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5"}`}
-        data-testid="button-bookmark"
-      >
-        <Bookmark className={`h-4 w-4 ${marked ? "fill-current" : ""}`} />
-      </button>
+      <HintTooltip label={tip}>
+        <button
+          type="button"
+          aria-label="Bookmark"
+          onClick={toggle}
+          className={`inline-flex items-center justify-center h-8 w-8 rounded-lg border transition-colors ${marked ? "border-primary/40 bg-primary/10 text-primary" : "border-border/60 bg-card/70 text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5"}`}
+          data-testid="button-bookmark"
+        >
+          <Bookmark className={`h-4 w-4 ${marked ? "fill-current" : ""}`} />
+        </button>
+      </HintTooltip>
     );
   }
   return (
-    <button type="button" onClick={toggle} aria-label="Bookmark" className="shrink-0 text-muted-foreground/60 hover:text-primary transition-colors" data-testid="button-bookmark">
-      <Bookmark className={`h-3.5 w-3.5 ${marked ? "fill-primary text-primary" : ""}`} />
-    </button>
+    <HintTooltip label={tip}>
+      <button type="button" onClick={toggle} aria-label="Bookmark" className="shrink-0 text-muted-foreground/60 hover:text-primary transition-colors" data-testid="button-bookmark">
+        <Bookmark className={`h-3.5 w-3.5 ${marked ? "fill-primary text-primary" : ""}`} />
+      </button>
+    </HintTooltip>
   );
 }
 
 /** Multi-language checkbox popover (Devanagari always on). Reused for the header + commentary. */
-function LanguagePopover({ languages, selected, onToggle, label, align = "right" }: {
+function LanguagePopover({ languages, selected, onToggle, label, align = "right", hint }: {
   languages: { code: string; name: string }[];
   selected: Set<string>;
   onToggle: (code: string) => void;
   label: string;
   align?: "left" | "right";
+  hint?: string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -567,16 +576,18 @@ function LanguagePopover({ languages, selected, onToggle, label, align = "right"
   }, [open]);
   return (
     <div className="relative" ref={ref}>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 h-9 px-3 text-xs sm:text-sm border border-border/60 bg-card hover:bg-accent/50 rounded-lg transition-colors"
-        data-testid="button-language-selector"
-      >
-        <Languages className="h-4 w-4 text-muted-foreground" />
-        <span className="text-foreground/80">{label}</span>
-        <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
+      <HintTooltip label={hint}>
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="flex items-center gap-1.5 h-9 px-3 text-xs sm:text-sm border border-border/60 bg-card hover:bg-accent/50 rounded-lg transition-colors"
+          data-testid="button-language-selector"
+        >
+          <Languages className="h-4 w-4 text-muted-foreground" />
+          <span className="text-foreground/80">{label}</span>
+          <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+      </HintTooltip>
       {open && (
         <div className={`absolute top-full mt-1.5 z-50 w-60 max-h-80 overflow-y-auto rounded-lg border border-border bg-card shadow-lg p-2 ${align === "right" ? "right-0" : "left-0"}`} data-testid="language-checkbox-panel">
           {languages.map((l) => {
@@ -1238,8 +1249,8 @@ export function BookReader({
           <div className="p-4 sm:p-6 max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto">
             <div className="py-4 sm:py-6">
               <div className="flex flex-col items-center text-center mb-4 sm:mb-5">
-                <span className="text-2xl sm:text-3xl text-primary/20 font-serif mb-2 select-none pointer-events-none">ॐ</span>
-                <h1 className="font-serif text-xl sm:text-2xl font-bold text-foreground tracking-tight" data-testid="text-cover-title">
+                <span className="text-2xl sm:text-3xl text-primary/20 font-body mb-2 select-none pointer-events-none">ॐ</span>
+                <h1 className="font-page-heading text-xl sm:text-2xl font-bold text-foreground tracking-tight" data-testid="text-cover-title">
                   {tc(book.title, bookTitleTranslations)}
                 </h1>
                 <Badge variant="secondary" className="mt-1.5 text-[10px] sm:text-xs">
@@ -1684,7 +1695,7 @@ export function BookReader({
                           onClick={() => onSelectPart?.(chapterViewAdhyay!, khanda.khandaNumber)}
                           data-testid={`chapter-view-khanda-${khanda.khandaNumber}`}
                         >
-                          <span className="text-xs sm:text-sm font-serif text-primary/60 tracking-wider uppercase group-hover:text-primary transition-colors">
+                          <span className="text-xs sm:text-sm font-body text-primary/60 tracking-wider uppercase group-hover:text-primary transition-colors">
                             {t("part")} {chapterViewAdhyay}.{khanda.khandaNumber}
                           </span>
                           <h3 className="font-serif text-sm sm:text-base text-foreground/80 mt-1 group-hover:text-primary transition-colors">
@@ -1712,20 +1723,20 @@ export function BookReader({
                                 data-testid={`chapter-verse-${verse.verseNumber}`}
                               >
                                 {devanagari && (
-                                  <div className="font-serif text-base sm:text-xl leading-loose sm:leading-loose text-center px-2 sm:px-8 group-hover:text-primary transition-colors whitespace-pre-line">
+                                  <div className="font-body text-base sm:text-xl leading-loose sm:leading-loose text-center px-2 sm:px-8 group-hover:text-primary transition-colors whitespace-pre-line">
                                     {devanagari}
                                   </div>
                                 )}
-                                <div className="mt-2 sm:mt-3 text-primary/50 text-xs sm:text-sm font-serif">
+                                <div className="mt-2 sm:mt-3 text-primary/50 text-xs sm:text-sm font-body">
                                   ॥ {verseLabel} ॥
                                 </div>
                                 {verse.sectionTitle && (
-                                  <div className="text-[11px] sm:text-xs text-muted-foreground/60 font-serif mt-1 italic">
+                                  <div className="text-[11px] sm:text-xs text-muted-foreground/60 font-body mt-1 italic">
                                     {tc(verse.sectionTitle, verseSectionTitleTranslations)}
                                   </div>
                                 )}
                                 {iast && (
-                                  <div className="mt-2 sm:mt-3 font-serif text-xs sm:text-sm leading-relaxed text-center px-4 sm:px-12 text-primary/70 italic whitespace-pre-line">
+                                  <div className="mt-2 sm:mt-3 font-body text-xs sm:text-sm leading-relaxed text-center px-4 sm:px-12 text-primary/70 italic whitespace-pre-line">
                                     {iast}
                                   </div>
                                 )}
@@ -1770,20 +1781,20 @@ export function BookReader({
                           data-testid={`chapter-verse-${verse.verseNumber}`}
                         >
                           {devanagari && (
-                            <div className="font-serif text-base sm:text-xl leading-loose sm:leading-loose text-center px-2 sm:px-8 group-hover:text-primary transition-colors whitespace-pre-line">
+                            <div className="font-hindi-reading text-base sm:text-xl leading-loose sm:leading-loose text-center px-2 sm:px-8 group-hover:text-primary transition-colors whitespace-pre-line">
                               {devanagari}
                             </div>
                           )}
-                          <div className="mt-2 sm:mt-3 text-primary/50 text-xs sm:text-sm font-serif">
+                          <div className="mt-2 sm:mt-3 text-primary/50 text-xs sm:text-sm font-body">
                             ॥ {verseLabel} ॥
                           </div>
                           {verse.sectionTitle && (
-                            <div className="text-[11px] sm:text-xs text-muted-foreground/60 font-serif mt-1 italic">
+                            <div className="text-[11px] sm:text-xs text-muted-foreground/60 font-body mt-1 italic">
                               {tc(verse.sectionTitle, verseSectionTitleTranslations)}
                             </div>
                           )}
                           {iast && (
-                            <div className="mt-2 sm:mt-3 font-serif text-xs sm:text-sm leading-relaxed text-center px-4 sm:px-12 text-primary/70 italic whitespace-pre-line">
+                            <div className="mt-2 sm:mt-3 font-body text-xs sm:text-sm leading-relaxed text-center px-4 sm:px-12 text-primary/70 italic whitespace-pre-line">
                               {iast}
                             </div>
                           )}
@@ -1870,7 +1881,7 @@ export function BookReader({
               <Badge variant="secondary" className="mb-2 text-[10px] sm:text-xs">
                 {tc(book.title, bookTitleTranslations)}
               </Badge>
-              <h1 className="font-serif text-xl sm:text-2xl font-bold text-foreground tracking-tight" data-testid="text-intro-title">
+              <h1 className="font-page-heading text-xl sm:text-2xl font-bold text-foreground tracking-tight" data-testid="text-intro-title">
                 {t("introduction")}
               </h1>
               <div className="mt-3 flex items-center justify-center gap-4">
@@ -1906,7 +1917,7 @@ export function BookReader({
 
             {introSanskrit && effectiveLang !== "devanagari" && effectiveLang !== "sa" && (
               <div className="mb-6 sm:mb-8 p-4 sm:p-6 rounded-lg bg-primary/5 border border-primary/10">
-                <div className="font-serif text-sm sm:text-base leading-relaxed sm:leading-loose text-foreground/90" data-testid="text-intro-sanskrit">
+                <div className="font-body text-sm sm:text-base leading-relaxed sm:leading-loose text-foreground/90" data-testid="text-intro-sanskrit">
                   <WordTooltip
                     content={introSanskrit}
                     commentaryContent={introCommentaryContext}
@@ -1920,7 +1931,7 @@ export function BookReader({
 
             <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none" data-testid="text-intro-content">
               {introTextForLang ? (
-                <div className="font-serif text-sm sm:text-base leading-relaxed sm:leading-loose text-foreground/80">
+                <div className="font-body text-sm sm:text-base leading-relaxed sm:leading-loose text-foreground/80">
                   <WordTooltip
                     content={introTextForLang}
                     commentaryContent={introCommentaryContext}
@@ -2062,7 +2073,7 @@ export function BookReader({
                   <div className="text-center min-w-0">
                     <div className="flex items-center justify-center gap-2.5">
                       <span className="text-primary/40 text-sm hidden sm:inline">❖</span>
-                      <h1 className="font-serif text-2xl sm:text-3xl lg:text-[2rem] font-bold text-primary tracking-tight leading-none truncate" data-testid="reader-book-title">
+                      <h1 className="font-page-heading text-2xl sm:text-3xl lg:text-[2rem] font-bold text-primary tracking-tight leading-none truncate" data-testid="reader-book-title">
                         {tc(book.title, bookTitleTranslations)}
                       </h1>
                       <span className="text-primary/40 text-sm hidden sm:inline">❖</span>
@@ -2094,6 +2105,7 @@ export function BookReader({
                       onToggle={toggleLanguage}
                       label="Language"
                       align="right"
+                      hint={t("hintLanguageSelector")}
                     />
                   )}
                 </div>
@@ -2119,14 +2131,14 @@ export function BookReader({
                       <MandalaCorner className="pointer-events-none absolute -bottom-6 -right-6 h-24 w-24 opacity-[0.18] dark:opacity-[0.26]" />
                       <div className="relative flex items-start justify-between gap-3 mb-3">
                         <div className="flex items-center gap-1.5">
-                          <IconAction icon={Copy} label="Copy" onClick={copyMantra} />
-                          <IconAction icon={Share2} label="Share" onClick={shareMantra} />
-                          <BookmarkButton verseId={currentVerse.id} variant="action" />
+                          <IconAction icon={Copy} label={t("hintCopyVerse")} onClick={copyMantra} />
+                          <IconAction icon={Share2} label={t("hintShareVerse")} onClick={shareMantra} />
+                          <BookmarkButton verseId={currentVerse.id} variant="action" hint={t("hintBookmark")} removeHint={t("hintRemoveBookmark")} />
                         </div>
-                        <ListenButton text={mantraPlain} />
+                        <ListenButton text={mantraPlain} hint={t("hintListen")} stopHint={t("hintStopListen")} />
                       </div>
                       <div
-                        className="relative font-serif text-xl sm:text-2xl lg:text-[1.7rem] leading-relaxed sm:leading-loose text-center text-primary"
+                        className="relative font-hindi-reading text-xl sm:text-2xl lg:text-[1.7rem] leading-relaxed sm:leading-loose text-center text-primary"
                         data-testid={`text-original-${currentVerse.verseNumber}`}
                       >
                         <WordTooltip
@@ -2140,7 +2152,7 @@ export function BookReader({
 
                       {verseTransliteration && (
                         <div
-                          className="relative font-serif text-sm sm:text-base leading-relaxed text-center text-primary/60 dark:text-primary/50 italic whitespace-pre-line mt-3 pt-3 border-t border-primary/15"
+                          className="relative font-body text-sm sm:text-base leading-relaxed text-center text-primary/60 dark:text-primary/50 italic whitespace-pre-line mt-3 pt-3 border-t border-primary/15"
                           data-testid={`text-transliteration-${currentVerse.verseNumber}`}
                         >
                           {verseTransliteration}
@@ -2175,7 +2187,7 @@ export function BookReader({
                                 </span>
                               )}
                               <div
-                                className="text-sm sm:text-base leading-relaxed text-foreground/80 font-serif"
+                                className="text-sm sm:text-base leading-relaxed text-foreground/80 font-body"
                                 data-testid={`text-translation-${translation.languageCode}-${currentVerse.verseNumber}`}
                               >
                                 <WordTooltip
@@ -2203,14 +2215,14 @@ export function BookReader({
                 <MandalaCorner className="pointer-events-none absolute -bottom-8 -right-8 h-28 w-28 opacity-20 dark:opacity-[0.28]" />
                 <div className="relative flex items-start justify-between gap-3 mb-3">
                   <div className="flex items-center gap-1.5">
-                    <IconAction icon={Copy} label="Copy" onClick={copyMantra} />
-                    <IconAction icon={Share2} label="Share" onClick={shareMantra} />
-                    <BookmarkButton verseId={currentVerse.id} variant="action" />
+                    <IconAction icon={Copy} label={t("hintCopyVerse")} onClick={copyMantra} />
+                    <IconAction icon={Share2} label={t("hintShareVerse")} onClick={shareMantra} />
+                    <BookmarkButton verseId={currentVerse.id} variant="action" hint={t("hintBookmark")} removeHint={t("hintRemoveBookmark")} />
                   </div>
-                  <ListenButton text={mantraPlain} />
+                  <ListenButton text={mantraPlain} hint={t("hintListen")} stopHint={t("hintStopListen")} />
                 </div>
                 <div
-                  className="relative font-serif text-xl sm:text-2xl lg:text-[1.7rem] leading-relaxed sm:leading-loose text-center text-foreground"
+                  className="relative font-hindi-reading text-xl sm:text-2xl lg:text-[1.7rem] leading-relaxed sm:leading-loose text-center text-foreground"
                   data-testid={`text-original-${currentVerse.verseNumber}`}
                 >
                   <WordTooltip
@@ -2223,7 +2235,7 @@ export function BookReader({
                 </div>
                 {verseTransliteration && (
                   <div
-                    className="relative font-serif text-sm sm:text-base leading-relaxed text-center text-primary/60 dark:text-primary/50 italic whitespace-pre-line mt-3 pt-3 border-t border-primary/15"
+                    className="relative font-body text-sm sm:text-base leading-relaxed text-center text-primary/60 dark:text-primary/50 italic whitespace-pre-line mt-3 pt-3 border-t border-primary/15"
                     data-testid={`text-transliteration-${currentVerse.verseNumber}`}
                   >
                     {verseTransliteration}
@@ -2258,7 +2270,7 @@ export function BookReader({
                           </span>
                         )}
                         <div
-                          className="text-sm sm:text-base leading-relaxed text-foreground/80 font-serif"
+                          className="text-sm sm:text-base leading-relaxed text-foreground/80 font-body"
                           data-testid={`text-translation-${translation.languageCode}-${currentVerse.verseNumber}`}
                         >
                           <WordTooltip
@@ -2305,20 +2317,21 @@ export function BookReader({
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 py-1.5">
-                      <IconAction icon={Copy} label="Copy" onClick={copyMantra} />
-                      <IconAction icon={Share2} label="Share" onClick={shareMantra} />
-                      <BookmarkButton verseId={currentVerse.id} variant="action" />
+                      <IconAction icon={Copy} label={t("hintCopyVerse")} onClick={copyMantra} />
+                      <IconAction icon={Share2} label={t("hintShareVerse")} onClick={shareMantra} />
+                      <BookmarkButton verseId={currentVerse.id} variant="action" hint={t("hintBookmark")} removeHint={t("hintRemoveBookmark")} />
                       {teekaAvailable && (
-                        <button
-                          type="button"
-                          onClick={() => setShowTeekas((v) => !v)}
-                          className={`inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg border text-xs font-medium transition-colors ${showTeekas ? "border-primary/40 bg-primary/10 text-primary" : "border-border/60 bg-card/70 text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5"}`}
-                          data-testid="button-pair-mode"
-                          title="Pair Mode — show Bhāṣyam and Ṭīkā together"
-                        >
-                          <ArrowLeftRight className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">Pair Mode</span>
-                        </button>
+                        <HintTooltip label={t("hintPairMode")}>
+                          <button
+                            type="button"
+                            onClick={() => setShowTeekas((v) => !v)}
+                            className={`inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg border text-xs font-medium transition-colors ${showTeekas ? "border-primary/40 bg-primary/10 text-primary" : "border-border/60 bg-card/70 text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5"}`}
+                            data-testid="button-pair-mode"
+                          >
+                            <ArrowLeftRight className="h-3.5 w-3.5" />
+                            <span className="hidden sm:inline">Pair Mode</span>
+                          </button>
+                        </HintTooltip>
                       )}
                     </div>
                   </div>
@@ -2335,7 +2348,7 @@ export function BookReader({
                                 {tc(selectedBhashyaAuthor || (verseBhashyaAuthors[0]?.authorName ?? ""), bookAuthorTranslations)} Bhāṣya
                               </h3>
                             </div>
-                            <LanguagePopover languages={commentaryLanguageList} selected={selectedLanguages} onToggle={toggleLanguage} label={readingLangLabel} align="right" />
+                            <LanguagePopover languages={commentaryLanguageList} selected={selectedLanguages} onToggle={toggleLanguage} label={readingLangLabel} align="right" hint={t("hintLanguageSelector")} />
                           </div>
                           {effectiveLang && (
                             <VerseExplanation
@@ -2403,7 +2416,7 @@ export function BookReader({
                                 </SelectContent>
                               </Select>
                             )}
-                            <LanguagePopover languages={commentaryLanguageList} selected={selectedLanguages} onToggle={toggleLanguage} label={readingLangLabel} align="right" />
+                            <LanguagePopover languages={commentaryLanguageList} selected={selectedLanguages} onToggle={toggleLanguage} label={readingLangLabel} align="right" hint={t("hintLanguageSelector")} />
                           </div>
                         </div>
                         {effectiveLang && (
@@ -2445,7 +2458,7 @@ export function BookReader({
                                 </SelectContent>
                               </Select>
                             )}
-                            <LanguagePopover languages={commentaryLanguageList} selected={selectedLanguages} onToggle={toggleLanguage} label={readingLangLabel} align="right" />
+                            <LanguagePopover languages={commentaryLanguageList} selected={selectedLanguages} onToggle={toggleLanguage} label={readingLangLabel} align="right" hint={t("hintLanguageSelector")} />
                           </div>
                         </div>
                         {commentaryExpanded && effectiveLang && (

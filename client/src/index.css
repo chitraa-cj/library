@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/**
+ * Page-heading typeface. "Sallenas Grandes" is a commercial font, so it is
+ * self-hosted rather than loaded from Google Fonts. Drop the font file(s) into
+ * client/public/fonts/ using the names below and it will be picked up
+ * automatically; until then the serif fallback stack is used.
+ */
+@font-face {
+  font-family: 'Sallenas Grandes';
+  src: url('/fonts/SallenasGrandes-Regular.woff2') format('woff2'),
+       url('/fonts/SallenasGrandes-Regular.woff') format('woff'),
+       url('/fonts/SallenasGrandes-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* LIGHT MODE - Clean, Calm Vedantic Theme */
 :root {
   --button-outline: rgba(0,0,0, .08);
@@ -43,9 +59,21 @@
   --chart-3: 8 65% 50%;
   --chart-4: 28 75% 50%;
   --chart-5: 35 70% 52%;
-  --font-sans: Inter, sans-serif;
-  --font-serif: 'Source Serif 4', 'Noto Serif', Georgia, serif;
+  /* Design system typefaces (see "font usage" spec).
+   * Each stack lists the Latin face first and the matching Devanagari face next,
+   * so the browser's per-glyph fallback renders Devanagari in the right typeface:
+   *   body/reading  -> Libre Franklin (Latin) + Tiro Devanagari Hindi (Devanagari)
+   *   headings      -> Noto Serif (Latin) + Amita (Devanagari) */
+  --font-sans: 'Libre Franklin', 'Tiro Devanagari Hindi', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Noto Serif', 'Amita', Georgia, serif;
   --font-mono: Menlo, monospace;
+
+  /* Semantic font roles */
+  --font-page-heading: 'Sallenas Grandes', 'Noto Serif', 'Amita', Georgia, serif;      /* Page Heading */
+  --font-section-heading: 'Noto Serif', 'Amita', Georgia, serif;                        /* Section heading */
+  --font-body: 'Libre Franklin', 'Tiro Devanagari Hindi', system-ui, sans-serif;        /* Body text */
+  --font-hindi-heading: 'Amita', 'Noto Serif', serif;                                   /* Hindi/Devanagari heading */
+  --font-hindi-reading: 'Tiro Devanagari Hindi', 'Noto Serif', serif;                   /* Hindi/Devanagari reading */
   --radius: .5rem;
   --shadow-2xs: 0px 2px 0px 0px hsl(30 8% 12% / 0.00);
   --shadow-xs: 0px 2px 0px 0px hsl(30 8% 12% / 0.00);

@@ -241,10 +241,10 @@ export function TaittiriyaHeroLanding({
               className="max-w-2xl rounded-xl border border-border bg-card p-5 shadow-lg sm:p-6 dark:border-transparent dark:bg-transparent dark:p-0 dark:shadow-none"
               data-testid="book-landing-content"
             >
-              <h1 className="font-serif text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+              <h1 className="font-page-heading text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl lg:text-5xl">
                 {meta.iastTitle}
               </h1>
-              <p className="mt-1 font-serif text-xl text-foreground sm:text-2xl">{meta.devanagariTitle}</p>
+              <p className="mt-1 font-body text-xl text-foreground sm:text-2xl">{meta.devanagariTitle}</p>
               <p className="mt-3 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
                 {meta.authorIast} | {meta.verseCount} {meta.verseLabel}
               </p>

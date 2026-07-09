@@ -79,7 +79,7 @@ export default function AuthPage() {
               alt="Advaita Vaaridhi"
               className="h-10 w-10 object-contain"
             />
-            <h1 className="font-serif text-xl font-bold text-primary">{t("advaitaVaaridhi")}</h1>
+            <h1 className="font-page-heading text-xl font-bold text-primary">{t("advaitaVaaridhi")}</h1>
           </div>
           <p className="text-xs text-muted-foreground tracking-wide">{t("encyclopaediaOfAdvaitaVedanta")}</p>
         </div>

@@ -795,7 +795,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
             {(!isSelected || verses.length === 0) && (
               <BookOpen className={`h-3.5 w-3.5 shrink-0 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
             )}
-            <span className="font-serif text-xs leading-snug flex-1 min-w-0">{tc(book.title, bookTitleTranslations)}</span>
+            <span className="font-body text-xs leading-snug flex-1 min-w-0">{tc(book.title, bookTitleTranslations)}</span>
             {book.totalVerses != null && book.totalVerses > 0 && (
               <Badge variant={isSelected ? "default" : "secondary"} className="text-[9px] font-medium px-1 h-4 shrink-0">
                 {book.totalVerses}
@@ -956,7 +956,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                                 data-testid={`button-book-tree-${book.id}`}
                               >
                                 <BookOpen className="h-3 w-3 shrink-0" />
-                                <span className="font-serif text-[11px] leading-snug flex-1 min-w-0 truncate">{tc(book.title, bookTitleTranslations)}</span>
+                                <span className="font-body text-[11px] leading-snug flex-1 min-w-0 truncate">{tc(book.title, bookTitleTranslations)}</span>
                               </button>
                             ))}
                           </div>
@@ -981,7 +981,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                       data-testid={`button-book-tree-${book.id}`}
                     >
                       <BookOpen className="h-3 w-3 shrink-0" />
-                      <span className="font-serif text-[11px] leading-snug flex-1 min-w-0 truncate">{tc(book.title, bookTitleTranslations)}</span>
+                      <span className="font-body text-[11px] leading-snug flex-1 min-w-0 truncate">{tc(book.title, bookTitleTranslations)}</span>
                     </button>
                   ))}
                 </div>
@@ -1243,7 +1243,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
                     data-testid="sidebar-current-book"
                   >
                     <BookOpen className="h-3.5 w-3.5 shrink-0" />
-                    <span className="font-serif text-xs leading-snug flex-1 min-w-0 truncate">{tc(selectedBookObj.title, bookTitleTranslations)}</span>
+                    <span className="font-body text-xs leading-snug flex-1 min-w-0 truncate">{tc(selectedBookObj.title, bookTitleTranslations)}</span>
                     {selectedBookObj.totalVerses != null && selectedBookObj.totalVerses > 0 && (
                       <Badge variant="default" className="text-[9px] font-medium px-1 h-4 shrink-0">
                         {selectedBookObj.totalVerses}

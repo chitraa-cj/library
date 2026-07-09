@@ -86,6 +86,12 @@ export default {
         sans: ["var(--font-sans)"],
         serif: ["var(--font-serif)"],
         mono: ["var(--font-mono)"],
+        // Semantic roles from the "font usage" spec
+        "page-heading": ["var(--font-page-heading)"],
+        "section-heading": ["var(--font-section-heading)"],
+        body: ["var(--font-body)"],
+        "hindi-heading": ["var(--font-hindi-heading)"],
+        "hindi-reading": ["var(--font-hindi-reading)"],
       },
       keyframes: {
         "accordion-down": {

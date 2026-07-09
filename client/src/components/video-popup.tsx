@@ -40,7 +40,7 @@ export function VideoPopup({
       </DialogTrigger>
       <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden">
         <DialogHeader className="p-4 pb-0">
-          <DialogTitle className="font-serif">{title}</DialogTitle>
+          <DialogTitle className="font-body">{title}</DialogTitle>
           <DialogDescription className="sr-only">
             Watch the introduction video about Isha Upanishad
           </DialogDescription>

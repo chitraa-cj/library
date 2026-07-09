@@ -140,7 +140,7 @@ function PanelContent({
                 {t("selectedVerse")}
               </h3>
               <Card className="p-4">
-                <p className="font-serif text-sm leading-relaxed">
+                <p className="font-body text-sm leading-relaxed">
                   {selectedContent || t("noContentAvailable")}
                 </p>
               </Card>

@@ -407,10 +407,10 @@ function LanguageMeaningWidget() {
         <img src={homeMandala} alt="" aria-hidden="true" className="pointer-events-none absolute -top-8 -right-8 h-40 w-40 opacity-20" />
         <img src={homeMandala} alt="" aria-hidden="true" className="pointer-events-none absolute -bottom-10 -left-10 h-44 w-44 opacity-20" />
         <p className="relative text-[11px] uppercase tracking-[0.25em] text-primary-foreground/70 mb-5 text-center">Original Sanskrit</p>
-        <p className="relative font-serif text-xl sm:text-2xl leading-relaxed text-center">
+        <p className="relative font-body text-xl sm:text-2xl leading-relaxed text-center">
           ईशावास्यमिदं सर्वं यत्किञ्च जगत्यां जगत् ।<br />तेन त्यक्तेन भुञ्जीथा मा गृधः कस्यस्विद्धनम् ॥
         </p>
-        <p className="relative text-sm text-primary-foreground/70 text-center mt-4 font-serif">— ईशावास्य उपनिषद् १</p>
+        <p className="relative text-sm text-primary-foreground/70 text-center mt-4 font-body">— ईशावास्य उपनिषद् १</p>
       </div>
       {/* Right: translation widget */}
       <div className="bg-card p-6 sm:p-8">
@@ -550,7 +550,7 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
         <p className="text-sm text-muted-foreground text-center mt-1 mb-4">{card.desc}</p>
         <div className="space-y-1.5 overflow-y-auto max-h-72 pr-1">
           {items.map((it, i) => (
-            <button key={it.label + i} type="button" onClick={it.onClick} className="w-full flex items-center gap-2 rounded-lg bg-card border border-border/50 px-3 py-2.5 text-left text-sm font-serif text-foreground hover:border-primary/40 hover:text-primary transition-colors">
+            <button key={it.label + i} type="button" onClick={it.onClick} className="w-full flex items-center gap-2 rounded-lg bg-card border border-border/50 px-3 py-2.5 text-left text-sm font-body text-foreground hover:border-primary/40 hover:text-primary transition-colors">
               <Sparkles className="h-3.5 w-3.5 text-primary/40 shrink-0" /><span className="truncate">{it.label}</span>
             </button>
           ))}
@@ -746,17 +746,17 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
         />
         <div className="relative max-w-4xl mx-auto space-y-6">
           <img src="/favicon.png" alt="Advaita Vaaridhi" className="h-20 sm:h-24 w-auto object-contain mx-auto" />
-          <h1 className="font-serif text-4xl sm:text-6xl lg:text-[4.25rem] font-bold text-primary tracking-tight leading-[1.05]">
+          <h1 className="font-page-heading text-4xl sm:text-6xl lg:text-[4.25rem] font-bold text-primary tracking-tight leading-[1.05]">
             Advaita Vedanta Digital Library
           </h1>
-          <p className="font-serif text-lg sm:text-2xl text-primary/70 tracking-wide">
+          <p className="font-body text-lg sm:text-2xl text-primary/70 tracking-wide">
             ब्रह्म सत्यं जगन्मिथ्या जीवो ब्रह्मैव नापरः
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
-            <Button onClick={onBrowseLibrary} className="gap-2 h-12 px-7 text-base font-serif shadow-md" data-testid="button-hero-browse">
+            <Button onClick={onBrowseLibrary} className="gap-2 h-12 px-7 text-base font-body shadow-md" data-testid="button-hero-browse">
               <BookOpen className="h-5 w-5" /> Browse the Library
             </Button>
-            <Button variant="outline" onClick={onBrowseLibrary} className="gap-2 h-12 px-7 text-base font-serif border-primary/40 text-primary hover:bg-primary/5 bg-background" data-testid="button-hero-resume">
+            <Button variant="outline" onClick={onBrowseLibrary} className="gap-2 h-12 px-7 text-base font-body border-primary/40 text-primary hover:bg-primary/5 bg-background" data-testid="button-hero-resume">
               Resume Study <ChevronDown className="h-4 w-4" />
             </Button>
           </div>
@@ -785,7 +785,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
                 </div>
               ))}
             </div>
-            <p className="font-serif text-lg sm:text-xl text-foreground text-center border-y border-primary/15 py-3 mb-6">
+            <p className="font-body text-lg sm:text-xl text-foreground text-center border-y border-primary/15 py-3 mb-6">
               <span className="text-primary font-bold">Shastras</span> are the direct means to know the truth of existence.
             </p>
             <div className="space-y-3 text-sm sm:text-base text-muted-foreground leading-relaxed">
@@ -902,7 +902,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
                 </p>
               </div>
               <div className="rounded-xl border border-primary-foreground/25 bg-primary-foreground/[0.08] p-6 text-center">
-                <p className="font-serif text-lg sm:text-xl leading-relaxed">
+                <p className="font-body text-lg sm:text-xl leading-relaxed">
                   "Brahman is the Only Truth, the World is an appearance, and the Individual Self is none other than Brahman."
                 </p>
               </div>
@@ -942,13 +942,13 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
 
       {/* ===== CLOSING ===== */}
       <section className="text-center px-4 pb-16">
-        <blockquote className="font-serif text-xl sm:text-2xl text-primary/90 leading-relaxed mb-4">
+        <blockquote className="font-body text-xl sm:text-2xl text-primary/90 leading-relaxed mb-4">
           "Knowledge is that which liberates." <span className="text-foreground/70">— सा विद्या या विमुक्तये</span>
         </blockquote>
         <p className="text-sm text-muted-foreground max-w-xl mx-auto">
           We invite you to explore this ocean of knowledge. May the grace of Acharya Shankar guide your inquiry from the transient to the Eternal.
         </p>
-        <div className="mt-10 text-primary/25 text-xs tracking-widest font-serif">॥ सर्वं खल्विदं ब्रह्म ॥</div>
+        <div className="mt-10 text-primary/25 text-xs tracking-widest font-body">॥ सर्वं खल्विदं ब्रह्म ॥</div>
       </section>
     </div>
   );
@@ -1023,8 +1023,8 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
   return (
     <div className="flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 bg-background relative overflow-y-auto">
       <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
-        <div className="absolute top-16 left-12 text-[14rem] text-primary/[0.015] dark:text-primary/[0.02] font-serif">ॐ</div>
-        <div className="absolute bottom-24 right-16 text-[10rem] text-primary/[0.015] dark:text-primary/[0.02] font-serif rotate-12">ॐ</div>
+        <div className="absolute top-16 left-12 text-[14rem] text-primary/[0.015] dark:text-primary/[0.02] font-body">ॐ</div>
+        <div className="absolute bottom-24 right-16 text-[10rem] text-primary/[0.015] dark:text-primary/[0.02] font-body rotate-12">ॐ</div>
       </div>
 
       <div className="max-w-6xl w-full relative z-10 py-4 sm:py-8 space-y-6 sm:space-y-8">
@@ -1041,7 +1041,7 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
           </Button>
           <div className="flex items-center gap-3">
             <Library className="h-6 w-6 text-primary shrink-0" />
-            <h1 className="font-serif text-lg sm:text-2xl font-semibold text-primary" data-testid="heading-browse-library">
+            <h1 className="font-page-heading text-lg sm:text-2xl font-semibold text-primary" data-testid="heading-browse-library">
               {t("browseTheLibrary")}
             </h1>
             <div className="h-px flex-1 bg-gradient-to-r from-primary/50 via-primary/25 to-transparent"></div>
@@ -1138,7 +1138,7 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
                   </div>
 
                   <div className="px-5 sm:px-6 pt-4 pb-3">
-                    <h3 className="font-serif text-lg sm:text-xl font-bold text-foreground leading-tight">
+                    <h3 className="font-serif text-lg sm:text-xl font-bold text-primary leading-tight">
                       {getTranslatedLabel(cat, t)}
                     </h3>
 
@@ -1197,7 +1197,7 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
                         data-testid={`button-book-${book.slug}`}
                       >
                         <BookOpen className="h-3.5 w-3.5 shrink-0 text-primary/50" />
-                        <span className="text-sm font-serif text-foreground group-hover:text-primary transition-colors truncate">
+                        <span className="text-sm font-body text-foreground group-hover:text-primary transition-colors truncate">
                           {tc(book.title, bookTitleTranslations)}
                         </span>
                       </button>
@@ -1214,7 +1214,7 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
         </div>
 
         <div className="text-center pb-4">
-          <div className="text-primary/25 text-xs tracking-widest font-serif">
+          <div className="text-primary/25 text-xs tracking-widest font-body">
             ॥ सर्वं खल्विदं ब्रह्म ॥
           </div>
         </div>
@@ -1272,7 +1272,7 @@ function PrasthanaThriyaLandingPage({ categoryId, books, onSelectSubCategory }: 
     <div className="flex-1 overflow-y-auto bg-background p-6 sm:p-8 lg:p-10" data-testid="prasthana-thraya-landing">
       <div className="max-w-5xl mx-auto">
         <div className="mb-8">
-          <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
+          <h1 className="font-page-heading text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
             Prasthana Thraya
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-3 max-w-2xl leading-relaxed">
@@ -1301,7 +1301,7 @@ function PrasthanaThriyaLandingPage({ categoryId, books, onSelectSubCategory }: 
                   <h2 className="font-serif text-xl sm:text-2xl font-bold text-foreground tracking-tight leading-tight">
                     {card.title}
                   </h2>
-                  <p className="font-serif text-sm text-foreground/50 mt-0.5">
+                  <p className="font-body text-sm text-foreground/50 mt-0.5">
                     {card.devanagari}
                   </p>
 
@@ -1324,7 +1324,7 @@ function PrasthanaThriyaLandingPage({ categoryId, books, onSelectSubCategory }: 
         </div>
 
         <div className="mt-8 text-center">
-          <div className="text-primary/25 text-xs tracking-widest font-serif">
+          <div className="text-primary/25 text-xs tracking-widest font-body">
             ॥ सर्वं खल्विदं ब्रह्म ॥
           </div>
         </div>
@@ -1975,11 +1975,11 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
 
             <div className="flex items-start justify-between gap-3 sm:gap-4">
               <div className="min-w-0">
-                <h1 className="font-serif font-bold text-foreground leading-tight tracking-tight text-3xl sm:text-4xl lg:text-[2.75rem]">
+                <h1 className="font-page-heading font-bold text-foreground leading-tight tracking-tight text-3xl sm:text-4xl lg:text-[2.75rem]">
                   {landingData.iastTitle}
                 </h1>
                 {landingData.devanagariTitle && (
-                  <p className="font-serif text-foreground/60 mt-1 text-lg sm:text-xl">
+                  <p className="font-body text-foreground/60 mt-1 text-lg sm:text-xl">
                     {landingData.devanagariTitle}
                   </p>
                 )}
@@ -2062,7 +2062,7 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <span className="font-serif text-5xl text-primary/25">ॐ</span>
+                    <span className="font-body text-5xl text-primary/25">ॐ</span>
                   </div>
                 )}
               </div>
@@ -2102,7 +2102,7 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
                           {item.title}
                         </p>
                         <span className="w-9 h-9 rounded-md bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
-                          <span className="font-serif text-lg text-primary/80 leading-none">ॐ</span>
+                          <span className="font-body text-lg text-primary/80 leading-none">ॐ</span>
                         </span>
                       </div>
                       <p className="text-[13px] text-muted-foreground mt-2 leading-relaxed line-clamp-4">
@@ -2128,7 +2128,7 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
 
             {/* Closing verse */}
             <div className="mt-9 pt-5 border-t border-border/40">
-              <p className="text-center text-primary/60 text-sm tracking-[0.35em] font-serif">
+              <p className="text-center text-primary/60 text-sm tracking-[0.35em] font-body">
                 ॥ सर्वं खल्विदं ब्रह्म ॥
               </p>
             </div>
@@ -2543,7 +2543,7 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
         ) : (
           <div className={`bg-gradient-to-br from-primary/15 via-primary/5 to-transparent flex items-end px-4 pb-3 ${isList ? "h-full w-full min-h-[9rem]" : "w-full h-[clamp(7rem,13vw,10rem)]"}`}>
             {principalUp && (
-              <span className="font-serif text-4xl text-primary/25 leading-none">{principalUp.devanagari}</span>
+              <span className="font-body text-4xl text-primary/25 leading-none">{principalUp.devanagari}</span>
             )}
           </div>
         )}
@@ -2564,7 +2564,7 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
               {displayTitle}
             </h3>
             {principalUp && !isCompanion && (
-              <p className="text-xs text-primary/70 font-serif mt-0.5">{principalUp.devanagariLong}</p>
+              <p className="text-xs text-primary/70 font-body mt-0.5">{principalUp.devanagariLong}</p>
             )}
           </div>
           {isList && (
@@ -2671,7 +2671,7 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
             )}
             <div className="flex items-center gap-3">
               <Library className="h-6 w-6 text-primary shrink-0" />
-              <h1 className="font-serif text-xl sm:text-2xl font-semibold text-primary" data-testid="heading-upanishad">
+              <h1 className="font-page-heading text-xl sm:text-2xl font-semibold text-primary" data-testid="heading-upanishad">
                 Upanishad
               </h1>
               <div className="h-px flex-1 bg-gradient-to-r from-primary/50 via-primary/25 to-transparent"></div>
@@ -2826,7 +2826,7 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2.5 shrink-0">
             <ScrollText className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
-            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-primary leading-none">
+            <h1 className="font-page-heading text-2xl sm:text-3xl font-bold text-primary leading-none">
               {headerTitle}
             </h1>
           </div>
@@ -3034,11 +3034,11 @@ function GitaChapterGrid({ book, chapters, onSelectBook, onSelectChapter, onGoBa
 
           <div className="flex items-start justify-between gap-3 border-l-[3px] border-l-primary/60 pl-3 sm:pl-4 mb-5">
             <div className="min-w-0">
-              <h1 className="font-serif text-2xl sm:text-3xl font-bold text-foreground leading-tight tracking-tight">
+              <h1 className="font-page-heading text-2xl sm:text-3xl font-bold text-foreground leading-tight tracking-tight">
                 {landingData?.iastTitle ?? tc(book.title, bookTitleTranslations)}
               </h1>
               {landingData?.devanagariTitle && (
-                <p className="font-serif text-lg sm:text-xl text-foreground/70 mt-0.5">
+                <p className="font-body text-lg sm:text-xl text-foreground/70 mt-0.5">
                   {landingData.devanagariTitle}
                 </p>
               )}
@@ -3076,7 +3076,7 @@ function GitaChapterGrid({ book, chapters, onSelectBook, onSelectChapter, onGoBa
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="font-serif text-3xl sm:text-4xl text-foreground/70" data-testid={`gita-chapter-devanagari-${ch.num}`}>
+                        <span className="font-body text-3xl sm:text-4xl text-foreground/70" data-testid={`gita-chapter-devanagari-${ch.num}`}>
                           {ch.name}
                         </span>
                       </div>

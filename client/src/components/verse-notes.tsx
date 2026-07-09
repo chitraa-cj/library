@@ -122,7 +122,7 @@ export function VerseNotes({ verseId, pendingSelectedText, onSelectedTextConsume
           {noteSelectedText && (
             <div className="flex items-start gap-2 p-2 rounded-md bg-primary/5 border border-primary/15 text-xs">
               <Quote className="h-3 w-3 text-primary shrink-0 mt-0.5" />
-              <p className="font-serif text-muted-foreground line-clamp-3 italic" data-testid="text-selected-quote">{noteSelectedText}</p>
+              <p className="font-body text-muted-foreground line-clamp-3 italic" data-testid="text-selected-quote">{noteSelectedText}</p>
             </div>
           )}
           <Textarea
@@ -204,7 +204,7 @@ export function VerseNotes({ verseId, pendingSelectedText, onSelectedTextConsume
                   {note.selectedText && (
                     <div className="flex items-start gap-1.5 mb-2 text-[11px]">
                       <Quote className="h-3 w-3 text-primary/60 shrink-0 mt-0.5" />
-                      <p className="font-serif text-muted-foreground/80 italic line-clamp-2">{note.selectedText}</p>
+                      <p className="font-body text-muted-foreground/80 italic line-clamp-2">{note.selectedText}</p>
                     </div>
                   )}
                   <p className="text-sm whitespace-pre-wrap pr-14">{note.content}</p>
