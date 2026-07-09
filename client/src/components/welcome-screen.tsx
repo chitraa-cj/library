@@ -626,7 +626,7 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
   const renderCard = (card: Card) => {
     const items = ql ? card.items.filter(i => i.label.toLowerCase().includes(ql)) : card.items;
     return (
-      <div key={card.title + card.kicker} className="rounded-2xl bg-[#fdf6ee] dark:bg-primary/[0.06] dark:border dark:border-primary/15 p-5 flex flex-col min-w-0">
+      <div key={card.title + card.kicker} className="rounded-2xl bg-[#fdf6ee] dark:bg-[#17100a] dark:border dark:border-primary/20 shadow-sm p-5 flex flex-col min-w-0">
         <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground text-center font-semibold">{card.kicker}</p>
         <h3 className="font-serif text-2xl font-bold text-primary text-center mt-1">{card.title}</h3>
         <p className="text-center text-primary/40 text-sm">— ◇ —</p>
@@ -669,14 +669,12 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
           );
         })}
       </div>
-      <div className="relative overflow-hidden rounded-2xl bg-primary dark:bg-[#1e130c] dark:border dark:border-primary/15" data-testid="collections-panel">
-        {/* Subtle mandala texture across the whole panel */}
-        <img src={quickAccessMandala} alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-40 dark:opacity-20" />
+      <div className="relative overflow-hidden rounded-2xl bg-primary dark:bg-[#160d07] dark:border dark:border-primary/15" data-testid="collections-panel">
         {/* Adi Shankaracharya scene — shown complete, figure kept clear on the right (desktop) */}
         <img
           src={quickAccessScene}
           alt="Adi Shankaracharya"
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center lg:object-contain lg:object-right"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center lg:object-contain lg:object-right dark:opacity-90"
         />
         <div key={tab} className={`relative grid gap-4 sm:gap-5 p-4 sm:p-6 lg:pr-[42%] animate-in fade-in-0 duration-300 ${single ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"}`}>
           {cards.map(renderCard)}
@@ -1247,7 +1245,7 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
                   data-testid={`button-category-${cat.id}`}
                 >
                   {/* Product-image header on a warm parchment gradient */}
-                  <div className="relative h-40 sm:h-44 overflow-hidden bg-gradient-to-br from-[#E65100] via-[#f2822e] to-[#FFE598] dark:from-[#E65100] dark:via-[#a83c08] dark:to-[#3a2410] flex items-center justify-center">
+                  <div className="relative h-40 sm:h-44 overflow-hidden bg-gradient-to-br from-[#f6ead7] via-[#f3e2ca] to-[#efd9b8] dark:from-[#1c130d] dark:via-[#160f0a] dark:to-[#120b07] flex items-center justify-center">
                     {catImage ? (
                       <img
                         key={catImage}
