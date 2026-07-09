@@ -35,6 +35,7 @@ import homeMandalaDark from "@assets/mantra-mandala-dark.png";
 import quickAccessMandala from "@assets/quick-access-mandala.png";
 import quickAccessScene from "@assets/quick-access-scene.png";
 import visionMandala from "@assets/vision-mandala.png";
+import traditionMandala from "@assets/tradition-mandala.png";
 
 function BookProgressBar({ bookId, totalVerses, compact = false, alwaysShow = false, unitLabel }: { bookId: string; totalVerses: number | null | undefined; compact?: boolean; alwaysShow?: boolean; unitLabel?: string }) {
   const { data: summary } = useProgressSummary();
@@ -822,10 +823,10 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
     <div className="flex-1 flex flex-col bg-background relative overflow-y-auto">
       {/* ===== HERO ===== */}
       <section className="relative shrink-0 overflow-hidden bg-background px-4 pt-14 pb-12 sm:pt-16 sm:pb-14 text-center">
-        {/* subtle mandala watermark pattern — a touch stronger in dark so the hero keeps texture */}
+        {/* ornate mandala pattern filling the hero (Image #15) */}
         <div
-          className="absolute inset-0 pointer-events-none select-none opacity-[0.05] dark:opacity-[0.08]"
-          style={{ backgroundImage: `url(${mandalaImg})`, backgroundSize: "150px", backgroundRepeat: "repeat" }}
+          className="absolute inset-0 pointer-events-none select-none opacity-[0.08] dark:opacity-[0.14]"
+          style={{ backgroundImage: `url(${traditionMandala})`, backgroundSize: "300px auto", backgroundRepeat: "repeat" }}
         />
         {/* warm radial glow behind the title — kept prominent in dark mode so the hero background stays */}
         <div
@@ -950,13 +951,25 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
           {manifestations.map((m) => (
             <div key={m.title} className="relative overflow-hidden rounded-xl border border-border/60 bg-card p-5 shadow-sm">
-              <div className="flex flex-wrap gap-1.5 mb-3">
+              {/* Orange mandala corner (primary color masked by the mandala art) */}
+              <div
+                className="pointer-events-none absolute -top-12 -right-12 h-44 w-44 bg-primary opacity-[0.16] select-none"
+                style={{
+                  WebkitMaskImage: `url(${traditionMandala})`,
+                  maskImage: `url(${traditionMandala})`,
+                  WebkitMaskSize: "contain",
+                  maskSize: "contain",
+                  WebkitMaskRepeat: "no-repeat",
+                  maskRepeat: "no-repeat",
+                }}
+              />
+              <div className="relative flex flex-wrap gap-1.5 mb-3">
                 {m.tags.map((tag) => (
                   <span key={tag} className="rounded-full bg-primary/10 text-primary px-2 py-0.5 text-[9px] font-semibold tracking-wider">{tag}</span>
                 ))}
               </div>
-              <h3 className="font-serif text-lg font-bold text-foreground mb-1.5">{m.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{m.description}</p>
+              <h3 className="relative font-serif text-lg font-bold text-foreground mb-1.5">{m.title}</h3>
+              <p className="relative text-sm text-muted-foreground leading-relaxed">{m.description}</p>
             </div>
           ))}
         </div>
