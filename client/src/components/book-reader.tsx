@@ -4,7 +4,7 @@ import { cmsContentQueryOptions } from "@/lib/queryClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareText, StickyNote, List, Globe, Languages, Sparkles, Feather, ScrollText, Check, Lock, Copy, Share2, Bookmark, Volume2, VolumeX, ArrowLeftRight, Sun, Maximize2 } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareText, StickyNote, List, Globe, Languages, Sparkles, Feather, ScrollText, Check, Lock, Copy, Share2, Bookmark, Volume2, VolumeX, ArrowLeftRight, Sun, Maximize2, Minimize2, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoPopup } from "@/components/video-popup";
 import { WordTooltip } from "@/components/word-tooltip";
@@ -700,6 +700,21 @@ export function BookReader({
   const [expandedTOCAdhyays, setExpandedTOCAdhyays] = useState<Set<number>>(new Set());
   const [expandedTOCKhandas, setExpandedTOCKhandas] = useState<Set<string>>(new Set());
   const [showTeekas, setShowTeekas] = useState(false);
+  const commentaryRef = useRef<HTMLDivElement | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+  const toggleFullscreen = () => {
+    const el = commentaryRef.current;
+    if (!document.fullscreenElement) {
+      el?.requestFullscreen?.().catch(() => {});
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+    }
+  };
   const [selectedBhashyaAuthor, setSelectedBhashyaAuthor] = useState<string | null>(null);
   const [selectedTeekaAuthor, setSelectedTeekaAuthor] = useState<string | null>(null);
   // Remember the user's explicitly chosen commentary author across page/verse changes.
@@ -2291,7 +2306,7 @@ export function BookReader({
               </div>
 
               {hasCommentaryOptions && (
-                <div className="rounded-2xl border border-border/60 bg-card overflow-hidden" data-testid="commentary-section">
+                <div ref={commentaryRef} className={`rounded-2xl border border-border/60 bg-card overflow-hidden ${isFullscreen ? "h-screen overflow-y-auto" : ""}`} data-testid="commentary-section">
                   {/* Tab bar */}
                   <div className="flex items-center justify-between gap-2 border-b border-border/50 px-2 sm:px-3">
                     <div className="flex items-center">
@@ -2317,19 +2332,34 @@ export function BookReader({
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 py-1.5">
-                      <IconAction icon={Copy} label={t("hintCopyVerse")} onClick={copyMantra} />
-                      <IconAction icon={Share2} label={t("hintShareVerse")} onClick={shareMantra} />
-                      <BookmarkButton verseId={currentVerse.id} variant="action" hint={t("hintBookmark")} removeHint={t("hintRemoveBookmark")} />
+                      {!showTeekas && (
+                        <>
+                          <IconAction icon={Copy} label={t("hintCopyVerse")} onClick={copyMantra} />
+                          <IconAction icon={Share2} label={t("hintShareVerse")} onClick={shareMantra} />
+                          <BookmarkButton verseId={currentVerse.id} variant="action" hint={t("hintBookmark")} removeHint={t("hintRemoveBookmark")} />
+                        </>
+                      )}
+                      {showTeekas && (
+                        <button
+                          type="button"
+                          onClick={toggleFullscreen}
+                          className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-border/60 bg-card/70 text-xs font-medium text-muted-foreground transition-colors hover:text-primary hover:border-primary/40 hover:bg-primary/5"
+                          data-testid="button-fullscreen"
+                        >
+                          {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+                          <span className="hidden sm:inline">{isFullscreen ? "Exit Full Screen" : "Full Screen"}</span>
+                        </button>
+                      )}
                       {teekaAvailable && (
-                        <HintTooltip label={t("hintPairMode")}>
+                        <HintTooltip label={showTeekas ? "Exit pair mode" : t("hintPairMode")}>
                           <button
                             type="button"
                             onClick={() => setShowTeekas((v) => !v)}
                             className={`inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg border text-xs font-medium transition-colors ${showTeekas ? "border-primary/40 bg-primary/10 text-primary" : "border-border/60 bg-card/70 text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5"}`}
                             data-testid="button-pair-mode"
                           >
-                            <ArrowLeftRight className="h-3.5 w-3.5" />
-                            <span className="hidden sm:inline">Pair Mode</span>
+                            {showTeekas ? <X className="h-3.5 w-3.5" /> : <ArrowLeftRight className="h-3.5 w-3.5" />}
+                            <span className="hidden sm:inline">{showTeekas ? "Exit Pair Mode" : "Pair Mode"}</span>
                           </button>
                         </HintTooltip>
                       )}
@@ -2347,6 +2377,11 @@ export function BookReader({
                               <h3 className="font-serif text-base sm:text-lg font-bold text-foreground">
                                 {tc(selectedBhashyaAuthor || (verseBhashyaAuthors[0]?.authorName ?? ""), bookAuthorTranslations)} Bhāṣya
                               </h3>
+                              <span className="flex items-center gap-1">
+                                <IconAction icon={Copy} label={t("hintCopyVerse")} onClick={copyMantra} />
+                                <IconAction icon={Share2} label={t("hintShareVerse")} onClick={shareMantra} />
+                                <BookmarkButton verseId={currentVerse.id} variant="action" hint={t("hintBookmark")} removeHint={t("hintRemoveBookmark")} />
+                              </span>
                             </div>
                             <LanguagePopover languages={commentaryLanguageList} selected={selectedLanguages} onToggle={toggleLanguage} label={readingLangLabel} align="right" hint={t("hintLanguageSelector")} />
                           </div>
@@ -2364,9 +2399,16 @@ export function BookReader({
                         </div>
                         <div className="border-t border-border/40 pt-4 lg:border-t-0 lg:pt-0 lg:border-l lg:border-border/40 lg:pl-6" data-testid="teeka-content-card">
                           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                            <h3 className="font-serif text-base sm:text-lg font-bold text-foreground">
-                              {tc(selectedTeekaAuthor || (verseTeekaAuthors[0]?.authorName ?? ""), bookAuthorTranslations)} Ṭīkā
-                            </h3>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-serif text-base sm:text-lg font-bold text-foreground">
+                                {tc(selectedTeekaAuthor || (verseTeekaAuthors[0]?.authorName ?? ""), bookAuthorTranslations)} Ṭīkā
+                              </h3>
+                              <span className="flex items-center gap-1">
+                                <IconAction icon={Copy} label={t("hintCopyVerse")} onClick={copyMantra} />
+                                <IconAction icon={Share2} label={t("hintShareVerse")} onClick={shareMantra} />
+                                <BookmarkButton verseId={currentVerse.id} variant="action" hint={t("hintBookmark")} removeHint={t("hintRemoveBookmark")} />
+                              </span>
+                            </div>
                             {verseTeekaAuthors.length > 1 && (
                               <Select value={selectedTeekaAuthor || verseTeekaAuthors[0]?.authorName || ""} onValueChange={handleSelectTeekaAuthor}>
                                 <SelectTrigger className="h-8 w-auto min-w-[120px] max-w-[200px] text-[11px] border border-border/50 bg-card px-2 rounded-lg" data-testid="select-teeka-author">

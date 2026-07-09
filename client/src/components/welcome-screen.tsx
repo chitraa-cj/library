@@ -1182,7 +1182,7 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
                   data-testid={`button-category-${cat.id}`}
                 >
                   {/* Product-image header on a warm parchment gradient */}
-                  <div className="relative h-40 sm:h-44 overflow-hidden bg-gradient-to-br from-[#f6ead7] via-[#f3e2ca] to-[#efd9b8] dark:from-[#1c130d] dark:via-[#160f0a] dark:to-[#120b07] flex items-center justify-center">
+                  <div className="relative h-40 sm:h-44 overflow-hidden bg-gradient-to-br from-[#E65100] via-[#f2822e] to-[#FFE598] dark:from-[#E65100] dark:via-[#a83c08] dark:to-[#3a2410] flex items-center justify-center">
                     {catImage ? (
                       <img
                         key={catImage}
