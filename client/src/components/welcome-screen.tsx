@@ -1043,16 +1043,41 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
         </div>
       </section>
 
-      {/* ===== CLOSING ===== */}
-      <section className="text-center px-4 pb-16">
-        <blockquote className="font-body text-xl sm:text-2xl text-primary/90 leading-relaxed mb-4">
-          "Knowledge is that which liberates." <span className="text-foreground/70">— सा विद्या या विमुक्तये</span>
-        </blockquote>
-        <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-          We invite you to explore this ocean of knowledge. May the grace of Acharya Shankar guide your inquiry from the transient to the Eternal.
-        </p>
-        <div className="mt-10 text-primary/25 text-xs tracking-widest font-body">॥ सर्वं खल्विदं ब्रह्म ॥</div>
+      {/* ===== INVITATION ===== */}
+      <section className="relative overflow-hidden bg-[#fdf4ec] dark:bg-[#1a110b] px-4 py-16 sm:py-24 text-center">
+        <div
+          className="absolute inset-0 pointer-events-none select-none opacity-[0.05] dark:opacity-[0.08]"
+          style={{ backgroundImage: `url(${mandalaImg})`, backgroundSize: "150px", backgroundRepeat: "repeat" }}
+        />
+        <div className="relative max-w-2xl mx-auto">
+          <blockquote className="font-page-heading text-2xl sm:text-3xl lg:text-4xl text-primary leading-snug mb-5">
+            “Knowledge is that which liberates.” <span className="font-hindi-heading text-foreground/80">— सा विद्या या विमुक्तये</span>
+          </blockquote>
+          <p className="font-body text-sm sm:text-base text-muted-foreground max-w-xl mx-auto mb-8">
+            We invite you to explore this ocean of knowledge. May the grace of Acharya Shankar guide your inquiry from the transient to the Eternal.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Button onClick={onBrowseLibrary} className="h-12 px-8 text-base font-body shadow-md" data-testid="button-start-reading">Start Reading</Button>
+            <Button variant="outline" onClick={onBrowseLibrary} className="h-12 px-8 text-base font-body border-primary/40 text-primary hover:bg-primary/5 bg-transparent" data-testid="button-donate">Donate to Library</Button>
+          </div>
+        </div>
       </section>
+
+      {/* ===== FOOTER ===== */}
+      <footer className="bg-background px-4 py-12 sm:py-14 text-center border-t border-border/40">
+        <div className="flex items-center justify-center gap-2.5 mb-8">
+          <img src="/favicon.png" alt="" aria-hidden="true" className="h-9 w-9 object-contain" />
+          <span className="font-page-heading text-xl sm:text-2xl text-primary">Advaita Vaaridhi</span>
+        </div>
+        <nav className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 mb-8 text-sm">
+          <button type="button" className="text-muted-foreground hover:text-primary transition-colors">Privacy Policy</button>
+          <button type="button" className="text-muted-foreground hover:text-primary transition-colors">Terms of Service</button>
+          <button type="button" className="text-muted-foreground hover:text-primary transition-colors">Contact Us</button>
+          <button type="button" onClick={onBrowseLibrary} className="text-muted-foreground hover:text-primary transition-colors">Library</button>
+        </nav>
+        <p className="text-sm text-muted-foreground/70 mb-8">Managed by the Acharya Shankar Sanskritik Ekta Nyas, Madhya Pradesh.</p>
+        <div className="font-hindi-reading text-primary/35 text-base tracking-[0.3em]">॥ सर्वं खल्विदं ब्रह्म ॥</div>
+      </footer>
     </div>
   );
 }
