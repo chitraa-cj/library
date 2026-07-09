@@ -127,16 +127,28 @@ export default function AuthPage() {
     }
   };
 
-  const bg = isRegister ? signupBg : signinBg;
-
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-primary">
-      {/* Full-bleed scene: Adi Shankaracharya */}
-      <img src={bg} alt="Adi Shankaracharya" className="absolute inset-0 h-full w-full object-cover object-left" />
+      {/* Full-bleed scene: Adi Shankaracharya — both stacked, crossfaded on mode switch */}
+      <img
+        src={signinBg}
+        alt=""
+        aria-hidden={isRegister}
+        className="absolute inset-0 h-full w-full object-cover object-left transition-opacity duration-700 ease-in-out"
+        style={{ opacity: isRegister ? 0 : 1 }}
+      />
+      <img
+        src={signupBg}
+        alt="Adi Shankaracharya"
+        aria-hidden={!isRegister}
+        className="absolute inset-0 h-full w-full object-cover object-left transition-opacity duration-700 ease-in-out"
+        style={{ opacity: isRegister ? 1 : 0 }}
+      />
 
       {/* Quote overlay — top for sign up, bottom for sign in */}
       <div
-        className={`pointer-events-none absolute left-6 hidden max-w-sm xl:left-14 lg:block ${
+        key={mode}
+        className={`pointer-events-none absolute left-6 hidden max-w-sm xl:left-14 lg:block animate-in fade-in-0 duration-700 ${
           isRegister ? "top-14" : "bottom-14"
         }`}
       >

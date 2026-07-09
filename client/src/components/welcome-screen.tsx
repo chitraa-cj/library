@@ -346,7 +346,7 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
         <div className={colBox}>
           <div className={colHead}><BookOpen className="h-4 w-4 text-primary" /><span className="text-sm font-semibold">1. Text</span></div>
           <div className={searchBox}><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" /><input className={searchInput} placeholder="Search texts..." value={qBook} onChange={e => setQBook(e.target.value)} /></div>
-          <div className="flex-1 overflow-y-auto max-h-72 pr-1 space-y-0.5">
+          <div key={cat} className="flex-1 overflow-y-auto max-h-72 pr-1 space-y-0.5 animate-in fade-in-0 duration-300">
             {catBooks.filter(b => tc(b.title).toLowerCase().includes(qBook.toLowerCase())).map(b => (
               <button key={b.id} type="button" onClick={() => { setBookId(b.id); reset("book"); }} className={`${rowBase} ${bookId === b.id ? rowActive : rowIdle}`}>
                 <span className="truncate">{tc(b.title)}</span><ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" />
@@ -650,7 +650,7 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
           alt="Adi Shankaracharya"
           className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center lg:object-contain lg:object-right"
         />
-        <div className={`relative grid gap-4 sm:gap-5 p-4 sm:p-6 lg:pr-[42%] ${single ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"}`}>
+        <div key={tab} className={`relative grid gap-4 sm:gap-5 p-4 sm:p-6 lg:pr-[42%] animate-in fade-in-0 duration-300 ${single ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"}`}>
           {cards.map(renderCard)}
         </div>
       </div>
@@ -832,7 +832,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
       <section className="bg-[#fdf1ec] dark:bg-[#170c07] mt-14 sm:mt-20 py-14 sm:py-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           <div className="flex justify-center">
-            <img src={advaiticTreeImg} alt="The literary dimensions of Advaita — from Shruti to Bhakti" className="w-full max-w-sm object-contain" draggable={false} />
+            <img key={advaiticTreeImg} src={advaiticTreeImg} alt="The literary dimensions of Advaita — from Shruti to Bhakti" className="w-full max-w-sm object-contain animate-in fade-in-0 duration-500" draggable={false} />
           </div>
           <div>
             <p className="text-[11px] uppercase tracking-[0.25em] text-primary/70 font-semibold mb-3">Immerse in Non-Dual Nectar</p>
@@ -1180,9 +1180,10 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
                   <div className="relative h-40 sm:h-44 overflow-hidden bg-gradient-to-br from-[#f6ead7] via-[#f3e2ca] to-[#efd9b8] dark:from-[#1c130d] dark:via-[#160f0a] dark:to-[#120b07] flex items-center justify-center">
                     {catImage ? (
                       <img
+                        key={catImage}
                         src={catImage}
                         alt={getTranslatedLabel(cat, t)}
-                        className="h-full w-full object-contain p-3 mix-blend-multiply transition-transform duration-500 group-hover:scale-105"
+                        className="h-full w-full object-contain p-3 mix-blend-multiply transition-transform duration-500 group-hover:scale-105 animate-in fade-in-0"
                         draggable={false}
                       />
                     ) : null}
@@ -2797,10 +2798,11 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
                       <Icon className="h-5 w-5 text-primary/80" />
                     </div>
                     <img
+                      key={card.image}
                       src={card.image}
                       alt=""
                       aria-hidden="true"
-                      className="pointer-events-none -mt-2 -mr-2 h-28 sm:h-32 w-auto max-w-[55%] object-contain mix-blend-multiply dark:mix-blend-normal"
+                      className="pointer-events-none -mt-2 -mr-2 h-28 sm:h-32 w-auto max-w-[55%] object-contain mix-blend-multiply dark:mix-blend-normal animate-in fade-in-0 duration-500"
                       style={{
                         maskImage: "radial-gradient(ellipse 82% 82% at 68% 42%, #000 46%, transparent 84%)",
                         WebkitMaskImage: "radial-gradient(ellipse 82% 82% at 68% 42%, #000 46%, transparent 84%)",
