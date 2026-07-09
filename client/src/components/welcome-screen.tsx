@@ -272,7 +272,21 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
 
   const selectedChapter = chapters.find(c => c.number === adhyay);
   const khandaList = selectedChapter?.khandas || [];
-  const mantraNums = (khanda != null ? khandaList.find(k => k.number === khanda)?.verseNumbers : selectedChapter?.verseNumbers) || [];
+
+  // Show only the levels the selected grantha actually has:
+  //  - Adhyāya column only when there is more than one adhyāya (a single wrapping
+  //    adhyāya, e.g. Isha, collapses to Text › Mantra).
+  //  - Khaṇḍa/Pāda column only when some adhyāya is genuinely subdivided.
+  const showAdhyaya = chapters.length > 1;
+  const showKhanda = showAdhyaya && chapters.some(c => (c.khandas?.length ?? 0) > 1);
+  const allVerseNums = chapters.flatMap(c => c.verseNumbers);
+  const mantraNums = !showAdhyaya
+    ? allVerseNums
+    : showKhanda
+      ? (khanda != null ? (khandaList.find(k => k.number === khanda)?.verseNumbers ?? []) : [])
+      : (selectedChapter?.verseNumbers ?? []);
+  const visibleCols = 2 + (showAdhyaya ? 1 : 0) + (showKhanda ? 1 : 0);
+  const gridColsClass = visibleCols === 4 ? "lg:grid-cols-4" : visibleCols === 3 ? "lg:grid-cols-3" : "lg:grid-cols-2";
 
   const selectedBook = books.find(b => b.id === bookId);
   // Hierarchy terminology adapts to the selected text (or the active category):
@@ -288,6 +302,11 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
     if (isUpanishad) return { l1: "Adhyāya", l2: "Khaṇḍa", unit: "Mantra" };
     return { l1: "Chapter", l2: "Section", unit: "Verse" };
   })();
+  // Show the grantha's real chapter name (e.g. Gita's "Karma Yoga") when present,
+  // otherwise fall back to "<Adhyāya> N".
+  const adhyayaLabel = (c: { number: number; title?: string | null }) =>
+    c.title && !/^chapter\s*\d+$/i.test(c.title.trim()) ? c.title : `${hier.l1} ${c.number}`;
+  const num = { adhyaya: 2, khanda: showAdhyaya ? 3 : 2, mantra: visibleCols };
   const reset = (level: "cat" | "book" | "adhyay" | "khanda") => {
     if (level === "cat" || level === "book") { setAdhyay(null); setKhanda(null); setVerse(null); }
     if (level === "adhyay") { setKhanda(null); setVerse(null); }
@@ -341,7 +360,7 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
         })}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-4 border-t border-border/50 pt-4">
+      <div className={`grid grid-cols-1 sm:grid-cols-2 ${gridColsClass} gap-y-4 border-t border-border/50 pt-4`}>
         {/* Column 1: Books */}
         <div className={colBox}>
           <div className={colHead}><BookOpen className="h-4 w-4 text-primary" /><span className="text-sm font-semibold">1. Text</span></div>
@@ -356,39 +375,43 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
           </div>
         </div>
 
-        {/* Column 2: Adhyaya */}
-        <div className={colBox}>
-          <div className={colHead}><Layers className="h-4 w-4 text-primary" /><span className="text-sm font-semibold">2. {hier.l1}</span></div>
-          <div className={searchBox}><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" /><input className={searchInput} placeholder={`Search ${hier.l1.toLowerCase()}s...`} value={qAdh} onChange={e => setQAdh(e.target.value)} /></div>
-          <div className="flex-1 overflow-y-auto max-h-72 pr-1 space-y-0.5">
-            {chapters.filter(c => `${hier.l1} ${c.number} ${c.title || ""} adhyaya`.toLowerCase().includes(qAdh.toLowerCase())).map(c => (
-              <button key={c.number} type="button" onClick={() => { setAdhyay(c.number); reset("adhyay"); }} className={`${rowBase} ${adhyay === c.number ? rowActive : rowIdle}`}>
-                <span className="truncate">{hier.l1} {c.number}</span><ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" />
-              </button>
-            ))}
-            {bookId && chapters.length === 0 && <p className="text-xs text-muted-foreground/60 px-2.5 py-2">Loading…</p>}
-            {!bookId && <p className="text-xs text-muted-foreground/50 px-2.5 py-2">Select a text first.</p>}
+        {/* Column: Adhyaya — only when the grantha has more than one adhyāya */}
+        {showAdhyaya && (
+          <div className={colBox}>
+            <div className={colHead}><Layers className="h-4 w-4 text-primary" /><span className="text-sm font-semibold">{num.adhyaya}. {hier.l1}</span></div>
+            <div className={searchBox}><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" /><input className={searchInput} placeholder={`Search ${hier.l1.toLowerCase()}s...`} value={qAdh} onChange={e => setQAdh(e.target.value)} /></div>
+            <div key={bookId || "none"} className="flex-1 overflow-y-auto max-h-72 pr-1 space-y-0.5 animate-in fade-in-0 duration-300">
+              {chapters.filter(c => `${adhyayaLabel(c)} ${c.number} adhyaya`.toLowerCase().includes(qAdh.toLowerCase())).map(c => (
+                <button key={c.number} type="button" onClick={() => { setAdhyay(c.number); reset("adhyay"); }} className={`${rowBase} ${adhyay === c.number ? rowActive : rowIdle}`}>
+                  <span className="truncate">{adhyayaLabel(c)}</span><ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" />
+                </button>
+              ))}
+              {bookId && chapters.length === 0 && <p className="text-xs text-muted-foreground/60 px-2.5 py-2">Loading…</p>}
+              {!bookId && <p className="text-xs text-muted-foreground/50 px-2.5 py-2">Select a text first.</p>}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Column 3: Khanda */}
-        <div className={colBox}>
-          <div className={colHead}><Bookmark className="h-4 w-4 text-primary" /><span className="text-sm font-semibold">3. {hier.l2}</span></div>
-          <div className={searchBox}><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" /><input className={searchInput} placeholder={`Search ${hier.l2.toLowerCase()}s...`} value={qKh} onChange={e => setQKh(e.target.value)} /></div>
-          <div className="flex-1 overflow-y-auto max-h-72 pr-1 space-y-0.5">
-            {khandaList.filter(k => `${hier.l2} ${k.number} khanda`.toLowerCase().includes(qKh.toLowerCase())).map(k => (
-              <button key={k.number} type="button" onClick={() => { setKhanda(k.number); reset("khanda"); }} className={`${rowBase} ${khanda === k.number ? rowActive : rowIdle}`}>
-                <span className="truncate">{hier.l2} {k.number}</span><ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" />
-              </button>
-            ))}
-            {adhyay != null && khandaList.length === 0 && <p className="text-xs text-muted-foreground/50 px-2.5 py-2">No {hier.l2.toLowerCase()} divisions — pick a {hier.unit.toLowerCase()}.</p>}
-            {adhyay == null && <p className="text-xs text-muted-foreground/50 px-2.5 py-2">Select an {hier.l1.toLowerCase()}.</p>}
+        {/* Column: Khanda — only when an adhyāya is genuinely subdivided */}
+        {showKhanda && (
+          <div className={colBox}>
+            <div className={colHead}><Bookmark className="h-4 w-4 text-primary" /><span className="text-sm font-semibold">{num.khanda}. {hier.l2}</span></div>
+            <div className={searchBox}><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" /><input className={searchInput} placeholder={`Search ${hier.l2.toLowerCase()}s...`} value={qKh} onChange={e => setQKh(e.target.value)} /></div>
+            <div className="flex-1 overflow-y-auto max-h-72 pr-1 space-y-0.5">
+              {khandaList.filter(k => `${hier.l2} ${k.number} khanda`.toLowerCase().includes(qKh.toLowerCase())).map(k => (
+                <button key={k.number} type="button" onClick={() => { setKhanda(k.number); reset("khanda"); }} className={`${rowBase} ${khanda === k.number ? rowActive : rowIdle}`}>
+                  <span className="truncate">{hier.l2} {k.number}</span><ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" />
+                </button>
+              ))}
+              {adhyay != null && khandaList.length === 0 && <p className="text-xs text-muted-foreground/50 px-2.5 py-2">No {hier.l2.toLowerCase()} divisions — pick a {hier.unit.toLowerCase()}.</p>}
+              {adhyay == null && <p className="text-xs text-muted-foreground/50 px-2.5 py-2">Select an {hier.l1.toLowerCase()}.</p>}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Column 4: Mantra */}
+        {/* Column: Mantra / Shloka / Sūtra */}
         <div className={colBox}>
-          <div className={colHead}><List className="h-4 w-4 text-primary" /><span className="text-sm font-semibold">4. {hier.unit}</span></div>
+          <div className={colHead}><List className="h-4 w-4 text-primary" /><span className="text-sm font-semibold">{num.mantra}. {hier.unit}</span></div>
           <div className={searchBox}><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" /><input className={searchInput} placeholder={`Search ${hier.unit.toLowerCase()}s...`} value={qMan} onChange={e => setQMan(e.target.value)} /></div>
           <div className="flex-1 overflow-y-auto max-h-72 pr-1 space-y-0.5">
             {mantraNums.filter((_, i) => `${hier.unit} ${i + 1} mantra`.toLowerCase().includes(qMan.toLowerCase())).map((vn, i) => (
@@ -396,7 +419,11 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
                 <span className="truncate">{hier.unit} {i + 1}</span>
               </button>
             ))}
-            {adhyay != null && mantraNums.length === 0 && <p className="text-xs text-muted-foreground/50 px-2.5 py-2">Select an {hier.l1.toLowerCase()}.</p>}
+            {mantraNums.length === 0 && (
+              <p className="text-xs text-muted-foreground/50 px-2.5 py-2">
+                {!bookId ? "Select a text first." : showKhanda ? `Select a ${hier.l2.toLowerCase()}.` : showAdhyaya ? `Select an ${hier.l1.toLowerCase()}.` : "No entries."}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -405,7 +432,7 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
       <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-muted/40 border border-border/50 px-3 py-2.5">
         <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"><Library className="h-3.5 w-3.5" /> Your Selection</span>
         {selectedBook && <span className="inline-flex items-center gap-1 rounded-md bg-background border border-border/60 px-2 py-1 text-xs text-foreground/80">{tc(selectedBook.title)}</span>}
-        {adhyay != null && <><ChevronRight className="h-3 w-3 text-muted-foreground/50" /><span className="rounded-md bg-background border border-border/60 px-2 py-1 text-xs text-foreground/80">{hier.l1} {adhyay}</span></>}
+        {adhyay != null && selectedChapter && <><ChevronRight className="h-3 w-3 text-muted-foreground/50" /><span className="rounded-md bg-background border border-border/60 px-2 py-1 text-xs text-foreground/80">{adhyayaLabel(selectedChapter)}</span></>}
         {khanda != null && <><ChevronRight className="h-3 w-3 text-muted-foreground/50" /><span className="rounded-md bg-background border border-border/60 px-2 py-1 text-xs text-foreground/80">{hier.l2} {khanda}</span></>}
         {verse != null && <><ChevronRight className="h-3 w-3 text-muted-foreground/50" /><span className="rounded-md bg-background border border-border/60 px-2 py-1 text-xs text-foreground/80">{hier.unit} {mantraNums.indexOf(verse) + 1}</span></>}
         <Button
