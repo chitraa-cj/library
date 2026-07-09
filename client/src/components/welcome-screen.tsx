@@ -11,6 +11,7 @@ import { useTranslation } from "@/lib/translations";
 import { translateContent, bookTitleTranslations, bookAuthorTranslations, bookCategoryTranslations, bookDescriptionTranslations } from "@/lib/content-translations";
 import { useProgressSummary } from "@/hooks/use-progress";
 import { resolveBookCoverImage } from "@/components/book-landing-cover-hero";
+import { useTheme } from "@/components/theme-provider";
 
 import catImgPrasthana from "@assets/cat-prasthana-thraya.png";
 import catImgPrakarana from "@assets/cat-prakarana-granthas.png";
@@ -22,6 +23,15 @@ import homeAdvaiticTree from "@assets/home-advaitic-tree.png";
 import homeCollectionsShankara from "@assets/home-collections-shankara.jpg";
 import homeMandala from "@assets/mantra-mandala.png";
 import homeAdiShankara from "@assets/home-adi-shankara-figure.png";
+
+// Dark-mode variants (used on the home, browse, and Upanishad pages)
+import catImgPrasthanaDark from "@assets/cat-prasthana-thraya-dark.png";
+import catImgPrakaranaDark from "@assets/cat-prakarana-granthas-dark.png";
+import catImgShlokasDark from "@assets/cat-advaita-traditions-dark.png";
+import upanishadPrincipalDark from "@assets/upanishad-principal-dark.png";
+import upanishadAdditionalDark from "@assets/upanishad-additional-dark.png";
+import homeAdvaiticTreeDark from "@assets/home-advaitic-tree-dark.png";
+import homeMandalaDark from "@assets/mantra-mandala-dark.png";
 
 function BookProgressBar({ bookId, totalVerses, compact = false, alwaysShow = false, unitLabel }: { bookId: string; totalVerses: number | null | undefined; compact?: boolean; alwaysShow?: boolean; unitLabel?: string }) {
   const { data: summary } = useProgressSummary();
@@ -56,6 +66,12 @@ const categoryImages: Record<string, string> = {
   "prasthana-thraya": catImgPrasthana,
   "prakarana-granthas": catImgPrakarana,
   "other-texts": catImgShlokas,
+};
+
+const categoryImagesDark: Record<string, string> = {
+  "prasthana-thraya": catImgPrasthanaDark,
+  "prakarana-granthas": catImgPrakaranaDark,
+  "other-texts": catImgShlokasDark,
 };
 
 const categoryIcons: Record<string, typeof ScrollText> = {
@@ -602,6 +618,9 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
 
 export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChapter, onBrowseLibrary, onSelectSubCategory, languageCode }: WelcomeScreenProps) {
   const { t } = useTranslation(languageCode ?? null);
+  const { theme } = useTheme();
+  const mandalaImg = theme === "dark" ? homeMandalaDark : homeMandala;
+  const advaiticTreeImg = theme === "dark" ? homeAdvaiticTreeDark : homeAdvaiticTree;
 
   const upanishadBooks = useMemo(
     () => books.filter(b => b.category === "Upanishad" || b.category === "Upanishad Bhashya"),
@@ -737,7 +756,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
         {/* subtle mandala watermark pattern */}
         <div
           className="absolute inset-0 pointer-events-none select-none opacity-[0.05]"
-          style={{ backgroundImage: `url(${homeMandala})`, backgroundSize: "150px", backgroundRepeat: "repeat" }}
+          style={{ backgroundImage: `url(${mandalaImg})`, backgroundSize: "150px", backgroundRepeat: "repeat" }}
         />
         {/* warm radial glow behind the title */}
         <div
@@ -771,7 +790,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
       <section className="bg-[#fdf1ec] dark:bg-primary/[0.04] mt-14 sm:mt-20 py-14 sm:py-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           <div className="flex justify-center">
-            <img src={homeAdvaiticTree} alt="The literary dimensions of Advaita — from Shruti to Bhakti" className="w-full max-w-sm object-contain" draggable={false} />
+            <img src={advaiticTreeImg} alt="The literary dimensions of Advaita — from Shruti to Bhakti" className="w-full max-w-sm object-contain" draggable={false} />
           </div>
           <div>
             <p className="text-[11px] uppercase tracking-[0.25em] text-primary/70 font-semibold mb-3">Immerse in Non-Dual Nectar</p>
@@ -892,7 +911,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
       {/* ===== OUR VISION: SANSKRITIK EKTA ===== */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-8 sm:p-12">
-          <img src={homeMandala} alt="" aria-hidden="true" className="pointer-events-none absolute -top-10 -right-10 h-56 w-56 opacity-15" />
+          <img src={mandalaImg} alt="" aria-hidden="true" className="pointer-events-none absolute -top-10 -right-10 h-56 w-56 opacity-15" />
           <div className="relative grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-8 lg:gap-10 items-end">
             <div className="space-y-6">
               <div>
@@ -995,6 +1014,7 @@ interface LibraryCatalogProps {
 
 export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSelectSubCategory, onGoBack, languageCode }: LibraryCatalogProps) {
   const { t } = useTranslation(languageCode ?? null);
+  const { theme } = useTheme();
   const welcomeLang = languageCode || "en";
   const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, welcomeLang);
   const [showGuidance, setShowGuidance] = useState(true);
@@ -1104,7 +1124,7 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5" data-testid="catalog-tree">
           {CATALOG_TREE.map(cat => {
             const catBooks = getBooksForCategory(books, cat);
-            const catImage = categoryImages[cat.id];
+            const catImage = (theme === "dark" ? categoryImagesDark : categoryImages)[cat.id];
 
             return (
               <Card
@@ -2347,6 +2367,7 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
   languageCode?: string | null;
   onCoverBookChange?: (info: { bookId: string; title: string } | null) => void;
 }) {
+  const { theme } = useTheme();
   const [selectedUpanishadSlug, setSelectedUpanishadSlug] = useState<string | null>(null);
   /** null = two category boxes; principal | other = show that section's grid */
   const [categoryView, setCategoryView] = useState<"principal" | "other" | null>(null);
@@ -2630,7 +2651,7 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
     const collectionCards = [
       {
         key: "principal" as const,
-        image: upanishadPrincipalImg,
+        image: theme === "dark" ? upanishadPrincipalDark : upanishadPrincipalImg,
         icon: BookOpen,
         title: "Principal Upanishads",
         description: "The ten classical Upanishads traditionally studied in Vedanta.",
@@ -2640,7 +2661,7 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
       },
       {
         key: "other" as const,
-        image: upanishadAdditionalImg,
+        image: theme === "dark" ? upanishadAdditionalDark : upanishadAdditionalImg,
         icon: FileText,
         title: "Additional Upanishads",
         description: "Specialized Upanishadic literature with Advaita bhāṣyas & commentaries.",
