@@ -1,6 +1,7 @@
 import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { registerAcharyaRoutes } from "./acharyas";
 import { STRAPI_REPLACES_LOCAL } from "./strapi-merge-policy";
 import { testStrapiConnection, STRAPI_URL, invalidateBookCache, invalidateAllStrapiCaches, strapiGetVerseById } from "./strapi";
 import {
@@ -52,6 +53,9 @@ export async function registerRoutes(
   app.get("/api/health", (_req, res) => {
     res.status(200).send("OK");
   });
+
+  // Read-only acharya (guru-parampara) profiles, sourced from the CMS database.
+  registerAcharyaRoutes(app);
 
   app.get("/api/books", async (req, res) => {
     try {

@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider, useTheme } from "@/components/theme-provider";
 import { CATALOG_TREE, findBookPath } from "@/components/app-sidebar";
 import { WelcomeScreen, LibraryCatalogView, CategoryDetailView, SubCategoryDetailView } from "@/components/welcome-screen";
+import { AcharyasPage } from "@/components/acharyas-page";
 import { BookReader } from "@/components/book-reader";
 import { TranslationPanel } from "@/components/translation-panel";
 import { ReaderNavSidebar, useBookChapters } from "@/components/reader-nav-sidebar";
@@ -92,6 +93,9 @@ function HomePageContent() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string | null>(null);
   const [showLibraryCatalog, setShowLibraryCatalog] = useState(false);
+  // Acharyas (guru-parampara) view: showAcharyas toggles the page; slug = detail.
+  const [showAcharyas, setShowAcharyas] = useState(false);
+  const [selectedAcharyaSlug, setSelectedAcharyaSlug] = useState<string | null>(null);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(() => {
     return typeof window !== 'undefined' && window.innerWidth < 1024;
   });
@@ -881,6 +885,16 @@ function HomePageContent() {
                 }}
                 languageCode={selectedCommentaryLanguage}
               />
+            ) : showAcharyas ? (
+              <AcharyasPage
+                slug={selectedAcharyaSlug}
+                onSelectAcharya={(slug) => setSelectedAcharyaSlug(slug)}
+                onBack={() => {
+                  if (selectedAcharyaSlug) setSelectedAcharyaSlug(null);
+                  else setShowAcharyas(false);
+                }}
+                languageCode={selectedCommentaryLanguage}
+              />
             ) : showLibraryCatalog ? (
               <LibraryCatalogView
                 books={allBooks || []}
@@ -905,6 +919,10 @@ function HomePageContent() {
                 onSelectSubCategory={(categoryId, subCategoryId) => {
                   setSelectedCategoryId(categoryId);
                   setSelectedSubCategoryId(subCategoryId);
+                }}
+                onOpenAcharya={(slug) => {
+                  setSelectedAcharyaSlug(slug ?? null);
+                  setShowAcharyas(true);
                 }}
                 languageCode={selectedCommentaryLanguage}
               />

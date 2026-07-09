@@ -100,6 +100,7 @@ interface WelcomeScreenProps {
   onSelectChapter?: (bookId: string, adhyayNumber: number) => void;
   onBrowseLibrary: () => void;
   onSelectSubCategory?: (categoryId: string, subCategoryId: string) => void;
+  onOpenAcharya?: (slug?: string) => void;
   languageCode?: string | null;
 }
 
@@ -462,16 +463,22 @@ function LanguageMeaningWidget() {
 }
 
 /** "Quick Access to Library Collections" — tabbed collections with per-category content. */
-function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary, onSelectSubCategory, languageCode }: {
+function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary, onSelectSubCategory, onOpenAcharya, languageCode }: {
   books: Book[];
   onSelectBook: (bookId: string) => void;
   onSelectChapter?: (bookId: string, adhyayNumber: number) => void;
   onBrowseLibrary: () => void;
   onSelectSubCategory?: (categoryId: string, subCategoryId: string) => void;
+  onOpenAcharya?: (slug?: string) => void;
   languageCode?: string | null;
 }) {
   const [tab, setTab] = useState("Upanishads");
   const [q, setQ] = useState("");
+
+  // Acharyas come from the read-only /api/acharyas endpoint (guru-parampara).
+  const { data: acharyas } = useQuery<{ slug: string; name_iast: string; name_devanagari: string; name_display: string | null }[]>({
+    queryKey: ["/api/acharyas"],
+  });
 
   const findBySlug = (slugs: string[]) => {
     for (const s of slugs) { const b = books.find(x => x.slug?.toLowerCase() === s); if (b) return b; }
@@ -490,35 +497,58 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
   // Open a specific Upanishad by its principal entry (reliable slug match), else the collection.
   const openPrincipal = (up: PrincipalUpanishad) => { const b = findBookForPrincipal(up, books); return b ? () => onSelectBook(b.id) : openUps; };
   // Open a Upanishad/text by fuzzy name match, else fall back.
-  const openNamed = (name: string, fallback: () => void) => () => {
-    const norm = (s?: string | null) => (s || "").toLowerCase().replace(/upani[sṣ]ad|upanishad|upanishat|opanishad|opanisad|opaniṣad/g, "").replace(/[^a-z0-9]/g, "");
+  const norm = (s?: string | null) => (s || "").toLowerCase().replace(/upani[sṣ]ad|upanishad|upanishat|opanishad|opanisad|opaniṣad/g, "").replace(/[^a-z0-9]/g, "");
+  const findBookByName = (name: string) => {
     const key = norm(name);
-    const b = key ? books.find(x => { const tt = norm(x.title); const sl = norm(x.slug); return (tt && (tt.includes(key) || key.includes(tt))) || (sl && (sl.includes(key) || key.includes(sl))); }) : null;
+    return key ? books.find(x => { const tt = norm(x.title); const sl = norm(x.slug); return (tt && (tt.includes(key) || key.includes(tt))) || (sl && (sl.includes(key) || key.includes(sl))); }) : undefined;
+  };
+  const openNamed = (name: string, fallback: () => void) => () => {
+    const b = findBookByName(name);
     b ? onSelectBook(b.id) : fallback();
   };
-
   type Item = { label: string; onClick: () => void };
+  // Only surface texts that actually exist in the library ("show only existing texts").
+  const curated = (name: string, slugs?: string[]): Item | null => {
+    const b = (slugs && findBySlug(slugs)) || findBookByName(name);
+    return b ? { label: b.title, onClick: () => onSelectBook(b.id) } : null;
+  };
+  const catItems = (cats: string[]): Item[] =>
+    books
+      .filter(b => cats.includes(b.category || ""))
+      .sort((a, b) => (a.title || "").localeCompare(b.title || ""))
+      .map(b => ({ label: b.title, onClick: () => onSelectBook(b.id) }));
+  const acharyaItems: Item[] = (acharyas || []).map(a => ({
+    label: a.name_display || a.name_iast || a.name_devanagari || a.slug,
+    onClick: () => (onOpenAcharya ? onOpenAcharya(a.slug) : onBrowseLibrary()),
+  }));
+
   type Card = { kicker: string; title: string; desc: string; items: Item[] };
+  const upItems = catItems(["Upanishad", "Upanishad Bhashya"]);
+  const upHalf = Math.ceil(upItems.length / 2);
+  const prakaranaItems = catItems(["Prakarana Grantha"]);
+  const bhaktiItems = catItems(["Bhakthi Grantha", "Bhakti Grantha", "Bhakthi Stotra"]);
   const TABS: Record<string, Card[]> = {
     Popular: [
       { kicker: "Most Read", title: "Popular Texts", desc: "Frequently studied scriptures across the library.", items: [
-        { label: "Bhagavad Gita", onClick: openGita },
-        { label: "Īśāvāsyopaniṣad", onClick: openNamed("ishavasya isha", openUps) },
-        { label: "Kenopaniṣad", onClick: openNamed("kena", openUps) },
-        { label: "Brahma Sutras", onClick: openBrahma },
-        { label: "Vivekachudamani", onClick: openBook(["vivekachudamani", "viveka-chudamani"], openPrakarana) },
-      ] },
+        gitaBook ? { label: gitaBook.title, onClick: openGita } : null,
+        curated("ishavasya isha"),
+        curated("kena"),
+        brahmaBook ? { label: brahmaBook.title, onClick: openBrahma } : null,
+        curated("vivekachudamani", ["vivekachudamani", "viveka-chudamani"]),
+      ].filter(Boolean) as Item[] },
       { kicker: "Begin Here", title: "For Beginners", desc: "Gentle entry points into Advaita Vedanta.", items: [
-        { label: "Tattva Bodha", onClick: openBook(["tattva-bodha", "tattvabodha"], openPrakarana) },
-        { label: "Atma Bodha", onClick: openBook(["atma-bodha", "atmabodha"], openPrakarana) },
-        { label: "Īśāvāsyopaniṣad", onClick: openNamed("ishavasya isha", openUps) },
-        { label: "Bhaja Govindam", onClick: onBrowseLibrary },
-      ] },
+        curated("tattva bodha", ["tattva-bodha", "tattvabodha"]),
+        curated("atma bodha", ["atma-bodha", "atmabodha"]),
+        curated("ishavasya isha"),
+        curated("drig drishya vivek", ["drig-drishya-vivek", "drig-drishya-viveka"]),
+      ].filter(Boolean) as Item[] },
     ],
-    Upanishads: [
-      { kicker: "Foundational Collection", title: "Principal Upanishads", desc: "The ten classical Upanishads that form the foundation of Vedantic inquiry.", items: PRINCIPAL_UPANISHADS.map(u => ({ label: u.iastFull, onClick: openPrincipal(u) })) },
-      { kicker: "Extended Collection", title: "Other Upanishads", desc: "Additional Upanishads with profound teachings and Advaita commentaries.", items: ["Advaitopanishad", "Atharvashira Upanishad", "Ekaksharaopanoshad", "Amritha Nadopanishad", "Atharvashika Upanishad", "Kaivalya Upanishad", "Kalagnirudropanishat", "Aatmopanishad", "Adhvaithabhavanopanishad"].map(n => ({ label: n, onClick: openNamed(n, openUps) })) },
-    ],
+    Upanishads: upItems.length > 12
+      ? [
+          { kicker: "Śruti Prasthāna", title: "Upanishads", desc: "Upanishads with Advaita bhāṣyas & commentaries.", items: upItems.slice(0, upHalf) },
+          { kicker: "Continued", title: "Upanishads", desc: "More Upanishadic texts in the library.", items: upItems.slice(upHalf) },
+        ]
+      : [{ kicker: "Śruti Prasthāna", title: "Upanishads", desc: "Upanishads with Advaita bhāṣyas & commentaries.", items: upItems }],
     "Bhagavad Gita": [
       { kicker: "Chapters 1–9", title: "Bhagavad Gita", desc: "The eternal dialogue of Krishna and Arjuna — first half.", items: GITA_CHAPTERS.slice(0, 9).map(c => ({ label: `${c.num}. ${c.transliteration}`, onClick: openGitaCh(c.num) })) },
       { kicker: "Chapters 10–18", title: "Bhagavad Gita", desc: "From the Divine Glories to Liberation — second half.", items: GITA_CHAPTERS.slice(9).map(c => ({ label: `${c.num}. ${c.transliteration}`, onClick: openGitaCh(c.num) })) },
@@ -531,27 +561,20 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
         { label: "4. Phala Adhyāya", onClick: openBrahmaCh(4) },
       ] },
     ],
-    "Prakarana Granthas": [
-      { kicker: "Introductory Treatises", title: "Prakarana Granthas", desc: "Foundational texts by Acharyas explaining the core tenets of Advaita.", items: [
-        { label: "Vivekachudamani", onClick: openBook(["vivekachudamani", "viveka-chudamani"], openPrakarana) },
-        { label: "Upadesha Sahasri", onClick: openBook(["upadesha-sahasri", "upadesa-sahasri"], openPrakarana) },
-        { label: "Atma Bodha", onClick: openBook(["atma-bodha", "atmabodha"], openPrakarana) },
-        { label: "Tattva Bodha", onClick: openBook(["tattva-bodha", "tattvabodha"], openPrakarana) },
-        { label: "Panchikaranam", onClick: openBook(["panchikaranam", "panchikarana"], openPrakarana) },
-        { label: "Drig Drishya Viveka", onClick: openBook(["drig-drishya-viveka", "drk-drsya-viveka"], openPrakarana) },
-      ] },
-    ],
+    "Prakarana Granthas": prakaranaItems.length > 12
+      ? [
+          { kicker: "Introductory Treatises", title: "Prakarana Granthas", desc: "Foundational texts by Acharyas explaining the core tenets of Advaita.", items: prakaranaItems.slice(0, Math.ceil(prakaranaItems.length / 2)) },
+          { kicker: "Continued", title: "Prakarana Granthas", desc: "More independent Advaita works.", items: prakaranaItems.slice(Math.ceil(prakaranaItems.length / 2)) },
+        ]
+      : [{ kicker: "Introductory Treatises", title: "Prakarana Granthas", desc: "Foundational texts by Acharyas explaining the core tenets of Advaita.", items: prakaranaItems }],
     Bhakti: [
-      { kicker: "Devotional Hymns", title: "Bhakti Stotras", desc: "Hymns of Shankaracharya and the devotional tradition of Advaita.", items: ["Bhaja Govindam", "Soundarya Lahari", "Shivananda Lahari", "Kanakadhara Stotram", "Dakshinamurthy Stotram", "Nirvana Shatakam"].map(n => ({ label: n, onClick: onBrowseLibrary })) },
+      { kicker: "Devotional Hymns", title: "Bhakti Stotras", desc: "Hymns of Shankaracharya and the devotional tradition of Advaita.", items: bhaktiItems },
     ],
     Acharyas: [
-      { kicker: "The Lineage", title: "Acharyas", desc: "The great masters who carried the Advaita vision forward.", items: ["Adi Shankaracharya", "Sureshvaracharya", "Padmapadacharya", "Hastamalakacharya", "Totakacharya", "Vidyaranya Swami", "Vachaspati Misra", "Appayya Dikshita"].map(n => ({ label: n, onClick: onBrowseLibrary })) },
-    ],
-    "Regional Traditions": [
-      { kicker: "Across Bhārat", title: "Regional Luminaries", desc: "Peethams, mathas, and masters spread across the land.", items: ["Sringeri Peetham", "Kanchi Peetham", "Uttaradi Math", "Nirmohi Akhada", "Sri Bellamkonda Rama Raya", "Shrimad Bodhendra Saraswati"].map(n => ({ label: n, onClick: onBrowseLibrary })) },
+      { kicker: "The Lineage", title: "Acharyas", desc: "The guru-parampara — tap a master to read their profile and works.", items: acharyaItems },
     ],
   };
-  const TAB_KEYS = ["Popular", "Upanishads", "Bhagavad Gita", "Brahma Sutras", "Prakarana Granthas", "Bhakti", "Acharyas", "Regional Traditions"];
+  const TAB_KEYS = ["Popular", "Upanishads", "Bhagavad Gita", "Brahma Sutras", "Prakarana Granthas", "Bhakti", "Acharyas"];
   const cards = TABS[tab] || TABS.Upanishads;
   const single = cards.length === 1;
   const ql = q.trim().toLowerCase();
@@ -616,7 +639,7 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
   );
 }
 
-export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChapter, onBrowseLibrary, onSelectSubCategory, languageCode }: WelcomeScreenProps) {
+export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChapter, onBrowseLibrary, onSelectSubCategory, onOpenAcharya, languageCode }: WelcomeScreenProps) {
   const { t } = useTranslation(languageCode ?? null);
   const { theme } = useTheme();
   const mandalaImg = theme === "dark" ? homeMandalaDark : homeMandala;
@@ -835,7 +858,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
       </section>
 
       {/* ===== QUICK ACCESS TO LIBRARY COLLECTIONS ===== */}
-      <HomeCollections books={books} onSelectBook={onSelectBook} onSelectChapter={onSelectChapter} onBrowseLibrary={onBrowseLibrary} onSelectSubCategory={onSelectSubCategory} languageCode={languageCode} />
+      <HomeCollections books={books} onSelectBook={onSelectBook} onSelectChapter={onSelectChapter} onBrowseLibrary={onBrowseLibrary} onSelectSubCategory={onSelectSubCategory} onOpenAcharya={onOpenAcharya} languageCode={languageCode} />
 
       {/* ===== WISDOM WITHOUT LANGUAGE BARRIERS ===== */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
