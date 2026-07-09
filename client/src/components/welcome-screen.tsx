@@ -823,9 +823,9 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
     <div className="flex-1 flex flex-col bg-background relative overflow-y-auto">
       {/* ===== HERO ===== */}
       <section className="relative shrink-0 overflow-hidden bg-background px-4 pt-14 pb-12 sm:pt-16 sm:pb-14 text-center">
-        {/* Home hero background art (theme-specific) */}
+        {/* Home hero background art (theme-specific) — kept as a faint watermark */}
         <div
-          className="absolute inset-0 pointer-events-none select-none"
+          className="absolute inset-0 pointer-events-none select-none opacity-[0.10] dark:opacity-[0.16]"
           style={{
             backgroundImage: `url(${theme === "dark" ? heroBgDark : heroBgLight})`,
             backgroundSize: "cover",
