@@ -1258,7 +1258,7 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
                         key={catImage}
                         src={catImage}
                         alt={getTranslatedLabel(cat, t)}
-                        className="h-full w-full object-contain p-3 mix-blend-multiply transition-transform duration-500 group-hover:scale-105 animate-in fade-in-0"
+                        className="h-full w-full object-contain p-3 mix-blend-multiply dark:mix-blend-normal transition-transform duration-500 group-hover:scale-105 animate-in fade-in-0"
                         draggable={false}
                       />
                     ) : null}
