@@ -34,6 +34,7 @@ import homeAdvaiticTreeDark from "@assets/home-advaitic-tree-dark.png";
 import homeMandalaDark from "@assets/mantra-mandala-dark.png";
 import quickAccessMandala from "@assets/quick-access-mandala.png";
 import quickAccessScene from "@assets/quick-access-scene.png";
+import visionMandala from "@assets/vision-mandala.png";
 
 function BookProgressBar({ bookId, totalVerses, compact = false, alwaysShow = false, unitLabel }: { bookId: string; totalVerses: number | null | undefined; compact?: boolean; alwaysShow?: boolean; unitLabel?: string }) {
   const { data: summary } = useProgressSummary();
@@ -951,30 +952,27 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
 
       {/* ===== OUR VISION: SANSKRITIK EKTA ===== */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-8 sm:p-12">
-          <img src={mandalaImg} alt="" aria-hidden="true" className="pointer-events-none absolute -top-10 -right-10 h-56 w-56 opacity-15" />
-          <div className="relative grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-8 lg:gap-10 items-end">
-            <div className="space-y-6">
-              <div>
-                <h2 className="font-serif text-3xl sm:text-4xl font-bold mb-5">Our Vision: Sanskritik Ekta</h2>
-                <p className="text-sm sm:text-base leading-relaxed text-primary-foreground/85 italic">
-                  In alignment with the mission of Acharya Shankar Sanskritik Ekta Nyas, this library is more than a repository of books; it is a tool for universal harmony. By making the Advaita philosophy accessible to all, we aim to dissolve the boundaries of "otherness" and reveal the underlying unity of all existence.
-                </p>
-              </div>
-              <div className="rounded-xl border border-primary-foreground/25 bg-primary-foreground/[0.08] p-6 text-center">
-                <p className="font-body text-lg sm:text-xl leading-relaxed">
-                  "Brahman is the Only Truth, the World is an appearance, and the Individual Self is none other than Brahman."
-                </p>
-              </div>
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary to-[#b8460e] text-primary-foreground px-6 py-12 sm:px-12 sm:py-16">
+          {/* Mandala corner decorations (white line-art watermark) */}
+          <img src={visionMandala} alt="" aria-hidden="true" className="pointer-events-none absolute -top-40 -right-40 h-[32rem] w-[32rem] opacity-[0.12] select-none" />
+          <img src={visionMandala} alt="" aria-hidden="true" className="pointer-events-none absolute -bottom-52 left-1/4 h-96 w-96 opacity-[0.07] select-none" />
+          <img src={visionMandala} alt="" aria-hidden="true" className="pointer-events-none absolute -bottom-44 -left-40 h-80 w-80 opacity-[0.06] select-none" />
+
+          <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 items-center">
+            {/* Left: heading + mission */}
+            <div>
+              <h2 className="font-page-heading text-3xl sm:text-4xl lg:text-[2.75rem] font-bold leading-tight mb-6">
+                Our Vision: Sanskritik Ekta
+              </h2>
+              <p className="font-body text-base sm:text-lg leading-relaxed italic text-primary-foreground/90">
+                In alignment with the mission of Acharya Shankar Sanskritik Ekta Nyas, this library is more than a repository of books; it is a tool for universal harmony. By making the Advaita philosophy accessible to all, we aim to dissolve the boundaries of "otherness" and reveal the underlying unity of all existence.
+              </p>
             </div>
-            {/* Adi Shankaracharya standing figure */}
-            <div className="flex justify-center lg:justify-end items-end -mb-8 sm:-mb-12">
-              <img
-                src={homeAdiShankara}
-                alt="Adi Shankaracharya"
-                className="h-64 sm:h-72 lg:h-[22rem] w-auto object-contain object-bottom drop-shadow-2xl"
-                draggable={false}
-              />
+            {/* Right: quote box */}
+            <div className="rounded-2xl border border-primary-foreground/25 bg-primary-foreground/[0.06] px-8 py-12 sm:px-10 text-center">
+              <p className="font-body text-lg sm:text-xl leading-relaxed text-primary-foreground">
+                "Brahman is the Only Truth, the World is an appearance, and the Individual Self is none other than Brahman."
+              </p>
             </div>
           </div>
         </div>
