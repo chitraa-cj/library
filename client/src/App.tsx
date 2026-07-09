@@ -797,6 +797,8 @@ function HomePageContent() {
                       bookTitle={selectedBook?.title || ""}
                       chapters={readerChapters}
                       currentVerseNumber={currentVerseNumber}
+                      chapterViewAdhyay={chapterViewAdhyay}
+                      chapterViewKhanda={chapterViewKhanda}
                       onSelectVerse={handleReaderNavSelectVerse}
                       onSelectBook={handleBookSelect}
                     />

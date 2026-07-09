@@ -244,11 +244,13 @@ const SIDEBAR_VIDEO_BY_SLUG: Record<string, { videoId: string; minutes: number }
   "isha-upanishad-bhashya": { videoId: "8ELHatzdtAk", minutes: 32 },
 };
 
-export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumber, onSelectVerse, onSelectBook }: {
+export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumber, chapterViewAdhyay, chapterViewKhanda, onSelectVerse, onSelectBook }: {
   bookId: string;
   bookTitle: string;
   chapters: ChapterInfo[];
   currentVerseNumber: number;
+  chapterViewAdhyay?: number | null;
+  chapterViewKhanda?: number | null;
   onSelectVerse: (bookId: string, verseNumber: number) => void;
   onSelectBook: (bookId: string) => void;
 }) {
@@ -278,14 +280,20 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
   const [searchQuery, setSearchQuery] = useState("");
   const activeVerseRef = useRef<HTMLButtonElement>(null);
 
+  // When the reader is in chapter-view mode, the whole adhyāya/khaṇḍa is open (no
+  // single "current verse"), so drive the selectors from that instead of the verse.
   const activeChapter = useMemo(() => {
+    if (chapterViewAdhyay != null) return chapterViewAdhyay;
     for (const ch of chapters) {
       if (ch.verseNumbers.includes(currentVerseNumber)) return ch.number;
     }
     return null;
-  }, [chapters, currentVerseNumber]);
+  }, [chapters, currentVerseNumber, chapterViewAdhyay]);
 
   const activeKhandaObj = useMemo(() => {
+    if (chapterViewAdhyay != null) {
+      return chapterViewKhanda != null ? { chapterNum: chapterViewAdhyay, khandaNum: chapterViewKhanda } : null;
+    }
     for (const ch of chapters) {
       if (ch.khandas) {
         for (const kh of ch.khandas) {
@@ -296,7 +304,7 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
       }
     }
     return null;
-  }, [chapters, currentVerseNumber]);
+  }, [chapters, currentVerseNumber, chapterViewAdhyay, chapterViewKhanda]);
 
   // Keep selectors in sync with the verse open in the reader (e.g. after Next/Prev).
   useEffect(() => {
