@@ -9,12 +9,13 @@ import { CATALOG_TREE, findBookPath } from "@/components/app-sidebar";
 import { WelcomeScreen, LibraryCatalogView, CategoryDetailView, SubCategoryDetailView } from "@/components/welcome-screen";
 import { AcharyasPage } from "@/components/acharyas-page";
 import { BookReader } from "@/components/book-reader";
-import { TranslationPanel } from "@/components/translation-panel";
 import { ReaderNavSidebar, useBookChapters } from "@/components/reader-nav-sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ChevronRight, Globe, LogIn, LogOut, Settings, User, Search, Check, ChevronsUpDown } from "lucide-react";
+import { ArrowLeft, ChevronRight, Globe, LogIn, LogOut, Settings, User, Search, Check, ChevronsUpDown, Menu } from "lucide-react";
+import { MyLibraryPanel } from "@/components/my-library-panel";
+import { setLastRead } from "@/lib/last-read";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -64,7 +65,9 @@ function HomePageContent() {
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [selectedVerseId, setSelectedVerseId] = useState<string | null>(null);
   const [selectedContent, setSelectedContent] = useState("");
-  const [showTranslationPanel, setShowTranslationPanel] = useState(false);
+  // The right "Commentary & Insight" panel was removed. Keep a no-op setter so the
+  // existing navigation handlers stay unchanged; the value is no longer read anywhere.
+  const setShowTranslationPanel = (_open: boolean) => {};
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const [langSearchOpen, setLangSearchOpen] = useState(false);
   const [langSearchQuery, setLangSearchQuery] = useState("");
@@ -102,6 +105,7 @@ function HomePageContent() {
   const [verseBreadcrumb, setVerseBreadcrumb] = useState<VerseBreadcrumb | null>(null);
   const [coverBook, setCoverBook] = useState<{ bookId: string; title: string } | null>(null);
   const [pendingNoteText, setPendingNoteText] = useState<string | null>(null);
+  const [showMyLibrary, setShowMyLibrary] = useState(false);
   const [urlInitialized, setUrlInitialized] = useState(false);
   const [mobileInitialPanelShown, setMobileInitialPanelShown] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
@@ -407,6 +411,19 @@ function HomePageContent() {
     }
   }, [isMobile, selectedBookId, selectedVerseId, mobileInitialPanelShown]);
 
+  // Remember the reader's position so "My Library → Resume Study" can return here.
+  useEffect(() => {
+    if (selectedBookId && typeof currentVerseNumber === "number" && currentVerseNumber > 0) {
+      setLastRead({
+        bookId: selectedBookId,
+        bookSlug: getBookSlug(selectedBookId) || undefined,
+        bookTitle: verseBreadcrumb?.bookTitle || selectedBook?.title || undefined,
+        verseNumber: currentVerseNumber,
+        verseLabel: verseBreadcrumb?.verseLabel || String(currentVerseNumber),
+      });
+    }
+  }, [selectedBookId, currentVerseNumber, verseBreadcrumb, selectedBook, getBookSlug]);
+
   const handleShowCoverPage = useCallback(() => {
     setChapterViewAdhyay(null);
     setChapterViewKhanda(null);
@@ -542,6 +559,9 @@ function HomePageContent() {
       }
     }
   }, [selectedBookId, getBookSlug, setLocation, chapterViewAdhyay]);
+
+  // The "My Library" button shows on every view except the pure home/welcome screen.
+  const isHomeScreen = !selectedBookId && !selectedCategoryId && !selectedSubCategoryId && !showAcharyas && !showLibraryCatalog;
 
   return (
       <div className="flex h-screen w-full overflow-hidden">
@@ -709,6 +729,18 @@ function HomePageContent() {
             </nav>
 
             <div className="flex items-center gap-1 shrink-0">
+              {!isHomeScreen && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 mr-1 border-primary/40 text-primary hover:bg-primary/5 hover:text-primary"
+                  onClick={() => setShowMyLibrary(true)}
+                  data-testid="button-my-library"
+                >
+                  <span className="hidden sm:inline">{t("myLibrary")}</span>
+                  <Menu className="h-4 w-4" />
+                </Button>
+              )}
               <Popover open={langSearchOpen} onOpenChange={(open) => { setLangSearchOpen(open); if (!open) setLangSearchQuery(""); }}>
                 <PopoverTrigger asChild>
                   <Button
@@ -833,30 +865,8 @@ function HomePageContent() {
                   onSelectChapter={handleSelectChapter}
                   onSelectPart={handleSelectPart}
                   onShowCoverPage={handleShowCoverPage}
-                  onAddNoteWithText={(text) => {
-                    setPendingNoteText(text);
-                    if (isMobile) {
-                      setShowTranslationPanel(true);
-                    } else if (rightPanelCollapsed) {
-                      setRightPanelCollapsed(false);
-                    }
-                  }}
                 />
                 </div>
-                <TranslationPanel
-                  bookId={selectedBookId}
-                  selectedVerseId={selectedVerseId}
-                  selectedContent={selectedContent}
-                  selectedAuthor={selectedAuthor}
-                  selectedCommentaryLanguage={selectedCommentaryLanguage}
-                  onAuthorChange={setSelectedAuthor}
-                  open={showTranslationPanel}
-                  onOpenChange={setShowTranslationPanel}
-                  collapsed={rightPanelCollapsed}
-                  onCollapsedChange={setRightPanelCollapsed}
-                  pendingNoteText={pendingNoteText}
-                  onPendingNoteTextConsumed={() => setPendingNoteText(null)}
-                />
               </>
             ) : selectedCategoryId && selectedSubCategoryId ? (
               <SubCategoryDetailView
@@ -943,6 +953,24 @@ function HomePageContent() {
             languageCode={selectedCommentaryLanguage}
           />
         )}
+        <MyLibraryPanel
+          open={showMyLibrary}
+          onOpenChange={setShowMyLibrary}
+          allBooks={allBooks}
+          isAuthenticated={isLoggedIn}
+          languageCode={selectedCommentaryLanguage}
+          onResume={(entry) => handleLandingSelectVerse(entry.bookId, entry.verseNumber)}
+          onOpenBookmark={(entry) => {
+            if (entry.bookId && typeof entry.verseNumber === "number") {
+              handleLandingSelectVerse(entry.bookId, entry.verseNumber);
+            }
+          }}
+          onBrowse={() => setShowLibraryCatalog(true)}
+          onOpenSettings={() => {
+            if (isLoggedIn && user) setShowPreferences(true);
+            else setLocation("/auth");
+          }}
+        />
       </div>
   );
 }

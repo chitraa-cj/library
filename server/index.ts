@@ -16,6 +16,7 @@ import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 import { importTranslationDataFromFiles } from "./import-translation-data";
 import { syncSouthIndianBhashya } from "./sync-south-indian-bhashya";
 import { ensureCanonicalLocalBooks } from "./ensure-canonical-books";
+import { repairUserTableForeignKeys } from "./repair-schema";
 
 const app = express();
 const httpServer = createServer(app);
@@ -136,6 +137,7 @@ async function runSeedOperations() {
   }
   seedOperationsStarted = true;
   try {
+    await repairUserTableForeignKeys().catch(console.error);
     await seedDatabase().catch(console.error);
     await seedAdditionalCommentaries().catch(console.error);
     await updateIncompleteShankaraExplanations().catch(console.error);

@@ -15,6 +15,8 @@ import { useBookProgress, useMarkVerseComplete, useUnmarkVerseComplete } from "@
 import { useToast } from "@/hooks/use-toast";
 import { translateContent, bookTitleTranslations, bookAuthorTranslations, bookCategoryTranslations, bookDescriptionTranslations, chapterTitleTranslations, sectionTitleTranslations, verseSectionTitleTranslations } from "@/lib/content-translations";
 import type { BookWithVerseMeta, VerseMeta, VerseTranslation, Explanation, VerseWithTranslations } from "@shared/schema";
+import { NotesDialog } from "@/components/notes-dialog";
+import { isBookmarked, toggleBookmark, subscribeBookmarks, type BookmarkEntry } from "@/lib/bookmarks";
 import shankaracharyaImg from "@assets/image_1770455528511.png";
 import mantraMandalaImg from "@assets/mantra-mandala.png";
 import readerIllustration from "@assets/reader-shankaracharya-standing.jpg";
@@ -516,21 +518,15 @@ function ListenButton({ text, hint, stopHint }: { text: string; hint?: string; s
 }
 
 /** Bookmark toggle persisted in localStorage (no auth required). */
-function BookmarkButton({ verseId, variant = "plain", hint, removeHint }: { verseId: string; variant?: "plain" | "action"; hint?: string; removeHint?: string }) {
-  const KEY = "ssh:bookmarks";
+function BookmarkButton({ verseId, entry, variant = "plain", hint, removeHint }: { verseId: string; entry?: Omit<BookmarkEntry, "verseId">; variant?: "plain" | "action"; hint?: string; removeHint?: string }) {
   const [marked, setMarked] = useState(false);
   useEffect(() => {
-    try { setMarked((JSON.parse(localStorage.getItem(KEY) || "[]") as string[]).includes(verseId)); }
-    catch { setMarked(false); }
+    setMarked(isBookmarked(verseId));
+    return subscribeBookmarks(() => setMarked(isBookmarked(verseId)));
   }, [verseId]);
   const toggle = (e?: ReactMouseEvent) => {
     e?.stopPropagation();
-    try {
-      const set = new Set<string>(JSON.parse(localStorage.getItem(KEY) || "[]"));
-      if (set.has(verseId)) set.delete(verseId); else set.add(verseId);
-      localStorage.setItem(KEY, JSON.stringify(Array.from(set)));
-      setMarked(set.has(verseId));
-    } catch { /* ignore */ }
+    setMarked(toggleBookmark({ verseId, ...entry }));
   };
   const tip = marked ? removeHint : hint;
   if (variant === "action") {
@@ -696,6 +692,10 @@ export function BookReader({
   const [commentaryExpanded, setCommentaryExpanded] = useState(true);
   const [commentaryMode, setCommentaryMode] = useState<"bhashyam" | "teeka">("bhashyam");
   const [selectionPopup, setSelectionPopup] = useState<{ text: string; x: number; y: number } | null>(null);
+  // Notes modal: replaces the old right-hand notes sidebar.
+  const [notesDialogOpen, setNotesDialogOpen] = useState(false);
+  const [notesDialogView, setNotesDialogView] = useState<"list" | "add">("list");
+  const [notesPendingText, setNotesPendingText] = useState<string | null>(null);
   const [showCoverPage, setShowCoverPage] = useState(false);
   const [expandedTOCAdhyays, setExpandedTOCAdhyays] = useState<Set<number>>(new Set());
   const [expandedTOCKhandas, setExpandedTOCKhandas] = useState<Set<string>>(new Set());
@@ -744,6 +744,12 @@ export function BookReader({
     });
   }, []);
 
+  const openNotesDialog = useCallback((view: "list" | "add", text: string | null = null) => {
+    setNotesPendingText(text);
+    setNotesDialogView(view);
+    setNotesDialogOpen(true);
+  }, []);
+
   const handleAddNoteFromSelection = useCallback(() => {
     if (!selectionPopup) return;
     if (!isAuthenticated) {
@@ -756,12 +762,10 @@ export function BookReader({
       window.location.href = "/auth";
       return;
     }
-    if (onAddNoteWithText) {
-      onAddNoteWithText(selectionPopup.text);
-      window.getSelection()?.removeAllRanges();
-      setSelectionPopup(null);
-    }
-  }, [selectionPopup, onAddNoteWithText, isAuthenticated, toast, t]);
+    openNotesDialog("add", selectionPopup.text);
+    window.getSelection()?.removeAllRanges();
+    setSelectionPopup(null);
+  }, [selectionPopup, isAuthenticated, toast, t, openNotesDialog]);
 
   useEffect(() => {
     const dismiss = () => {
@@ -1867,13 +1871,23 @@ export function BookReader({
     const introCommentaryContext = introSanskrit || "";
     return (
       <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden focus:outline-none" tabIndex={0} onKeyDown={handleKeyDown}>
+        <NotesDialog
+          open={notesDialogOpen}
+          onOpenChange={setNotesDialogOpen}
+          verseId={currentVerse?.id ?? null}
+          verseReference={`${tc(book.title, bookTitleTranslations)} ${currentNumericLabel || ""}`.trim()}
+          verseLabel={currentNumericLabel || ""}
+          initialView={notesDialogView}
+          initialSelectedText={notesPendingText}
+          languageCode={selectedCommentaryLanguage}
+        />
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain">
           <div
             className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-8 py-6 sm:py-10"
             onMouseUp={handleTextSelect}
             onTouchEnd={handleTextSelect}
           >
-            {selectionPopup && onAddNoteWithText && (
+            {selectionPopup && (
               <div
                 className="fixed z-50 animate-in fade-in slide-in-from-bottom-1 duration-150"
                 style={{ left: `${selectionPopup.x}px`, top: `${selectionPopup.y}px`, transform: "translate(-50%, -100%)" }}
@@ -2008,6 +2022,13 @@ export function BookReader({
   }
 
   const mantraLabel = currentNumericLabel || (currentVerse ? String(currentVerse.verseNumber) : "");
+  const bookmarkEntry: Omit<BookmarkEntry, "verseId"> | undefined = book && currentVerse ? {
+    bookId: book.id,
+    bookSlug: book.slug,
+    bookTitle: tc(book.title, bookTitleTranslations),
+    verseLabel: mantraLabel,
+    verseNumber: currentVerse.verseNumber,
+  } : undefined;
   const mantraPlain = toPlainText(originalDevanagari);
   const shareTitle = `${tc(book.title, bookTitleTranslations)} — ${t("mantra") || "Mantra"} ${mantraLabel}`;
   const shareBody = [
@@ -2043,12 +2064,22 @@ export function BookReader({
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
+      <NotesDialog
+        open={notesDialogOpen}
+        onOpenChange={setNotesDialogOpen}
+        verseId={currentVerse?.id ?? null}
+        verseReference={`${tc(book.title, bookTitleTranslations)} ${mantraLabel}`.trim()}
+        verseLabel={mantraLabel}
+        initialView={notesDialogView}
+        initialSelectedText={notesPendingText}
+        languageCode={selectedCommentaryLanguage}
+      />
       <div
         className="min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain"
         data-testid="reader-scroll-area"
       >
-        <div className="px-4 sm:px-6 py-4 sm:py-6 pb-8">
-          {selectionPopup && onAddNoteWithText && (
+        <div className="px-3 sm:px-4 py-3 sm:py-4 pb-6">
+          {selectionPopup && (
             <div
               className="fixed z-50 animate-in fade-in slide-in-from-bottom-1 duration-150"
               style={{ left: `${selectionPopup.x}px`, top: `${selectionPopup.y}px`, transform: "translate(-50%, -100%)" }}
@@ -2067,7 +2098,7 @@ export function BookReader({
               </Button>
             </div>
           )}
-          <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl w-full mx-auto">
+          <div className="max-w-4xl xl:max-w-5xl w-full mx-auto">
             {isVerseLoading || !currentVerseDetails ? (
               <div className="space-y-4 py-8">
                 <Skeleton className="h-6 w-32 mx-auto" />
@@ -2075,13 +2106,13 @@ export function BookReader({
                 <Skeleton className="h-12 w-3/4 mx-auto" />
               </div>
             ) : (
-            <div 
-              className="py-2 space-y-4"
+            <div
+              className="py-1 space-y-3"
               data-testid={`verse-${currentVerse.verseNumber}`}
               onMouseUp={handleTextSelect}
               onTouchEnd={handleTextSelect}
             >
-              <div className="shrink-0 space-y-5">
+              <div className="shrink-0 space-y-4">
                 {/* Decorative header with Shankaracharya portraits */}
                 <div className="flex items-center justify-center gap-3 sm:gap-6" data-testid="reader-book-header">
                   <img src={shankaracharyaImg} alt="" className="hidden sm:block h-16 lg:h-20 w-auto object-contain shrink-0 opacity-90" aria-hidden="true" />
@@ -2102,17 +2133,16 @@ export function BookReader({
 
                 {/* Toolbar: Add Note + Language */}
                 <div className="flex items-center justify-between gap-3">
-                  {onAddNoteWithText ? (
-                    <button
-                      type="button"
-                      onClick={() => onAddNoteWithText("")}
-                      className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg border border-dashed border-primary/50 text-primary text-sm font-medium hover:bg-primary/5 transition-colors"
-                      data-testid="button-add-note"
-                    >
-                      <StickyNote className="h-4 w-4" />
-                      Add Note
-                    </button>
-                  ) : <span />}
+                  <button
+                    type="button"
+                    onClick={() => openNotesDialog("list")}
+                    title={t("addNoteHint")}
+                    className="inline-flex items-center gap-2 h-9 px-3.5 rounded-lg border border-dashed border-primary/50 text-primary text-sm font-medium hover:bg-primary/5 transition-colors"
+                    data-testid="button-add-note"
+                  >
+                    <StickyNote className="h-4 w-4" />
+                    {t("addNote")}
+                  </button>
                   {commentaryLanguageList.length > 0 && (
                     <LanguagePopover
                       languages={commentaryLanguageList}
@@ -2148,7 +2178,7 @@ export function BookReader({
                         <div className="flex items-center gap-1.5">
                           <IconAction icon={Copy} label={t("hintCopyVerse")} onClick={copyMantra} />
                           <IconAction icon={Share2} label={t("hintShareVerse")} onClick={shareMantra} />
-                          <BookmarkButton verseId={currentVerse.id} variant="action" hint={t("hintBookmark")} removeHint={t("hintRemoveBookmark")} />
+                          <BookmarkButton verseId={currentVerse.id} entry={bookmarkEntry} variant="action" hint={t("hintBookmark")} removeHint={t("hintRemoveBookmark")} />
                         </div>
                         <ListenButton text={mantraPlain} hint={t("hintListen")} stopHint={t("hintStopListen")} />
                       </div>
@@ -2223,7 +2253,7 @@ export function BookReader({
               </div>
               ) : (
               <>
-              <div className="relative overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-b from-primary/[0.10] via-primary/[0.05] to-primary/[0.09] px-4 sm:px-8 py-6 sm:py-8" data-testid="verse-card">
+              <div className="relative overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-b from-primary/[0.10] via-primary/[0.05] to-primary/[0.09] px-4 sm:px-8 py-5 sm:py-6" data-testid="verse-card">
                 <MandalaCorner className="pointer-events-none absolute -top-8 -left-8 h-28 w-28 opacity-20 dark:opacity-[0.28]" />
                 <MandalaCorner className="pointer-events-none absolute -top-8 -right-8 h-28 w-28 opacity-20 dark:opacity-[0.28]" />
                 <MandalaCorner className="pointer-events-none absolute -bottom-8 -left-8 h-28 w-28 opacity-20 dark:opacity-[0.28]" />
@@ -2232,7 +2262,7 @@ export function BookReader({
                   <div className="flex items-center gap-1.5">
                     <IconAction icon={Copy} label={t("hintCopyVerse")} onClick={copyMantra} />
                     <IconAction icon={Share2} label={t("hintShareVerse")} onClick={shareMantra} />
-                    <BookmarkButton verseId={currentVerse.id} variant="action" hint={t("hintBookmark")} removeHint={t("hintRemoveBookmark")} />
+                    <BookmarkButton verseId={currentVerse.id} entry={bookmarkEntry} variant="action" hint={t("hintBookmark")} removeHint={t("hintRemoveBookmark")} />
                   </div>
                   <ListenButton text={mantraPlain} hint={t("hintListen")} stopHint={t("hintStopListen")} />
                 </div>
@@ -2336,7 +2366,7 @@ export function BookReader({
                         <>
                           <IconAction icon={Copy} label={t("hintCopyVerse")} onClick={copyMantra} />
                           <IconAction icon={Share2} label={t("hintShareVerse")} onClick={shareMantra} />
-                          <BookmarkButton verseId={currentVerse.id} variant="action" hint={t("hintBookmark")} removeHint={t("hintRemoveBookmark")} />
+                          <BookmarkButton verseId={currentVerse.id} entry={bookmarkEntry} variant="action" hint={t("hintBookmark")} removeHint={t("hintRemoveBookmark")} />
                         </>
                       )}
                       {showTeekas && (
@@ -2380,7 +2410,7 @@ export function BookReader({
                               <span className="flex items-center gap-1">
                                 <IconAction icon={Copy} label={t("hintCopyVerse")} onClick={copyMantra} />
                                 <IconAction icon={Share2} label={t("hintShareVerse")} onClick={shareMantra} />
-                                <BookmarkButton verseId={currentVerse.id} variant="action" hint={t("hintBookmark")} removeHint={t("hintRemoveBookmark")} />
+                                <BookmarkButton verseId={currentVerse.id} entry={bookmarkEntry} variant="action" hint={t("hintBookmark")} removeHint={t("hintRemoveBookmark")} />
                               </span>
                             </div>
                             <LanguagePopover languages={commentaryLanguageList} selected={selectedLanguages} onToggle={toggleLanguage} label={readingLangLabel} align="right" hint={t("hintLanguageSelector")} />
@@ -2406,7 +2436,7 @@ export function BookReader({
                               <span className="flex items-center gap-1">
                                 <IconAction icon={Copy} label={t("hintCopyVerse")} onClick={copyMantra} />
                                 <IconAction icon={Share2} label={t("hintShareVerse")} onClick={shareMantra} />
-                                <BookmarkButton verseId={currentVerse.id} variant="action" hint={t("hintBookmark")} removeHint={t("hintRemoveBookmark")} />
+                                <BookmarkButton verseId={currentVerse.id} entry={bookmarkEntry} variant="action" hint={t("hintBookmark")} removeHint={t("hintRemoveBookmark")} />
                               </span>
                             </div>
                             {verseTeekaAuthors.length > 1 && (

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { cmsContentQueryOptions } from "@/lib/queryClient";
 import { BookOpen, Search, ChevronDown, Bookmark, Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { isBookmarked, toggleBookmark, subscribeBookmarks, type BookmarkEntry } from "@/lib/bookmarks";
 import shankaracharyaImg from "@assets/image_1770455528511.png";
 
 export interface KhandaInfo {
@@ -165,23 +166,16 @@ function detectLabels(chapters: ChapterInfo[]): { chapterLabel: string; khandaLa
   return { chapterLabel, khandaLabel, mantraLabel };
 }
 
-const BOOKMARKS_KEY = "ssh:bookmarks";
-
-/** Bookmark toggle (localStorage) — shares the key with the reader so state stays in sync. */
-function SidebarBookmark({ verseId }: { verseId: string }) {
+/** Bookmark toggle (localStorage) — shares the store with the reader so state stays in sync. */
+function SidebarBookmark({ verseId, entry }: { verseId: string; entry?: Omit<BookmarkEntry, "verseId"> }) {
   const [marked, setMarked] = useState(false);
   useEffect(() => {
-    try { setMarked((JSON.parse(localStorage.getItem(BOOKMARKS_KEY) || "[]") as string[]).includes(verseId)); }
-    catch { setMarked(false); }
+    setMarked(isBookmarked(verseId));
+    return subscribeBookmarks(() => setMarked(isBookmarked(verseId)));
   }, [verseId]);
   const toggle = (e: ReactMouseEvent) => {
     e.stopPropagation();
-    try {
-      const set = new Set<string>(JSON.parse(localStorage.getItem(BOOKMARKS_KEY) || "[]"));
-      if (set.has(verseId)) set.delete(verseId); else set.add(verseId);
-      localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(Array.from(set)));
-      setMarked(set.has(verseId));
-    } catch { /* ignore */ }
+    setMarked(toggleBookmark({ verseId, ...entry }));
   };
   return (
     <button type="button" onClick={toggle} aria-label="Bookmark" className="shrink-0 p-1 text-muted-foreground/50 hover:text-primary transition-colors" data-testid={`nav-bookmark-${verseId}`}>
@@ -521,7 +515,7 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
                     <span className="block text-[11px] text-muted-foreground truncate leading-tight">{preview}</span>
                   )}
                 </span>
-                {vid && <SidebarBookmark verseId={vid} />}
+                {vid && <SidebarBookmark verseId={vid} entry={{ bookId, bookTitle, verseNumber: vn, verseLabel: labelFor(vn) }} />}
               </button>
             );
           })
