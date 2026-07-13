@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef, type MouseEvent as ReactMouseEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { cmsContentQueryOptions } from "@/lib/queryClient";
-import { BookOpen, Search, ChevronDown, Bookmark, Play } from "lucide-react";
+import { BookOpen, Search, ChevronDown, Bookmark, Play, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { isBookmarked, toggleBookmark, subscribeBookmarks, type BookmarkEntry } from "@/lib/bookmarks";
 import shankaracharyaImg from "@assets/image_1770455528511.png";
@@ -233,7 +233,10 @@ function SidebarSelect({ label, value, options, onChange, testId }: {
   );
 }
 
-/** Optional intro video keyed by book slug. */
+/** Shown for every book unless a slug below overrides it. */
+const DEFAULT_SIDEBAR_VIDEO = { videoId: "8ELHatzdtAk", minutes: 32 };
+
+/** Per-slug intro video overrides (falls back to DEFAULT_SIDEBAR_VIDEO). */
 const SIDEBAR_VIDEO_BY_SLUG: Record<string, { videoId: string; minutes: number }> = {
   "isha-upanishad-bhashya": { videoId: "8ELHatzdtAk", minutes: 32 },
 };
@@ -272,6 +275,7 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
   const [selectedChapterNum, setSelectedChapterNum] = useState<number | null>(null);
   const [selectedKhandaNum, setSelectedKhandaNum] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const activeVerseRef = useRef<HTMLButtonElement>(null);
 
   // When the reader is in chapter-view mode, the whole adhyāya/khaṇḍa is open (no
@@ -392,7 +396,10 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
     [selectedChapter],
   );
 
-  const video = bookData?.slug ? SIDEBAR_VIDEO_BY_SLUG[bookData.slug] : undefined;
+  const video = (bookData?.slug && SIDEBAR_VIDEO_BY_SLUG[bookData.slug]) || DEFAULT_SIDEBAR_VIDEO;
+
+  // Stop playback when navigating to a different book.
+  useEffect(() => { setIsVideoPlaying(false); }, [bookId]);
 
   return (
     <div className="h-full flex flex-col border-r border-border bg-card" data-testid="reader-nav-sidebar">
@@ -528,27 +535,57 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
 
       {/* Intro video (fixed) */}
       {video && (
-        <div className="shrink-0 border-t border-border/60 p-2.5">
-          <button
-            type="button"
-            onClick={() => window.open(`https://www.youtube.com/watch?v=${video.videoId}`, "_blank", "noopener,noreferrer")}
-            className="w-full flex items-center gap-2.5 rounded-lg border border-border/60 bg-card hover:border-primary/40 hover:bg-primary/[0.03] transition-colors p-2 text-left"
-            data-testid="reader-nav-video"
-          >
-            <div className="relative h-11 w-16 rounded-md overflow-hidden shrink-0 bg-muted">
-              <img src={`https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg`} alt="" className="h-full w-full object-cover" />
-              <span className="absolute inset-0 flex items-center justify-center bg-black/30">
-                <Play className="h-4 w-4 text-white fill-white" />
-              </span>
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] text-muted-foreground leading-tight">Introduction to</p>
-              <p className="text-xs font-semibold text-foreground truncate">{bookTitle}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">
-                {video.minutes} min &middot; <span className="text-primary font-semibold">WATCH NOW</span>
-              </p>
-            </div>
-          </button>
+        <div className="shrink-0 border-t border-border/60 p-2.5 space-y-2">
+          {isVideoPlaying ? (
+            <>
+              <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-black">
+                <iframe
+                  src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1`}
+                  title={`Introduction to ${bookTitle}`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="absolute inset-0 w-full h-full"
+                  data-testid="reader-nav-video-player"
+                />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] text-muted-foreground leading-tight">Introduction to</p>
+                  <p className="text-xs font-semibold text-foreground truncate">{bookTitle}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsVideoPlaying(false)}
+                  className="shrink-0 flex items-center gap-1 rounded-md border border-border/60 px-2 py-1 text-[10px] font-medium text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors"
+                  data-testid="reader-nav-video-close"
+                >
+                  <X className="h-3 w-3" />
+                  Close
+                </button>
+              </div>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsVideoPlaying(true)}
+              className="w-full flex items-center gap-2.5 rounded-lg border border-border/60 bg-card hover:border-primary/40 hover:bg-primary/[0.03] transition-colors p-2 text-left"
+              data-testid="reader-nav-video"
+            >
+              <div className="relative h-11 w-16 rounded-md overflow-hidden shrink-0 bg-muted">
+                <img src={`https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg`} alt="" className="h-full w-full object-cover" />
+                <span className="absolute inset-0 flex items-center justify-center bg-black/30">
+                  <Play className="h-4 w-4 text-white fill-white" />
+                </span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] text-muted-foreground leading-tight">Introduction to</p>
+                <p className="text-xs font-semibold text-foreground truncate">{bookTitle}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  {video.minutes} min &middot; <span className="text-primary font-semibold">WATCH NOW</span>
+                </p>
+              </div>
+            </button>
+          )}
         </div>
       )}
     </div>

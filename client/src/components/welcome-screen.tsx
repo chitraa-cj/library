@@ -23,6 +23,9 @@ import homeAdvaiticTree from "@assets/home-advaitic-tree.png";
 import homeCollectionsShankara from "@assets/home-collections-shankara.jpg";
 import homeMandala from "@assets/mantra-mandala.png";
 import homeAdiShankara from "@assets/home-adi-shankara-figure.png";
+import prasthanaUpanishadImg from "@assets/prasthana-upanishad.png";
+import prasthanaGitaImg from "@assets/prasthana-gita.png";
+import prasthanaBrahmasutraImg from "@assets/prasthana-brahmasutra.png";
 
 // Dark-mode variants (used on the home, browse, and Upanishad pages)
 import catImgPrasthanaDark from "@assets/cat-prasthana-thraya-dark.png";
@@ -254,6 +257,7 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
   const [qAdh, setQAdh] = useState("");
   const [qKh, setQKh] = useState("");
   const [qMan, setQMan] = useState("");
+  const [open, setOpen] = useState(false);
 
   const chapters = useBookChapters(bookId || undefined);
 
@@ -326,13 +330,23 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card shadow-sm p-5 sm:p-7" data-testid="home-text-navigator">
-      <div className="flex items-center gap-2.5 mb-1.5">
-        <BookOpen className="h-6 w-6 text-primary" />
-        <h2 className="font-serif text-xl sm:text-2xl font-bold text-foreground">Jump to a Specific Text</h2>
-      </div>
-      <p className="text-sm text-muted-foreground mb-4">Search and navigate directly to any scripture, chapter, or mantra</p>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-start gap-2.5 text-left"
+        aria-expanded={open}
+        data-testid="button-navigator-toggle"
+      >
+        <BookOpen className="h-6 w-6 text-primary shrink-0 mt-0.5" />
+        <div className="min-w-0 flex-1">
+          <h2 className="font-serif text-xl sm:text-2xl font-bold text-foreground">Jump to a Specific Text</h2>
+          <p className="text-sm text-muted-foreground">Search and navigate directly to any scripture, chapter, or mantra</p>
+        </div>
+        <ChevronDown className={`h-5 w-5 text-muted-foreground shrink-0 mt-1 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
 
-      <div className="relative mb-5">
+      {open && (<>
+      <div className="relative mb-5 mt-4">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
         <input
           className="w-full h-11 rounded-xl border border-border/60 bg-muted/40 pl-11 pr-3 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary/50 focus:bg-background"
@@ -451,6 +465,7 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
           Open Text <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
+      </>)}
     </div>
   );
 }
@@ -1383,6 +1398,7 @@ interface PrasthanaCard {
   description: string;
   countLabel: string;
   icon: typeof BookOpen;
+  image: string;
 }
 
 const PRASTHANA_CARDS: PrasthanaCard[] = [
@@ -1394,6 +1410,7 @@ const PRASTHANA_CARDS: PrasthanaCard[] = [
     description: "The revealed wisdom of the Vedas. Containing the core philosophical teachings regarding the nature of Brahman and Atman.",
     countLabel: "12 Major Texts",
     icon: BookOpen,
+    image: prasthanaUpanishadImg,
   },
   {
     subCategoryId: "pt-gita",
@@ -1403,6 +1420,7 @@ const PRASTHANA_CARDS: PrasthanaCard[] = [
     description: "The practical application of Vedantic truth delivered by Sri Krishna on the battlefield of Kurukshetra.",
     countLabel: "18 Chapters",
     icon: ScrollText,
+    image: prasthanaGitaImg,
   },
   {
     subCategoryId: "pt-brahmasutra",
@@ -1412,6 +1430,7 @@ const PRASTHANA_CARDS: PrasthanaCard[] = [
     description: "The logical systematization of Vedantic thought, reconciling apparent contradictions in the Upanishads.",
     countLabel: "555 Sutras",
     icon: Layers,
+    image: prasthanaBrahmasutraImg,
   },
 ];
 
@@ -1438,16 +1457,26 @@ function PrasthanaThriyaLandingPage({ categoryId, books, onSelectSubCategory }: 
             return (
               <Card
                 key={card.subCategoryId}
-                className="group flex flex-col border-border/60 bg-card hover:border-primary/30 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer rounded-xl overflow-hidden"
+                className="group relative flex flex-col border-border/60 bg-card hover:border-primary/30 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer rounded-xl overflow-hidden"
                 onClick={() => onSelectSubCategory(categoryId, card.subCategoryId)}
                 data-testid={`prasthana-card-${card.subCategoryId}`}
               >
-                <div className="p-6 sm:p-7 flex-1 flex flex-col">
-                  <div className="p-3 rounded-xl bg-primary/5 dark:bg-primary/10 border border-primary/15 w-fit mb-5">
+                {/* Warm gradient wash at the top of the card */}
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-60 bg-gradient-to-b from-primary/[0.12] via-primary/[0.05] to-transparent dark:from-primary/20 dark:via-primary/[0.08] dark:to-transparent" />
+                {/* Book illustration, bleeding off the top-right */}
+                <img
+                  src={card.image}
+                  alt=""
+                  aria-hidden="true"
+                  className="pointer-events-none select-none absolute right-0 top-4 h-28 sm:h-32 w-auto max-w-[62%] object-contain object-right-top drop-shadow-md transition-transform duration-300 group-hover:scale-[1.03]"
+                />
+
+                <div className="relative p-6 sm:p-7 flex-1 flex flex-col">
+                  <div className="p-3 rounded-xl bg-card/90 backdrop-blur-sm shadow-sm border border-primary/15 w-fit mb-5">
                     <IconComp className="h-6 w-6 text-primary" />
                   </div>
 
-                  <p className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-1">
+                  <p className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-1 mt-10 sm:mt-12">
                     {card.prasthanaLabel}
                   </p>
                   <h2 className="font-serif text-xl sm:text-2xl font-bold text-foreground tracking-tight leading-tight">
