@@ -1,4 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef, type MouseEvent as ReactMouseEvent } from "react";
+import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { cmsContentQueryOptions } from "@/lib/queryClient";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -562,14 +563,48 @@ function LanguagePopover({ languages, selected, onToggle, label, align = "right"
   align?: "left" | "right";
   hint?: string;
 }) {
+  const PANEL_WIDTH = 240; // matches w-60
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  const reposition = useCallback(() => {
+    const btn = ref.current;
+    if (!btn) return;
+    const r = btn.getBoundingClientRect();
+    const margin = 8;
+    // Anchor to the button, then clamp fully into the viewport so no ancestor
+    // overflow can clip the panel (the reader scroll area is overflow-x-hidden).
+    let left = align === "right" ? r.right - PANEL_WIDTH : r.left;
+    const maxLeft = window.innerWidth - PANEL_WIDTH - margin;
+    left = Math.max(margin, Math.min(left, maxLeft));
+    setPos({ top: r.bottom + 6, left });
+  }, [align]);
+
+  useLayoutEffect(() => {
+    if (!open) { setPos(null); return; }
+    reposition();
+    const onScroll = () => reposition();
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [open, reposition]);
+
   useEffect(() => {
     if (!open) return;
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    const h = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (ref.current?.contains(target) || panelRef.current?.contains(target)) return;
+      setOpen(false);
+    };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, [open]);
+
   return (
     <div className="relative" ref={ref}>
       <HintTooltip label={hint}>
@@ -584,8 +619,13 @@ function LanguagePopover({ languages, selected, onToggle, label, align = "right"
           <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
       </HintTooltip>
-      {open && (
-        <div className={`absolute top-full mt-1.5 z-50 w-60 max-h-80 overflow-y-auto rounded-lg border border-border bg-card shadow-lg p-2 ${align === "right" ? "right-0" : "left-0"}`} data-testid="language-checkbox-panel">
+      {open && pos && createPortal(
+        <div
+          ref={panelRef}
+          className="fixed z-50 w-60 max-h-80 overflow-y-auto rounded-lg border border-border bg-card shadow-lg p-2"
+          style={{ top: pos.top, left: pos.left }}
+          data-testid="language-checkbox-panel"
+        >
           {languages.map((l) => {
             const norm = l.code === "hi" ? "hindi" : l.code === "en" ? "english" : l.code;
             const isDeva = norm === "devanagari" || norm === "sa";
@@ -605,7 +645,8 @@ function LanguagePopover({ languages, selected, onToggle, label, align = "right"
               </button>
             );
           })}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
