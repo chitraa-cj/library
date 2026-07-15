@@ -696,6 +696,29 @@ async function fetchSectionsForGranthaVerseMeta(granthaDocId: string): Promise<S
   });
 }
 
+// Short Devanagari opening of each manthra, keyed by manthra documentId. The
+// verse-meta sections fetch keeps manthras shallow (no text), so this pulls just
+// the shloka Sanskrit in one grantha-wide query to power the sidebar previews.
+async function fetchManthraPreviewsForGrantha(granthaDocId: string): Promise<Map<string, string>> {
+  const previews = new Map<string, string>();
+  try {
+    const manthras = await strapiFetchAll<any>("/manthras", {
+      "filters[Section][grantha][documentId]": granthaDocId,
+      "populate[0]": "ShlokaManthraEntry",
+    });
+    for (const m of manthras) {
+      const docId = m.documentId || String(m.id);
+      const sanskrit = richTextToString(m.ShlokaManthraEntry?.SanskritTextEntry);
+      if (sanskrit) {
+        previews.set(docId, sanskrit.replace(/\s+/g, " ").trim().slice(0, 80));
+      }
+    }
+  } catch (err: any) {
+    console.warn("[Strapi] manthra preview fetch failed:", err.message);
+  }
+  return previews;
+}
+
 export async function strapiGetBookById(id: string): Promise<BookWithDetails | undefined> {
   const cached = getCached(bookDetailCache, id);
   if (cached) return cached;
@@ -885,7 +908,10 @@ async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWith
     const grantha = result.data;
     const book = mapGranthaToBook(grantha);
 
-    const allSections = await fetchSectionsForGrantha(grantha.documentId);
+    const [allSections, previewMap] = await Promise.all([
+      fetchSectionsForGrantha(grantha.documentId),
+      fetchManthraPreviewsForGrantha(grantha.documentId),
+    ]);
     const sectionTree = buildSectionTree(allSections);
 
     const verses: VerseMeta[] = [];
@@ -936,6 +962,8 @@ async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWith
       seenManthraDocIds.add(docId);
       if (m.ShlokaManthraNumber) seenManthraKeys.add(numberKey);
       globalIndex++;
+      // Short Devanagari opening so the sidebar can show a snippet under each
+      // mantra number without a per-verse fetch (ShlokaManthraEntry is populated).
       verses.push({
         id: docId,
         bookId: book.id,
@@ -947,6 +975,7 @@ async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWith
         khandaTitle,
         adhyayType,
         khandaType,
+        preview: previewMap.get(docId),
       });
     }
 

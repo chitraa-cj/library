@@ -104,6 +104,8 @@ function HomePageContent() {
   });
   const [verseBreadcrumb, setVerseBreadcrumb] = useState<VerseBreadcrumb | null>(null);
   const [coverBook, setCoverBook] = useState<{ bookId: string; title: string } | null>(null);
+  // Bumped to ask the open BookReader to show its cover / table-of-contents view.
+  const [readerCoverSignal, setReaderCoverSignal] = useState(0);
   const [pendingNoteText, setPendingNoteText] = useState<string | null>(null);
   const [showMyLibrary, setShowMyLibrary] = useState(false);
   const [urlInitialized, setUrlInitialized] = useState(false);
@@ -401,6 +403,8 @@ function HomePageContent() {
     setShowLibraryCatalog(false);
     setSelectedCategoryId(null);
     setSelectedSubCategoryId(null);
+    setShowAcharyas(false);
+    setSelectedAcharyaSlug(null);
     setLocation("/");
   };
 
@@ -435,6 +439,13 @@ function HomePageContent() {
       setLocation(`/${slug}`);
     }
   }, [selectedBookId, getBookSlug]);
+
+  // Sidebar book-title button: reset navigation to the book root and tell the
+  // reader to render its cover / table of contents.
+  const handleShowReaderCover = useCallback(() => {
+    handleShowCoverPage();
+    setReaderCoverSignal((n) => n + 1);
+  }, [handleShowCoverPage]);
 
   const handleSidebarVerseSelect = (verseNumber: number) => {
     setChapterViewAdhyay(null);
@@ -833,6 +844,7 @@ function HomePageContent() {
                       chapterViewKhanda={chapterViewKhanda}
                       onSelectVerse={handleReaderNavSelectVerse}
                       onSelectBook={handleBookSelect}
+                      onShowCover={handleShowReaderCover}
                     />
                   </div>
                 )}
@@ -865,6 +877,7 @@ function HomePageContent() {
                   onSelectChapter={handleSelectChapter}
                   onSelectPart={handleSelectPart}
                   onShowCoverPage={handleShowCoverPage}
+                  showCoverSignal={readerCoverSignal}
                 />
                 </div>
               </>

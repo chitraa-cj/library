@@ -106,6 +106,9 @@ export type VerseMeta = Pick<Verse, 'id' | 'verseNumber' | 'sectionTitle' | 'adh
   // of guessing the level name from titles. Null when the grantha doesn't define one.
   adhyayType?: string | null;
   khandaType?: string | null;
+  // Short Devanagari opening of the mantra, so the nav sidebar can show a snippet
+  // under each mantra number without fetching the full verse. Undefined if empty.
+  preview?: string;
 };
 
 export interface BookWithVerseMeta extends Book {

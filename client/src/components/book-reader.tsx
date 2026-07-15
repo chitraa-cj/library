@@ -217,6 +217,9 @@ interface BookReaderProps {
   onSelectChapter?: (adhyayNumber: number) => void;
   onSelectPart?: (adhyayNumber: number, khandaNumber: number) => void;
   onShowCoverPage?: () => void;
+  // Incrementing counter that asks the reader to open its cover / table-of-contents
+  // view (used by the sidebar book-title button). Ignored on its initial value.
+  showCoverSignal?: number;
 }
 
 function isShankaracharya(name: string): boolean {
@@ -280,15 +283,17 @@ function VerseExplanation({
   authorName,
   showAll,
   filterFn,
-  mode
-}: { 
-  verseId: string; 
+  mode,
+  hideAuthorHeading = false
+}: {
+  verseId: string;
   languageCode: string;
   languageCodes?: string[];
   authorName: string | null;
   showAll: boolean;
   filterFn?: (explanation: any) => boolean;
   mode?: "bhashyam" | "teeka";
+  hideAuthorHeading?: boolean;
 }) {
   const { t, locale } = useTranslation(languageCode);
   const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, locale);
@@ -359,7 +364,7 @@ function VerseExplanation({
     punjabi: "ਪੰਜਾਬੀ", pa: "ਪੰਜਾਬੀ",
   };
 
-  const renderGroup = (group: { authorName: string; authorTitle: string | null; items: Explanation[] }, gIdx: number) => {
+  const renderGroup = (group: { authorName: string; authorTitle: string | null; items: Explanation[] }, gIdx: number, hideHeader = false) => {
     const sortedItems = effectiveLanguages.length > 1
       ? [...group.items].sort((a, b) => {
           const aIdx = effectiveLanguages.findIndex(l => langMatches(a.languageCode, l));
@@ -374,17 +379,19 @@ function VerseExplanation({
         className={`${gIdx > 0 ? "pt-3 border-t border-border/40" : ""}`}
         data-testid={`commentary-group-${group.authorName.toLowerCase().replace(/\s+/g, '-')}`}
       >
-        <div className="flex items-center gap-2 mb-2">
-          {isShankaracharya(group.authorName) ? (
-            <img src={shankaracharyaImg} alt="Adi Shankaracharya" className="h-8 w-8 object-contain shrink-0" />
-          ) : (
-            <User className="h-4 w-4 text-primary/70 shrink-0" />
-          )}
-          <h4 className="text-sm font-semibold text-foreground">{tc(group.authorName, bookAuthorTranslations)}</h4>
-          {group.authorTitle && (
-            <span className="text-xs text-muted-foreground">- {group.authorTitle}</span>
-          )}
-        </div>
+        {!hideHeader && (
+          <div className="flex items-center gap-2 mb-2">
+            {isShankaracharya(group.authorName) ? (
+              <img src={shankaracharyaImg} alt="Adi Shankaracharya" className="h-8 w-8 object-contain shrink-0" />
+            ) : (
+              <User className="h-4 w-4 text-primary/70 shrink-0" />
+            )}
+            <h4 className="text-sm font-semibold text-foreground">{tc(group.authorName, bookAuthorTranslations)}</h4>
+            {group.authorTitle && (
+              <span className="text-xs text-muted-foreground">- {group.authorTitle}</span>
+            )}
+          </div>
+        )}
         {sortedItems.map((explanation, idx) => {
           const showLangLabel = effectiveLanguages.length > 1;
           const langLabel = LANG_DISPLAY_NAMES[explanation.languageCode] || explanation.languageCode;
@@ -422,7 +429,7 @@ function VerseExplanation({
 
   return (
     <div className="mt-3 space-y-4" data-testid={`explanation-${verseId}`}>
-      {Object.values(primaryGrouped).map((group, gIdx) => renderGroup(group, gIdx))}
+      {Object.values(primaryGrouped).map((group, gIdx) => renderGroup(group, gIdx, hideAuthorHeading))}
 
       {otherExplanations.length > 0 && (
         <>
@@ -670,6 +677,7 @@ export function BookReader({
   onSelectChapter,
   onSelectPart,
   onShowCoverPage,
+  showCoverSignal,
 }: BookReaderProps) {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -947,6 +955,15 @@ export function BookReader({
     setExpandedTOCKhandas(new Set());
     setLocalLanguage(selectedCommentaryLanguage);
   }, [bookId]);
+
+  // The sidebar book-title button asks for the cover / table-of-contents view by
+  // bumping this counter. Skip the initial mount so we don't hijack the first render.
+  const coverSignalRef = useRef(showCoverSignal);
+  useEffect(() => {
+    if (showCoverSignal === undefined || showCoverSignal === coverSignalRef.current) return;
+    coverSignalRef.current = showCoverSignal;
+    setShowCoverPage(true);
+  }, [showCoverSignal]);
 
   useLayoutEffect(() => {
     if (navigateToVerse !== null && navigateToVerse !== undefined && verses.length > 0) {
@@ -1924,7 +1941,7 @@ export function BookReader({
         />
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain">
           <div
-            className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-8 py-6 sm:py-10"
+            className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto px-4 sm:px-8 py-6 sm:py-10"
             onMouseUp={handleTextSelect}
             onTouchEnd={handleTextSelect}
           >
@@ -2091,8 +2108,6 @@ export function BookReader({
       }
     } catch { /* share dismissed */ }
   };
-  const readingLangCount = Math.max(0, selectedLanguages.size - 1);
-  const readingLangLabel = readingLangCount > 0 ? `Sanskrit +${readingLangCount}` : "Sanskrit";
   const teekaAvailable = verseTeekaAuthors.length > 0;
   const activeCommentaryMode = commentaryMode === "teeka" && teekaAvailable ? "teeka" : "bhashyam";
   const commentaryLanguageList = commentaryOptions?.languages ?? [];
@@ -2119,7 +2134,7 @@ export function BookReader({
         className="min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain"
         data-testid="reader-scroll-area"
       >
-        <div className="px-3 sm:px-4 py-3 sm:py-4 pb-6">
+        <div className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 pb-6">
           {selectionPopup && (
             <div
               className="fixed z-50 animate-in fade-in slide-in-from-bottom-1 duration-150"
@@ -2139,7 +2154,7 @@ export function BookReader({
               </Button>
             </div>
           )}
-          <div className="max-w-4xl xl:max-w-5xl w-full mx-auto">
+          <div className="max-w-6xl xl:max-w-none w-full mx-auto">
             {isVerseLoading || !currentVerseDetails ? (
               <div className="space-y-4 py-8">
                 <Skeleton className="h-6 w-32 mx-auto" />
@@ -2294,12 +2309,12 @@ export function BookReader({
               </div>
               ) : (
               <>
-              <div className="relative overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-b from-primary/[0.10] via-primary/[0.05] to-primary/[0.09] px-4 sm:px-8 py-5 sm:py-6" data-testid="verse-card">
+              <div className="relative overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-b from-primary/[0.10] via-primary/[0.05] to-primary/[0.09] px-4 sm:px-8 py-3 sm:py-4" data-testid="verse-card">
                 <MandalaCorner className="pointer-events-none absolute -top-8 -left-8 h-28 w-28 opacity-20 dark:opacity-[0.28]" />
                 <MandalaCorner className="pointer-events-none absolute -top-8 -right-8 h-28 w-28 opacity-20 dark:opacity-[0.28]" />
                 <MandalaCorner className="pointer-events-none absolute -bottom-8 -left-8 h-28 w-28 opacity-20 dark:opacity-[0.28]" />
                 <MandalaCorner className="pointer-events-none absolute -bottom-8 -right-8 h-28 w-28 opacity-20 dark:opacity-[0.28]" />
-                <div className="relative flex items-start justify-between gap-3 mb-3">
+                <div className="relative flex items-start justify-between gap-3 mb-2">
                   <div className="flex items-center gap-1.5">
                     <IconAction icon={Copy} label={t("hintCopyVerse")} onClick={copyMantra} />
                     <IconAction icon={Share2} label={t("hintShareVerse")} onClick={shareMantra} />
@@ -2308,7 +2323,7 @@ export function BookReader({
                   <ListenButton text={mantraPlain} hint={t("hintListen")} stopHint={t("hintStopListen")} />
                 </div>
                 <div
-                  className="relative font-hindi-reading text-xl sm:text-2xl lg:text-[1.7rem] leading-relaxed sm:leading-loose text-center text-foreground"
+                  className="relative font-hindi-reading text-xl sm:text-2xl lg:text-[1.7rem] leading-relaxed text-center text-foreground py-2"
                   data-testid={`text-original-${currentVerse.verseNumber}`}
                 >
                   <WordTooltip
@@ -2454,7 +2469,6 @@ export function BookReader({
                                 <BookmarkButton verseId={currentVerse.id} entry={bookmarkEntry} variant="action" hint={t("hintBookmark")} removeHint={t("hintRemoveBookmark")} />
                               </span>
                             </div>
-                            <LanguagePopover languages={commentaryLanguageList} selected={selectedLanguages} onToggle={toggleLanguage} label={readingLangLabel} align="right" hint={t("hintLanguageSelector")} />
                           </div>
                           {effectiveLang && (
                             <VerseExplanation
@@ -2465,6 +2479,7 @@ export function BookReader({
                               showAll={false}
                               filterFn={(e: any) => e.commentaryType ? e.commentaryType === "bhashya" : isBhashyaAuthorByName(e.authorName)}
                               mode="bhashyam"
+                              hideAuthorHeading
                             />
                           )}
                         </div>
@@ -2504,6 +2519,7 @@ export function BookReader({
                               showAll={false}
                               filterFn={(e: any) => e.commentaryType ? e.commentaryType === "teeka" : isTeekaAuthorByName(e.authorName)}
                               mode="teeka"
+                              hideAuthorHeading
                             />
                           )}
                         </div>
@@ -2529,7 +2545,6 @@ export function BookReader({
                                 </SelectContent>
                               </Select>
                             )}
-                            <LanguagePopover languages={commentaryLanguageList} selected={selectedLanguages} onToggle={toggleLanguage} label={readingLangLabel} align="right" hint={t("hintLanguageSelector")} />
                           </div>
                         </div>
                         {effectiveLang && (
@@ -2541,6 +2556,7 @@ export function BookReader({
                             showAll={false}
                             filterFn={(e: any) => e.commentaryType ? e.commentaryType === "teeka" : isTeekaAuthorByName(e.authorName)}
                             mode="teeka"
+                            hideAuthorHeading
                           />
                         )}
                       </div>
@@ -2571,7 +2587,6 @@ export function BookReader({
                                 </SelectContent>
                               </Select>
                             )}
-                            <LanguagePopover languages={commentaryLanguageList} selected={selectedLanguages} onToggle={toggleLanguage} label={readingLangLabel} align="right" hint={t("hintLanguageSelector")} />
                           </div>
                         </div>
                         {commentaryExpanded && effectiveLang && (
@@ -2583,6 +2598,7 @@ export function BookReader({
                             showAll={false}
                             filterFn={(e: any) => e.commentaryType ? e.commentaryType === "bhashya" : isBhashyaAuthorByName(e.authorName)}
                             mode="bhashyam"
+                            hideAuthorHeading
                           />
                         )}
                       </div>
@@ -2609,7 +2625,7 @@ export function BookReader({
       </div>
 
         <div className="border-t border-border/50 bg-background px-4 sm:px-8 py-2 sm:py-3">
-          <div className="max-w-4xl xl:max-w-5xl mx-auto space-y-2">
+          <div className="max-w-6xl xl:max-w-none mx-auto space-y-2">
             {progressAuthed && verseTotal > 0 && (
               <div className="flex items-center gap-2" data-testid="reader-progress-bar">
                 <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">

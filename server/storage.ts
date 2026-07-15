@@ -531,16 +531,22 @@ export class HybridStorage implements IStorage {
     return {
       ...book,
       titles: book.titles ?? [],
-      verses: book.verses.map((v) => ({
-        id: v.id,
-        bookId: v.bookId,
-        verseNumber: v.verseNumber,
-        sectionTitle: v.sectionTitle,
-        adhyayNumber: v.adhyayNumber ?? null,
-        adhyayTitle: v.adhyayTitle ?? null,
-        khandaNumber: v.khandaNumber ?? null,
-        khandaTitle: v.khandaTitle ?? null,
-      })),
+      verses: book.verses.map((v) => {
+        const deva = v.translations?.find(
+          (t) => t.languageCode === "devanagari" || t.languageCode === "sa",
+        )?.content;
+        return {
+          id: v.id,
+          bookId: v.bookId,
+          verseNumber: v.verseNumber,
+          sectionTitle: v.sectionTitle,
+          adhyayNumber: v.adhyayNumber ?? null,
+          adhyayTitle: v.adhyayTitle ?? null,
+          khandaNumber: v.khandaNumber ?? null,
+          khandaTitle: v.khandaTitle ?? null,
+          preview: deva ? deva.replace(/\s+/g, " ").trim().slice(0, 80) : undefined,
+        };
+      }),
       totalVerses: book.totalVerses ?? book.verses.length,
     };
   }

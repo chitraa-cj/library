@@ -241,7 +241,7 @@ const SIDEBAR_VIDEO_BY_SLUG: Record<string, { videoId: string; minutes: number }
   "isha-upanishad-bhashya": { videoId: "8ELHatzdtAk", minutes: 32 },
 };
 
-export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumber, chapterViewAdhyay, chapterViewKhanda, onSelectVerse, onSelectBook }: {
+export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumber, chapterViewAdhyay, chapterViewKhanda, onSelectVerse, onSelectBook, onShowCover }: {
   bookId: string;
   bookTitle: string;
   chapters: ChapterInfo[];
@@ -250,6 +250,7 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
   chapterViewKhanda?: number | null;
   onSelectVerse: (bookId: string, verseNumber: number) => void;
   onSelectBook: (bookId: string) => void;
+  onShowCover?: () => void;
 }) {
   const { data: bookData } = useQuery<any>({
     queryKey: ["/api/books", bookId],
@@ -341,10 +342,22 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
     const preview = new Map<number, string>();
     const ids = new Map<number, string>();
     const verses = bookData?.verses;
+    // The book-meta endpoint ships a short Devanagari `preview` per verse. Fall
+    // back to a translations[] array or flat text fields for other data sources.
+    const pickPreview = (v: any): string => {
+      if (v?.preview) return v.preview;
+      const trs = Array.isArray(v?.translations) ? v.translations : [];
+      const byCode = (code: string) => trs.find((t: any) => t?.languageCode === code)?.content;
+      return (
+        byCode("devanagari") ?? byCode("sa") ?? byCode("sanskrit") ??
+        v?.devanagari ?? v?.text ?? v?.originalText ?? v?.sanskrit ?? v?.verseText ?? v?.content ??
+        trs[0]?.content ?? ""
+      );
+    };
     if (Array.isArray(verses)) {
       for (const v of verses) {
         if (v?.id != null) ids.set(v.verseNumber, v.id);
-        const raw = v?.devanagari ?? v?.text ?? v?.originalText ?? v?.sanskrit ?? v?.verseText ?? v?.content ?? "";
+        const raw = pickPreview(v);
         const plain = String(raw).replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
         if (plain) preview.set(v.verseNumber, plain);
       }
@@ -408,7 +421,7 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
         {/* Book selector */}
         <button
           className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
-          onClick={() => onSelectBook(bookId)}
+          onClick={() => (onShowCover ? onShowCover() : onSelectBook(bookId))}
           data-testid="reader-nav-book-title"
         >
           <span className="font-serif font-semibold text-sm truncate">{bookTitle}</span>

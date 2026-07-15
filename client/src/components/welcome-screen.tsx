@@ -584,8 +584,22 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
   }));
 
   type Card = { kicker: string; title: string; desc: string; items: Item[] };
-  const upItems = catItems(["Upanishad", "Upanishad Bhashya"]);
-  const upHalf = Math.ceil(upItems.length / 2);
+  const upBooks = books
+    .filter(b => ["Upanishad", "Upanishad Bhashya"].includes(b.category || ""))
+    .sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+  // Principal (Daśopaniṣad) first, in canonical order; everything else falls to "Other".
+  const principalUpIds = new Set<string>();
+  const principalUpItems: Item[] = [];
+  for (const up of PRINCIPAL_UPANISHADS) {
+    const b = findBookForPrincipal(up, books);
+    if (b && !principalUpIds.has(b.id)) {
+      principalUpIds.add(b.id);
+      principalUpItems.push({ label: b.title, onClick: () => onSelectBook(b.id) });
+    }
+  }
+  const otherUpItems: Item[] = upBooks
+    .filter(b => !principalUpIds.has(b.id))
+    .map(b => ({ label: b.title, onClick: () => onSelectBook(b.id) }));
   const prakaranaItems = catItems(["Prakarana Grantha"]);
   const bhaktiItems = catItems(["Bhakthi Grantha", "Bhakti Grantha", "Bhakthi Stotra"]);
   const TABS: Record<string, Card[]> = {
@@ -604,12 +618,12 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
         curated("drig drishya vivek", ["drig-drishya-vivek", "drig-drishya-viveka"]),
       ].filter(Boolean) as Item[] },
     ],
-    Upanishads: upItems.length > 12
+    Upanishads: principalUpItems.length > 0
       ? [
-          { kicker: "Śruti Prasthāna", title: "Upanishads", desc: "Upanishads with Advaita bhāṣyas & commentaries.", items: upItems.slice(0, upHalf) },
-          { kicker: "Continued", title: "Upanishads", desc: "More Upanishadic texts in the library.", items: upItems.slice(upHalf) },
+          { kicker: "Daśopaniṣad", title: "Principal Upanishads", desc: "The major Upanishads with Advaita bhāṣyas & commentaries.", items: principalUpItems },
+          { kicker: "Śruti Prasthāna", title: "Other Upanishads", desc: "More Upanishadic texts in the library.", items: otherUpItems },
         ]
-      : [{ kicker: "Śruti Prasthāna", title: "Upanishads", desc: "Upanishads with Advaita bhāṣyas & commentaries.", items: upItems }],
+      : [{ kicker: "Śruti Prasthāna", title: "Upanishads", desc: "Upanishads with Advaita bhāṣyas & commentaries.", items: otherUpItems }],
     "Bhagavad Gita": [
       { kicker: "Chapters 1–9", title: "Bhagavad Gita", desc: "The eternal dialogue of Krishna and Arjuna — first half.", items: GITA_CHAPTERS.slice(0, 9).map(c => ({ label: `${c.num}. ${c.transliteration}`, onClick: openGitaCh(c.num) })) },
       { kicker: "Chapters 10–18", title: "Bhagavad Gita", desc: "From the Divine Glories to Liberation — second half.", items: GITA_CHAPTERS.slice(9).map(c => ({ label: `${c.num}. ${c.transliteration}`, onClick: openGitaCh(c.num) })) },
@@ -835,9 +849,9 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
 
 
   return (
-    <div className="flex-1 flex flex-col bg-background relative overflow-y-auto">
+    <div className="flex-1 flex flex-col bg-[#fcf5f2] dark:bg-background relative overflow-y-auto">
       {/* ===== HERO ===== */}
-      <section className="relative shrink-0 overflow-hidden bg-background px-4 pt-14 pb-12 sm:pt-16 sm:pb-14 text-center">
+      <section className="relative shrink-0 overflow-hidden px-4 pt-14 pb-12 sm:pt-16 sm:pb-14 text-center">
         {/* Home hero background art (theme-specific) — kept as a faint watermark */}
         <div
           className="absolute inset-0 pointer-events-none select-none opacity-[0.06] dark:opacity-[0.08]"
@@ -870,7 +884,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
             <Button onClick={onBrowseLibrary} className="gap-2 h-12 px-7 text-base font-body shadow-md" data-testid="button-hero-browse">
               <BookOpen className="h-5 w-5" /> Browse the Library
             </Button>
-            <Button variant="outline" onClick={onBrowseLibrary} className="gap-2 h-12 px-7 text-base font-body border-primary/40 text-primary hover:bg-primary/5 bg-background" data-testid="button-hero-resume">
+            <Button variant="outline" onClick={onBrowseLibrary} className="gap-2 h-12 px-7 text-base font-body border-primary/40 text-primary hover:bg-primary/5 bg-transparent" data-testid="button-hero-resume">
               Resume Study <ChevronDown className="h-4 w-4" />
             </Button>
           </div>
@@ -882,7 +896,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
       </div>
 
       {/* ===== EXPRESSIONS OF ADVAITIC VISION ===== */}
-      <section className="bg-[#fdf1ec] dark:bg-[#170c07] mt-14 sm:mt-20 py-14 sm:py-20">
+      <section className="dark:bg-[#170c07] mt-14 sm:mt-20 py-14 sm:py-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
           <div className="flex justify-center">
             <img key={advaiticTreeImg} src={advaiticTreeImg} alt="The literary dimensions of Advaita — from Shruti to Bhakti" className="w-full max-w-sm object-contain animate-in fade-in-0 duration-500" draggable={false} />
@@ -923,7 +937,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
 
       {/* ===== FEATURE STRIP ===== */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-        <div className="rounded-2xl border border-primary/20 bg-[#fdf6ee] dark:bg-primary/[0.04] px-6 sm:px-10 py-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="rounded-2xl border border-primary/20 bg-[#fcf5f2] dark:bg-primary/[0.04] px-6 sm:px-10 py-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {featureStrip.map(({ icon: Icon, title, desc }) => (
             <div key={title} className="text-center">
               <div className="mx-auto mb-4 h-14 w-14 rounded-full border border-primary/25 bg-primary/[0.06] flex items-center justify-center">
@@ -1081,7 +1095,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
       </section>
 
       {/* ===== INVITATION ===== */}
-      <section className="relative overflow-hidden bg-[#fdf4ec] dark:bg-[#1a110b] px-4 py-16 sm:py-24 text-center">
+      <section className="relative overflow-hidden dark:bg-[#1a110b] px-4 py-16 sm:py-24 text-center">
         <div
           className="absolute inset-0 pointer-events-none select-none opacity-[0.05] dark:opacity-[0.08]"
           style={{ backgroundImage: `url(${mandalaImg})`, backgroundSize: "150px", backgroundRepeat: "repeat" }}
@@ -1101,7 +1115,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
       </section>
 
       {/* ===== FOOTER ===== */}
-      <footer className="bg-background px-4 py-12 sm:py-14 text-center border-t border-border/40">
+      <footer className="dark:bg-background px-4 py-12 sm:py-14 text-center border-t border-border/40">
         <div className="flex items-center justify-center gap-2.5 mb-8">
           <img src="/favicon.png" alt="" aria-hidden="true" className="h-9 w-9 object-contain" />
           <span className="font-page-heading text-xl sm:text-2xl text-primary">Advaita Vaaridhi</span>
