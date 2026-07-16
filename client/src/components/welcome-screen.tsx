@@ -625,8 +625,9 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
         ]
       : [{ kicker: "Śruti Prasthāna", title: "Upanishads", desc: "Upanishads with Advaita bhāṣyas & commentaries.", items: otherUpItems }],
     "Bhagavad Gita": [
-      { kicker: "Chapters 1–9", title: "Bhagavad Gita", desc: "The eternal dialogue of Krishna and Arjuna — first half.", items: GITA_CHAPTERS.slice(0, 9).map(c => ({ label: `${c.num}. ${c.transliteration}`, onClick: openGitaCh(c.num) })) },
-      { kicker: "Chapters 10–18", title: "Bhagavad Gita", desc: "From the Divine Glories to Liberation — second half.", items: GITA_CHAPTERS.slice(9).map(c => ({ label: `${c.num}. ${c.transliteration}`, onClick: openGitaCh(c.num) })) },
+      { kicker: "Chapters 1–6", title: "Tvam Pada Pradhana", desc: "Nature of the individual soul (Tvam) and the path of action.", items: GITA_CHAPTERS.slice(0, 6).map(c => ({ label: `${c.num}. ${c.transliteration}`, onClick: openGitaCh(c.num) })) },
+      { kicker: "Chapters 7–12", title: "Tat Pada Pradhana", desc: "Nature of the Supreme Lord (Tat) and the path of devotion.", items: GITA_CHAPTERS.slice(6, 12).map(c => ({ label: `${c.num}. ${c.transliteration}`, onClick: openGitaCh(c.num) })) },
+      { kicker: "Chapters 13–18", title: "Asi Pada Pradhana", desc: "Unity of Jīva and Brahman (Asi) and the path of knowledge.", items: GITA_CHAPTERS.slice(12).map(c => ({ label: `${c.num}. ${c.transliteration}`, onClick: openGitaCh(c.num) })) },
     ],
     "Brahma Sutras": [
       { kicker: "Nyāya Prasthāna", title: "Brahma Sutras", desc: "The logical systematization of Vedanta across four adhyāyas.", items: [
@@ -652,6 +653,7 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
   const TAB_KEYS = ["Popular", "Upanishads", "Bhagavad Gita", "Brahma Sutras", "Prakarana Granthas", "Bhakti", "Acharyas"];
   const cards = TABS[tab] || TABS.Upanishads;
   const single = cards.length === 1;
+  const triple = cards.length >= 3;
   const ql = q.trim().toLowerCase();
 
   const renderCard = (card: Card) => {
@@ -664,8 +666,8 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
         <p className="text-sm text-muted-foreground text-center mt-1 mb-4">{card.desc}</p>
         <div className="space-y-1.5 overflow-y-auto max-h-72 pr-1">
           {items.map((it, i) => (
-            <button key={it.label + i} type="button" onClick={it.onClick} className="w-full flex items-center gap-2 rounded-lg bg-card border border-border/50 px-3 py-2.5 text-left text-sm font-body text-foreground hover:border-primary/40 hover:text-primary transition-colors">
-              <Sparkles className="h-3.5 w-3.5 text-primary/40 shrink-0" /><span className="truncate">{it.label}</span>
+            <button key={it.label + i} type="button" onClick={it.onClick} className="w-full flex items-center gap-2 rounded-lg bg-card border border-border/50 px-3 py-2.5 text-left text-xs font-body text-foreground hover:border-primary/40 hover:text-primary transition-colors">
+              <Sparkles className="h-3.5 w-3.5 text-primary/40 shrink-0" /><span className="whitespace-nowrap">{it.label}</span>
             </button>
           ))}
           {items.length === 0 && <p className="text-xs text-muted-foreground/60 px-2 py-3 text-center">No matches.</p>}
@@ -675,7 +677,7 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
   };
 
   return (
-    <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
+    <section className={`${triple ? "max-w-7xl" : "max-w-6xl"} mx-auto px-4 sm:px-6 lg:px-8 pb-4`}>
       <div className="flex items-center gap-2.5 mb-5">
         <BookOpen className="h-6 w-6 text-primary" />
         <h2 className="font-serif text-2xl sm:text-3xl font-bold text-foreground">Quick Access to <span className="text-primary">Library Collections</span></h2>
@@ -707,7 +709,7 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
           alt="Adi Shankaracharya"
           className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center lg:object-contain lg:object-right"
         />
-        <div key={tab} className={`relative grid gap-4 sm:gap-5 p-4 sm:p-6 lg:pr-[42%] animate-in fade-in-0 duration-300 ${single ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"}`}>
+        <div key={tab} className={`relative grid gap-4 sm:gap-5 p-4 sm:p-6 animate-in fade-in-0 duration-300 ${triple ? "lg:pr-[26%] grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : `lg:pr-[42%] ${single ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"}`}`}>
           {cards.map(renderCard)}
         </div>
       </div>

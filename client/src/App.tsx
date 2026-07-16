@@ -834,7 +834,7 @@ function HomePageContent() {
             {selectedBookId ? (
               <>
                 {!isMobile && readerChapters.length > 0 && !readerNavCollapsed && (
-                  <div className="w-56 xl:w-64 shrink-0 h-full" data-testid="reader-nav-sidebar-wrapper">
+                  <div className="w-72 xl:w-80 shrink-0 h-full" data-testid="reader-nav-sidebar-wrapper">
                     <ReaderNavSidebar
                       bookId={selectedBookId}
                       bookTitle={selectedBook?.title || ""}
