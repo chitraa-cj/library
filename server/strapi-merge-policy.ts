@@ -11,9 +11,9 @@ export function normalizeBookSlugForMerge(slug: string | null | undefined): stri
  * CMS is canonical for Isha, Gita, and Katha; Postgres copies remain as fallback when Strapi is down.
  */
 export const STRAPI_REPLACES_LOCAL: Array<{ strapiDocId: string; localPgSlug: string }> = [
-  { strapiDocId: "t2d3crlf4ptuadp73lziogy5", localPgSlug: "katha-upanishad-bhashya" },
-  { strapiDocId: "ngjdm2fcgp0ogp16jcey3vo1", localPgSlug: "isha-upanishad-bhashya" },
-  { strapiDocId: "b7zir6h4z5v2ng6uofnvhmp3", localPgSlug: "bhagavad-gita" },
+  { strapiDocId: "a7ja5q8qe5w68plzokxh17hz", localPgSlug: "katha-upanishad-bhashya" },
+  { strapiDocId: "j7jxq2cec6dcmqtqc3wont6c", localPgSlug: "isha-upanishad-bhashya" },
+  { strapiDocId: "s4gkaqmq9udj3oq58jsk92y3", localPgSlug: "bhagavad-gita" },
 ];
 
 /** Strapi granthas that must still be merged when slug matches PG (otherwise slug de-dup drops them). */

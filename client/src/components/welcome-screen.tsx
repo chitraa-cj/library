@@ -876,11 +876,20 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
         />
         <div className="relative max-w-4xl mx-auto space-y-6">
           <img src="/favicon.png" alt="Advaita Vaaridhi" className="h-20 sm:h-24 w-auto object-contain mx-auto" />
-          <h1 className="font-page-heading text-4xl sm:text-6xl lg:text-[4.25rem] font-bold text-primary tracking-tight leading-[1.05]">
-            Advaita Vedanta Digital Library
+          <h1 className="font-page-heading text-3xl sm:text-5xl lg:text-[3.75rem] font-normal text-primary tracking-tight leading-[1.1] text-balance">
+            Discover Advaita through its original sources.
           </h1>
           <p className="font-body text-lg sm:text-2xl text-primary/70 tracking-wide">
             ब्रह्म सत्यं जगन्मिथ्या जीवो ब्रह्मैव नापरः
+          </p>
+          {/* ornamental divider */}
+          <div className="flex items-center justify-center gap-3" aria-hidden="true">
+            <span className="h-px w-20 sm:w-28 bg-gradient-to-r from-transparent to-primary/40" />
+            <span className="text-primary/60 text-sm tracking-widest leading-none">❖</span>
+            <span className="h-px w-20 sm:w-28 bg-gradient-to-l from-transparent to-primary/40" />
+          </div>
+          <p className="font-body text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            Read scriptures, commentaries, philosophical works, and traditions that have shaped Advaita across generations.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
             <Button onClick={onBrowseLibrary} className="gap-2 h-12 px-7 text-base font-body shadow-md" data-testid="button-hero-browse">
