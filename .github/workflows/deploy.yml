@@ -16,7 +16,6 @@ jobs:
     steps:
       - name: Deploy
         uses: appleboy/ssh-action@v1.2.0
-
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
@@ -26,40 +25,56 @@ jobs:
           script: |
             set -euo pipefail
 
-            APP_DIR=~/library/library
-            APP_NAME=sacred-script-hub
+            APP_DIR="$HOME/library/library"
+            APP_NAME="library"
 
-            cd $APP_DIR
+            cd "$APP_DIR"
 
+            echo "Updating repository..."
             git fetch origin
             git reset --hard origin/main
 
+            echo "Installing dependencies..."
             NPM_CONFIG_OMIT="" npm install --include=dev
 
+            echo "Building application..."
             npm run build
 
-            test -f dist/index.cjs
+            if [ ! -f dist/index.cjs ]; then
+              echo "Build failed: dist/index.cjs not found."
+              exit 1
+            fi
 
-            if pm2 describe $APP_NAME >/dev/null; then
-              pm2 restart $APP_NAME --update-env
+            echo "Restarting PM2..."
+
+            if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
+              pm2 restart "$APP_NAME" --update-env
             else
-              pm2 start dist/index.cjs --name $APP_NAME
+              pm2 start dist/index.cjs --name "$APP_NAME"
             fi
 
             pm2 save
 
-            sleep 20
+            echo "Waiting for app..."
+            sleep 10
 
-            # detect actual listening port
-            PORT=$(ss -tulpn | grep node | awk '{print $5}' | tail -1 | cut -d: -f2)
+            PORT=$(pm2 env "$APP_NAME" 2>/dev/null | grep "^PORT=" | cut -d= -f2 || true)
+
+            if [ -z "$PORT" ]; then
+              PORT=$(ss -tulpn | grep node | awk '{print $5}' | sed 's/.*://' | head -1 || true)
+            fi
 
             if [ -n "$PORT" ]; then
+              echo "Health checking on port $PORT"
               curl --fail \
                 --retry 10 \
                 --retry-delay 3 \
-                "http://localhost:$PORT"
+                "http://127.0.0.1:$PORT"
             else
-              echo "Skipping health check: app port not detected"
+              echo "No listening port detected. Skipping health check."
             fi
 
+            echo "Reloading nginx..."
             sudo systemctl reload nginx
+
+            echo "Deployment completed successfully."
