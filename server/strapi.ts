@@ -213,10 +213,9 @@ async function strapiFetch<T = any>(endpoint: string, params: Record<string, str
   return response.json() as Promise<T>;
 }
 
-async function strapiFetchAll<T = any>(endpoint: string, params: Record<string, string> = {}): Promise<T[]> {
+async function strapiFetchAll<T = any>(endpoint: string, params: Record<string, string> = {}, pageSize = 100): Promise<T[]> {
   const allItems: T[] = [];
   let page = 1;
-  const pageSize = 100;
 
   while (true) {
     const result = await strapiFetch<StrapiResponse<T[]>>(endpoint, {
@@ -636,6 +635,14 @@ async function fetchSectionsForGrantha(granthaDocId: string): Promise<StrapiSect
 }
 
 async function fetchManthrasForSection(sectionDocId: string): Promise<any[]> {
+  // This fetch deep-populates bhashya + every teeka, each with ~45-language
+  // OtherTranslations. At pageSize=100 the response for a large section (e.g.
+  // Mandukya/Gaudapada with 100+ manthras) exceeds Strapi's limit and 500s,
+  // which silently empties the book's commentary options. Keep the page small.
+  const MANTHRA_PAGE_SIZE = Math.max(
+    1,
+    Math.min(100, Number(process.env.STRAPI_MANTHRA_PAGE_SIZE || 20)),
+  );
   return strapiFetchAll("/manthras", {
     "filters[Section][documentId]": sectionDocId,
     "populate[0]": "Section",
@@ -648,7 +655,7 @@ async function fetchManthrasForSection(sectionDocId: string): Promise<any[]> {
     "populate[7]": "Teekas.TeekaEntry.OtherTranslations",
     "sort[0]": "order:asc",
     "sort[1]": "id:asc",
-  });
+  }, MANTHRA_PAGE_SIZE);
 }
 
 // A manthra is considered "empty" (and therefore should not appear on the site)
