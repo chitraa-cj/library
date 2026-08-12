@@ -19,6 +19,7 @@ import type { BookWithVerseMeta, VerseMeta, VerseTranslation, Explanation, Verse
 import { NotesDialog } from "@/components/notes-dialog";
 import { isBookmarked, toggleBookmark, subscribeBookmarks, type BookmarkEntry } from "@/lib/bookmarks";
 import shankaracharyaImg from "@assets/image_1770455528511.png";
+import shishyasImg from "@assets/shishyas.png";
 import mantraMandalaImg from "@assets/mantra-mandala.png";
 import readerIllustration from "@assets/reader-shankaracharya-standing.jpg";
 
@@ -2184,7 +2185,7 @@ export function BookReader({
                       {(t("mantra") || "Mantra")} {mantraLabel}
                     </p>
                   </div>
-                  <img src={shankaracharyaImg} alt="" className="hidden sm:block h-16 lg:h-20 w-auto object-contain shrink-0 opacity-90 -scale-x-100" aria-hidden="true" />
+                  <img src={shishyasImg} alt="" className="hidden sm:block h-16 lg:h-20 w-auto object-contain shrink-0 opacity-90" aria-hidden="true" />
                 </div>
 
                 {/* Toolbar: Add Note + Language */}

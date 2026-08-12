@@ -5,6 +5,15 @@ import { cmsContentQueryOptions } from "@/lib/queryClient";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { getRecentReads, subscribeLastRead, type LastReadEntry } from "@/lib/last-read";
 import { VideoInline } from "@/components/video-popup";
 import { CATALOG_TREE, type CatalogCategory } from "@/components/app-sidebar";
 import { useTranslation } from "@/lib/translations";
@@ -294,6 +303,28 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
       : (selectedChapter?.verseNumbers ?? []);
   const visibleCols = 2 + (showAdhyaya ? 1 : 0) + (showKhanda ? 1 : 0);
   const gridColsClass = visibleCols === 4 ? "lg:grid-cols-4" : visibleCols === 3 ? "lg:grid-cols-3" : "lg:grid-cols-2";
+
+  // Keep a full path pre-selected while the navigator is open so no column shows a
+  // "Select a text first / Select an adhyāya" placeholder — default to the first
+  // grantha, then its first adhyāya and khaṇḍa as those levels load.
+  useEffect(() => {
+    if (!open) return;
+    const valid = bookId && catBooks.some(b => b.id === bookId);
+    if (!valid && catBooks.length > 0) {
+      setBookId(catBooks[0].id);
+      setAdhyay(null); setKhanda(null); setVerse(null);
+    }
+  }, [open, catBooks, bookId]);
+
+  useEffect(() => {
+    if (!open || !showAdhyaya) return;
+    if (adhyay == null && chapters.length > 0) setAdhyay(chapters[0].number);
+  }, [open, showAdhyaya, adhyay, chapters.length]);
+
+  useEffect(() => {
+    if (!open || !showKhanda) return;
+    if (khanda == null && khandaList.length > 0) setKhanda(khandaList[0].number);
+  }, [open, showKhanda, khanda, khandaList.length]);
 
   const selectedBook = books.find(b => b.id === bookId);
   // Hierarchy terminology adapts to the selected text (or the active category):
@@ -723,6 +754,18 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
   const mandalaImg = theme === "dark" ? homeMandalaDark : homeMandala;
   const advaiticTreeImg = theme === "dark" ? homeAdvaiticTreeDark : homeAdvaiticTree;
 
+  // Books the reader has recently been studying (for the "Resume Study" dropdown).
+  const [recentReads, setRecentReads] = useState<LastReadEntry[]>([]);
+  useEffect(() => {
+    setRecentReads(getRecentReads());
+    return subscribeLastRead(() => setRecentReads(getRecentReads()));
+  }, []);
+
+  const openRecent = (entry: LastReadEntry) => {
+    if (onSelectVerse && entry.verseNumber > 0) onSelectVerse(entry.bookId, entry.verseNumber);
+    else onSelectBook(entry.bookId);
+  };
+
   const upanishadBooks = useMemo(
     () => books.filter(b => b.category === "Upanishad" || b.category === "Upanishad Bhashya"),
     [books],
@@ -856,7 +899,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
       <section className="relative shrink-0 overflow-hidden px-4 pt-14 pb-12 sm:pt-16 sm:pb-14 text-center">
         {/* Home hero background art (theme-specific) — kept as a faint watermark */}
         <div
-          className="absolute inset-0 pointer-events-none select-none opacity-[0.06] dark:opacity-[0.08]"
+          className="absolute inset-0 pointer-events-none select-none opacity-[0.035] dark:opacity-[0.06]"
           style={{
             backgroundImage: `url(${theme === "dark" ? heroBgDark : heroBgLight})`,
             backgroundSize: "cover",
@@ -895,9 +938,45 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
             <Button onClick={onBrowseLibrary} className="gap-2 h-12 px-7 text-base font-body shadow-md" data-testid="button-hero-browse">
               <BookOpen className="h-5 w-5" /> Browse the Library
             </Button>
-            <Button variant="outline" onClick={onBrowseLibrary} className="gap-2 h-12 px-7 text-base font-body border-primary/40 text-primary hover:bg-primary/5 bg-transparent" data-testid="button-hero-resume">
-              Resume Study <ChevronDown className="h-4 w-4" />
-            </Button>
+            {recentReads.length > 0 ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2 h-12 px-7 text-base font-body border-primary/40 text-primary hover:bg-primary/5 bg-transparent" data-testid="button-hero-resume">
+                    {t("resumeStudy") || "Resume Study"} <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-72">
+                  <DropdownMenuLabel className="text-muted-foreground font-normal">
+                    {t("resumeStudy") || "Resume Study"}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {recentReads.map((entry) => (
+                    <DropdownMenuItem
+                      key={entry.bookId}
+                      onSelect={() => openRecent(entry)}
+                      className="flex items-start gap-3 py-2.5 cursor-pointer"
+                      data-testid={`resume-item-${entry.bookId}`}
+                    >
+                      <BookOpen className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {translateContent(entry.bookTitle || "", bookTitleTranslations, languageCode || "en") || entry.bookTitle || "Untitled"}
+                        </p>
+                        {entry.verseLabel && (
+                          <p className="text-xs text-muted-foreground">
+                            {(t("mantra") || "Mantra")} {entry.verseLabel}
+                          </p>
+                        )}
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="outline" onClick={onBrowseLibrary} className="gap-2 h-12 px-7 text-base font-body border-primary/40 text-primary hover:bg-primary/5 bg-transparent" data-testid="button-hero-resume">
+                {t("resumeStudy") || "Resume Study"} <ChevronDown className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
       </section>
