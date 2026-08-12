@@ -2311,10 +2311,8 @@ export function BookReader({
               ) : (
               <>
               <div className="relative overflow-hidden rounded-2xl border border-primary/25 bg-gradient-to-b from-primary/[0.10] via-primary/[0.05] to-primary/[0.09] px-4 sm:px-8 py-3 sm:py-4" data-testid="verse-card">
-                <MandalaCorner className="pointer-events-none absolute -top-8 -left-8 h-28 w-28 opacity-20 dark:opacity-[0.28]" />
-                <MandalaCorner className="pointer-events-none absolute -top-8 -right-8 h-28 w-28 opacity-20 dark:opacity-[0.28]" />
-                <MandalaCorner className="pointer-events-none absolute -bottom-8 -left-8 h-28 w-28 opacity-20 dark:opacity-[0.28]" />
-                <MandalaCorner className="pointer-events-none absolute -bottom-8 -right-8 h-28 w-28 opacity-20 dark:opacity-[0.28]" />
+                <MandalaCorner className="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 opacity-20 dark:opacity-[0.28]" />
+                <MandalaCorner className="pointer-events-none absolute -bottom-10 -right-10 h-32 w-32 opacity-20 dark:opacity-[0.28]" />
                 <div className="relative flex items-start justify-between gap-3 mb-2">
                   <div className="flex items-center gap-1.5">
                     <IconAction icon={Copy} label={t("hintCopyVerse")} onClick={copyMantra} />
@@ -2324,7 +2322,7 @@ export function BookReader({
                   <ListenButton text={mantraPlain} hint={t("hintListen")} stopHint={t("hintStopListen")} />
                 </div>
                 <div
-                  className="relative font-hindi-reading text-xl sm:text-2xl lg:text-[1.7rem] leading-relaxed text-center text-foreground py-2"
+                  className="relative font-hindi-reading text-xl sm:text-2xl lg:text-[1.7rem] leading-relaxed text-center text-primary py-2"
                   data-testid={`text-original-${currentVerse.verseNumber}`}
                 >
                   <WordTooltip

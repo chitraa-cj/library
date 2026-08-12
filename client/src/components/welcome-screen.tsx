@@ -48,6 +48,7 @@ import quickAccessMandala from "@assets/quick-access-mandala.png";
 import quickAccessScene from "@assets/quick-access-scene.png";
 import visionMandala from "@assets/vision-mandala.png";
 import traditionMandala from "@assets/tradition-mandala.png";
+import advaiticVisionMandala from "@assets/advaitic-vision-mandala.png";
 import heroBgLight from "@assets/hero-bg-light.png";
 import heroBgDark from "@assets/hero-bg-dark.png";
 
@@ -1002,7 +1003,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
                   <p className="relative z-10 text-sm font-semibold text-primary leading-snug">{q}</p>
                   {/* Mandala arcing up from the bottom edge */}
                   <img
-                    src={traditionMandala}
+                    src={advaiticVisionMandala}
                     alt=""
                     aria-hidden="true"
                     className="pointer-events-none absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 h-24 w-24 object-contain opacity-50 dark:opacity-40 select-none"
@@ -1110,19 +1111,22 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
           {twoSchools.map((s, i) => (
             <div
               key={s.name}
-              className={`rounded-2xl border border-border/60 bg-card p-6 sm:p-8 text-center ${i === 0 ? "sm:text-left sm:pr-20" : "sm:text-right sm:pl-20"}`}
+              className={`relative overflow-hidden rounded-2xl border border-border/60 bg-card p-6 sm:p-8 text-center ${i === 0 ? "sm:text-left sm:pr-20" : "sm:text-right sm:pl-20"}`}
             >
-              <h3 className="font-serif text-xl sm:text-2xl font-bold text-foreground mb-1.5">{s.name}</h3>
-              <p className="text-sm text-muted-foreground">{s.members.join(" · ")}</p>
+              {/* Each card clips its own half of the mandala at the inner edge, so the two
+                  halves read as a single ring split by the seam between the cards. */}
+              <img
+                src={traditionMandala}
+                alt=""
+                aria-hidden="true"
+                className={`hidden sm:block pointer-events-none absolute top-1/2 -translate-y-1/2 h-28 w-28 object-contain z-10 select-none ${
+                  i === 0 ? "right-0 translate-x-1/2" : "left-0 -translate-x-1/2"
+                }`}
+              />
+              <h3 className="relative z-20 font-serif text-xl sm:text-2xl font-bold text-foreground mb-1.5">{s.name}</h3>
+              <p className="relative z-20 text-sm text-muted-foreground">{s.members.join(" · ")}</p>
             </div>
           ))}
-          {/* Gold mandala centerpiece straddling the two cards */}
-          <img
-            src={traditionMandala}
-            alt=""
-            aria-hidden="true"
-            className="hidden sm:block pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-28 w-28 object-contain z-10 select-none"
-          />
         </div>
 
         <p className="text-[11px] uppercase tracking-[0.2em] text-primary font-semibold mb-3">Regional Luminaries</p>
