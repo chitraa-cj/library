@@ -17,6 +17,7 @@ import { getRecentReads, subscribeLastRead, type LastReadEntry } from "@/lib/las
 import { VideoInline } from "@/components/video-popup";
 import { CATALOG_TREE, type CatalogCategory } from "@/components/app-sidebar";
 import { useTranslation } from "@/lib/translations";
+import { matchAcharyaSlug } from "@/lib/acharya-match";
 import { translateContent, bookTitleTranslations, bookAuthorTranslations, bookCategoryTranslations, bookDescriptionTranslations } from "@/lib/content-translations";
 import { useProgressSummary } from "@/hooks/use-progress";
 import { resolveBookCoverImage } from "@/components/book-landing-cover-hero";
@@ -1547,6 +1548,17 @@ function PrasthanaThriyaLandingPage({ categoryId, books, onSelectSubCategory }: 
   books: Book[];
   onSelectSubCategory: (categoryId: string, subCategoryId: string) => void;
 }) {
+  // The Upanishad card's count reflects how many principal ("major") Upanishad texts
+  // are actually present in the library, rather than a fixed number. The Gita/Brahma
+  // Sutra counts stay fixed (chapters / sutras are constant).
+  const upanishadCount = PRINCIPAL_UPANISHADS.reduce(
+    (n, up) => (findBookForPrincipal(up, books) ? n + 1 : n),
+    0,
+  );
+  const countLabelFor = (card: PrasthanaCard) =>
+    card.subCategoryId === "pt-upanishad" && upanishadCount > 0
+      ? `${upanishadCount} Major Text${upanishadCount === 1 ? "" : "s"}`
+      : card.countLabel;
   return (
     <div className="flex-1 overflow-y-auto bg-background p-6 sm:p-8 lg:p-10" data-testid="prasthana-thraya-landing">
       <div className="max-w-5xl mx-auto">
@@ -1600,7 +1612,7 @@ function PrasthanaThriyaLandingPage({ categoryId, books, onSelectSubCategory }: 
 
                   <div className="flex items-center justify-between mt-5 pt-4 border-t border-border/40">
                     <span className="text-[10px] font-bold text-primary/70 uppercase tracking-wider">
-                      {card.countLabel}
+                      {countLabelFor(card)}
                     </span>
                     <div className="h-8 w-8 rounded-full bg-foreground flex items-center justify-center group-hover:bg-primary transition-colors">
                       <ArrowRight className="h-4 w-4 text-background" />
@@ -2148,7 +2160,7 @@ function LandingNavSidebar({ book, chapters, landingData, onSelectBook, onSelect
   );
 }
 
-function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, t, tc, languageCode, onBack, backLabel, hierarchyLegend, onCoverBookChange }: {
+function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, t, tc, languageCode, onBack, backLabel, hierarchyLegend, onCoverBookChange, onOpenAcharya }: {
   book: Book;
   landingData: BookLandingData;
   chapters: ChapterInfo[];
@@ -2163,6 +2175,7 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
   backLabel?: string;
   hierarchyLegend?: { label: string; dotClass: string }[];
   onCoverBookChange?: (info: { bookId: string; title: string } | null) => void;
+  onOpenAcharya?: (slug?: string) => void;
 }) {
   const coverImage = resolveBookCoverImage(book);
 
@@ -2174,24 +2187,51 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
   }, [book.id, coverTitle]);
 
   const chapterCount = chapters.length;
-  const commentators = [
-    ...(book.author
-      ? [{
-          name: book.author,
-          role: "Bhāṣyakāra (Commentator)",
-          sub: book.bhashyamName,
-          icon: Users,
-          primary: true,
-        }]
-      : []),
-    ...((book.teekasList ?? []).map((teeka) => ({
-      name: teeka.author || teeka.name,
+
+  // Acharya (guru-parampara) profiles, used to make commentator names clickable.
+  const { data: acharyas } = useQuery<{ slug: string; name_iast: string; name_devanagari: string; name_display: string | null }[]>({
+    queryKey: ["/api/acharyas"],
+  });
+  const acharyaSlugFor = (name: string): string | undefined => matchAcharyaSlug(name, acharyas);
+
+  // Build the commentarial-tradition list. Teekas are grouped by their author so a
+  // sub-commentator who wrote several works (e.g. Ramananda Saraswati) appears once
+  // with each work listed beneath, instead of the same name repeating per work.
+  type Commentator = { name: string; role: string; subs: string[]; icon: typeof Users; primary: boolean; slug?: string };
+  const commentators: Commentator[] = [];
+  if (book.author) {
+    commentators.push({
+      name: book.author,
+      role: "Bhāṣyakāra (Commentator)",
+      subs: book.bhashyamName ? [book.bhashyamName] : [],
+      icon: Users,
+      primary: true,
+      slug: acharyaSlugFor(book.author),
+    });
+  }
+  const teekaGroups = new Map<string, { name: string; subs: string[] }>();
+  for (const teeka of book.teekasList ?? []) {
+    const person = teeka.author || teeka.name;
+    if (!person) continue;
+    const work = teeka.author && teeka.name ? teeka.name : undefined;
+    const key = person.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "");
+    const existing = teekaGroups.get(key);
+    if (existing) {
+      if (work && !existing.subs.includes(work)) existing.subs.push(work);
+    } else {
+      teekaGroups.set(key, { name: person, subs: work ? [work] : [] });
+    }
+  }
+  for (const group of Array.from(teekaGroups.values())) {
+    commentators.push({
+      name: group.name,
       role: "Ṭīkākāras (Sub-commentators)",
-      sub: teeka.author && teeka.name ? teeka.name : undefined,
+      subs: group.subs,
       icon: Feather,
       primary: false,
-    }))),
-  ];
+      slug: acharyaSlugFor(group.name),
+    });
+  }
 
   return (
     <div
@@ -2315,6 +2355,8 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
                 <div className="flex flex-wrap items-center gap-x-7 gap-y-3">
                   {commentators.map((c, idx) => {
                     const Icon = c.icon;
+                    const clickable = Boolean(c.slug && onOpenAcharya);
+                    const nameClass = `text-sm font-semibold leading-tight ${c.primary ? "text-primary" : "text-foreground"}`;
                     return (
                       <div key={idx} className="relative flex items-center gap-2.5">
                         {idx > 0 && (
@@ -2324,13 +2366,25 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
                           <Icon className={`h-4 w-4 ${c.primary ? "text-primary/80" : "text-muted-foreground"}`} />
                         </div>
                         <div className="min-w-0">
-                          <p className={`text-sm font-semibold leading-tight ${c.primary ? "text-primary" : "text-foreground"}`}>
-                            {c.name}
-                          </p>
+                          {clickable ? (
+                            <button
+                              type="button"
+                              onClick={() => onOpenAcharya!(c.slug)}
+                              className={`${nameClass} text-left bg-transparent border-none p-0 hover:underline underline-offset-2 cursor-pointer`}
+                              title="View acharya profile"
+                              data-testid={`commentator-link-${idx}`}
+                            >
+                              {c.name}
+                            </button>
+                          ) : (
+                            <p className={nameClass}>{c.name}</p>
+                          )}
                           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
                             {c.role}
                           </p>
-                          {c.sub && <p className="text-[11px] text-muted-foreground italic leading-tight">{c.sub}</p>}
+                          {c.subs.map((sub, subIdx) => (
+                            <p key={subIdx} className="text-[11px] text-muted-foreground italic leading-tight">{sub}</p>
+                          ))}
                         </div>
                       </div>
                     );
@@ -2626,7 +2680,7 @@ function findCompanionBooksForPrincipal(
   });
 }
 
-function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, onGoBack, languageCode, onCoverBookChange }: {
+function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, onGoBack, languageCode, onCoverBookChange, onOpenAcharya }: {
   books: Book[];
   onSelectBook: (bookId: string) => void;
   onSelectChapter?: (bookId: string, adhyayNumber: number) => void;
@@ -2635,6 +2689,7 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
   onGoBack?: () => void;
   languageCode?: string | null;
   onCoverBookChange?: (info: { bookId: string; title: string } | null) => void;
+  onOpenAcharya?: (slug?: string) => void;
 }) {
   const { theme } = useTheme();
   const [selectedUpanishadSlug, setSelectedUpanishadSlug] = useState<string | null>(null);
@@ -2743,6 +2798,7 @@ function UpanishadLandingPage({ books, onSelectBook, onSelectChapter, onSelectPa
           t={(k: any) => k}
           tc={(text) => text || ""}
           onCoverBookChange={onCoverBookChange}
+          onOpenAcharya={onOpenAcharya}
         />
       </div>
     );
@@ -3264,24 +3320,24 @@ interface GitaChapter {
 }
 
 const GITA_CHAPTERS: GitaChapter[] = [
-  { num: 1, name: "अर्जुनविषादयोग", transliteration: "Arjun Viṣhād Yog", meaning: "Arjuna's Dilemma", verses: 47 },
-  { num: 2, name: "सांख्ययोग", transliteration: "Sānkhya Yog", meaning: "The Yoga of Knowledge", verses: 72 },
-  { num: 3, name: "कर्मयोग", transliteration: "Karm Yog", meaning: "The Yoga of Action", verses: 43 },
-  { num: 4, name: "ज्ञानकर्मसंन्यासयोग", transliteration: "Jñāna Karm Sanyās Yog", meaning: "The Yoga of Knowledge and Action", verses: 42 },
-  { num: 5, name: "कर्मसंन्यासयोग", transliteration: "Karm Sanyās Yog", meaning: "The Yoga of Renunciation", verses: 29 },
-  { num: 6, name: "ध्यानयोग", transliteration: "Dhyān Yog", meaning: "The Yoga of Meditation", verses: 47 },
-  { num: 7, name: "ज्ञानविज्ञानयोग", transliteration: "Jñāna Vijñāna Yog", meaning: "The Yoga of Knowledge and Wisdom", verses: 30 },
-  { num: 8, name: "अक्षरब्रह्मयोग", transliteration: "Akṣhar Brahma Yog", meaning: "The Yoga of the Imperishable Brahman", verses: 28 },
-  { num: 9, name: "राजविद्याराजगुह्ययोग", transliteration: "Rāja Vidyā Yog", meaning: "The Yoga of Royal Knowledge", verses: 34 },
-  { num: 10, name: "विभूतियोग", transliteration: "Vibhūti Yog", meaning: "The Yoga of Divine Glories", verses: 42 },
-  { num: 11, name: "विश्वरूपदर्शनयोग", transliteration: "Viśhwarūp Darśhan Yog", meaning: "The Yoga of the Universal Form", verses: 55 },
-  { num: 12, name: "भक्तियोग", transliteration: "Bhakti Yog", meaning: "The Yoga of Devotion", verses: 20 },
-  { num: 13, name: "क्षेत्र-क्षेत्रज्ञविभागयोग", transliteration: "Kṣhetra Kṣhetrajña Vibhāg Yog", meaning: "The Yoga of the Field and the Knower", verses: 35 },
-  { num: 14, name: "गुणत्रयविभागयोग", transliteration: "Guṇa Traya Vibhāg Yog", meaning: "The Yoga of the Three Gunas", verses: 27 },
-  { num: 15, name: "पुरुषोत्तमयोग", transliteration: "Puruṣhottam Yog", meaning: "The Yoga of the Supreme Person", verses: 20 },
-  { num: 16, name: "दैवासुरसम्पद्विभागयोग", transliteration: "Daivāsura Sampad Vibhāg Yog", meaning: "The Yoga of Divine and Demoniac Natures", verses: 24 },
-  { num: 17, name: "श्रद्धात्रयविभागयोग", transliteration: "Śhraddhā Traya Vibhāg Yog", meaning: "The Yoga of the Three Divisions of Faith", verses: 28 },
-  { num: 18, name: "मोक्षसंन्यासयोग", transliteration: "Mokṣha Sanyās Yog", meaning: "The Yoga of Liberation through Renunciation", verses: 78 },
+  { num: 1, name: "अर्जुनविषादयोग", transliteration: "Arjuna Viṣhāda Yoga", meaning: "Arjuna's Dilemma", verses: 47 },
+  { num: 2, name: "सांख्ययोग", transliteration: "Sānkhya Yoga", meaning: "The Yoga of Knowledge", verses: 72 },
+  { num: 3, name: "कर्मयोग", transliteration: "Karma Yoga", meaning: "The Yoga of Action", verses: 43 },
+  { num: 4, name: "ज्ञानकर्मसंन्यासयोग", transliteration: "Jñāna Karma Sanyāsa Yoga", meaning: "The Yoga of Knowledge and Action", verses: 42 },
+  { num: 5, name: "कर्मसंन्यासयोग", transliteration: "Karma Sanyāsa Yoga", meaning: "The Yoga of Renunciation", verses: 29 },
+  { num: 6, name: "ध्यानयोग", transliteration: "Dhyāna Yoga", meaning: "The Yoga of Meditation", verses: 47 },
+  { num: 7, name: "ज्ञानविज्ञानयोग", transliteration: "Jñāna Vijñāna Yoga", meaning: "The Yoga of Knowledge and Wisdom", verses: 30 },
+  { num: 8, name: "अक्षरब्रह्मयोग", transliteration: "Akṣhara Brahma Yoga", meaning: "The Yoga of the Imperishable Brahman", verses: 28 },
+  { num: 9, name: "राजविद्याराजगुह्ययोग", transliteration: "Rāja Vidyā Yoga", meaning: "The Yoga of Royal Knowledge", verses: 34 },
+  { num: 10, name: "विभूतियोग", transliteration: "Vibhūti Yoga", meaning: "The Yoga of Divine Glories", verses: 42 },
+  { num: 11, name: "विश्वरूपदर्शनयोग", transliteration: "Viśhwarūpa Darśhana Yoga", meaning: "The Yoga of the Universal Form", verses: 55 },
+  { num: 12, name: "भक्तियोग", transliteration: "Bhakti Yoga", meaning: "The Yoga of Devotion", verses: 20 },
+  { num: 13, name: "क्षेत्र-क्षेत्रज्ञविभागयोग", transliteration: "Kṣhetra Kṣhetrajña Vibhāga Yoga", meaning: "The Yoga of the Field and the Knower", verses: 35 },
+  { num: 14, name: "गुणत्रयविभागयोग", transliteration: "Guṇa Traya Vibhāga Yoga", meaning: "The Yoga of the Three Gunas", verses: 27 },
+  { num: 15, name: "पुरुषोत्तमयोग", transliteration: "Puruṣhottama Yoga", meaning: "The Yoga of the Supreme Person", verses: 20 },
+  { num: 16, name: "दैवासुरसम्पद्विभागयोग", transliteration: "Daivāsura Sampada Vibhāga Yoga", meaning: "The Yoga of Divine and Demoniac Natures", verses: 24 },
+  { num: 17, name: "श्रद्धात्रयविभागयोग", transliteration: "Śhraddhā Traya Vibhāga Yoga", meaning: "The Yoga of the Three Divisions of Faith", verses: 28 },
+  { num: 18, name: "मोक्षसंन्यासयोग", transliteration: "Mokṣha Sanyāsa Yoga", meaning: "The Yoga of Liberation through Renunciation", verses: 78 },
 ];
 
 // Per-chapter cover art served from public/images/gita-chapters/{num}.jpg (chapters 1–18).
@@ -3418,9 +3474,10 @@ interface SubCategoryDetailViewProps {
   onGoBack: () => void;
   languageCode?: string | null;
   onCoverBookChange?: (info: { bookId: string; title: string } | null) => void;
+  onOpenAcharya?: (slug?: string) => void;
 }
 
-export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, onGoBack, languageCode, onCoverBookChange }: SubCategoryDetailViewProps) {
+export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSelectBook, onSelectChapter, onSelectPart, onSelectVerse, onGoBack, languageCode, onCoverBookChange, onOpenAcharya }: SubCategoryDetailViewProps) {
   const category = CATALOG_TREE.find(c => c.id === categoryId);
   const subCategory = category?.children?.find(s => s.id === subCategoryId);
   if (!category || !subCategory) return null;
@@ -3446,6 +3503,7 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
         onGoBack={onGoBack}
         languageCode={languageCode}
         onCoverBookChange={onCoverBookChange}
+        onOpenAcharya={onOpenAcharya}
       />
     );
   }
@@ -3485,6 +3543,7 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
           tc={tc}
           languageCode={languageCode}
           onCoverBookChange={onCoverBookChange}
+          onOpenAcharya={onOpenAcharya}
         />
       </div>
     );

@@ -120,6 +120,19 @@ function dedupeTitleWords(title: string): string {
   return title.replace(/\b(\w+)(\s+\1\b)+/gi, "$1");
 }
 
+// Verse-unit synonyms (all mean "verse/stanza"). The CMS occasionally stores a
+// section title with two of these stacked — e.g. "Mantra Shloka 1.6" — which reads
+// as a duplicate. Keep the trailing one (it carries the number) and drop a leading
+// synonym only when it's immediately followed by another synonym.
+const VERSE_UNIT_SYNONYMS = "mantra|mantram|shloka|sloka|śloka|shlokam|slokam|sutra|sūtra|sutram|karika|kārikā|kaarika|verse|richa|richā|padya";
+function collapseVerseUnitSynonyms(title: string): string {
+  const re = new RegExp(`^\\s*(?:${VERSE_UNIT_SYNONYMS})\\s+(?=(?:${VERSE_UNIT_SYNONYMS})\\b)`, "i");
+  let out = title;
+  // Loop in case three or more are stacked (e.g. "Mantra Shloka Karika 1.6").
+  while (re.test(out)) out = out.replace(re, "");
+  return out;
+}
+
 function buildTOCHierarchy(verses: VerseMeta[], t?: (key: string) => string): { type: "three-level" | "two-level" | "flat"; groups: TOCAdhyay[] } {
   const hasThreeLevel = verses.some(v => v.adhyayNumber != null && v.khandaNumber != null);
   const hasTwoLevel = verses.some(v => v.adhyayNumber != null);
@@ -843,7 +856,7 @@ export function BookReader({
   const verses = useMemo(
     () =>
       (book?.verses || []).map((v) =>
-        v.sectionTitle ? { ...v, sectionTitle: dedupeTitleWords(v.sectionTitle) } : v
+        v.sectionTitle ? { ...v, sectionTitle: collapseVerseUnitSynonyms(dedupeTitleWords(v.sectionTitle)) } : v
       ),
     [book]
   );
@@ -924,14 +937,24 @@ export function BookReader({
     (commentaryOptions.authors.length > 0 || commentaryOptions.languages.length > 0);
 
   const currentNumericLabel = useMemo(() => {
-    if (!currentVerse || currentVerse.adhyayNumber == null || currentVerse.khandaNumber == null) {
+    if (!currentVerse || currentVerse.adhyayNumber == null) {
       return null;
     }
-    const khandaVerses = verses
-      .filter((v: VerseMeta) => v.adhyayNumber === currentVerse.adhyayNumber && v.khandaNumber === currentVerse.khandaNumber)
+    if (currentVerse.khandaNumber != null) {
+      // Three-level (adhyaya → khanda → mantra), e.g. Chandogya "1.2.3".
+      const khandaVerses = verses
+        .filter((v: VerseMeta) => v.adhyayNumber === currentVerse.adhyayNumber && v.khandaNumber === currentVerse.khandaNumber)
+        .sort((a: VerseMeta, b: VerseMeta) => a.verseNumber - b.verseNumber);
+      const idx = khandaVerses.findIndex((v: VerseMeta) => v.id === currentVerse.id);
+      return `${currentVerse.adhyayNumber}.${currentVerse.khandaNumber}.${idx >= 0 ? idx + 1 : 1}`;
+    }
+    // Two-level (adhyaya → mantra), e.g. Bhagavad Gita "2.18": show the mantra's
+    // position within its chapter, not its absolute number across the whole book.
+    const adhyayVerses = verses
+      .filter((v: VerseMeta) => v.adhyayNumber === currentVerse.adhyayNumber)
       .sort((a: VerseMeta, b: VerseMeta) => a.verseNumber - b.verseNumber);
-    const idx = khandaVerses.findIndex((v: VerseMeta) => v.id === currentVerse.id);
-    return `${currentVerse.adhyayNumber}.${currentVerse.khandaNumber}.${idx >= 0 ? idx + 1 : 1}`;
+    const idx = adhyayVerses.findIndex((v: VerseMeta) => v.id === currentVerse.id);
+    return `${currentVerse.adhyayNumber}.${idx >= 0 ? idx + 1 : 1}`;
   }, [currentVerse, verses]);
 
   const introTextForLang = useMemo(() => {
@@ -1682,9 +1705,12 @@ export function BookReader({
     };
 
     const getChapterDevanagari = (verse: VerseWithTranslations): string => {
-      const devText = verse.translations?.find(tr => tr.languageCode === "devanagari")?.content;
+      const devText = verse.translations?.find(tr => tr.languageCode === "devanagari")?.content
+        || verse.translations?.find(tr => tr.languageCode === "sa")?.content;
       if (devText) return devText;
-      return verse.translations?.find(tr => tr.languageCode === "sa")?.content || "";
+      // Fall back to the verse-meta preview (the full mantra text) so the chapter
+      // view still renders when the full-text query is slow/unavailable.
+      return (verse as VerseWithTranslations & { preview?: string }).preview || "";
     };
 
     const nonIndicLangs = ["english", "en", "devanagari", "sa", "kannada", "kn", "telugu", "te", "tamil", "ta"];
@@ -1703,9 +1729,24 @@ export function BookReader({
     const showTranslation = true;
     const chapterTransLang = (effectiveLang && effectiveLang !== "devanagari" && effectiveLang !== "sa") ? effectiveLang : "en";
 
-    const filteredChapterVerses = chapterViewKhanda != null && selectedKhandaInfo
-      ? chapterVerses?.filter(v => selectedKhandaInfo.verses.some(sv => sv.verseNumber === v.verseNumber))
-      : chapterVerses;
+    // Drive the chapter/part verse list from the always-available cached verse
+    // meta (loaded with the book) rather than the separate /chapter/verses query,
+    // which is slow and occasionally fails for large CMS-backed books — leaving
+    // every adhyaya AND khanda view empty and indistinguishable. The query result
+    // (when present) only enriches each mantra with its full text / translations.
+    const chapterFullByNum = new Map<number, VerseWithTranslations>(
+      (chapterVerses || []).map(v => [v.verseNumber, v])
+    );
+    const metaInAdhyay = verses.filter(v => v.adhyayNumber === chapterViewAdhyay);
+    const metaInScope = chapterViewKhanda != null
+      ? metaInAdhyay.filter(v => v.khandaNumber === chapterViewKhanda)
+      : metaInAdhyay;
+    const filteredChapterVerses: VerseWithTranslations[] = metaInScope.map(m => {
+      const full = chapterFullByNum.get(m.verseNumber);
+      return full
+        ? { ...m, ...full }
+        : ({ ...m, translations: [], explanations: [] } as unknown as VerseWithTranslations);
+    });
 
     const groupedByKhanda = chapterViewKhanda == null && chapterInfo && tocHierarchy.type === "three-level"
       ? chapterInfo.khandas.map(k => ({
@@ -1743,7 +1784,7 @@ export function BookReader({
 
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain">
           <div className="max-w-3xl xl:max-w-4xl 2xl:max-w-5xl mx-auto px-4 sm:px-8 py-4 sm:py-6">
-            {isChapterLoading ? (
+            {isChapterLoading && filteredChapterVerses.length === 0 ? (
               <div className="space-y-6">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div key={i} className="space-y-3">
@@ -1801,7 +1842,7 @@ export function BookReader({
                                 data-testid={`chapter-verse-${verse.verseNumber}`}
                               >
                                 {devanagari && (
-                                  <div className="font-body text-base sm:text-xl leading-loose sm:leading-loose text-center px-2 sm:px-8 group-hover:text-primary transition-colors whitespace-pre-line">
+                                  <div className="font-hindi-reading text-base sm:text-xl leading-loose sm:leading-loose text-center px-2 sm:px-8 group-hover:text-primary transition-colors whitespace-pre-line">
                                     {devanagari}
                                   </div>
                                 )}

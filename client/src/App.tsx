@@ -5,7 +5,7 @@ import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider, useTheme } from "@/components/theme-provider";
-import { CATALOG_TREE, findBookPath } from "@/components/app-sidebar";
+import { CATALOG_TREE, findBookPath, matchesCategory } from "@/components/app-sidebar";
 import { WelcomeScreen, LibraryCatalogView, CategoryDetailView, SubCategoryDetailView } from "@/components/welcome-screen";
 import { AcharyasPage } from "@/components/acharyas-page";
 import { BookReader } from "@/components/book-reader";
@@ -408,6 +408,24 @@ function HomePageContent() {
     setLocation("/");
   };
 
+  // Open the guru-parampara (acharya) page. Clears book/category selection so the
+  // acharya branch actually renders (it sits below the category views in the tree).
+  const handleOpenAcharya = (slug?: string) => {
+    setSelectedBookId(null);
+    setSelectedVerseId(null);
+    setSelectedContent("");
+    setShowTranslationPanel(false);
+    setSelectedAuthor(null);
+    setNavigateToVerse(null);
+    setCurrentVerseNumber(1);
+    setVerseBreadcrumb(null);
+    setSelectedCategoryId(null);
+    setSelectedSubCategoryId(null);
+    setShowLibraryCatalog(false);
+    setSelectedAcharyaSlug(slug ?? null);
+    setShowAcharyas(true);
+  };
+
   useEffect(() => {
     if (isMobile && selectedBookId && selectedVerseId && !mobileInitialPanelShown) {
       setShowTranslationPanel(true);
@@ -633,7 +651,26 @@ function HomePageContent() {
                     }
                   }
                 } else if (showLibraryCatalog) {
-                  crumbs.push({ label: t("browseTheLibrary"), onClick: handleGoHome });
+                  // "Browse Library" returns to the catalog root (keeps the catalog
+                  // open) rather than going all the way Home. When nothing deeper is
+                  // selected it IS the current page, so it renders non-clickable.
+                  crumbs.push({
+                    label: t("browseTheLibrary"),
+                    onClick: selectedBookId ? () => {
+                      setSelectedBookId(null);
+                      setSelectedVerseId(null);
+                      setSelectedContent("");
+                      setShowTranslationPanel(false);
+                      setSelectedAuthor(null);
+                      setNavigateToVerse(null);
+                      setCurrentVerseNumber(1);
+                      setVerseBreadcrumb(null);
+                      setSelectedCategoryId(null);
+                      setSelectedSubCategoryId(null);
+                      setShowLibraryCatalog(true);
+                      setLocation("/");
+                    } : undefined,
+                  });
                 }
 
                 if (selectedBookId) {
@@ -662,7 +699,16 @@ function HomePageContent() {
                         });
                         if (bookPath.subCategoryId && cat.children) {
                           const sub = cat.children.find(s => s.id === bookPath.subCategoryId);
-                          if (sub) {
+                          // A single-book subcategory (e.g. "Bhagavad Gita" → the one
+                          // Srimad Bhagavad Gita text, or "Brahma Sutra" → Brahmasūtra)
+                          // resolves to the same landing as the book itself, so showing
+                          // both reads as a duplicate. Skip the subcategory crumb in that
+                          // case; keep it when the subcategory holds many texts (e.g.
+                          // "Upanishad"), where it's a genuinely distinct list page.
+                          const subBookCount = sub
+                            ? (allBooks ?? []).filter(b => matchesCategory(sub.categoryMatch, sub.categoryAltMatch, b.category)).length
+                            : 0;
+                          if (sub && subBookCount !== 1) {
                             crumbs.push({
                               label: sub.labelKey ? t(sub.labelKey) !== sub.labelKey ? t(sub.labelKey) : sub.label : sub.label,
                               onClick: () => {
@@ -715,7 +761,18 @@ function HomePageContent() {
                   crumbs.push({ label: coverBook.title });
                 }
 
-                return crumbs.map((crumb, idx) => (
+                // Collapse an adjacent duplicate label. A single-book subcategory
+                // (e.g. the "Brahma Sutra" subcategory holding only "Brahmasūtra")
+                // otherwise renders the same name twice in a row. Drop the earlier
+                // (subcategory) crumb and keep the more specific book/current one.
+                const normCrumb = (s: string) =>
+                  s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "");
+                const dedupedCrumbs = crumbs.filter((crumb, idx) => {
+                  const next = crumbs[idx + 1];
+                  return !(next && normCrumb(crumb.label) === normCrumb(next.label));
+                });
+
+                return dedupedCrumbs.map((crumb, idx) => (
                   <span key={idx} className="flex items-center gap-1 shrink-0">
                     {idx > 0 && <ChevronRight className="h-3 w-3 text-muted-foreground/40 shrink-0" />}
                     {crumb.onClick ? (
@@ -845,6 +902,7 @@ function HomePageContent() {
                       onSelectVerse={handleReaderNavSelectVerse}
                       onSelectBook={handleBookSelect}
                       onShowCover={handleShowReaderCover}
+                      onOpenAcharya={handleOpenAcharya}
                     />
                   </div>
                 )}
@@ -895,6 +953,7 @@ function HomePageContent() {
                 }}
                 languageCode={selectedCommentaryLanguage}
                 onCoverBookChange={setCoverBook}
+                onOpenAcharya={handleOpenAcharya}
               />
             ) : selectedCategoryId ? (
               <CategoryDetailView
@@ -945,10 +1004,7 @@ function HomePageContent() {
                   setSelectedCategoryId(categoryId);
                   setSelectedSubCategoryId(subCategoryId);
                 }}
-                onOpenAcharya={(slug) => {
-                  setSelectedAcharyaSlug(slug ?? null);
-                  setShowAcharyas(true);
-                }}
+                onOpenAcharya={handleOpenAcharya}
                 languageCode={selectedCommentaryLanguage}
               />
             )}

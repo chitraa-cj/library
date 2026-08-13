@@ -4,6 +4,7 @@ import { cmsContentQueryOptions } from "@/lib/queryClient";
 import { BookOpen, Search, ChevronDown, Bookmark, Play, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { isBookmarked, toggleBookmark, subscribeBookmarks, type BookmarkEntry } from "@/lib/bookmarks";
+import { matchAcharyaSlug, type AcharyaNameRef } from "@/lib/acharya-match";
 import shankaracharyaImg from "@assets/image_1770455528511.png";
 
 export interface KhandaInfo {
@@ -241,7 +242,7 @@ const SIDEBAR_VIDEO_BY_SLUG: Record<string, { videoId: string; minutes: number }
   "isha-upanishad-bhashya": { videoId: "8ELHatzdtAk", minutes: 32 },
 };
 
-export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumber, chapterViewAdhyay, chapterViewKhanda, onSelectVerse, onSelectBook, onShowCover }: {
+export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumber, chapterViewAdhyay, chapterViewKhanda, onSelectVerse, onSelectBook, onShowCover, onOpenAcharya }: {
   bookId: string;
   bookTitle: string;
   chapters: ChapterInfo[];
@@ -251,11 +252,16 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
   onSelectVerse: (bookId: string, verseNumber: number) => void;
   onSelectBook: (bookId: string) => void;
   onShowCover?: () => void;
+  onOpenAcharya?: (slug?: string) => void;
 }) {
   const { data: bookData } = useQuery<any>({
     queryKey: ["/api/books", bookId],
     enabled: !!bookId,
     ...cmsContentQueryOptions,
+  });
+  // Acharya (guru-parampara) profiles — used to link the author name to its in-app page.
+  const { data: acharyas } = useQuery<AcharyaNameRef[]>({
+    queryKey: ["/api/acharyas"],
   });
   const introInfo = useMemo(() => {
     if (!bookData?.verses) return { hasIntro: false, label: "Sambandha Bhāṣyam" };
@@ -272,6 +278,9 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
   const hasKhandas = useMemo(() => chapters.some((ch) => ch.khandas && ch.khandas.length > 0), [chapters]);
   const labels = useMemo(() => detectLabels(chapters), [chapters]);
   const author = (bookData?.author && String(bookData.author).trim()) || "Śrī Śaṅkarācārya";
+  const authorAcharyaSlug = useMemo(() => matchAcharyaSlug(author, acharyas), [author, acharyas]);
+  const authorLinkable = Boolean(authorAcharyaSlug && onOpenAcharya);
+  const openAuthorAcharya = () => { if (authorAcharyaSlug && onOpenAcharya) onOpenAcharya(authorAcharyaSlug); };
 
   const [selectedChapterNum, setSelectedChapterNum] = useState<number | null>(null);
   const [selectedKhandaNum, setSelectedKhandaNum] = useState<number | null>(null);
@@ -428,21 +437,37 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
           <ChevronDown className="h-4 w-4 shrink-0 opacity-90" />
         </button>
 
-        {/* Author card */}
+        {/* Author card — the acharya name links to its in-app guru-parampara page. */}
         <div className="flex items-center gap-2.5 rounded-xl border border-primary/20 bg-primary/[0.04] p-2.5" data-testid="reader-nav-author">
           <img src={shankaracharyaImg} alt="" className="h-11 w-11 object-contain shrink-0" aria-hidden="true" />
           <div className="min-w-0 flex-1 text-center">
-            <button
-              type="button"
-              onClick={() => window.open("https://en.wikipedia.org/wiki/Adi_Shankara", "_blank", "noopener,noreferrer")}
-              className="text-[11px] text-muted-foreground hover:text-primary hover:underline transition-colors"
-              data-testid="button-read-biography"
-            >
-              Read Biography
-            </button>
+            {authorLinkable ? (
+              <button
+                type="button"
+                onClick={openAuthorAcharya}
+                className="text-[11px] text-muted-foreground hover:text-primary hover:underline transition-colors"
+                data-testid="button-read-biography"
+              >
+                View Profile
+              </button>
+            ) : (
+              <span className="text-[11px] text-muted-foreground">Acharya</span>
+            )}
             <div className="flex items-center justify-center gap-1.5">
               <span className="text-primary/40 text-[10px]">&#10086;</span>
-              <span className="text-sm font-serif font-semibold text-primary truncate">{author}</span>
+              {authorLinkable ? (
+                <button
+                  type="button"
+                  onClick={openAuthorAcharya}
+                  className="text-sm font-serif font-semibold text-primary truncate hover:underline underline-offset-2 cursor-pointer bg-transparent border-none p-0"
+                  title="View acharya profile"
+                  data-testid="link-author-acharya"
+                >
+                  {author}
+                </button>
+              ) : (
+                <span className="text-sm font-serif font-semibold text-primary truncate">{author}</span>
+              )}
               <span className="text-primary/40 text-[10px]">&#10086;</span>
             </div>
           </div>
