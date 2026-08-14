@@ -3345,7 +3345,7 @@ const GITA_CHAPTER_IMAGES: Record<number, string> = Object.fromEntries(
   GITA_CHAPTERS.map((ch) => [ch.num, `/images/gita-chapters/${ch.num}.jpg`]),
 );
 
-function GitaChapterGrid({ book, chapters, onSelectBook, onSelectChapter, onGoBack, landingData, t, tc, languageCode }: {
+function GitaChapterGrid({ book, chapters, onSelectBook, onSelectChapter, onGoBack, landingData, t, tc, languageCode, onOpenAcharya }: {
   book: Book;
   chapters: ChapterInfo[];
   onSelectBook: (bookId: string) => void;
@@ -3355,6 +3355,7 @@ function GitaChapterGrid({ book, chapters, onSelectBook, onSelectChapter, onGoBa
   t: (key: any) => string;
   tc: (text: string | null | undefined, map: Record<string, Record<string, string>>) => string;
   languageCode?: string | null;
+  onOpenAcharya?: (slug?: string) => void;
 }) {
   const verseCountFor = (num: number) =>
     chapters.find(c => c.number === num)?.verseCount ?? GITA_CHAPTERS.find(c => c.num === num)?.verses ?? 0;
@@ -3364,10 +3365,118 @@ function GitaChapterGrid({ book, chapters, onSelectBook, onSelectChapter, onGoBa
     else onSelectBook(book.id);
   };
 
+  // Acharya (guru-parampara) profiles, used to make commentator names clickable.
+  const { data: acharyas } = useQuery<{ slug: string; name_iast: string; name_devanagari: string; name_display: string | null }[]>({
+    queryKey: ["/api/acharyas"],
+  });
+  const acharyaSlugFor = (name: string): string | undefined => matchAcharyaSlug(name, acharyas);
+
+  // Build the commentarial-tradition list: one primary bhāṣyakāra plus the ṭīkākāras
+  // grouped by author so a sub-commentator with several works appears once with each
+  // work listed beneath (mirrors the BookLandingPage sidebar logic).
+  type GitaCommentator = { name: string; subs: string[]; slug?: string };
+  const bhashyakara: GitaCommentator | null = book.author
+    ? { name: book.author, subs: book.bhashyamName ? [book.bhashyamName] : [], slug: acharyaSlugFor(book.author) }
+    : null;
+  const teekaGroups = new Map<string, { name: string; subs: string[] }>();
+  for (const teeka of book.teekasList ?? []) {
+    const person = teeka.author || teeka.name;
+    if (!person) continue;
+    const work = teeka.author && teeka.name ? teeka.name : undefined;
+    const key = person.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, "");
+    const existing = teekaGroups.get(key);
+    if (existing) {
+      if (work && !existing.subs.includes(work)) existing.subs.push(work);
+    } else {
+      teekaGroups.set(key, { name: person, subs: work ? [work] : [] });
+    }
+  }
+  const tikakaras: GitaCommentator[] = Array.from(teekaGroups.values()).map(g => ({
+    name: g.name,
+    subs: g.subs,
+    slug: acharyaSlugFor(g.name),
+  }));
+  const hasCommentators = Boolean(bhashyakara) || tikakaras.length > 0;
+
+  const renderCommentator = (c: GitaCommentator, primary: boolean, testId: string) => {
+    const Icon = primary ? Users : Feather;
+    const clickable = Boolean(c.slug && onOpenAcharya);
+    const nameClass = `text-sm font-semibold leading-tight ${primary ? "text-primary" : "text-foreground"}`;
+    return (
+      <div className="flex items-start gap-2.5" data-testid={testId}>
+        <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${primary ? "bg-primary/10" : "bg-accent/70"}`}>
+          <Icon className={`h-4 w-4 ${primary ? "text-primary/80" : "text-muted-foreground"}`} />
+        </div>
+        <div className="min-w-0">
+          {clickable ? (
+            <button
+              type="button"
+              onClick={() => onOpenAcharya!(c.slug)}
+              className={`${nameClass} text-left bg-transparent border-none p-0 hover:underline underline-offset-2 cursor-pointer`}
+              title="View acharya profile"
+            >
+              {c.name}
+            </button>
+          ) : (
+            <p className={nameClass}>{c.name}</p>
+          )}
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
+            {primary ? "Bhāṣyakāra (Commentator)" : "Ṭīkākāras (Sub-commentators)"}
+          </p>
+          {c.subs.map((sub, subIdx) => (
+            <p key={subIdx} className="text-[11px] text-muted-foreground italic leading-tight">{sub}</p>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-1 min-h-0 flex-col overflow-hidden bg-background" data-testid="gita-chapter-grid-view">
       <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain p-4 sm:p-6 lg:p-8">
-        <div className="max-w-6xl mx-auto">
+        <div className="w-full mx-auto max-w-[min(98vw,88rem)]">
+          <div className="flex flex-col lg:flex-row gap-4 lg:gap-7 lg:items-start">
+
+          {/* Commentarial-tradition sidebar */}
+          {hasCommentators && (
+            <aside className="lg:w-[clamp(13rem,19vw,17.5rem)] shrink-0 lg:sticky lg:top-4 lg:self-start order-first">
+              <Card
+                className="p-3 sm:p-4 border-border/70 bg-card/90 backdrop-blur-sm shadow-[0_10px_30px_-20px_hsl(var(--foreground)/0.45)] flex flex-col max-h-[calc(100dvh-5.5rem)] overflow-y-auto overscroll-y-contain"
+                data-testid="gita-commentarial-sidebar"
+              >
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.18em] mb-3">
+                  Commentarial Tradition
+                </p>
+
+                {bhashyakara && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-1.5 mb-2.5">
+                      <BookMarked className="h-3.5 w-3.5 text-primary/70" />
+                      <span className="font-body text-sm text-foreground/80">भाष्यम्</span>
+                    </div>
+                    {renderCommentator(bhashyakara, true, "gita-bhashyakara")}
+                  </div>
+                )}
+
+                {tikakaras.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-2.5">
+                      <ScrollText className="h-3.5 w-3.5 text-primary/70" />
+                      <span className="font-body text-sm text-foreground/80">टीका</span>
+                    </div>
+                    <div className="space-y-3.5">
+                      {tikakaras.map((c, idx) => (
+                        <div key={idx}>{renderCommentator(c, false, `gita-tikakara-${idx}`)}</div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </Card>
+            </aside>
+          )}
+
+          {/* Main content */}
+          <div className="flex-1 min-w-0">
           <Button
             variant="ghost"
             size="sm"
@@ -3404,7 +3513,7 @@ function GitaChapterGrid({ book, chapters, onSelectBook, onSelectChapter, onGoBa
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-testid="gita-chapters-grid">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4" data-testid="gita-chapters-grid">
             {GITA_CHAPTERS.map(ch => {
               const img = GITA_CHAPTER_IMAGES[ch.num];
               return (
@@ -3456,6 +3565,8 @@ function GitaChapterGrid({ book, chapters, onSelectBook, onSelectChapter, onGoBa
                 </Card>
               );
             })}
+          </div>
+          </div>
           </div>
         </div>
       </div>
@@ -3520,6 +3631,7 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
         t={t}
         tc={tc}
         languageCode={languageCode}
+        onOpenAcharya={onOpenAcharya}
       />
     );
   }
