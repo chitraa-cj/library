@@ -527,7 +527,7 @@ function LanguageMeaningWidget() {
       <div className="bg-card p-6 sm:p-8">
         <div className="flex items-center justify-between gap-3 mb-4">
           <span className="text-[11px] uppercase tracking-[0.15em] font-semibold text-foreground/70">See the meaning in your language</span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 text-[10px] font-semibold text-primary-foreground"><Languages className="h-3 w-3" /> 60+ Languages</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 text-[10px] font-semibold text-primary-foreground"><Languages className="h-3 w-3" /> 50+ Languages</span>
         </div>
         <div className="relative mb-4">
           <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -889,7 +889,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
   ];
 
   const langStats = [
-    { icon: Globe, title: "60+ Languages", sub: "INDIAN & GLOBAL" },
+    { icon: Globe, title: "50+ Languages", sub: "INDIAN & GLOBAL" },
     { icon: FileText, title: "Complete Structure", sub: "MANTRA, MEANING, BHASHYA" },
     { icon: Users, title: "For Every Seeker", sub: "ACROSS CULTURES & GENERATIONS" },
   ];
@@ -1053,7 +1053,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
             <span className="text-primary">Wisdom</span> Without Language Barriers
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground mt-4 leading-relaxed">
-            We make Advaita accessible in <span className="text-primary font-semibold">60+ Indian</span> and global languages so that every seeker, regardless of where they are or what language they speak, can study, understand and live this wisdom.
+            We make Advaita accessible in <span className="text-primary font-semibold">50+ Indian</span> and global languages so that every seeker, regardless of where they are or what language they speak, can study, understand and live this wisdom.
           </p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-y border-border/50 py-6 mb-10">
