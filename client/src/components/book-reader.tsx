@@ -2511,16 +2511,18 @@ export function BookReader({
                             </div>
                           </div>
                           {effectiveLang && (
-                            <VerseExplanation
-                              verseId={currentVerse.id}
-                              languageCode={effectiveLang}
-                              languageCodes={Array.from(selectedLanguages)}
-                              authorName={selectedBhashyaAuthor}
-                              showAll={false}
-                              filterFn={(e: any) => e.commentaryType ? e.commentaryType === "bhashya" : isBhashyaAuthorByName(e.authorName)}
-                              mode="bhashyam"
-                              hideAuthorHeading
-                            />
+                            <div className="h-[480px] overflow-y-auto overscroll-contain pr-2">
+                              <VerseExplanation
+                                verseId={currentVerse.id}
+                                languageCode={effectiveLang}
+                                languageCodes={Array.from(selectedLanguages)}
+                                authorName={selectedBhashyaAuthor}
+                                showAll={false}
+                                filterFn={(e: any) => e.commentaryType ? e.commentaryType === "bhashya" : isBhashyaAuthorByName(e.authorName)}
+                                mode="bhashyam"
+                                hideAuthorHeading
+                              />
+                            </div>
                           )}
                         </div>
                         <div className="border-t border-border/40 pt-4 lg:border-t-0 lg:pt-0 lg:border-l lg:border-border/40 lg:pl-6" data-testid="teeka-content-card">
@@ -2551,16 +2553,18 @@ export function BookReader({
                             )}
                           </div>
                           {effectiveLang && (
-                            <VerseExplanation
-                              verseId={currentVerse.id}
-                              languageCode={effectiveLang}
-                              languageCodes={Array.from(selectedLanguages)}
-                              authorName={selectedTeekaAuthor}
-                              showAll={false}
-                              filterFn={(e: any) => e.commentaryType ? e.commentaryType === "teeka" : isTeekaAuthorByName(e.authorName)}
-                              mode="teeka"
-                              hideAuthorHeading
-                            />
+                            <div className="h-[480px] overflow-y-auto overscroll-contain pr-2">
+                              <VerseExplanation
+                                verseId={currentVerse.id}
+                                languageCode={effectiveLang}
+                                languageCodes={Array.from(selectedLanguages)}
+                                authorName={selectedTeekaAuthor}
+                                showAll={false}
+                                filterFn={(e: any) => e.commentaryType ? e.commentaryType === "teeka" : isTeekaAuthorByName(e.authorName)}
+                                mode="teeka"
+                                hideAuthorHeading
+                              />
+                            </div>
                           )}
                         </div>
                       </div>
@@ -2588,16 +2592,18 @@ export function BookReader({
                           </div>
                         </div>
                         {effectiveLang && (
-                          <VerseExplanation
-                            verseId={currentVerse.id}
-                            languageCode={effectiveLang}
-                            languageCodes={Array.from(selectedLanguages)}
-                            authorName={selectedTeekaAuthor}
-                            showAll={false}
-                            filterFn={(e: any) => e.commentaryType ? e.commentaryType === "teeka" : isTeekaAuthorByName(e.authorName)}
-                            mode="teeka"
-                            hideAuthorHeading
-                          />
+                          <div className="h-[480px] overflow-y-auto overscroll-contain pr-2">
+                            <VerseExplanation
+                              verseId={currentVerse.id}
+                              languageCode={effectiveLang}
+                              languageCodes={Array.from(selectedLanguages)}
+                              authorName={selectedTeekaAuthor}
+                              showAll={false}
+                              filterFn={(e: any) => e.commentaryType ? e.commentaryType === "teeka" : isTeekaAuthorByName(e.authorName)}
+                              mode="teeka"
+                              hideAuthorHeading
+                            />
+                          </div>
                         )}
                       </div>
                     ) : (
@@ -2630,16 +2636,18 @@ export function BookReader({
                           </div>
                         </div>
                         {commentaryExpanded && effectiveLang && (
-                          <VerseExplanation
-                            verseId={currentVerse.id}
-                            languageCode={effectiveLang}
-                            languageCodes={Array.from(selectedLanguages)}
-                            authorName={selectedBhashyaAuthor}
-                            showAll={false}
-                            filterFn={(e: any) => e.commentaryType ? e.commentaryType === "bhashya" : isBhashyaAuthorByName(e.authorName)}
-                            mode="bhashyam"
-                            hideAuthorHeading
-                          />
+                          <div className="h-[480px] overflow-y-auto overscroll-contain pr-2">
+                            <VerseExplanation
+                              verseId={currentVerse.id}
+                              languageCode={effectiveLang}
+                              languageCodes={Array.from(selectedLanguages)}
+                              authorName={selectedBhashyaAuthor}
+                              showAll={false}
+                              filterFn={(e: any) => e.commentaryType ? e.commentaryType === "bhashya" : isBhashyaAuthorByName(e.authorName)}
+                              mode="bhashyam"
+                              hideAuthorHeading
+                            />
+                          </div>
                         )}
                       </div>
                     )}
