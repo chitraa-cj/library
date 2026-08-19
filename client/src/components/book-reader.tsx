@@ -778,6 +778,8 @@ export function BookReader({
       document.exitFullscreen?.().catch(() => {});
     }
   };
+  // In fullscreen, let the bhāṣya/ṭīkā panels grow to fill the viewport instead of the fixed 480px.
+  const commentaryPanelHeight = isFullscreen ? "h-[calc(100vh-9rem)]" : "h-[480px]";
   const [selectedBhashyaAuthor, setSelectedBhashyaAuthor] = useState<string | null>(null);
   const [selectedTeekaAuthor, setSelectedTeekaAuthor] = useState<string | null>(null);
   // Remember the user's explicitly chosen commentary author across page/verse changes.
@@ -2511,7 +2513,7 @@ export function BookReader({
                             </div>
                           </div>
                           {effectiveLang && (
-                            <div className="h-[480px] overflow-y-auto overscroll-contain pr-2">
+                            <div className={`${commentaryPanelHeight} overflow-y-auto overscroll-contain pr-2`}>
                               <VerseExplanation
                                 verseId={currentVerse.id}
                                 languageCode={effectiveLang}
@@ -2553,7 +2555,7 @@ export function BookReader({
                             )}
                           </div>
                           {effectiveLang && (
-                            <div className="h-[480px] overflow-y-auto overscroll-contain pr-2">
+                            <div className={`${commentaryPanelHeight} overflow-y-auto overscroll-contain pr-2`}>
                               <VerseExplanation
                                 verseId={currentVerse.id}
                                 languageCode={effectiveLang}
@@ -2592,7 +2594,7 @@ export function BookReader({
                           </div>
                         </div>
                         {effectiveLang && (
-                          <div className="h-[480px] overflow-y-auto overscroll-contain pr-2">
+                          <div className={`${commentaryPanelHeight} overflow-y-auto overscroll-contain pr-2`}>
                             <VerseExplanation
                               verseId={currentVerse.id}
                               languageCode={effectiveLang}
@@ -2636,7 +2638,7 @@ export function BookReader({
                           </div>
                         </div>
                         {commentaryExpanded && effectiveLang && (
-                          <div className="h-[480px] overflow-y-auto overscroll-contain pr-2">
+                          <div className={`${commentaryPanelHeight} overflow-y-auto overscroll-contain pr-2`}>
                             <VerseExplanation
                               verseId={currentVerse.id}
                               languageCode={effectiveLang}
