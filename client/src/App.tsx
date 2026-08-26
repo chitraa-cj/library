@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Switch, Route, useLocation } from "wouter";
-import { queryClient, apiRequest, cmsContentQueryOptions } from "./lib/queryClient";
+import { queryClient, apiRequest, cmsContentQueryOptions, readCachedList, writeCachedList, BOOKS_CACHE_KEY } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -121,7 +121,17 @@ function HomePageContent() {
   const { data: allBooks } = useQuery<Book[]>({
     queryKey: ["/api/books"],
     ...cmsContentQueryOptions,
+    // Paint real book names instantly from the last-seen list, then refetch in
+    // the background. initialDataUpdatedAt: 0 marks the cache as stale so a
+    // fresh fetch still runs on mount and silently reconciles any changes.
+    initialData: () => readCachedList<Book>(BOOKS_CACHE_KEY),
+    initialDataUpdatedAt: 0,
   });
+
+  // Persist the freshest book list so the next visit can hydrate from it.
+  useEffect(() => {
+    writeCachedList(BOOKS_CACHE_KEY, allBooks);
+  }, [allBooks]);
 
   const { data: allLanguages } = useQuery<Language[]>({
     queryKey: ["/api/languages"],

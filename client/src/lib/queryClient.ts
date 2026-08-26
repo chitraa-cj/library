@@ -47,6 +47,34 @@ export const cmsContentQueryOptions = {
   refetchOnWindowFocus: true,
 } as const;
 
+/**
+ * localStorage-backed cache for slow, rarely-changing list endpoints (e.g. the
+ * book catalogue). Seeding react-query's `initialData` from here lets the home
+ * screen paint real book names instantly on repeat visits instead of flashing
+ * empty sections for several seconds while the network round-trip completes.
+ */
+export function readCachedList<T>(key: string): T[] | undefined {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return undefined;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? (parsed as T[]) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function writeCachedList<T>(key: string, data: T[] | undefined): void {
+  try {
+    if (!data || data.length === 0) return;
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch {
+    /* quota / private-mode — cache is best-effort */
+  }
+}
+
+export const BOOKS_CACHE_KEY = "cachedBooks:v1";
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
