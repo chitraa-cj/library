@@ -288,6 +288,14 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
     }
   }, [books, cat]);
 
+  // The Text column is category-scoped while browsing, but a typed query searches
+  // across ALL texts (not just the selected category) so anything can be found.
+  const bookResults = useMemo(() => {
+    const q = qBook.trim().toLowerCase();
+    if (!q) return catBooks;
+    return books.filter(b => tc(b.title).toLowerCase().includes(q));
+  }, [qBook, books, catBooks, welcomeLang]);
+
   const selectedChapter = chapters.find(c => c.number === adhyay);
   const khandaList = selectedChapter?.khandas || [];
 
@@ -311,12 +319,12 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
   // grantha, then its first adhyāya and khaṇḍa as those levels load.
   useEffect(() => {
     if (!open) return;
-    const valid = bookId && catBooks.some(b => b.id === bookId);
-    if (!valid && catBooks.length > 0) {
-      setBookId(catBooks[0].id);
+    const valid = bookId && bookResults.some(b => b.id === bookId);
+    if (!valid && bookResults.length > 0) {
+      setBookId(bookResults[0].id);
       setAdhyay(null); setKhanda(null); setVerse(null);
     }
-  }, [open, catBooks, bookId]);
+  }, [open, bookResults, bookId]);
 
   useEffect(() => {
     if (!open || !showAdhyaya) return;
@@ -415,13 +423,13 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
         <div className={colBox}>
           <div className={colHead}><BookOpen className="h-4 w-4 text-primary" /><span className="text-sm font-semibold">1. Text</span></div>
           <div className={searchBox}><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" /><input className={searchInput} placeholder="Search texts..." value={qBook} onChange={e => setQBook(e.target.value)} /></div>
-          <div key={cat} className="flex-1 overflow-y-auto max-h-72 pr-1 space-y-0.5 animate-in fade-in-0 duration-300">
-            {catBooks.filter(b => tc(b.title).toLowerCase().includes(qBook.toLowerCase())).map(b => (
+          <div key={qBook.trim() ? "search" : cat} className="flex-1 overflow-y-auto max-h-72 pr-1 space-y-0.5 animate-in fade-in-0 duration-300">
+            {bookResults.map(b => (
               <button key={b.id} type="button" onClick={() => { setBookId(b.id); reset("book"); }} className={`${rowBase} ${bookId === b.id ? rowActive : rowIdle}`}>
                 <span className="truncate">{tc(b.title)}</span><ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" />
               </button>
             ))}
-            {catBooks.length === 0 && <p className="text-xs text-muted-foreground/60 px-2.5 py-2">No texts here yet.</p>}
+            {bookResults.length === 0 && <p className="text-xs text-muted-foreground/60 px-2.5 py-2">{qBook.trim() ? "No texts found." : "No texts here yet."}</p>}
           </div>
         </div>
 

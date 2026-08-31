@@ -25,6 +25,7 @@ export const users = pgTable("users", {
   preferredLanguage: varchar("preferred_language", { length: 20 }),
   preferredAuthor: varchar("preferred_author", { length: 200 }),
   preferredTheme: varchar("preferred_theme", { length: 10 }),
+  preferredFontScale: varchar("preferred_font_scale", { length: 8 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

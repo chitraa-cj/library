@@ -322,6 +322,24 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/user/preferred-font-scale", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const { scale } = req.body;
+      const numeric = typeof scale === "number" ? scale : parseFloat(scale);
+      if (!Number.isFinite(numeric) || numeric < 0.5 || numeric > 3) {
+        return res.status(400).json({ error: "A valid font scale is required" });
+      }
+      // Snap to one decimal and store as a short string (e.g. "1.1").
+      const value = String(Math.round(numeric * 10) / 10);
+      await authStorage.updateUserPreferredFontScale(userId, value);
+      res.json({ success: true, scale: value });
+    } catch (error) {
+      console.error("Error updating preferred font scale:", error);
+      res.status(500).json({ error: "Failed to update preferred font scale" });
+    }
+  });
+
   app.patch("/api/user/preferences", isAuthenticated, async (req: any, res) => {
     try {
       const userId = getUserId(req);

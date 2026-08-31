@@ -13,9 +13,10 @@ import { ReaderNavSidebar, useBookChapters } from "@/components/reader-nav-sideb
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ChevronRight, Globe, LogIn, LogOut, Settings, User, Search, Check, ChevronsUpDown, Menu } from "lucide-react";
+import { ArrowLeft, ChevronRight, Globe, LogIn, LogOut, Settings, User, Search, Check, ChevronsUpDown, Menu, Plus, Minus } from "lucide-react";
 import { MyLibraryPanel } from "@/components/my-library-panel";
 import { setLastRead } from "@/lib/last-read";
+import { getFontScale, setFontScale, MIN_FONT_SCALE, MAX_FONT_SCALE, FONT_SCALE_STEP } from "@/lib/font-scale";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -89,6 +90,7 @@ function HomePageContent() {
     }
     return 'english';
   });
+  const [fontScale, setFontScaleState] = useState<number>(() => getFontScale());
   const [navigateToVerse, setNavigateToVerse] = useState<number | null>(null);
   const [currentVerseNumber, setCurrentVerseNumber] = useState<number>(1);
   const [chapterViewAdhyay, setChapterViewAdhyay] = useState<number | null>(null);
@@ -260,6 +262,12 @@ function HomePageContent() {
     if (user.preferredTheme && (user.preferredTheme === "light" || user.preferredTheme === "dark")) {
       setTheme(user.preferredTheme);
     }
+    if (user.preferredFontScale) {
+      const scale = parseFloat(user.preferredFontScale);
+      if (!Number.isNaN(scale)) {
+        setFontScaleState(setFontScale(scale));
+      }
+    }
     setPrefsApplied(true);
   }, [user]);
 
@@ -268,6 +276,15 @@ function HomePageContent() {
     localStorage.setItem('preferredLanguage', langCode);
     if (isLoggedIn) {
       apiRequest("PATCH", "/api/user/preferred-language", { language: langCode }).catch(console.error);
+    }
+  }, [isLoggedIn]);
+
+  const handleFontScaleChange = useCallback((next: number) => {
+    const applied = setFontScale(next);
+    setFontScaleState(applied);
+    // Persist to the account so the choice follows logged-in users across devices.
+    if (isLoggedIn) {
+      apiRequest("PATCH", "/api/user/preferred-font-scale", { scale: applied }).catch(console.error);
     }
   }, [isLoggedIn]);
 
@@ -819,6 +836,39 @@ function HomePageContent() {
                   <Menu className="h-4 w-4" />
                 </Button>
               )}
+              <div
+                className="flex items-center h-8 rounded-md border border-border/60"
+                data-testid="font-size-control"
+                title={t("fontSize")}
+              >
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-7 rounded-none rounded-l-md"
+                  onClick={() => handleFontScaleChange(fontScale - FONT_SCALE_STEP)}
+                  disabled={fontScale <= MIN_FONT_SCALE}
+                  aria-label={t("decreaseFontSize")}
+                  title={t("decreaseFontSize")}
+                  data-testid="button-font-decrease"
+                >
+                  <Minus className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
+                <span className="w-9 text-center text-[11px] leading-none tabular-nums text-muted-foreground select-none">
+                  {Math.round(fontScale * 100)}%
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-7 rounded-none rounded-r-md"
+                  onClick={() => handleFontScaleChange(fontScale + FONT_SCALE_STEP)}
+                  disabled={fontScale >= MAX_FONT_SCALE}
+                  aria-label={t("increaseFontSize")}
+                  title={t("increaseFontSize")}
+                  data-testid="button-font-increase"
+                >
+                  <Plus className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
+              </div>
               <Popover open={langSearchOpen} onOpenChange={(open) => { setLangSearchOpen(open); if (!open) setLangSearchQuery(""); }}>
                 <PopoverTrigger asChild>
                   <Button
