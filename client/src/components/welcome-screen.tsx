@@ -15,6 +15,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { getRecentReads, subscribeLastRead, type LastReadEntry } from "@/lib/last-read";
+import { useAuth } from "@/hooks/use-auth";
 import { VideoInline } from "@/components/video-popup";
 import { CATALOG_TREE, type CatalogCategory } from "@/components/app-sidebar";
 import { useTranslation } from "@/lib/translations";
@@ -57,6 +58,10 @@ import featuredCollectionBg from "@assets/featured-collection-bg.png";
 import featuredSutaSamhita from "@assets/featured-suta-samhita.png";
 import featuredGitaBhasya from "@assets/featured-gita-bhasya.png";
 import featuredAtmabodha from "@assets/featured-atmabodha.png";
+import forYouUpanishad from "@assets/foryou-upanishad.png";
+import forYouGita from "@assets/foryou-gita.png";
+import forYouBrahmaSutra from "@assets/foryou-brahma-sutra.png";
+import forYouStotra from "@assets/foryou-stotra.png";
 
 // ===== FEATURED COLLECTION ("Beyond the Mainstream") =====
 const FEATURED_BOOKS = [
@@ -67,6 +72,8 @@ const FEATURED_BOOKS = [
     desc: "An important traditional work, rarely available as a structured digital text.",
     category: "Purāṇa",
     language: "Sanskrit",
+    // slug candidates used to resolve this card to the actual book in the library
+    slugs: ["suta-samhita", "suta-samhita-bhashya", "suta", "sutasamhita"],
   },
   {
     img: featuredGitaBhasya,
@@ -75,6 +82,7 @@ const FEATURED_BOOKS = [
     desc: "A traditional Gītā commentary, seldom found in digital form.",
     category: "Bhagavad Gītā",
     language: "Sanskrit",
+    slugs: ["gita-bhasya-sara-tika", "gita-bhashya-sara-tika", "gita-bhasya-sara", "gita-bhasya", "gita-bhashya"],
   },
   {
     img: featuredAtmabodha,
@@ -83,22 +91,188 @@ const FEATURED_BOOKS = [
     desc: "A revered Advaita text, rarely available in digital form.",
     category: "Vedānta",
     language: "Sanskrit",
+    slugs: ["atmabodha-tika", "atma-bodha-tika", "atmabodha-bhashya", "atma-bodha", "atmabodha"],
   },
 ];
 
-function FeaturedCollection({ onExplore }: { onExplore?: () => void }) {
+/** Normalizes a title for diacritic-insensitive comparison (e.g. "Ātmabodha Ṭīkā" -> "atmabodha tika"). */
+function normalizeTitle(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "") // strip combining diacritics
+    .toLowerCase()
+    .replace(/[^a-z0-9ऀ-ॿ]+/g, " ") // keep latin + devanagari, collapse the rest
+    .trim();
+}
+
+/** Resolves a featured card to a real book in the library by slug candidates, then by normalized title. */
+function resolveFeaturedBook(featured: { slugs?: string[]; title: string }, books: Book[]): Book | null {
+  const slugs = featured.slugs ?? [];
+  // 1) exact slug match
+  for (const s of slugs) {
+    const b = books.find((x) => x.slug?.toLowerCase() === s);
+    if (b) return b;
+  }
+  // 2) slug prefix match (handles e.g. "atmabodha-tika-shankara")
+  for (const s of slugs) {
+    const b = books.find((x) => x.slug?.toLowerCase().startsWith(s));
+    if (b) return b;
+  }
+  // 3) normalized-title match (diacritic-insensitive)
+  const target = normalizeTitle(featured.title);
+  const byTitle = books.find((x) => normalizeTitle(x.title) === target);
+  if (byTitle) return byTitle;
+  // 4) loose title containment as a last resort
+  const byContains = books.find((x) => {
+    const n = normalizeTitle(x.title);
+    return n.includes(target) || target.includes(n);
+  });
+  return byContains ?? null;
+}
+
+// ===== PERSONALIZED "FOR YOU" SUGGESTIONS =====
+// Each suggestion group ties a library category to its cover art. When a signed-in
+// reader has been studying a category, we surface more from that same tradition.
+interface SuggestionCategory {
+  id: string;
+  label: string;
+  sanskrit: string;
+  img: string;
+  matches: string[];
+}
+
+const SUGGESTION_CATEGORIES: SuggestionCategory[] = [
+  { id: "upanishad", label: "Upaniṣads", sanskrit: "उपनिषद्", img: forYouUpanishad, matches: ["Upanishad", "Upanishad Bhashya"] },
+  { id: "gita", label: "Bhagavad Gītā", sanskrit: "भगवद्गीता", img: forYouGita, matches: ["Gita", "Bhagavad Gita"] },
+  { id: "brahma-sutra", label: "Brahma Sūtra", sanskrit: "ब्रह्मसूत्र", img: forYouBrahmaSutra, matches: ["Brahma Sutra"] },
+  { id: "stotra", label: "Stotra Saṅgraha", sanskrit: "स्तोत्रसंग्रहः", img: forYouStotra, matches: ["Bhakthi Grantha", "Bhakti Grantha", "Bhakthi Stotra"] },
+];
+
+interface ForYouCard {
+  cat: SuggestionCategory;
+  book: Book;        // the specific text this card opens
+  fromHistory: boolean;
+  becauseOf?: string; // title of the read book that triggered this suggestion
+  isNew: boolean;     // true when the suggested book hasn't been read yet
+}
+
+/**
+ * Builds personalized suggestion cards from a reader's recent history:
+ * categories they've been reading rank first (each suggesting an unread text
+ * from the same tradition), then the remaining categories fill out the row.
+ */
+function buildForYouCards(books: Book[], recentReads: LastReadEntry[]): ForYouCard[] {
+  const catOf = (book: Book) => SUGGESTION_CATEGORIES.find((c) => c.matches.includes(book.category)) ?? null;
+  const readIds = new Set(recentReads.map((r) => r.bookId));
+
+  const ranked: SuggestionCategory[] = [];
+  const seen = new Set<string>();
+  const triggerTitle: Record<string, string> = {};
+
+  // Categories from history, most-recent first.
+  for (const r of recentReads) {
+    const book = books.find((b) => b.id === r.bookId);
+    if (!book) continue;
+    const cat = catOf(book);
+    if (cat && !seen.has(cat.id)) {
+      seen.add(cat.id);
+      ranked.push(cat);
+      triggerTitle[cat.id] = r.bookTitle || book.title;
+    }
+  }
+  const historyCount = ranked.length;
+  // Fill remaining categories in default order so the row always feels complete.
+  for (const cat of SUGGESTION_CATEGORIES) {
+    if (!seen.has(cat.id)) { seen.add(cat.id); ranked.push(cat); }
+  }
+
+  const cards: ForYouCard[] = [];
+  ranked.forEach((cat, idx) => {
+    const inCat = books.filter((b) => cat.matches.includes(b.category));
+    if (inCat.length === 0) return; // no cover unless the library actually has texts here
+    const unread = inCat.find((b) => !readIds.has(b.id));
+    cards.push({
+      cat,
+      book: unread ?? inCat[0],
+      fromHistory: idx < historyCount,
+      becauseOf: triggerTitle[cat.id],
+      isNew: !!unread,
+    });
+  });
+  return cards;
+}
+
+interface FeaturedSlide {
+  key: string;
+  img: string;
+  badge: string;
+  title: string;
+  sanskrit?: string;
+  desc: string;
+  category: string;
+  language: string;
+  cta: string;
+  ariaLabel: string;
+  onOpen: (e?: { clientX: number; clientY: number }) => void;
+}
+
+function FeaturedCollection({ onExplore, books = [], onSelectBook, recentReads = [] }: { onExplore?: () => void; books?: Book[]; onSelectBook?: (bookId: string) => void; recentReads?: LastReadEntry[] }) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ align: "start", loop: false, containScroll: "trimSnaps" });
   const [selected, setSelected] = useState(0);
   const [snapCount, setSnapCount] = useState(1);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(false);
+  const { user, isAuthenticated } = useAuth();
   // Track pointer movement so a carousel drag/swipe doesn't register as a card click.
   const pointerStart = useRef<{ x: number; y: number } | null>(null);
-  const openBook = (e: { clientX: number; clientY: number }) => {
+  const guardDrag = (e?: { clientX: number; clientY: number }) => {
+    if (!e) return false;
     const start = pointerStart.current;
-    if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) return;
-    onExplore?.();
+    return !!(start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10);
   };
+  // Open the specific book this card represents; if it isn't in the library yet, fall back to browsing.
+  const openBook = (resolved: Book | null, e?: { clientX: number; clientY: number }) => {
+    if (guardDrag(e)) return;
+    if (resolved && onSelectBook) onSelectBook(resolved.id);
+    else onExplore?.();
+  };
+
+  // Personalized "For You" cards for signed-in readers with study history; otherwise the curated default.
+  const forYouCards = useMemo(() => buildForYouCards(books, recentReads), [books, recentReads]);
+  const personalized = isAuthenticated && forYouCards.some((c) => c.fromHistory);
+  const firstName = user?.firstName?.trim() || "";
+
+  const slides: FeaturedSlide[] = personalized
+    ? forYouCards.map((c) => ({
+        key: c.cat.id,
+        img: c.cat.img,
+        badge: c.fromHistory ? "For You" : "Suggested",
+        title: c.cat.label,
+        sanskrit: c.cat.sanskrit,
+        desc: c.fromHistory && c.becauseOf
+          ? `Because you’ve been reading ${c.becauseOf}`
+          : `Continue exploring the ${c.cat.label}`,
+        category: c.cat.label,
+        language: "Sanskrit",
+        cta: c.isNew ? "Start Reading" : "Continue Reading",
+        ariaLabel: `Open ${c.book.title}`,
+        onOpen: (e) => { if (!guardDrag(e)) onSelectBook?.(c.book.id); },
+      }))
+    : FEATURED_BOOKS.map((b) => {
+        const resolved = resolveFeaturedBook(b, books);
+        return {
+          key: b.title,
+          img: b.img,
+          badge: b.badge,
+          title: b.title,
+          desc: b.desc,
+          category: b.category,
+          language: b.language,
+          cta: resolved ? "Open Text" : "Explore Text",
+          ariaLabel: resolved ? `Open ${b.title}` : `Explore ${b.title}`,
+          onOpen: (e) => openBook(resolved, e),
+        };
+      });
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
@@ -119,6 +293,9 @@ function FeaturedCollection({ onExplore }: { onExplore?: () => void }) {
       emblaApi.off("select", onSelect).off("reInit", sync);
     };
   }, [emblaApi, onSelect]);
+
+  // Recalculate snap points when the slide set changes (e.g. default ↔ personalized).
+  useEffect(() => { emblaApi?.reInit(); }, [emblaApi, slides.length]);
 
   return (
     <section className="relative overflow-hidden bg-[#9e441c]">
@@ -144,18 +321,22 @@ function FeaturedCollection({ onExplore }: { onExplore?: () => void }) {
                 <span className="h-2.5 w-2.5 rounded-full border border-amber-300/70" />
               </span>
               <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.28em] text-amber-300">
-                Featured Collection
+                {personalized ? "For You" : "Featured Collection"}
               </span>
             </div>
             <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-[#fdf3e7] leading-tight sm:whitespace-nowrap">
-              Beyond the Mainstream
+              {personalized
+                ? (firstName ? `Curated for You, ${firstName}` : "Curated for You")
+                : "Beyond the Mainstream"}
             </h2>
             <div className="flex items-center gap-2 mt-4 mb-5" aria-hidden="true">
               <span className="h-px w-16 bg-amber-300/50" />
               <span className="text-amber-300/80 text-base leading-none">ॐ</span>
             </div>
             <p className="max-w-md text-sm sm:text-base text-amber-50/85 leading-relaxed">
-              Discover hidden texts, commentaries, and books that reveal the timeless wisdom of oneness.
+              {personalized
+                ? "Handpicked from the traditions you’ve been studying — pick up where your journey leads."
+                : "Discover hidden texts, commentaries, and books that reveal the timeless wisdom of oneness."}
             </p>
           </div>
           <button
@@ -164,7 +345,7 @@ function FeaturedCollection({ onExplore }: { onExplore?: () => void }) {
             className="self-start inline-flex items-center gap-2 rounded-full border border-amber-300/60 px-5 py-2.5 text-sm font-semibold text-amber-100 hover:bg-amber-300/10 transition-colors shrink-0"
             data-testid="button-view-all-featured"
           >
-            View All Featured <ArrowRight className="h-4 w-4" />
+            {personalized ? "Browse Library" : "View All Featured"} <ArrowRight className="h-4 w-4" />
           </button>
         </div>
 
@@ -172,25 +353,25 @@ function FeaturedCollection({ onExplore }: { onExplore?: () => void }) {
         <div className="relative">
           <div className="overflow-hidden" ref={emblaRef}>
             <div className="flex -ml-4 sm:-ml-6">
-              {FEATURED_BOOKS.map((book) => (
-                <div key={book.title} className="min-w-0 shrink-0 grow-0 basis-[88%] sm:basis-1/2 lg:basis-1/3 pl-4 sm:pl-6">
+              {slides.map((slide) => (
+                <div key={slide.key} className="min-w-0 shrink-0 grow-0 basis-[88%] sm:basis-1/2 lg:basis-1/3 pl-4 sm:pl-6">
                   <article
                     role="button"
                     tabIndex={0}
-                    aria-label={`Explore ${book.title}`}
+                    aria-label={slide.ariaLabel}
                     onPointerDown={(e) => { pointerStart.current = { x: e.clientX, y: e.clientY }; }}
-                    onClick={openBook}
-                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onExplore?.(); } }}
+                    onClick={(e) => slide.onOpen(e)}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); slide.onOpen(); } }}
                     className="group flex h-full cursor-pointer flex-col rounded-2xl bg-[#fdf9f2] shadow-xl shadow-black/10 p-5 sm:p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#9e441c]"
-                    data-testid={`card-featured-${book.title}`}
+                    data-testid={`card-featured-${slide.key}`}
                   >
                     <div className="flex gap-4 sm:gap-5">
                       {/* book cover */}
                       <div className="shrink-0 w-24 sm:w-28 flex items-start">
                         <img
-                          src={book.img}
-                          alt={book.title}
-                          className="w-full object-contain drop-shadow-lg"
+                          src={slide.img}
+                          alt={slide.title}
+                          className="w-full rounded-md object-contain drop-shadow-lg"
                           draggable={false}
                         />
                       </div>
@@ -198,19 +379,22 @@ function FeaturedCollection({ onExplore }: { onExplore?: () => void }) {
                       <div className="min-w-0 flex-1">
                         <div className="flex justify-end mb-2">
                           <span className="inline-flex items-center gap-1.5 rounded-full border border-[#d98a4a]/50 bg-[#fbeede] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#b3541d] whitespace-nowrap">
-                            <Sparkles className="h-3 w-3" /> {book.badge}
+                            <Sparkles className="h-3 w-3" /> {slide.badge}
                           </span>
                         </div>
                         <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#2a1b12] leading-tight">
-                          {book.title}
+                          {slide.title}
                         </h3>
+                        {slide.sanskrit ? (
+                          <p className="mt-1 font-serif text-base text-[#b3541d]/90 leading-tight">{slide.sanskrit}</p>
+                        ) : null}
                         <div className="flex items-center gap-2 my-3" aria-hidden="true">
                           <span className="h-px flex-1 bg-[#2a1b12]/10" />
                           <span className="text-[#b3541d]/70 text-xs leading-none">◇</span>
                           <span className="h-px flex-1 bg-[#2a1b12]/10" />
                         </div>
                         <p className="text-xs sm:text-sm text-[#5b4636] leading-relaxed">
-                          {book.desc}
+                          {slide.desc}
                         </p>
                       </div>
                     </div>
@@ -218,13 +402,13 @@ function FeaturedCollection({ onExplore }: { onExplore?: () => void }) {
                     <div className="mt-auto pt-5">
                       <div className="flex items-center gap-2 border-t border-[#2a1b12]/10 pt-4 text-[11px] font-semibold uppercase tracking-wider text-[#7a6552]">
                         <BookOpen className="h-3.5 w-3.5 text-[#8a7360]" />
-                        <span>{book.category}</span>
+                        <span>{slide.category}</span>
                         <span className="text-[#b3541d]/50">•</span>
                         <Languages className="h-3.5 w-3.5 text-[#8a7360]" />
-                        <span>{book.language}</span>
+                        <span>{slide.language}</span>
                       </div>
                       <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#b3541d] transition-all group-hover:gap-3">
-                        Explore Text <ArrowRight className="h-4 w-4" />
+                        {slide.cta} <ArrowRight className="h-4 w-4" />
                       </span>
                     </div>
                   </article>
@@ -1270,7 +1454,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
 
       {/* ===== FEATURED COLLECTION — BEYOND THE MAINSTREAM ===== */}
       <div className="mt-14 sm:mt-20">
-        <FeaturedCollection onExplore={onBrowseLibrary} />
+        <FeaturedCollection onExplore={onBrowseLibrary} books={books} onSelectBook={onSelectBook} recentReads={recentReads} />
       </div>
 
       {/* ===== FEATURE STRIP ===== */}
