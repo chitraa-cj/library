@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useMemo, type MouseEvent as ReactMouseEvent } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback, type MouseEvent as ReactMouseEvent } from "react";
+import useEmblaCarousel from "embla-carousel-react";
 import { BookOpen, Library, FolderOpen, Lock, ArrowLeft, ArrowRight, ChevronRight, ChevronUp, ChevronDown, ScrollText, Feather, Users, Heart, BookMarked, Music, Layers, Search, X, FileText, Archive, Sparkles, Bookmark, Share2, Cloud, LayoutGrid, List, Globe, Languages, ShieldCheck, PenLine, Quote } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { cmsContentQueryOptions } from "@/lib/queryClient";
@@ -52,6 +53,238 @@ import traditionMandala from "@assets/tradition-mandala.png";
 import advaiticVisionMandala from "@assets/advaitic-vision-mandala.png";
 import heroBgLight from "@assets/hero-bg-light.png";
 import heroBgDark from "@assets/hero-bg-dark.png";
+import featuredCollectionBg from "@assets/featured-collection-bg.png";
+import featuredSutaSamhita from "@assets/featured-suta-samhita.png";
+import featuredGitaBhasya from "@assets/featured-gita-bhasya.png";
+import featuredAtmabodha from "@assets/featured-atmabodha.png";
+
+// ===== FEATURED COLLECTION ("Beyond the Mainstream") =====
+const FEATURED_BOOKS = [
+  {
+    img: featuredSutaSamhita,
+    badge: "Rare Text",
+    title: "Sūta Saṃhitā",
+    desc: "An important traditional work, rarely available as a structured digital text.",
+    category: "Purāṇa",
+    language: "Sanskrit",
+  },
+  {
+    img: featuredGitaBhasya,
+    badge: "Rare Commentary",
+    title: "Gītā Bhāṣya Sāra Ṭīkā",
+    desc: "A traditional Gītā commentary, seldom found in digital form.",
+    category: "Bhagavad Gītā",
+    language: "Sanskrit",
+  },
+  {
+    img: featuredAtmabodha,
+    badge: "Rare Edition",
+    title: "Ātmabodha Ṭīkā",
+    desc: "A revered Advaita text, rarely available in digital form.",
+    category: "Vedānta",
+    language: "Sanskrit",
+  },
+];
+
+function FeaturedCollection({ onExplore }: { onExplore?: () => void }) {
+  const [emblaRef, emblaApi] = useEmblaCarousel({ align: "start", loop: false, containScroll: "trimSnaps" });
+  const [selected, setSelected] = useState(0);
+  const [snapCount, setSnapCount] = useState(1);
+  const [canPrev, setCanPrev] = useState(false);
+  const [canNext, setCanNext] = useState(false);
+  // Track pointer movement so a carousel drag/swipe doesn't register as a card click.
+  const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  const openBook = (e: { clientX: number; clientY: number }) => {
+    const start = pointerStart.current;
+    if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) return;
+    onExplore?.();
+  };
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setSelected(emblaApi.selectedScrollSnap());
+    setCanPrev(emblaApi.canScrollPrev());
+    setCanNext(emblaApi.canScrollNext());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    const sync = () => {
+      setSnapCount(emblaApi.scrollSnapList().length);
+      onSelect();
+    };
+    sync();
+    emblaApi.on("select", onSelect).on("reInit", sync);
+    return () => {
+      emblaApi.off("select", onSelect).off("reInit", sync);
+    };
+  }, [emblaApi, onSelect]);
+
+  return (
+    <section className="relative overflow-hidden bg-[#9e441c]">
+      {/* textured rust background with gold mandala */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${featuredCollectionBg})` }}
+        aria-hidden="true"
+      />
+      {/* darken the left half so the heading/text stays legible over the texture */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: "linear-gradient(90deg, rgba(120,50,20,0.55) 0%, rgba(120,50,20,0.15) 55%, transparent 100%)" }}
+        aria-hidden="true"
+      />
+
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
+        {/* header */}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 mb-8 sm:mb-10">
+          <div className="max-w-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-amber-300/60">
+                <span className="h-2.5 w-2.5 rounded-full border border-amber-300/70" />
+              </span>
+              <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.28em] text-amber-300">
+                Featured Collection
+              </span>
+            </div>
+            <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-[#fdf3e7] leading-tight sm:whitespace-nowrap">
+              Beyond the Mainstream
+            </h2>
+            <div className="flex items-center gap-2 mt-4 mb-5" aria-hidden="true">
+              <span className="h-px w-16 bg-amber-300/50" />
+              <span className="text-amber-300/80 text-base leading-none">ॐ</span>
+            </div>
+            <p className="max-w-md text-sm sm:text-base text-amber-50/85 leading-relaxed">
+              Discover hidden texts, commentaries, and books that reveal the timeless wisdom of oneness.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onExplore}
+            className="self-start inline-flex items-center gap-2 rounded-full border border-amber-300/60 px-5 py-2.5 text-sm font-semibold text-amber-100 hover:bg-amber-300/10 transition-colors shrink-0"
+            data-testid="button-view-all-featured"
+          >
+            View All Featured <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* carousel */}
+        <div className="relative">
+          <div className="overflow-hidden" ref={emblaRef}>
+            <div className="flex -ml-4 sm:-ml-6">
+              {FEATURED_BOOKS.map((book) => (
+                <div key={book.title} className="min-w-0 shrink-0 grow-0 basis-[88%] sm:basis-1/2 lg:basis-1/3 pl-4 sm:pl-6">
+                  <article
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Explore ${book.title}`}
+                    onPointerDown={(e) => { pointerStart.current = { x: e.clientX, y: e.clientY }; }}
+                    onClick={openBook}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onExplore?.(); } }}
+                    className="group flex h-full cursor-pointer flex-col rounded-2xl bg-[#fdf9f2] shadow-xl shadow-black/10 p-5 sm:p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#9e441c]"
+                    data-testid={`card-featured-${book.title}`}
+                  >
+                    <div className="flex gap-4 sm:gap-5">
+                      {/* book cover */}
+                      <div className="shrink-0 w-24 sm:w-28 flex items-start">
+                        <img
+                          src={book.img}
+                          alt={book.title}
+                          className="w-full object-contain drop-shadow-lg"
+                          draggable={false}
+                        />
+                      </div>
+                      {/* details */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex justify-end mb-2">
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#d98a4a]/50 bg-[#fbeede] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#b3541d] whitespace-nowrap">
+                            <Sparkles className="h-3 w-3" /> {book.badge}
+                          </span>
+                        </div>
+                        <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#2a1b12] leading-tight">
+                          {book.title}
+                        </h3>
+                        <div className="flex items-center gap-2 my-3" aria-hidden="true">
+                          <span className="h-px flex-1 bg-[#2a1b12]/10" />
+                          <span className="text-[#b3541d]/70 text-xs leading-none">◇</span>
+                          <span className="h-px flex-1 bg-[#2a1b12]/10" />
+                        </div>
+                        <p className="text-xs sm:text-sm text-[#5b4636] leading-relaxed">
+                          {book.desc}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-auto pt-5">
+                      <div className="flex items-center gap-2 border-t border-[#2a1b12]/10 pt-4 text-[11px] font-semibold uppercase tracking-wider text-[#7a6552]">
+                        <BookOpen className="h-3.5 w-3.5 text-[#8a7360]" />
+                        <span>{book.category}</span>
+                        <span className="text-[#b3541d]/50">•</span>
+                        <Languages className="h-3.5 w-3.5 text-[#8a7360]" />
+                        <span>{book.language}</span>
+                      </div>
+                      <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#b3541d] transition-all group-hover:gap-3">
+                        Explore Text <ArrowRight className="h-4 w-4" />
+                      </span>
+                    </div>
+                  </article>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* arrows */}
+          {snapCount > 1 && (
+            <>
+              <button
+                type="button"
+                aria-label="Previous"
+                onClick={() => emblaApi?.scrollPrev()}
+                disabled={!canPrev}
+                className="absolute left-0 sm:-left-3 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-amber-200/50 bg-[#8a3d18]/80 text-amber-100 shadow-lg backdrop-blur-sm transition-opacity hover:bg-[#8a3d18] disabled:opacity-30"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                aria-label="Next"
+                onClick={() => emblaApi?.scrollNext()}
+                disabled={!canNext}
+                className="absolute right-0 sm:-right-3 top-1/2 -translate-y-1/2 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-amber-200/50 bg-[#8a3d18]/80 text-amber-100 shadow-lg backdrop-blur-sm transition-opacity hover:bg-[#8a3d18] disabled:opacity-30"
+              >
+                <ArrowRight className="h-5 w-5" />
+              </button>
+            </>
+          )}
+        </div>
+
+        {/* dots */}
+        {snapCount > 1 && (
+          <div className="flex items-center justify-center gap-2.5 mt-8">
+            {Array.from({ length: snapCount }).map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                aria-label={`Go to slide ${i + 1}`}
+                onClick={() => emblaApi?.scrollTo(i)}
+                className={`h-2.5 rounded-full transition-all ${selected === i ? "w-6 bg-amber-200" : "w-2.5 bg-amber-200/40 hover:bg-amber-200/60"}`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* footer tagline */}
+        <div className="flex items-center justify-center gap-4 mt-12 sm:mt-14" aria-hidden="true">
+          <span className="text-amber-300/70 text-sm">◇</span>
+          <span className="h-px w-16 sm:w-24 bg-amber-300/40" />
+          <span className="font-serif italic text-base sm:text-lg text-amber-200">Many texts. One timeless vision.</span>
+          <span className="h-px w-16 sm:w-24 bg-amber-300/40" />
+          <span className="text-amber-300/70 text-sm">◇</span>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function BookProgressBar({ bookId, totalVerses, compact = false, alwaysShow = false, unitLabel }: { bookId: string; totalVerses: number | null | undefined; compact?: boolean; alwaysShow?: boolean; unitLabel?: string }) {
   const { data: summary } = useProgressSummary();
@@ -1034,6 +1267,11 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
           </div>
         </div>
       </section>
+
+      {/* ===== FEATURED COLLECTION — BEYOND THE MAINSTREAM ===== */}
+      <div className="mt-14 sm:mt-20">
+        <FeaturedCollection onExplore={onBrowseLibrary} />
+      </div>
 
       {/* ===== FEATURE STRIP ===== */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
