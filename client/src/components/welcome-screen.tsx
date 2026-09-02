@@ -1125,7 +1125,7 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
         <div className="space-y-1.5 overflow-y-auto max-h-72 pr-1">
           {items.map((it, i) => (
             <button key={it.label + i} type="button" onClick={it.onClick} className="w-full flex items-center gap-2 rounded-lg bg-card border border-border/50 px-3 py-2.5 text-left text-xs font-body text-foreground hover:border-primary/40 hover:text-primary transition-colors">
-              <Sparkles className="h-3.5 w-3.5 text-primary/40 shrink-0" /><span className="whitespace-nowrap">{it.label}</span>
+              <Sparkles className="h-3.5 w-3.5 text-primary/40 shrink-0" /><span className="min-w-0 flex-1 truncate">{it.label}</span>
             </button>
           ))}
           {items.length === 0 && <p className="text-xs text-muted-foreground/60 px-2 py-3 text-center">No matches.</p>}
