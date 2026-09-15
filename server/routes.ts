@@ -40,7 +40,16 @@ function isStrapiCacheSecretValid(req: Request): boolean {
 }
 
 function setContentApiCacheHeaders(res: import("express").Response): void {
-  res.setHeader("Cache-Control", "private, no-cache, must-revalidate");
+  // Scripture content (books, verses, bhashya/teeka, commentary options) is
+  // public and changes rarely; the CMS webhook clears the server-side cache on
+  // edits. Allow the browser/CDN to serve it for a few minutes and revalidate in
+  // the background, so repeat reads and back/forward navigation don't re-fetch
+  // heavy commentary payloads. Override with CONTENT_CACHE_MAX_AGE (seconds).
+  const maxAge = Math.max(0, Number(process.env.CONTENT_CACHE_MAX_AGE || 300));
+  res.setHeader(
+    "Cache-Control",
+    `public, max-age=${maxAge}, stale-while-revalidate=86400`,
+  );
 }
 
 export async function registerRoutes(

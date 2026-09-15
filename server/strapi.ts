@@ -72,12 +72,17 @@ interface CacheEntry<T> {
   timestamp: number;
 }
 
-/** Default 5 minutes; override with STRAPI_CACHE_TTL_MS (0 = always re-fetch Strapi). */
+/**
+ * Default 30 minutes; override with STRAPI_CACHE_TTL_MS (0 = always re-fetch
+ * Strapi). Content is invalidated eagerly by the CMS webhook, so a long TTL is
+ * safe and keeps heavy full-book / commentary fetches off the critical path.
+ */
+const DEFAULT_CACHE_TTL = 30 * 60 * 1000;
 const CACHE_TTL = (() => {
   const raw = process.env.STRAPI_CACHE_TTL_MS;
-  if (raw === undefined || raw === "") return 5 * 60 * 1000;
+  if (raw === undefined || raw === "") return DEFAULT_CACHE_TTL;
   const n = Number(raw);
-  return Number.isFinite(n) && n >= 0 ? n : 5 * 60 * 1000;
+  return Number.isFinite(n) && n >= 0 ? n : DEFAULT_CACHE_TTL;
 })();
 const bookDetailCache = new Map<string, CacheEntry<BookWithDetails>>();
 const bookVerseMetaCache = new Map<string, CacheEntry<BookWithVerseMeta>>();
@@ -830,7 +835,7 @@ async function _strapiGetBookByIdUncached(id: string): Promise<BookWithDetails |
 
     const sectionFetchConcurrency = Math.max(
       1,
-      Math.min(8, Number(process.env.STRAPI_SECTION_FETCH_CONCURRENCY || 4)),
+      Math.min(8, Number(process.env.STRAPI_SECTION_FETCH_CONCURRENCY || 6)),
     );
     const taskResults: { task: LeafTask; manthras: any[] }[] = new Array(leafTasks.length);
     let nextIdx = 0;
@@ -1176,49 +1181,161 @@ export async function strapiGetWordMeaningsByVerseId(_verseId: string): Promise<
   return [];
 }
 
-export async function strapiGetCommentaryOptionsByBookId(bookId: string): Promise<CommentaryOptions | null> {
-  try {
-    const book = await strapiGetBookById(bookId);
-    if (!book || book.verses.length === 0) return null;
+type CommentaryAuthorAcc = {
+  authorTitle: string | null;
+  languageCodes: Set<string>;
+  commentaryType?: "bhashya" | "teeka";
+};
 
-    const authorMap = new Map<string, { authorTitle: string | null; languageCodes: Set<string>; commentaryType?: "bhashya" | "teeka" }>();
-    const languageSet = new Set<string>();
+function buildCommentaryOptions(
+  authorMap: Map<string, CommentaryAuthorAcc>,
+  languageSet: Set<string>,
+): CommentaryOptions {
+  const authors: CommentaryOption[] = Array.from(authorMap.entries()).map(([name, data]) => ({
+    authorName: name,
+    authorTitle: data.authorTitle,
+    languageCodes: Array.from(data.languageCodes),
+    commentaryType: data.commentaryType,
+  }));
+  const languages = Array.from(languageSet).map((code) => ({ code, name: code }));
+  return { authors, languages };
+}
 
-    for (const verse of book.verses) {
-      for (const exp of verse.explanations) {
-        const expAny = exp as any;
-        languageSet.add(exp.languageCode);
-        if (!authorMap.has(exp.authorName)) {
-          authorMap.set(exp.authorName, {
-            authorTitle: exp.authorTitle,
-            languageCodes: new Set([exp.languageCode]),
-            commentaryType: expAny.commentaryType || undefined,
-          });
-        } else {
-          const existing = authorMap.get(exp.authorName)!;
-          existing.languageCodes.add(exp.languageCode);
-          if (expAny.commentaryType === "bhashya") {
-            existing.commentaryType = "bhashya";
-          } else if (!existing.commentaryType && expAny.commentaryType) {
-            existing.commentaryType = expAny.commentaryType;
-          }
+function accumulateCommentaryAuthor(
+  authorMap: Map<string, CommentaryAuthorAcc>,
+  languageSet: Set<string>,
+  authorName: string,
+  authorTitle: string | null,
+  commentaryType: "bhashya" | "teeka",
+  langCodes: string[],
+): void {
+  const existing = authorMap.get(authorName);
+  const target = existing ?? { authorTitle, languageCodes: new Set<string>(), commentaryType };
+  if (!existing) authorMap.set(authorName, target);
+  if (commentaryType === "bhashya") target.commentaryType = "bhashya";
+  else if (!target.commentaryType) target.commentaryType = commentaryType;
+  for (const code of langCodes) {
+    languageSet.add(code);
+    target.languageCodes.add(code);
+  }
+}
+
+/** Language codes carried by one Text-and-Translation component, WITHOUT its heavy content. */
+function langCodesFromLightTat(tat: any): string[] {
+  if (!tat) return [];
+  const codes: string[] = [];
+  if (richTextToString(tat.SanskritTextEntry)) codes.push("devanagari");
+  if (richTextToString(tat.EnglishTranslationText)) codes.push("english");
+  if (Array.isArray(tat.OtherTranslations)) {
+    for (const ot of tat.OtherTranslations) {
+      if (ot?.LanguageOfTranslation) codes.push(String(ot.LanguageOfTranslation).toLowerCase());
+    }
+  }
+  return codes;
+}
+
+/**
+ * Commentary options (which authors/languages exist) without hydrating the whole
+ * book. Scans manthras with a trimmed populate that keeps the native Sanskrit/
+ * English bhashya text (needed to detect those languages) but drops the ~45
+ * OtherTranslations rich-text bodies — the payload that makes the full-book load
+ * slow — keeping only each translation's language code. Falls back to the
+ * full-book derivation if the light scan fails.
+ */
+async function commentaryOptionsFromLightScan(bookId: string): Promise<CommentaryOptions | null> {
+  const grantha = await strapiFetch<StrapiResponse<any>>(`/granthas/${bookId}`, {
+    "fields[0]": "BhashyamAuthor",
+    "fields[1]": "BhashyamName",
+  });
+  if (!grantha?.data) return null;
+  const bhashyamAuthor = grantha.data.BhashyamAuthor || "Sri Shankaracharya";
+  const bhashyamName = grantha.data.BhashyamName || "Shankara Bhashyam";
+
+  const manthras = await strapiFetchAll<any>("/manthras", {
+    "filters[Section][grantha][documentId]": bookId,
+    "populate[BhashyamEntry][fields][0]": "SanskritTextEntry",
+    "populate[BhashyamEntry][fields][1]": "EnglishTranslationText",
+    "populate[BhashyamEntry][populate][OtherTranslations][fields][0]": "LanguageOfTranslation",
+    "populate[Teekas][populate][teeka][fields][0]": "TeekaName",
+    "populate[Teekas][populate][teeka][fields][1]": "TeekaAuthor",
+    "populate[Teekas][populate][TeekaEntry][fields][0]": "SanskritTextEntry",
+    "populate[Teekas][populate][TeekaEntry][fields][1]": "EnglishTranslationText",
+    "populate[Teekas][populate][TeekaEntry][populate][OtherTranslations][fields][0]": "LanguageOfTranslation",
+  }, 100);
+  if (manthras.length === 0) return null;
+
+  const authorMap = new Map<string, CommentaryAuthorAcc>();
+  const languageSet = new Set<string>();
+
+  for (const m of manthras) {
+    const bhashyaCodes = langCodesFromLightTat(m.BhashyamEntry);
+    if (bhashyaCodes.length > 0) {
+      accumulateCommentaryAuthor(authorMap, languageSet, bhashyamAuthor, bhashyamName, "bhashya", bhashyaCodes);
+    }
+    if (Array.isArray(m.Teekas)) {
+      for (const teekaEntry of m.Teekas) {
+        const teekaRef = teekaEntry.teeka;
+        const teekaName = teekaRef?.TeekaName || "Teeka";
+        const teekaAuthor = teekaRef?.TeekaAuthor || teekaName;
+        const teekaCodes = langCodesFromLightTat(teekaEntry.TeekaEntry);
+        if (teekaCodes.length > 0) {
+          accumulateCommentaryAuthor(authorMap, languageSet, teekaAuthor, teekaName, "teeka", teekaCodes);
         }
       }
     }
-
-    const authors: CommentaryOption[] = Array.from(authorMap.entries()).map(([name, data]) => ({
-      authorName: name,
-      authorTitle: data.authorTitle,
-      languageCodes: Array.from(data.languageCodes),
-      commentaryType: data.commentaryType,
-    }));
-
-    const languagesResult = Array.from(languageSet).map((code) => ({ code, name: code }));
-
-    return { authors, languages: languagesResult };
-  } catch {
-    return null;
   }
+
+  if (authorMap.size === 0) return null;
+  return buildCommentaryOptions(authorMap, languageSet);
+}
+
+/** Derive commentary options from a fully hydrated book (fallback, heavier). */
+async function commentaryOptionsFromFullBook(bookId: string): Promise<CommentaryOptions | null> {
+  const book = await strapiGetBookById(bookId);
+  if (!book || book.verses.length === 0) return null;
+
+  const authorMap = new Map<string, CommentaryAuthorAcc>();
+  const languageSet = new Set<string>();
+
+  for (const verse of book.verses) {
+    for (const exp of verse.explanations) {
+      const expAny = exp as any;
+      accumulateCommentaryAuthor(
+        authorMap,
+        languageSet,
+        exp.authorName,
+        exp.authorTitle,
+        expAny.commentaryType === "bhashya" ? "bhashya" : "teeka",
+        [exp.languageCode],
+      );
+    }
+  }
+
+  if (authorMap.size === 0) return null;
+  return buildCommentaryOptions(authorMap, languageSet);
+}
+
+export async function strapiGetCommentaryOptionsByBookId(bookId: string): Promise<CommentaryOptions | null> {
+  const cached = getCached(commentaryOptionsCache, bookId);
+  if (cached) return cached;
+
+  return dedup(`commentaryOptions:${bookId}`, async () => {
+    let options: CommentaryOptions | null = null;
+    try {
+      options = await commentaryOptionsFromLightScan(bookId);
+    } catch (err: any) {
+      console.warn(`[Strapi] Light commentary-options scan failed for ${bookId}, falling back to full book:`, err?.message);
+    }
+    if (!options) {
+      try {
+        options = await commentaryOptionsFromFullBook(bookId);
+      } catch {
+        options = null;
+      }
+    }
+    if (options) setCache(commentaryOptionsCache, bookId, options);
+    return options;
+  });
 }
 
 export async function strapiGetChapterVerses(bookId: string, adhyayNumber: number): Promise<VerseWithTranslations[]> {

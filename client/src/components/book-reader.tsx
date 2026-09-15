@@ -1,7 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef, type MouseEvent as ReactMouseEvent } from "react";
 import { createPortal } from "react-dom";
-import { useQuery } from "@tanstack/react-query";
-import { cmsContentQueryOptions } from "@/lib/queryClient";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { cmsContentQueryOptions, getQueryFn } from "@/lib/queryClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -845,6 +845,8 @@ export function BookReader({
     return () => document.removeEventListener("mousedown", dismiss);
   }, []);
 
+  const queryClient = useQueryClient();
+
   const { data: book, isLoading, error } = useQuery<BookWithVerseMeta>({
     queryKey: ["/api/books", bookId],
     ...cmsContentQueryOptions,
@@ -889,17 +891,31 @@ export function BookReader({
     ...cmsContentQueryOptions,
   });
 
-  const { data: currentVerseExplanations } = useQuery<Explanation[]>({
-    queryKey: ["/api/verses", currentVerseMeta?.id, "explanations"],
-    enabled: !!currentVerseMeta?.id && chapterViewAdhyay == null,
-    ...cmsContentQueryOptions,
-  });
+  // The verse-detail endpoint already returns the full commentary set, so derive
+  // explanations from it instead of issuing a second network request per verse.
+  const currentVerseExplanations = currentVerseDetails?.explanations;
 
   const { data: chapterVerses, isLoading: isChapterLoading } = useQuery<VerseWithTranslations[]>({
     queryKey: ["/api/books", bookId, "chapter", chapterViewAdhyay, "verses"],
     enabled: chapterViewAdhyay != null,
     ...cmsContentQueryOptions,
   });
+
+  // Warm the cache for the verses on either side of the current one so tapping
+  // next/previous renders the (heavy) bhashya + teeka content immediately
+  // instead of waiting on a fresh Strapi round-trip.
+  useEffect(() => {
+    if (chapterViewAdhyay != null || verses.length === 0) return;
+    const neighbours = [verses[currentPage + 1], verses[currentPage - 1]];
+    for (const neighbour of neighbours) {
+      if (!neighbour?.id) continue;
+      queryClient.prefetchQuery({
+        queryKey: ["/api/verses", neighbour.id],
+        queryFn: getQueryFn({ on401: "throw" }),
+        ...cmsContentQueryOptions,
+      });
+    }
+  }, [currentPage, verses, chapterViewAdhyay, queryClient]);
 
   useEffect(() => {
     setInitialized(false);

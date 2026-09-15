@@ -41,10 +41,17 @@ export const getQueryFn: <T>(options: {
     return await res.json();
   };
 
-/** Books, verses, and commentary from Strapi — refetch after CMS edits or tab focus. */
+/**
+ * Books, verses, and commentary from Strapi. This content changes rarely and is
+ * invalidated server-side via the CMS webhook, so we keep it fresh for several
+ * minutes and hold it in the query cache far longer. This makes back/forward
+ * navigation and re-opening a verse instant instead of re-fetching heavy
+ * bhashya/teeka payloads on every focus change.
+ */
 export const cmsContentQueryOptions = {
-  staleTime: 30_000,
-  refetchOnWindowFocus: true,
+  staleTime: 5 * 60_000,
+  gcTime: 60 * 60_000,
+  refetchOnWindowFocus: false,
 } as const;
 
 /**
