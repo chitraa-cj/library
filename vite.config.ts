@@ -58,7 +58,13 @@ export default defineConfig({
         // browser fetch these in parallel with the entry chunk.
         manualChunks(id) {
           if (id.includes("node_modules")) {
-            if (id.includes("react-dom") || /[\\/]react[\\/]/.test(id) || id.includes("scheduler")) {
+            // Match ONLY the real react/react-dom/scheduler packages at a
+            // node_modules path boundary. A loose `includes("react-dom")` also
+            // catches `@floating-ui/react-dom` (a Radix dep), which then drags
+            // `@floating-ui/dom` from the `vendor` chunk into `react-vendor` —
+            // creating a circular chunk dependency that crashes at init with
+            // "Cannot set properties of undefined (setting 'Children')".
+            if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) {
               return "react-vendor";
             }
             if (id.includes("@radix-ui")) return "radix-vendor";
