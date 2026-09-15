@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient, apiRequest, cmsContentQueryOptions, readCachedList, writeCachedList, BOOKS_CACHE_KEY } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
@@ -7,8 +7,17 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider, useTheme } from "@/components/theme-provider";
 import { CATALOG_TREE, findBookPath, matchesCategory } from "@/components/app-sidebar";
 import { WelcomeScreen, LibraryCatalogView, CategoryDetailView, SubCategoryDetailView } from "@/components/welcome-screen";
-import { AcharyasPage } from "@/components/acharyas-page";
-import { BookReader } from "@/components/book-reader";
+// Heavy, route-specific screens are code-split so the home page paints without
+// downloading the reader/acharya code. They load on demand (and are prefetched
+// in the background once the app is idle — see prefetchReaderChunk below).
+const AcharyasPage = lazy(() =>
+  import("@/components/acharyas-page").then((m) => ({ default: m.AcharyasPage })),
+);
+const BookReader = lazy(() =>
+  import("@/components/book-reader").then((m) => ({ default: m.BookReader })),
+);
+/** Warms the BookReader chunk ahead of the user opening a book. */
+export const prefetchReaderChunk = () => import("@/components/book-reader");
 import { ReaderNavSidebar, useBookChapters } from "@/components/reader-nav-sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
@@ -25,8 +34,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { PreferencesDialog } from "@/components/preferences-dialog";
 import { ThemeToggle } from "@/components/theme-toggle";
 import NotFound from "@/pages/not-found";
-import AuthPage from "@/pages/auth-page";
-import TranslatePage from "@/pages/translate-page";
+const AuthPage = lazy(() => import("@/pages/auth-page"));
+const TranslatePage = lazy(() => import("@/pages/translate-page"));
 import { useTranslation } from "@/lib/translations";
 import { translateContent, bookAuthorTranslations } from "@/lib/content-translations";
 import type { Book, Language } from "@shared/schema";
@@ -134,6 +143,23 @@ function HomePageContent() {
   useEffect(() => {
     writeCachedList(BOOKS_CACHE_KEY, allBooks);
   }, [allBooks]);
+
+  // Once the home screen is painted and the browser is idle, warm the (code-split)
+  // BookReader chunk in the background. Opening a book then uses cached JS instead
+  // of blocking on a network fetch — background loading without slowing first paint.
+  useEffect(() => {
+    if (selectedBookId) return; // already reading — chunk is loading anyway
+    const w = window as unknown as {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    if (w.requestIdleCallback) {
+      const id = w.requestIdleCallback(() => { void prefetchReaderChunk(); }, { timeout: 3000 });
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const t = setTimeout(() => { void prefetchReaderChunk(); }, 1500);
+    return () => clearTimeout(t);
+  }, [selectedBookId]);
 
   const { data: allLanguages } = useQuery<Language[]>({
     queryKey: ["/api/languages"],
@@ -967,6 +993,7 @@ function HomePageContent() {
                   </div>
                 )}
                 <div className="flex flex-1 flex-col min-w-0 min-h-0 h-full overflow-hidden">
+                <Suspense fallback={<ScreenFallback />}>
                 <BookReader
                   bookId={selectedBookId}
                   onVerseSelect={handleVerseSelect}
@@ -997,6 +1024,7 @@ function HomePageContent() {
                   onShowCoverPage={handleShowCoverPage}
                   showCoverSignal={readerCoverSignal}
                 />
+                </Suspense>
                 </div>
               </>
             ) : selectedCategoryId && selectedSubCategoryId ? (
@@ -1030,15 +1058,17 @@ function HomePageContent() {
                 languageCode={selectedCommentaryLanguage}
               />
             ) : showAcharyas ? (
-              <AcharyasPage
-                slug={selectedAcharyaSlug}
-                onSelectAcharya={(slug) => setSelectedAcharyaSlug(slug)}
-                onBack={() => {
-                  if (selectedAcharyaSlug) setSelectedAcharyaSlug(null);
-                  else setShowAcharyas(false);
-                }}
-                languageCode={selectedCommentaryLanguage}
-              />
+              <Suspense fallback={<ScreenFallback />}>
+                <AcharyasPage
+                  slug={selectedAcharyaSlug}
+                  onSelectAcharya={(slug) => setSelectedAcharyaSlug(slug)}
+                  onBack={() => {
+                    if (selectedAcharyaSlug) setSelectedAcharyaSlug(null);
+                    else setShowAcharyas(false);
+                  }}
+                  languageCode={selectedCommentaryLanguage}
+                />
+              </Suspense>
             ) : showLibraryCatalog ? (
               <LibraryCatalogView
                 books={allBooks || []}
@@ -1108,18 +1138,29 @@ function HomePage() {
   return <HomePageContent />;
 }
 
+/** Minimal, theme-aware fallback shown while a code-split screen streams in. */
+function ScreenFallback() {
+  return (
+    <div className="flex h-full w-full items-center justify-center py-24" aria-busy="true">
+      <div className="h-7 w-7 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+    </div>
+  );
+}
+
 function Router() {
   return (
-    <Switch>
-      <Route path="/" component={HomePage} />
-      <Route path="/auth" component={AuthPage} />
-      <Route path="/translate" component={TranslatePage} />
-      <Route path="/:bookSlug" component={HomePage} />
-      <Route path="/:bookSlug/chapter/:chapterNumber" component={HomePage} />
-      <Route path="/:bookSlug/chapter/:chapterNumber/:partNumber" component={HomePage} />
-      <Route path="/:bookSlug/:verseNumber" component={HomePage} />
-      <Route component={NotFound} />
-    </Switch>
+    <Suspense fallback={<ScreenFallback />}>
+      <Switch>
+        <Route path="/" component={HomePage} />
+        <Route path="/auth" component={AuthPage} />
+        <Route path="/translate" component={TranslatePage} />
+        <Route path="/:bookSlug" component={HomePage} />
+        <Route path="/:bookSlug/chapter/:chapterNumber" component={HomePage} />
+        <Route path="/:bookSlug/chapter/:chapterNumber/:partNumber" component={HomePage} />
+        <Route path="/:bookSlug/:verseNumber" component={HomePage} />
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
 }
 

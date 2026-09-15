@@ -5,6 +5,7 @@ process.on("SIGHUP", () => {
 });
 
 import express, { type Request, Response, NextFunction } from "express";
+import compression from "compression";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -26,6 +27,12 @@ declare module "http" {
     rawBody: unknown;
   }
 }
+
+// Gzip every text-based response (the ~1.3MB JS bundle, CSS, and JSON API
+// payloads). Bundles and translation JSON compress ~4-8x, which is the single
+// biggest transfer-size win for both first load and API responses. Runs first
+// so it wraps every downstream handler, including express.static.
+app.use(compression());
 
 app.use(
   express.json({

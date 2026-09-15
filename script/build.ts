@@ -8,6 +8,7 @@ import { execSync } from "child_process";
 const allowlist = [
   "@google/generative-ai",
   "axios",
+  "compression",
   "connect-pg-simple",
   "cors",
   "date-fns",
