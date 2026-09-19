@@ -16,6 +16,21 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+/**
+ * A Postgres failure here (missing column after a schema change, dead pool)
+ * otherwise reaches the browser as a bare 500 with no way to tell it apart from
+ * a bug in the handler. Log the driver's code/detail, and pass the SQLSTATE
+ * back so it is diagnosable from the network tab without shell access.
+ */
+function authFailure(res: any, label: string, error: unknown, status = 500) {
+  const err = error as { code?: string; message?: string; detail?: string };
+  console.error(`[auth] ${label} failed:`, err?.code ?? "", err?.message, err?.detail ?? "");
+  return res.status(status).json({
+    message: label,
+    ...(err?.code ? { code: err.code } : {}),
+  });
+}
+
 export function registerAuthRoutes(app: Express): void {
   app.get("/api/auth/user", async (req: any, res) => {
     if (!req.isAuthenticated?.() && !req.session?.emailUserId) {
@@ -36,8 +51,7 @@ export function registerAuthRoutes(app: Express): void {
       const { password: _, ...safeUser } = user;
       res.json(safeUser);
     } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
+      return authFailure(res, "Failed to fetch user", error);
     }
   });
 
@@ -70,8 +84,7 @@ export function registerAuthRoutes(app: Express): void {
         res.status(201).json(safeUser);
       });
     } catch (error) {
-      console.error("Error registering user:", error);
-      res.status(500).json({ message: "Failed to register" });
+      return authFailure(res, "Failed to register", error);
     }
   });
 
@@ -101,8 +114,7 @@ export function registerAuthRoutes(app: Express): void {
         res.json(safeUser);
       });
     } catch (error) {
-      console.error("Error logging in:", error);
-      res.status(500).json({ message: "Failed to log in" });
+      return authFailure(res, "Failed to log in", error);
     }
   });
 

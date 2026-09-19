@@ -17,7 +17,7 @@ import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 import { importTranslationDataFromFiles } from "./import-translation-data";
 import { syncSouthIndianBhashya } from "./sync-south-indian-bhashya";
 import { ensureCanonicalLocalBooks } from "./ensure-canonical-books";
-import { repairUserTableForeignKeys } from "./repair-schema";
+import { repairUserTableForeignKeys, ensureAuthSchema } from "./repair-schema";
 
 const app = express();
 const httpServer = createServer(app);
@@ -70,6 +70,9 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Must run before the auth routes are reachable: a deployed DB missing a
+  // column declared in shared/models/auth.ts fails every user query with 42703.
+  await ensureAuthSchema();
   await setupAuth(app);
   registerAuthRoutes(app);
   await registerRoutes(httpServer, app);
