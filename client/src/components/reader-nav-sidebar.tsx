@@ -7,22 +7,22 @@ import { isBookmarked, toggleBookmark, subscribeBookmarks, type BookmarkEntry } 
 import { matchAcharyaSlug, type AcharyaNameRef } from "@/lib/acharya-match";
 import shankaracharyaImg from "@assets/image_1770455528511.png";
 
-export interface KhandaInfo {
-  number: number;
-  title: string;
-  count: number;
-  verseNumbers: number[];
-  type?: string | null;
-}
+import {
+  buildSectionTree,
+  completePath,
+  detectLevelLabels,
+  nodeAtPath,
+  nodeLabel,
+  nodesAtPath,
+  pathOfVerse,
+  verseLabels,
+  type SectionNode,
+} from "@/lib/section-tree";
 
-export interface ChapterInfo {
-  number: number;
-  title: string;
-  verseCount: number;
-  khandas?: KhandaInfo[];
-  verseNumbers: number[];
-  type?: string | null;
-}
+export type { SectionNode } from "@/lib/section-tree";
+/** Legacy aliases — a "chapter" is just the outermost section level. */
+export type ChapterInfo = SectionNode;
+export type KhandaInfo = SectionNode;
 
 export function useBookChapters(bookId: string | undefined): ChapterInfo[] {
   const { data } = useQuery<any>({
@@ -31,140 +31,7 @@ export function useBookChapters(bookId: string | undefined): ChapterInfo[] {
     ...cmsContentQueryOptions,
   });
 
-  return useMemo(() => {
-    if (!data?.verses) return [];
-
-    const chapterMap = new Map<number, ChapterInfo>();
-    for (const v of data.verses) {
-      const adhyay = v.adhyayNumber;
-      if (adhyay == null) continue;
-
-      if (!chapterMap.has(adhyay)) {
-        chapterMap.set(adhyay, {
-          number: adhyay,
-          title: v.adhyayTitle || `Chapter ${adhyay}`,
-          verseCount: 0,
-          verseNumbers: [],
-          type: v.adhyayType ?? null,
-        });
-      }
-      const ch = chapterMap.get(adhyay)!;
-      ch.verseCount++;
-      ch.verseNumbers.push(v.verseNumber);
-
-      if (v.khandaNumber != null) {
-        if (!ch.khandas) ch.khandas = [];
-        const existingKhanda = ch.khandas.find(k => k.number === v.khandaNumber);
-        if (existingKhanda) {
-          existingKhanda.count++;
-          existingKhanda.verseNumbers.push(v.verseNumber);
-        } else {
-          ch.khandas.push({
-            number: v.khandaNumber,
-            title: v.khandaTitle || `Part ${v.khandaNumber}`,
-            count: 1,
-            verseNumbers: [v.verseNumber],
-            type: v.khandaType ?? null,
-          });
-        }
-      }
-    }
-
-    const result = Array.from(chapterMap.values()).sort((a, b) => a.number - b.number);
-    result.forEach(ch => {
-      ch.verseNumbers.sort((a, b) => a - b);
-      ch.khandas?.forEach(k => k.verseNumbers.sort((a, b) => a - b));
-    });
-    return result;
-  }, [data]);
-}
-
-function getChapterLabel(title: string) {
-  let t = title;
-  if (t.includes(' - ')) t = t.split(' - ').pop()?.trim() || t;
-  const levelWord = /(adhy[aā]ya|vall[iī]|pra[sś]na|mu[nṇ][dḍ]aka|kha[nṇ][dḍ]a|anuv[aā]ka|p[aā]da|chapter|section)[ḥh]?/i;
-  t = t.replace(new RegExp(`\\s+${levelWord.source}\\.?\\s*$`, 'i'), '').trim();
-  t = t.replace(new RegExp(`^${levelWord.source}\\s+[\\d०-९ivxIVX]*\\.?\\s*`, 'i'), '').trim();
-  t = t.replace(new RegExp(`^${levelWord.source}\\s+`, 'i'), '').trim();
-  return t || title;
-}
-
-// Known Strapi section `type` slugs -> properly diacriticised display labels.
-// Keys are normalised (lower-case, no spaces/underscores/hyphens).
-const SECTION_TYPE_LABELS: Record<string, string> = {
-  adhyay: "Adhyāya", adhyaya: "Adhyāya",
-  khanda: "Khaṇḍa", kanda: "Kāṇḍa",
-  valli: "Vallī",
-  anuvaka: "Anuvāka",
-  prashna: "Praśna", prasna: "Praśna",
-  mundaka: "Muṇḍaka",
-  pada: "Pāda",
-  vakhya: "Vākya", vakhyaa: "Vākya", vakya: "Vākya",
-  sarga: "Sarga",
-  brahmana: "Brāhmaṇa",
-  pariccheda: "Pariccheda", parichcheda: "Pariccheda",
-  section: "Section",
-  chapter: "Chapter",
-};
-
-// Turn a raw Strapi section `type` into a display label. Falls back to
-// title-casing unknown CMS values so a new grantha type still renders sensibly.
-function humanizeSectionType(type?: string | null): string | null {
-  if (!type) return null;
-  const key = type.toLowerCase().trim().replace(/[\s_-]+/g, "");
-  if (!key) return null;
-  if (SECTION_TYPE_LABELS[key]) return SECTION_TYPE_LABELS[key];
-  return type.trim().replace(/(^|\s)\S/g, (c) => c.toUpperCase());
-}
-
-// Loose stem patterns for guessing a level name from a section *title* when the
-// CMS hasn't set a `type`. Ordered most-specific first; stems are written to
-// tolerate diacritics and spelling variants (e.g. "parichchedha" ~ "pariccheda").
-const TITLE_LEVEL_PATTERNS: [RegExp, string][] = [
-  [/parichched|pariccheda/i, "Pariccheda"],
-  [/anuv[aā]ka/i, "Anuvāka"],
-  [/vall[iī]/i, "Vallī"],
-  [/mu[nṇ][dḍ]aka/i, "Muṇḍaka"],
-  [/pra[sś]na/i, "Praśna"],
-  [/br[aā]hma[nṇ]a/i, "Brāhmaṇa"],
-  [/kha[nṇ][dḍ]a/i, "Khaṇḍa"],
-  [/v[aā]kya/i, "Vākya"],
-  [/sarga/i, "Sarga"],
-  [/p[aā]da/i, "Pāda"],
-  [/adhy[aā]ya?/i, "Adhyāya"],
-  [/chapter/i, "Chapter"],
-  [/section/i, "Section"],
-];
-
-function labelFromTitle(title?: string | null): string | null {
-  if (!title) return null;
-  for (const [re, label] of TITLE_LEVEL_PATTERNS) {
-    if (re.test(title)) return label;
-  }
-  return null;
-}
-
-function detectLabels(chapters: ChapterInfo[]): { chapterLabel: string; khandaLabel: string; mantraLabel: string } {
-  const firstKhanda = chapters.find(ch => ch.khandas?.length)?.khandas?.[0];
-
-  // Prefer the level name straight from Strapi's section `type`; fall back to
-  // guessing from the title when the CMS hasn't set one (e.g. legacy books or
-  // sections imported without a type), and only then to a generic default.
-  const chapterLabel =
-    humanizeSectionType(chapters[0]?.type) || labelFromTitle(chapters[0]?.title) || "Adhyāya";
-  const khandaFromCms = humanizeSectionType(firstKhanda?.type);
-  let khandaLabel = khandaFromCms || labelFromTitle(firstKhanda?.title) || "Khaṇḍa";
-  let mantraLabel = "Mantra";
-
-  // Pariccheda-based prose works (e.g. Vedānta Paribhāṣā) aren't divided into
-  // khaṇḍas/mantras: their sub-sections are subject-topics (viṣaya) and the leaf
-  // prose passages are viṣayā. A CMS `type` on the sub-level still wins if set.
-  if (chapterLabel === "Pariccheda") {
-    if (!khandaFromCms) khandaLabel = "Viṣaya";
-    mantraLabel = "Viṣayā";
-  }
-
-  return { chapterLabel, khandaLabel, mantraLabel };
+  return useMemo(() => (data?.verses ? buildSectionTree(data.verses) : []), [data]);
 }
 
 /** Bookmark toggle (localStorage) — shares the store with the reader so state stays in sync. */
@@ -242,13 +109,13 @@ const SIDEBAR_VIDEO_BY_SLUG: Record<string, { videoId: string; minutes: number }
   "isha-upanishad-bhashya": { videoId: "8ELHatzdtAk", minutes: 32 },
 };
 
-export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumber, chapterViewAdhyay, chapterViewKhanda, onSelectVerse, onSelectBook, onShowCover, onOpenAcharya }: {
+export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumber, chapterViewPath, onSelectVerse, onSelectBook, onShowCover, onOpenAcharya }: {
   bookId: string;
   bookTitle: string;
   chapters: ChapterInfo[];
   currentVerseNumber: number;
-  chapterViewAdhyay?: number | null;
-  chapterViewKhanda?: number | null;
+  /** Section path the reader is showing in chapter view, e.g. [1, 2]. */
+  chapterViewPath?: number[] | null;
   onSelectVerse: (bookId: string, verseNumber: number) => void;
   onSelectBook: (bookId: string) => void;
   onShowCover?: () => void;
@@ -275,58 +142,45 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
   }, [bookData]);
   const hasIntro = introInfo.hasIntro;
   const isIntroActive = currentVerseNumber === 0;
-  const hasKhandas = useMemo(() => chapters.some((ch) => ch.khandas && ch.khandas.length > 0), [chapters]);
-  const labels = useMemo(() => detectLabels(chapters), [chapters]);
+  const labels = useMemo(() => detectLevelLabels(chapters), [chapters]);
+  const depth = labels.levelLabels.length;
   const author = (bookData?.author && String(bookData.author).trim()) || "Śrī Śaṅkarācārya";
   const authorAcharyaSlug = useMemo(() => matchAcharyaSlug(author, acharyas), [author, acharyas]);
   const authorLinkable = Boolean(authorAcharyaSlug && onOpenAcharya);
   const openAuthorAcharya = () => { if (authorAcharyaSlug && onOpenAcharya) onOpenAcharya(authorAcharyaSlug); };
 
-  const [selectedChapterNum, setSelectedChapterNum] = useState<number | null>(null);
-  const [selectedKhandaNum, setSelectedKhandaNum] = useState<number | null>(null);
+  // One selected section number per level, outermost first — so a grantha with
+  // four levels (Adhyāya › Pāda › Sūtra › Mantra) navigates just like a two-level one.
+  const [selectedPath, setSelectedPath] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const activeVerseRef = useRef<HTMLButtonElement>(null);
 
-  // When the reader is in chapter-view mode, the whole adhyāya/khaṇḍa is open (no
-  // single "current verse"), so drive the selectors from that instead of the verse.
-  const activeChapter = useMemo(() => {
-    if (chapterViewAdhyay != null) return chapterViewAdhyay;
-    for (const ch of chapters) {
-      if (ch.verseNumbers.includes(currentVerseNumber)) return ch.number;
-    }
-    return null;
-  }, [chapters, currentVerseNumber, chapterViewAdhyay]);
+  // In chapter-view mode the whole section is open (no single "current verse"),
+  // so drive the selectors from that path instead of from the verse.
+  const activePath = useMemo(() => {
+    if (chapterViewPath && chapterViewPath.length > 0) return chapterViewPath;
+    return pathOfVerse(chapters, currentVerseNumber);
+  }, [chapters, currentVerseNumber, chapterViewPath]);
 
-  const activeKhandaObj = useMemo(() => {
-    if (chapterViewAdhyay != null) {
-      return chapterViewKhanda != null ? { chapterNum: chapterViewAdhyay, khandaNum: chapterViewKhanda } : null;
-    }
-    for (const ch of chapters) {
-      if (ch.khandas) {
-        for (const kh of ch.khandas) {
-          if (kh.verseNumbers.includes(currentVerseNumber)) {
-            return { chapterNum: ch.number, khandaNum: kh.number };
-          }
-        }
-      }
-    }
-    return null;
-  }, [chapters, currentVerseNumber, chapterViewAdhyay, chapterViewKhanda]);
-
-  // Keep selectors in sync with the verse open in the reader (e.g. after Next/Prev).
+  // Keep selectors in sync with what the reader is showing (e.g. after Next/Prev),
+  // completing any levels the active path leaves open.
   useEffect(() => {
-    if (activeChapter != null) setSelectedChapterNum(activeChapter);
-    if (activeKhandaObj) setSelectedKhandaNum(activeKhandaObj.khandaNum);
-  }, [activeChapter, activeKhandaObj]);
+    if (activePath.length === 0) return;
+    setSelectedPath((prev) => {
+      const next = completePath(chapters, activePath);
+      return next.length === prev.length && next.every((n, i) => n === prev[i]) ? prev : next;
+    });
+  }, [activePath, chapters]);
 
-  // Default the selectors on first load — prefer the chapter of the open verse so a
-  // direct open (e.g. Mantra 2.5) doesn't get clobbered back to the first chapter.
+  // Default the selectors on first load — the active path above wins when the
+  // reader opened straight onto a verse (e.g. Mantra 2.5).
   useEffect(() => {
-    if (selectedChapterNum == null && chapters.length) {
-      setSelectedChapterNum(activeChapter ?? chapters[0].number);
-    }
-  }, [chapters, selectedChapterNum, activeChapter]);
+    if (chapters.length === 0) return;
+    // Functional update: the sync effect above may have set a path in the same
+    // commit (e.g. opening straight into a chapter view), and that must win.
+    setSelectedPath((prev) => (prev.length === 0 ? completePath(chapters, []) : prev));
+  }, [chapters, selectedPath]);
 
   useEffect(() => {
     setTimeout(() => {
@@ -334,17 +188,30 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
     }, 100);
   }, [currentVerseNumber]);
 
-  const selectedChapter = useMemo(() => chapters.find((ch) => ch.number === selectedChapterNum), [chapters, selectedChapterNum]);
-
-  useEffect(() => {
-    if (hasKhandas && selectedChapter && selectedKhandaNum == null) {
-      const activeInSelected =
-        activeKhandaObj && activeKhandaObj.chapterNum === selectedChapter.number
-          ? activeKhandaObj.khandaNum
-          : null;
-      setSelectedKhandaNum(activeInSelected ?? selectedChapter.khandas?.[0]?.number ?? null);
+  // Options and selection for every level, outermost first.
+  const levels = useMemo(() => {
+    const out: { label: string; value: number | null; options: { value: number; label: string }[] }[] = [];
+    for (let i = 0; i < depth; i++) {
+      const options = nodesAtPath(chapters, selectedPath.slice(0, i));
+      if (options.length === 0) break;
+      out.push({
+        label: labels.levelLabels[i],
+        value: selectedPath[i] ?? null,
+        options: options.map((n) => ({
+          value: n.number,
+          label: nodeLabel(n, labels.levelLabels[i]),
+        })),
+      });
     }
-  }, [hasKhandas, selectedChapter, selectedKhandaNum, activeKhandaObj]);
+    return out;
+  }, [chapters, selectedPath, depth, labels]);
+
+  // Picking a section at one level resets the levels below it to their first entry.
+  const selectLevel = (levelIndex: number, value: number) => {
+    setSelectedPath((prev) => completePath(chapters, [...prev.slice(0, levelIndex), value]));
+  };
+
+  const selectedNode = useMemo(() => nodeAtPath(chapters, selectedPath), [chapters, selectedPath]);
 
   // Per-verse Devanagari preview + id lookups from the raw CMS verses.
   const { previewMap, verseIdMap } = useMemo(() => {
@@ -374,49 +241,21 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
     return { previewMap: preview, verseIdMap: ids };
   }, [bookData]);
 
-  const verseLabelMap = useMemo(() => {
-    const map = new Map<number, string>();
-    for (const ch of chapters) {
-      if (ch.khandas && ch.khandas.length > 0) {
-        for (const kh of ch.khandas) {
-          kh.verseNumbers.forEach((vn, idx) => { map.set(vn, `${ch.number}.${kh.number}.${idx + 1}`); });
-        }
-        ch.verseNumbers.forEach((vn) => {
-          if (!map.has(vn)) { const idx = ch.verseNumbers.indexOf(vn); map.set(vn, `${ch.number}.${idx + 1}`); }
-        });
-      } else {
-        ch.verseNumbers.forEach((vn, idx) => { map.set(vn, `${ch.number}.${idx + 1}`); });
-      }
-    }
-    return map;
-  }, [chapters]);
+  // Reference label per verse — its section numbers plus its position in the
+  // deepest section, e.g. "2.5" (Gītā), "1.2.3" (Chāndogya), "1.1.31.4" (four levels).
+  const verseLabelMap = useMemo(() => verseLabels(chapters), [chapters]);
 
   const labelFor = (vn: number) => verseLabelMap.get(vn) || String(vn);
 
   const mantraNumbers = useMemo(() => {
-    let nums: number[] = [];
-    if (hasKhandas && selectedKhandaNum != null && selectedChapter?.khandas) {
-      nums = selectedChapter.khandas.find((k) => k.number === selectedKhandaNum)?.verseNumbers || [];
-    } else {
-      nums = selectedChapter?.verseNumbers || [];
-    }
-    nums = nums.filter((vn) => vn !== 0);
+    let nums = (selectedNode?.verseNumbers || []).filter((vn) => vn !== 0);
     const q = searchQuery.trim().toLowerCase();
     if (q) {
       nums = nums.filter((vn) => labelFor(vn).toLowerCase().includes(q) || (previewMap.get(vn) || "").toLowerCase().includes(q));
     }
     return nums;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasKhandas, selectedChapter, selectedKhandaNum, searchQuery, previewMap, verseLabelMap]);
-
-  const chapterOptions = useMemo(
-    () => chapters.map((ch) => ({ value: ch.number, label: `${ch.number} ${getChapterLabel(ch.title)}` })),
-    [chapters],
-  );
-  const khandaOptions = useMemo(
-    () => (selectedChapter?.khandas || []).map((kh) => ({ value: kh.number, label: `${kh.number} ${getChapterLabel(kh.title)}` })),
-    [selectedChapter],
-  );
+  }, [selectedNode, searchQuery, previewMap, verseLabelMap]);
 
   const video = (bookData?.slug && SIDEBAR_VIDEO_BY_SLUG[bookData.slug]) || DEFAULT_SIDEBAR_VIDEO;
 
@@ -487,29 +326,19 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
           </button>
         )}
 
-        {/* Adhyāya / Khaṇḍa selectors */}
-        {chapters.length > 0 && (
-          <div className={hasKhandas ? "grid grid-cols-2 gap-2" : "grid grid-cols-1 gap-2"}>
-            <SidebarSelect
-              label={labels.chapterLabel}
-              value={selectedChapterNum}
-              options={chapterOptions}
-              onChange={(v) => {
-                setSelectedChapterNum(v);
-                const c = chapters.find((ch) => ch.number === v);
-                setSelectedKhandaNum(c?.khandas?.[0]?.number ?? null);
-              }}
-              testId="dropdown-adhyaya"
-            />
-            {hasKhandas && (
+        {/* One selector per section level the grantha defines */}
+        {levels.length > 0 && (
+          <div className={levels.length === 1 ? "grid grid-cols-1 gap-2" : "grid grid-cols-2 gap-2"}>
+            {levels.map((level, i) => (
               <SidebarSelect
-                label={labels.khandaLabel}
-                value={selectedKhandaNum}
-                options={khandaOptions}
-                onChange={(v) => setSelectedKhandaNum(v)}
-                testId="dropdown-khanda"
+                key={i}
+                label={level.label}
+                value={level.value}
+                options={level.options}
+                onChange={(v) => selectLevel(i, v)}
+                testId={i === 0 ? "dropdown-adhyaya" : i === 1 ? "dropdown-khanda" : `dropdown-level-${i + 1}`}
               />
-            )}
+            ))}
           </div>
         )}
 
@@ -566,7 +395,7 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
           })
         ) : (
           <div className="text-[11px] text-muted-foreground text-center py-8 px-3">
-            {searchQuery.trim() ? "No results found" : `Select a ${labels.chapterLabel.toLowerCase()}`}
+            {searchQuery.trim() ? "No results found" : `Select a ${(labels.levelLabels[0] || "section").toLowerCase()}`}
           </div>
         )}
       </div>

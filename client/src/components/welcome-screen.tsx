@@ -24,6 +24,17 @@ import { translateContent, bookTitleTranslations, bookAuthorTranslations, bookCa
 import { useProgressSummary } from "@/hooks/use-progress";
 import { resolveBookCoverImage } from "@/components/book-landing-cover-hero";
 import { useTheme } from "@/components/theme-provider";
+import { useBookChapters, type ChapterInfo } from "@/components/reader-nav-sidebar";
+import {
+  completePath,
+  detectLevelLabels,
+  nodeAtPath,
+  nodeLabel,
+  nodesAtPath,
+  sectionDepth,
+  verseLabels,
+  type SectionNode,
+} from "@/lib/section-tree";
 
 import catImgPrasthana from "@assets/cat-prasthana-thraya.png";
 import catImgPrakarana from "@assets/cat-prakarana-granthas.png";
@@ -678,12 +689,13 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
 
   const [cat, setCat] = useState<string>("principal");
   const [bookId, setBookId] = useState<string | null>(null);
-  const [adhyay, setAdhyay] = useState<number | null>(null);
-  const [khanda, setKhanda] = useState<number | null>(null);
+  // One selected section number per level, outermost first — a four-level
+  // grantha (Adhyāya › Pāda › Sūtra › Mantra) gets four columns, not two.
+  const [path, setPath] = useState<number[]>([]);
   const [verse, setVerse] = useState<number | null>(null);
   const [qBook, setQBook] = useState("");
-  const [qAdh, setQAdh] = useState("");
-  const [qKh, setQKh] = useState("");
+  // One search box per section level, keyed by depth.
+  const [levelQueries, setLevelQueries] = useState<Record<number, string>>({});
   const [qMan, setQMan] = useState("");
   const [open, setOpen] = useState(false);
 
@@ -713,45 +725,46 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
     return books.filter(b => tc(b.title).toLowerCase().includes(q));
   }, [qBook, books, catBooks, welcomeLang]);
 
-  const selectedChapter = chapters.find(c => c.number === adhyay);
-  const khandaList = selectedChapter?.khandas || [];
+  // Levels worth their own column: one where the grantha actually branches.
+  // A level that never has siblings (e.g. Isha's single wrapping adhyāya) is
+  // auto-selected instead of shown, exactly as before.
+  const levelMeta = useMemo(() => {
+    const depth = sectionDepth(chapters);
+    const metas: { depth: number; branching: boolean }[] = [];
+    for (let d = 0; d < depth; d++) {
+      let maxSiblings = 0;
+      const walk = (nodes: SectionNode[], current: number) => {
+        if (current === d) { maxSiblings = Math.max(maxSiblings, nodes.length); return; }
+        for (const n of nodes) walk(n.children, current + 1);
+      };
+      walk(chapters, 0);
+      metas.push({ depth: d, branching: maxSiblings > 1 });
+    }
+    return metas;
+  }, [chapters]);
 
-  // Show only the levels the selected grantha actually has:
-  //  - Adhyāya column only when there is more than one adhyāya (a single wrapping
-  //    adhyāya, e.g. Isha, collapses to Text › Mantra).
-  //  - Khaṇḍa/Pāda column only when some adhyāya is genuinely subdivided.
-  const showAdhyaya = chapters.length > 1;
-  const showKhanda = showAdhyaya && chapters.some(c => (c.khandas?.length ?? 0) > 1);
-  const allVerseNums = chapters.flatMap(c => c.verseNumbers);
-  const mantraNums = !showAdhyaya
-    ? allVerseNums
-    : showKhanda
-      ? (khanda != null ? (khandaList.find(k => k.number === khanda)?.verseNumbers ?? []) : [])
-      : (selectedChapter?.verseNumbers ?? []);
-  const visibleCols = 2 + (showAdhyaya ? 1 : 0) + (showKhanda ? 1 : 0);
-  const gridColsClass = visibleCols === 4 ? "lg:grid-cols-4" : visibleCols === 3 ? "lg:grid-cols-3" : "lg:grid-cols-2";
+  const visibleLevels = levelMeta.filter((m) => m.branching);
+  const selectedNode = nodeAtPath(chapters, path);
+  const mantraNums = selectedNode?.verseNumbers ?? chapters.flatMap(c => c.verseNumbers);
+  const visibleCols = 2 + visibleLevels.length;
+  const gridColsClass = visibleCols >= 5 ? "lg:grid-cols-5" : visibleCols === 4 ? "lg:grid-cols-4" : visibleCols === 3 ? "lg:grid-cols-3" : "lg:grid-cols-2";
 
   // Keep a full path pre-selected while the navigator is open so no column shows a
   // "Select a text first / Select an adhyāya" placeholder — default to the first
-  // grantha, then its first adhyāya and khaṇḍa as those levels load.
+  // grantha, then its first section at each level as those levels load.
   useEffect(() => {
     if (!open) return;
     const valid = bookId && bookResults.some(b => b.id === bookId);
     if (!valid && bookResults.length > 0) {
       setBookId(bookResults[0].id);
-      setAdhyay(null); setKhanda(null); setVerse(null);
+      setPath([]); setVerse(null);
     }
   }, [open, bookResults, bookId]);
 
   useEffect(() => {
-    if (!open || !showAdhyaya) return;
-    if (adhyay == null && chapters.length > 0) setAdhyay(chapters[0].number);
-  }, [open, showAdhyaya, adhyay, chapters.length]);
-
-  useEffect(() => {
-    if (!open || !showKhanda) return;
-    if (khanda == null && khandaList.length > 0) setKhanda(khandaList[0].number);
-  }, [open, showKhanda, khanda, khandaList.length]);
+    if (!open || chapters.length === 0) return;
+    if (path.length < levelMeta.length) setPath(completePath(chapters, path));
+  }, [open, chapters, path, levelMeta.length]);
 
   const selectedBook = books.find(b => b.id === bookId);
   // Hierarchy terminology adapts to the selected text (or the active category):
@@ -767,15 +780,20 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
     if (isUpanishad) return { l1: "Adhyāya", l2: "Khaṇḍa", unit: "Mantra" };
     return { l1: "Chapter", l2: "Section", unit: "Verse" };
   })();
-  // Show the grantha's real chapter name (e.g. Gita's "Karma Yoga") when present,
+  // Level names come from the CMS section types when available, with the
+  // category-based terminology above as the fallback for the first two levels.
+  const detected = useMemo(() => detectLevelLabels(chapters), [chapters]);
+  const levelLabel = (depth: number) =>
+    detected.levelLabels[depth] || (depth === 0 ? hier.l1 : depth === 1 ? hier.l2 : `Level ${depth + 1}`);
+
+  // Show the grantha's real section name (e.g. Gita's "Karma Yoga") when present,
   // otherwise fall back to "<Adhyāya> N".
-  const adhyayaLabel = (c: { number: number; title?: string | null }) =>
-    c.title && !/^chapter\s*\d+$/i.test(c.title.trim()) ? c.title : `${hier.l1} ${c.number}`;
-  const num = { adhyaya: 2, khanda: showAdhyaya ? 3 : 2, mantra: visibleCols };
-  const reset = (level: "cat" | "book" | "adhyay" | "khanda") => {
-    if (level === "cat" || level === "book") { setAdhyay(null); setKhanda(null); setVerse(null); }
-    if (level === "adhyay") { setKhanda(null); setVerse(null); }
-    if (level === "khanda") { setVerse(null); }
+  const sectionLabel = (node: SectionNode, depth: number) =>
+    node.title && !/^chapter\s*\d+$/i.test(node.title.trim()) ? node.title : nodeLabel(node, levelLabel(depth));
+
+  const selectAtLevel = (depth: number, value: number) => {
+    setPath((prev) => completePath(chapters, [...prev.slice(0, depth), value]));
+    setVerse(null);
   };
 
   const colBox = "flex flex-col min-w-0 border-r border-border/50 last:border-r-0 px-3 sm:px-4 first:pl-0 last:pr-0";
@@ -824,7 +842,7 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
             <button
               key={c.id}
               type="button"
-              onClick={() => { setCat(c.id); setBookId(null); reset("cat"); }}
+              onClick={() => { setCat(c.id); setBookId(null); setPath([]); setVerse(null); }}
               className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors ${active ? "border-primary bg-primary/5 text-primary font-semibold" : "border-border/60 text-muted-foreground hover:text-foreground hover:border-primary/40"}`}
               data-testid={`navigator-cat-${c.id}`}
             >
@@ -842,7 +860,7 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
           <div className={searchBox}><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" /><input className={searchInput} placeholder="Search texts..." value={qBook} onChange={e => setQBook(e.target.value)} /></div>
           <div key={qBook.trim() ? "search" : cat} className="flex-1 overflow-y-auto max-h-72 pr-1 space-y-0.5 animate-in fade-in-0 duration-300">
             {bookResults.map(b => (
-              <button key={b.id} type="button" onClick={() => { setBookId(b.id); reset("book"); }} className={`${rowBase} ${bookId === b.id ? rowActive : rowIdle}`}>
+              <button key={b.id} type="button" onClick={() => { setBookId(b.id); setPath([]); setVerse(null); }} className={`${rowBase} ${bookId === b.id ? rowActive : rowIdle}`}>
                 <span className="truncate">{tc(b.title)}</span><ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" />
               </button>
             ))}
@@ -850,43 +868,48 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
           </div>
         </div>
 
-        {/* Column: Adhyaya — only when the grantha has more than one adhyāya */}
-        {showAdhyaya && (
-          <div className={colBox}>
-            <div className={colHead}><Layers className="h-4 w-4 text-primary" /><span className="text-sm font-semibold">{num.adhyaya}. {hier.l1}</span></div>
-            <div className={searchBox}><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" /><input className={searchInput} placeholder={`Search ${hier.l1.toLowerCase()}s...`} value={qAdh} onChange={e => setQAdh(e.target.value)} /></div>
-            <div key={bookId || "none"} className="flex-1 overflow-y-auto max-h-72 pr-1 space-y-0.5 animate-in fade-in-0 duration-300">
-              {chapters.filter(c => `${adhyayaLabel(c)} ${c.number} adhyaya`.toLowerCase().includes(qAdh.toLowerCase())).map(c => (
-                <button key={c.number} type="button" onClick={() => { setAdhyay(c.number); reset("adhyay"); }} className={`${rowBase} ${adhyay === c.number ? rowActive : rowIdle}`}>
-                  <span className="truncate">{adhyayaLabel(c)}</span><ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" />
-                </button>
-              ))}
-              {bookId && chapters.length === 0 && <p className="text-xs text-muted-foreground/60 px-2.5 py-2">Loading…</p>}
-              {!bookId && <p className="text-xs text-muted-foreground/50 px-2.5 py-2">Select a text first.</p>}
+        {/* One column per section level the grantha actually branches at */}
+        {visibleLevels.map((level, i) => {
+          const options = nodesAtPath(chapters, path.slice(0, level.depth));
+          const label = levelLabel(level.depth);
+          const query = levelQueries[level.depth] || "";
+          const Icon = i === 0 ? Layers : Bookmark;
+          return (
+            <div className={colBox} key={level.depth}>
+              <div className={colHead}><Icon className="h-4 w-4 text-primary" /><span className="text-sm font-semibold">{i + 2}. {label}</span></div>
+              <div className={searchBox}>
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" />
+                <input
+                  className={searchInput}
+                  placeholder={`Search ${label.toLowerCase()}s...`}
+                  value={query}
+                  onChange={e => setLevelQueries(q => ({ ...q, [level.depth]: e.target.value }))}
+                />
+              </div>
+              <div key={`${bookId || "none"}-${path.slice(0, level.depth).join(".")}`} className="flex-1 overflow-y-auto max-h-72 pr-1 space-y-0.5 animate-in fade-in-0 duration-300">
+                {options
+                  .filter(node => `${sectionLabel(node, level.depth)} ${node.number} ${label}`.toLowerCase().includes(query.toLowerCase()))
+                  .map(node => (
+                    <button
+                      key={node.number}
+                      type="button"
+                      onClick={() => selectAtLevel(level.depth, node.number)}
+                      className={`${rowBase} ${path[level.depth] === node.number ? rowActive : rowIdle}`}
+                    >
+                      <span className="truncate">{sectionLabel(node, level.depth)}</span>
+                      <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" />
+                    </button>
+                  ))}
+                {bookId && options.length === 0 && <p className="text-xs text-muted-foreground/60 px-2.5 py-2">Loading…</p>}
+                {!bookId && <p className="text-xs text-muted-foreground/50 px-2.5 py-2">Select a text first.</p>}
+              </div>
             </div>
-          </div>
-        )}
-
-        {/* Column: Khanda — only when an adhyāya is genuinely subdivided */}
-        {showKhanda && (
-          <div className={colBox}>
-            <div className={colHead}><Bookmark className="h-4 w-4 text-primary" /><span className="text-sm font-semibold">{num.khanda}. {hier.l2}</span></div>
-            <div className={searchBox}><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" /><input className={searchInput} placeholder={`Search ${hier.l2.toLowerCase()}s...`} value={qKh} onChange={e => setQKh(e.target.value)} /></div>
-            <div className="flex-1 overflow-y-auto max-h-72 pr-1 space-y-0.5">
-              {khandaList.filter(k => `${hier.l2} ${k.number} khanda`.toLowerCase().includes(qKh.toLowerCase())).map(k => (
-                <button key={k.number} type="button" onClick={() => { setKhanda(k.number); reset("khanda"); }} className={`${rowBase} ${khanda === k.number ? rowActive : rowIdle}`}>
-                  <span className="truncate">{hier.l2} {k.number}</span><ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" />
-                </button>
-              ))}
-              {adhyay != null && khandaList.length === 0 && <p className="text-xs text-muted-foreground/50 px-2.5 py-2">No {hier.l2.toLowerCase()} divisions — pick a {hier.unit.toLowerCase()}.</p>}
-              {adhyay == null && <p className="text-xs text-muted-foreground/50 px-2.5 py-2">Select an {hier.l1.toLowerCase()}.</p>}
-            </div>
-          </div>
-        )}
+          );
+        })}
 
         {/* Column: Mantra / Shloka / Sūtra */}
         <div className={colBox}>
-          <div className={colHead}><List className="h-4 w-4 text-primary" /><span className="text-sm font-semibold">{num.mantra}. {hier.unit}</span></div>
+          <div className={colHead}><List className="h-4 w-4 text-primary" /><span className="text-sm font-semibold">{visibleCols}. {hier.unit}</span></div>
           <div className={searchBox}><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" /><input className={searchInput} placeholder={`Search ${hier.unit.toLowerCase()}s...`} value={qMan} onChange={e => setQMan(e.target.value)} /></div>
           <div className="flex-1 overflow-y-auto max-h-72 pr-1 space-y-0.5">
             {mantraNums.filter((_, i) => `${hier.unit} ${i + 1} mantra`.toLowerCase().includes(qMan.toLowerCase())).map((vn, i) => (
@@ -896,7 +919,7 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
             ))}
             {mantraNums.length === 0 && (
               <p className="text-xs text-muted-foreground/50 px-2.5 py-2">
-                {!bookId ? "Select a text first." : showKhanda ? `Select a ${hier.l2.toLowerCase()}.` : showAdhyaya ? `Select an ${hier.l1.toLowerCase()}.` : "No entries."}
+                {!bookId ? "Select a text first." : visibleLevels.length > 0 ? `Select a ${levelLabel(visibleLevels[visibleLevels.length - 1].depth).toLowerCase()}.` : "No entries."}
               </p>
             )}
           </div>
@@ -907,8 +930,16 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
       <div className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-muted/40 border border-border/50 px-3 py-2.5">
         <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"><Library className="h-3.5 w-3.5" /> Your Selection</span>
         {selectedBook && <span className="inline-flex items-center gap-1 rounded-md bg-background border border-border/60 px-2 py-1 text-xs text-foreground/80">{tc(selectedBook.title)}</span>}
-        {adhyay != null && selectedChapter && <><ChevronRight className="h-3 w-3 text-muted-foreground/50" /><span className="rounded-md bg-background border border-border/60 px-2 py-1 text-xs text-foreground/80">{adhyayaLabel(selectedChapter)}</span></>}
-        {khanda != null && <><ChevronRight className="h-3 w-3 text-muted-foreground/50" /><span className="rounded-md bg-background border border-border/60 px-2 py-1 text-xs text-foreground/80">{hier.l2} {khanda}</span></>}
+        {visibleLevels.map((level) => {
+          const node = nodeAtPath(chapters, path.slice(0, level.depth + 1));
+          if (!node) return null;
+          return (
+            <span key={level.depth} className="inline-flex items-center gap-2">
+              <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+              <span className="rounded-md bg-background border border-border/60 px-2 py-1 text-xs text-foreground/80">{sectionLabel(node, level.depth)}</span>
+            </span>
+          );
+        })}
         {verse != null && <><ChevronRight className="h-3 w-3 text-muted-foreground/50" /><span className="rounded-md bg-background border border-border/60 px-2 py-1 text-xs text-foreground/80">{hier.unit} {mantraNums.indexOf(verse) + 1}</span></>}
         <Button
           className="ml-auto gap-2"
@@ -2354,72 +2385,6 @@ const BOOK_LANDING_DATA: Record<string, BookLandingData> = {
   },
 };
 
-interface KhandaInfo {
-  number: number;
-  title: string;
-  count: number;
-  verseNumbers: number[];
-}
-
-interface ChapterInfo {
-  number: number;
-  title: string;
-  verseCount: number;
-  khandas?: KhandaInfo[];
-  verseNumbers: number[];
-}
-
-function useBookChapters(bookId: string | undefined) {
-  const { data } = useQuery<any>({
-    queryKey: ["/api/books", bookId],
-    enabled: !!bookId,
-    ...cmsContentQueryOptions,
-  });
-
-  if (!data?.verses) return [];
-
-  const chapterMap = new Map<number, ChapterInfo>();
-  for (const v of data.verses) {
-    const adhyay = v.adhyayNumber;
-    if (adhyay == null) continue;
-
-    if (!chapterMap.has(adhyay)) {
-      chapterMap.set(adhyay, {
-        number: adhyay,
-        title: v.adhyayTitle || `Chapter ${adhyay}`,
-        verseCount: 0,
-        verseNumbers: [],
-      });
-    }
-    const ch = chapterMap.get(adhyay)!;
-    ch.verseCount++;
-    ch.verseNumbers.push(v.verseNumber);
-
-    if (v.khandaNumber != null) {
-      if (!ch.khandas) ch.khandas = [];
-      const existingKhanda = ch.khandas.find(k => k.number === v.khandaNumber);
-      if (existingKhanda) {
-        existingKhanda.count++;
-        existingKhanda.verseNumbers.push(v.verseNumber);
-      } else {
-        ch.khandas.push({
-          number: v.khandaNumber,
-          title: v.khandaTitle || `Part ${v.khandaNumber}`,
-          count: 1,
-          verseNumbers: [v.verseNumber],
-        });
-      }
-    }
-  }
-
-  const result = Array.from(chapterMap.values()).sort((a, b) => a.number - b.number);
-  result.forEach(ch => {
-    ch.verseNumbers.sort((a, b) => a - b);
-    ch.khandas?.forEach(k => k.verseNumbers.sort((a, b) => a - b));
-  });
-  return result;
-}
-
 function IntroSection({ title, cmsDescription, introText, compact = false }: {
   title: string;
   cmsDescription: string | null;
@@ -2474,49 +2439,76 @@ function LandingNavSidebar({ book, chapters, landingData, onSelectBook, onSelect
   onSelectVerse?: (bookId: string, verseNumber: number) => void;
   tc: (text: string | null | undefined, map: Record<string, Record<string, string>>) => string;
 }) {
-  const [expandedChapter, setExpandedChapter] = useState<number | null>(null);
-  const [expandedKhanda, setExpandedKhanda] = useState<string | null>(null);
+  // Expanded nodes keyed by section path ("1", "1.2", "1.2.31"), so the tree
+  // opens as deep as the grantha nests.
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const labels = useMemo(() => verseLabels(chapters), [chapters]);
 
-  const handleChapterClick = (ch: ChapterInfo) => {
-    if (ch.khandas && ch.khandas.length > 0) {
-      setExpandedChapter(expandedChapter === ch.number ? null : ch.number);
-      setExpandedKhanda(null);
-    } else {
-      if (expandedChapter === ch.number) {
-        setExpandedChapter(null);
-      } else {
-        setExpandedChapter(ch.number);
-      }
-    }
+  const toggle = (path: number[]) => {
+    const key = path.join(".");
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   };
 
-  const handleKhandaClick = (chNum: number, khNum: number) => {
-    const key = `${chNum}-${khNum}`;
-    setExpandedKhanda(expandedKhanda === key ? null : key);
-  };
-
-  const renderVerseGrid = (verseNumbers: number[], bookId: string, chapterNum?: number, khandaNum?: number) => (
+  const renderVerseGrid = (verseNumbers: number[], bookId: string) => (
     <div className="flex flex-wrap gap-1 mt-1.5 mb-1" data-testid="verse-number-grid">
-      {verseNumbers.map((vn, idx) => {
-        const label =
-          chapterNum != null && khandaNum != null
-            ? `${chapterNum}.${khandaNum}.${idx + 1}`
-            : chapterNum != null
-              ? `${chapterNum}.${idx + 1}`
-              : String(vn);
-        return (
-          <button
-            key={vn}
-            onClick={() => onSelectVerse ? onSelectVerse(bookId, vn) : onSelectBook(bookId)}
-            className="min-w-[2.5rem] h-8 px-2 rounded-md text-[11px] font-medium border border-border/40 bg-background hover:bg-primary/10 hover:border-primary/40 hover:text-primary transition-colors flex items-center justify-center"
-            data-testid={`nav-verse-${vn}`}
-          >
-            {label}
-          </button>
-        );
-      })}
+      {verseNumbers.map((vn) => (
+        <button
+          key={vn}
+          onClick={() => onSelectVerse ? onSelectVerse(bookId, vn) : onSelectBook(bookId)}
+          className="min-w-[2.5rem] h-8 px-2 rounded-md text-[11px] font-medium border border-border/40 bg-background hover:bg-primary/10 hover:border-primary/40 hover:text-primary transition-colors flex items-center justify-center"
+          data-testid={`nav-verse-${vn}`}
+        >
+          {labels.get(vn) || vn}
+        </button>
+      ))}
     </div>
   );
+
+  const renderNode = (node: SectionNode, depth: number, index: number) => {
+    const key = node.path.join(".");
+    const isExpanded = expanded.has(key);
+    const title = node.title.includes(' - ') ? node.title.split(' - ').pop()?.trim() : node.title;
+
+    return (
+      <div key={key} data-testid={depth === 0 ? `nav-chapter-${node.number}` : `nav-section-${key}`}>
+        <button
+          className={`flex items-center gap-2 w-full text-left rounded-lg transition-colors ${
+            depth === 0 ? "px-3 py-2 text-sm" : "px-2 py-1.5 text-sm"
+          } ${isExpanded
+            ? (depth === 0 ? "bg-accent text-foreground font-medium" : "bg-primary/5 text-primary font-medium")
+            : (depth === 0 ? "hover:bg-accent/60 text-foreground/80" : "hover:bg-accent/50 text-foreground/70")}`}
+          onClick={() => toggle(node.path)}
+          data-testid={depth === 0 ? `tree-chapter-${node.number}` : `tree-section-${key}`}
+        >
+          {depth === 0 && (
+            <span className="text-[11px] text-muted-foreground/60 w-5 text-right shrink-0 font-mono">
+              {String(index + 1).padStart(2, '0')}
+            </span>
+          )}
+          <span className="truncate flex-1">{title || key}</span>
+          <span className="text-[10px] text-muted-foreground shrink-0">{node.verseCount}</span>
+          <ChevronRight className={`${depth === 0 ? "h-3.5 w-3.5" : "h-3 w-3"} text-muted-foreground/50 shrink-0 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+        </button>
+
+        {isExpanded && (
+          <div className={`mt-0.5 space-y-0.5 animate-in slide-in-from-top-1 duration-150 ${
+            depth === 0 ? "ml-5 pl-2 border-l-2 border-primary/15" : "ml-3 pl-2 border-l border-primary/10"
+          }`}>
+            {node.children.length > 0
+              ? node.children.map((child, i) => renderNode(child, depth + 1, i))
+              : renderVerseGrid(node.verseNumbers, book.id)}
+            {node.children.length > 0 && node.directVerses.length > 0 &&
+              renderVerseGrid(node.directVerses.map((v: any) => v.verseNumber), book.id)}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-1" data-testid="landing-chapter-tree">
@@ -2529,63 +2521,7 @@ function LandingNavSidebar({ book, chapters, landingData, onSelectBook, onSelect
         <span className="font-medium text-primary truncate">{tc(book.title, bookTitleTranslations)}</span>
       </button>
 
-      {chapters.map((ch, idx) => {
-        const isExpanded = expandedChapter === ch.number;
-        const hasKhandas = ch.khandas && ch.khandas.length > 0;
-        const chapterLabel = ch.title.includes(' - ') ? ch.title.split(' - ').pop()?.trim() : ch.title;
-
-        return (
-          <div key={ch.number} data-testid={`nav-chapter-${ch.number}`}>
-            <button
-              className={`flex items-center gap-2 w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                isExpanded ? "bg-accent text-foreground font-medium" : "hover:bg-accent/60 text-foreground/80"
-              }`}
-              onClick={() => handleChapterClick(ch)}
-              data-testid={`tree-chapter-${ch.number}`}
-            >
-              <span className="text-[11px] text-muted-foreground/60 w-5 text-right shrink-0 font-mono">
-                {String(idx + 1).padStart(2, '0')}
-              </span>
-              <span className="truncate flex-1">{chapterLabel}</span>
-              <span className="text-[10px] text-muted-foreground shrink-0">{ch.verseCount}</span>
-              <ChevronRight className={`h-3.5 w-3.5 text-muted-foreground/50 shrink-0 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
-            </button>
-
-            {isExpanded && (
-              <div className="ml-5 pl-2 border-l-2 border-primary/15 mt-0.5 space-y-0.5 animate-in slide-in-from-top-1 duration-150">
-                {hasKhandas ? (
-                  ch.khandas!.map((kh) => {
-                    const khandaKey = `${ch.number}-${kh.number}`;
-                    const isKhandaExpanded = expandedKhanda === khandaKey;
-                    return (
-                      <div key={kh.number} data-testid={`nav-khanda-${ch.number}-${kh.number}`}>
-                        <button
-                          className={`flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-md text-sm transition-colors ${
-                            isKhandaExpanded ? "bg-primary/5 text-primary font-medium" : "hover:bg-accent/50 text-foreground/70"
-                          }`}
-                          onClick={() => handleKhandaClick(ch.number, kh.number)}
-                          data-testid={`tree-khanda-${ch.number}-${kh.number}`}
-                        >
-                          <span className="truncate flex-1">{kh.title}</span>
-                          <span className="text-[10px] text-muted-foreground shrink-0">{kh.count}</span>
-                          <ChevronRight className={`h-3 w-3 text-muted-foreground/50 shrink-0 transition-transform ${isKhandaExpanded ? "rotate-90" : ""}`} />
-                        </button>
-                        {isKhandaExpanded && (
-                          <div className="pl-2 animate-in slide-in-from-top-1 duration-150">
-                            {renderVerseGrid(kh.verseNumbers, book.id, ch.number, kh.number)}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                ) : (
-                  renderVerseGrid(ch.verseNumbers, book.id, ch.number)
-                )}
-              </div>
-            )}
-          </div>
-        );
-      })}
+      {chapters.map((node, idx) => renderNode(node, 0, idx))}
     </div>
   );
 }

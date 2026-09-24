@@ -91,6 +91,8 @@ export interface VerseTransliteration {
 export interface VerseWithTranslations extends Verse {
   translations: VerseTranslation[];
   explanations: Explanation[];
+  /** Full section hierarchy, outermost first (see SectionPathEntry). */
+  sectionPath?: SectionPathEntry[];
   iastTransliteration?: string;
   transliterations?: VerseTransliteration[];
 }
@@ -100,12 +102,27 @@ export interface BookWithDetails extends Book {
   verses: VerseWithTranslations[];
 }
 
+/**
+ * One level of a verse's CMS section hierarchy, outermost first. A grantha may
+ * nest sections arbitrarily deep (e.g. Bhāṣyārtha Ratnamālā: Adhyāya › Pāda ›
+ * Sūtra › Mantra), so the path is a list rather than fixed adhyay/khanda fields.
+ */
+export interface SectionPathEntry {
+  number: number | null;
+  title: string | null;
+  /** Raw Strapi section `type` (e.g. "adhyay", "khanda", "pada"), when set. */
+  type: string | null;
+}
+
 export type VerseMeta = Pick<Verse, 'id' | 'verseNumber' | 'sectionTitle' | 'adhyayNumber' | 'adhyayTitle' | 'khandaNumber' | 'khandaTitle' | 'bookId'> & {
   // Raw Strapi section `type` for each captured level (e.g. "adhyay", "khanda",
   // "valli", "vakhya"). Lets the reader label the hierarchy from the CMS instead
   // of guessing the level name from titles. Null when the grantha doesn't define one.
   adhyayType?: string | null;
   khandaType?: string | null;
+  // Full section hierarchy for this verse, outermost first. adhyay*/khanda*
+  // above mirror entries [0] and [1]; deeper levels only exist here.
+  sectionPath?: SectionPathEntry[];
   // Short Devanagari opening of the mantra, so the nav sidebar can show a snippet
   // under each mantra number without fetching the full verse. Undefined if empty.
   preview?: string;

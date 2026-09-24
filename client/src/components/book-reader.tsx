@@ -8,6 +8,17 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareText, StickyNote, List, Globe, Languages, Sparkles, Feather, ScrollText, Check, Lock, Copy, Share2, Bookmark, Volume2, VolumeX, ArrowLeftRight, Sun, Maximize2, Minimize2, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoPopup } from "@/components/video-popup";
+import {
+  buildSectionTree,
+  detectLevelLabels,
+  nodeAtPath,
+  pathStartsWith,
+  versePaths,
+  sectionDepth,
+  verseLabels,
+  nodeLabel,
+  type SectionNode,
+} from "@/lib/section-tree";
 import { WordTooltip } from "@/components/word-tooltip";
 import { HintTooltip } from "@/components/ui/hint-tooltip";
 import { useTranslation } from "@/lib/translations";
@@ -102,19 +113,6 @@ function getVerseCommentaryAuthors(
   return onVerse;
 }
 
-interface TOCAdhyay {
-  adhyayNumber: number;
-  adhyayTitle: string;
-  verses: VerseMeta[];
-  khandas: TOCKhanda[];
-}
-
-interface TOCKhanda {
-  khandaNumber: number;
-  khandaTitle: string;
-  verses: VerseMeta[];
-}
-
 /** Collapse accidental consecutive duplicate words in CMS titles, e.g. "Mantra Mantra 3.5" -> "Mantra 3.5". */
 function dedupeTitleWords(title: string): string {
   return title.replace(/\b(\w+)(\s+\1\b)+/gi, "$1");
@@ -133,50 +131,18 @@ function collapseVerseUnitSynonyms(title: string): string {
   return out;
 }
 
-function buildTOCHierarchy(verses: VerseMeta[], t?: (key: string) => string): { type: "three-level" | "two-level" | "flat"; groups: TOCAdhyay[] } {
-  const hasThreeLevel = verses.some(v => v.adhyayNumber != null && v.khandaNumber != null);
-  const hasTwoLevel = verses.some(v => v.adhyayNumber != null);
-  if (!hasThreeLevel && !hasTwoLevel) return { type: "flat", groups: [] };
-
-  const chapterLabel = t ? t("chapterFull") : "Chapter";
-  const sectionLabel = t ? t("section") : "Section";
-
-  const type = hasThreeLevel ? "three-level" : "two-level";
-  const hierarchyVerses = verses.filter(v => v.adhyayNumber != null);
-  const adhyayMap = new Map<number, TOCAdhyay>();
-
-  for (const verse of hierarchyVerses) {
-    const adhyayNum = verse.adhyayNumber!;
-    if (!adhyayMap.has(adhyayNum)) {
-      adhyayMap.set(adhyayNum, {
-        adhyayNumber: adhyayNum,
-        adhyayTitle: verse.adhyayTitle ?? `${chapterLabel} ${adhyayNum}`,
-        verses: [],
-        khandas: [],
-      });
-    }
-    const adhyay = adhyayMap.get(adhyayNum)!;
-    if (type === "three-level" && verse.khandaNumber != null) {
-      let khanda = adhyay.khandas.find(k => k.khandaNumber === verse.khandaNumber);
-      if (!khanda) {
-        khanda = { khandaNumber: verse.khandaNumber, khandaTitle: verse.khandaTitle ?? `${sectionLabel} ${verse.khandaNumber}`, verses: [] };
-        adhyay.khandas.push(khanda);
-      }
-      khanda.verses.push(verse);
-    } else {
-      adhyay.verses.push(verse);
-    }
-  }
-
-  const sorted = Array.from(adhyayMap.values()).sort((a, b) => a.adhyayNumber - b.adhyayNumber);
-  for (const adhyay of sorted) {
-    adhyay.verses.sort((a, b) => a.verseNumber - b.verseNumber);
-    adhyay.khandas.sort((a, b) => a.khandaNumber - b.khandaNumber);
-    for (const khanda of adhyay.khandas) {
-      khanda.verses.sort((a, b) => a.verseNumber - b.verseNumber);
-    }
-  }
-  return { type, groups: sorted };
+/**
+ * Table-of-contents tree for the grantha: one level per CMS section level, so
+ * four-level texts (Adhyāya › Pāda › Sūtra › Mantra) expand all the way down
+ * instead of collapsing into the two levels the reader used to assume.
+ */
+function buildTOCHierarchy(verses: VerseMeta[]): {
+  groups: SectionNode<VerseMeta>[];
+  depth: number;
+  levelLabels: string[];
+} {
+  const groups = buildSectionTree(verses);
+  return { groups, depth: sectionDepth(groups), levelLabels: detectLevelLabels(groups).levelLabels };
 }
 
 const bookMediaConfig: Record<string, { videoId?: string; videoTitle?: string }> = {
@@ -206,10 +172,8 @@ interface CommentaryOptions {
 
 interface VerseBreadcrumb {
   bookTitle: string;
-  adhyayNumber: number | null;
-  adhyayTitle: string | null;
-  khandaNumber: number | null;
-  khandaTitle: string | null;
+  /** One crumb per section level the verse sits under, outermost first. */
+  sections: { path: number[]; title: string }[];
   verseLabel: string;
   numericLabel: string;
 }
@@ -225,11 +189,11 @@ interface BookReaderProps {
   onVerseChange?: (verseNumber: number) => void;
   onBreadcrumbChange?: (breadcrumb: VerseBreadcrumb) => void;
   onAddNoteWithText?: (text: string) => void;
-  chapterViewAdhyay?: number | null;
-  chapterViewKhanda?: number | null;
+  /** Section path currently open in chapter view, e.g. [1] or [1, 2, 31]. */
+  chapterViewPath?: number[] | null;
   onExitChapterView?: (verseNumber?: number) => void;
-  onSelectChapter?: (adhyayNumber: number) => void;
-  onSelectPart?: (adhyayNumber: number, khandaNumber: number) => void;
+  /** Open a whole section (any level) in chapter view. */
+  onSelectSection?: (path: number[]) => void;
   onShowCoverPage?: () => void;
   // Incrementing counter that asks the reader to open its cover / table-of-contents
   // view (used by the sidebar book-title button). Ignored on its initial value.
@@ -685,11 +649,9 @@ export function BookReader({
   onVerseChange,
   onBreadcrumbChange,
   onAddNoteWithText,
-  chapterViewAdhyay,
-  chapterViewKhanda,
+  chapterViewPath,
   onExitChapterView,
-  onSelectChapter,
-  onSelectPart,
+  onSelectSection,
   onShowCoverPage,
   showCoverSignal,
 }: BookReaderProps) {
@@ -760,8 +722,10 @@ export function BookReader({
   const [notesDialogView, setNotesDialogView] = useState<"list" | "add">("list");
   const [notesPendingText, setNotesPendingText] = useState<string | null>(null);
   const [showCoverPage, setShowCoverPage] = useState(false);
-  const [expandedTOCAdhyays, setExpandedTOCAdhyays] = useState<Set<number>>(new Set());
-  const [expandedTOCKhandas, setExpandedTOCKhandas] = useState<Set<string>>(new Set());
+  const inChapterView = (chapterViewPath?.length ?? 0) > 0;
+
+  // Expanded TOC nodes, keyed by their section path ("1", "1.2", "1.2.31").
+  const [expandedTOCNodes, setExpandedTOCNodes] = useState<Set<string>>(new Set());
   const [showTeekas, setShowTeekas] = useState(false);
   const commentaryRef = useRef<HTMLDivElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -866,6 +830,12 @@ export function BookReader({
   );
   const currentVerseMeta = verses[currentPage] || null;
 
+  const tocHierarchy = useMemo(() => buildTOCHierarchy(verses), [verses]);
+  // Reference label ("1.1.31.4") and section path for every verse.
+  const verseLabelMap = useMemo(() => verseLabels(tocHierarchy.groups), [tocHierarchy]);
+  const versePathMap = useMemo(() => versePaths(tocHierarchy.groups), [tocHierarchy]);
+
+
   const isIntroSection = (title?: string | null) => {
     const t = title?.toLowerCase().trim();
     return t === "introduction" || t === "sambandha bhashyam";
@@ -887,7 +857,7 @@ export function BookReader({
 
   const { data: currentVerseDetails, isLoading: isVerseLoading } = useQuery<VerseWithTranslations>({
     queryKey: ["/api/verses", currentVerseMeta?.id],
-    enabled: !!currentVerseMeta?.id && chapterViewAdhyay == null,
+    enabled: !!currentVerseMeta?.id && !inChapterView,
     ...cmsContentQueryOptions,
   });
 
@@ -896,8 +866,8 @@ export function BookReader({
   const currentVerseExplanations = currentVerseDetails?.explanations;
 
   const { data: chapterVerses, isLoading: isChapterLoading } = useQuery<VerseWithTranslations[]>({
-    queryKey: ["/api/books", bookId, "chapter", chapterViewAdhyay, "verses"],
-    enabled: chapterViewAdhyay != null,
+    queryKey: ["/api/books", bookId, "chapter", chapterViewPath?.[0] ?? null, "verses"],
+    enabled: inChapterView,
     ...cmsContentQueryOptions,
   });
 
@@ -905,7 +875,7 @@ export function BookReader({
   // next/previous renders the (heavy) bhashya + teeka content immediately
   // instead of waiting on a fresh Strapi round-trip.
   useEffect(() => {
-    if (chapterViewAdhyay != null || verses.length === 0) return;
+    if (inChapterView || verses.length === 0) return;
     const neighbours = [verses[currentPage + 1], verses[currentPage - 1]];
     for (const neighbour of neighbours) {
       if (!neighbour?.id) continue;
@@ -915,7 +885,7 @@ export function BookReader({
         ...cmsContentQueryOptions,
       });
     }
-  }, [currentPage, verses, chapterViewAdhyay, queryClient]);
+  }, [currentPage, verses, inChapterView, queryClient]);
 
   useEffect(() => {
     setInitialized(false);
@@ -954,26 +924,12 @@ export function BookReader({
   const hasCommentaryOptions = commentaryOptions && 
     (commentaryOptions.authors.length > 0 || commentaryOptions.languages.length > 0);
 
+  // Reference of the open verse, with one number per section level:
+  // "2.18" (Gītā), "1.2.3" (Chāndogya), "1.1.31.4" (Adhyāya › Pāda › Sūtra).
   const currentNumericLabel = useMemo(() => {
-    if (!currentVerse || currentVerse.adhyayNumber == null) {
-      return null;
-    }
-    if (currentVerse.khandaNumber != null) {
-      // Three-level (adhyaya → khanda → mantra), e.g. Chandogya "1.2.3".
-      const khandaVerses = verses
-        .filter((v: VerseMeta) => v.adhyayNumber === currentVerse.adhyayNumber && v.khandaNumber === currentVerse.khandaNumber)
-        .sort((a: VerseMeta, b: VerseMeta) => a.verseNumber - b.verseNumber);
-      const idx = khandaVerses.findIndex((v: VerseMeta) => v.id === currentVerse.id);
-      return `${currentVerse.adhyayNumber}.${currentVerse.khandaNumber}.${idx >= 0 ? idx + 1 : 1}`;
-    }
-    // Two-level (adhyaya → mantra), e.g. Bhagavad Gita "2.18": show the mantra's
-    // position within its chapter, not its absolute number across the whole book.
-    const adhyayVerses = verses
-      .filter((v: VerseMeta) => v.adhyayNumber === currentVerse.adhyayNumber)
-      .sort((a: VerseMeta, b: VerseMeta) => a.verseNumber - b.verseNumber);
-    const idx = adhyayVerses.findIndex((v: VerseMeta) => v.id === currentVerse.id);
-    return `${currentVerse.adhyayNumber}.${idx >= 0 ? idx + 1 : 1}`;
-  }, [currentVerse, verses]);
+    if (!currentVerse) return null;
+    return verseLabelMap.get(currentVerse.verseNumber) ?? null;
+  }, [currentVerse, verseLabelMap]);
 
   const introTextForLang = useMemo(() => {
     if (!introExplanations || introExplanations.length === 0) return null;
@@ -993,8 +949,7 @@ export function BookReader({
     setShowCoverPage(false);
     hasNavigatedRef.current = false;
     consumedNavigateRef.current = null;
-    setExpandedTOCAdhyays(new Set());
-    setExpandedTOCKhandas(new Set());
+    setExpandedTOCNodes(new Set());
     setLocalLanguage(selectedCommentaryLanguage);
   }, [bookId]);
 
@@ -1024,7 +979,7 @@ export function BookReader({
       setCurrentPage(startIdx >= 0 ? startIdx : 0);
       hasNavigatedRef.current = true;
     }
-  }, [chapterViewAdhyay, navigateToVerse, verses]);
+  }, [inChapterView, navigateToVerse, verses]);
 
   useEffect(() => {
     if (!onVerseChange || !currentVerse || showCoverPage || isCurrentVerseIntro) return;
@@ -1049,31 +1004,23 @@ export function BookReader({
   useEffect(() => {
     if (onBreadcrumbChange && currentVerse && !showCoverPage && book) {
       const verse = currentVerse;
-      const adhyayNum = verse.adhyayNumber;
-      const khandaNum = verse.khandaNumber;
-
-      let numericLabel: string;
-      if (adhyayNum != null && khandaNum != null) {
-        const khandaVerses = verses
-          .filter((v: VerseMeta) => v.adhyayNumber === adhyayNum && v.khandaNumber === khandaNum)
-          .sort((a: VerseMeta, b: VerseMeta) => a.verseNumber - b.verseNumber);
-        const idx = khandaVerses.findIndex((v) => v.id === verse.id);
-        numericLabel = `${adhyayNum}.${khandaNum}.${idx >= 0 ? idx + 1 : 1}`;
-      } else {
-        numericLabel = `${verse.verseNumber}`;
+      const path = versePathMap.get(verse.verseNumber) ?? [];
+      const sections: { path: number[]; title: string }[] = [];
+      for (let i = 1; i <= path.length; i++) {
+        const node = nodeAtPath(tocHierarchy.groups, path.slice(0, i));
+        if (!node) break;
+        const title = node.title || nodeLabel(node, tocHierarchy.levelLabels[i - 1] || t("section"));
+        sections.push({ path: node.path, title: tc(title, i === 1 ? chapterTitleTranslations : sectionTitleTranslations) || title });
       }
 
       onBreadcrumbChange({
         bookTitle: tc(book.title, bookTitleTranslations),
-        adhyayNumber: adhyayNum ?? null,
-        adhyayTitle: tc(verse.adhyayTitle, chapterTitleTranslations) || null,
-        khandaNumber: khandaNum ?? null,
-        khandaTitle: tc(verse.khandaTitle, sectionTitleTranslations) || null,
+        sections,
         verseLabel: tc(verse.sectionTitle, verseSectionTitleTranslations) || `${t("mantra")} ${verse.verseNumber}`,
-        numericLabel,
+        numericLabel: verseLabelMap.get(verse.verseNumber) || `${verse.verseNumber}`,
       });
     }
-  }, [currentPage, book, onBreadcrumbChange, showCoverPage, lang]);
+  }, [currentPage, book, onBreadcrumbChange, showCoverPage, lang, tocHierarchy, verseLabelMap, versePathMap]);
 
   const availableTranslations = useMemo(() => {
     if (!currentVerseDetails?.translations) return [];
@@ -1138,31 +1085,25 @@ export function BookReader({
     }
   }, [currentVerse, currentVerseDetails, effectiveLang, isCurrentVerseIntro]);
 
-  const tocHierarchy = useMemo(() => buildTOCHierarchy(verses, t as any), [verses, t]);
 
   useEffect(() => {
-    if (onBreadcrumbChange && chapterViewAdhyay != null && book) {
-      const chapterInfo = tocHierarchy.groups.find(g => g.adhyayNumber === chapterViewAdhyay);
-      const chapterTitle = chapterInfo?.adhyayTitle || `${t("chapterFull")} ${chapterViewAdhyay}`;
-      const selectedKhanda = chapterViewKhanda != null && chapterInfo
-        ? chapterInfo.khandas.find(k => k.khandaNumber === chapterViewKhanda)
-        : null;
-
-      const numericLabel = chapterViewKhanda != null
-        ? `${chapterViewAdhyay}.${chapterViewKhanda}`
-        : `${chapterViewAdhyay}`;
+    if (onBreadcrumbChange && inChapterView && book && chapterViewPath) {
+      const sections: { path: number[]; title: string }[] = [];
+      for (let i = 1; i <= chapterViewPath.length; i++) {
+        const node = nodeAtPath(tocHierarchy.groups, chapterViewPath.slice(0, i));
+        if (!node) break;
+        const title = node.title || nodeLabel(node, tocHierarchy.levelLabels[i - 1] || t("section"));
+        sections.push({ path: node.path, title: tc(title, i === 1 ? chapterTitleTranslations : sectionTitleTranslations) || title });
+      }
 
       onBreadcrumbChange({
         bookTitle: tc(book.title, bookTitleTranslations),
-        adhyayNumber: chapterViewAdhyay,
-        adhyayTitle: tc(chapterTitle, chapterTitleTranslations) || null,
-        khandaNumber: chapterViewKhanda ?? null,
-        khandaTitle: selectedKhanda ? (tc(selectedKhanda.khandaTitle, sectionTitleTranslations) || null) : null,
+        sections,
         verseLabel: "",
-        numericLabel,
+        numericLabel: chapterViewPath.join("."),
       });
     }
-  }, [chapterViewAdhyay, chapterViewKhanda, book, onBreadcrumbChange, tocHierarchy, lang]);
+  }, [chapterViewPath, inChapterView, book, onBreadcrumbChange, tocHierarchy, lang]);
 
   const bhashyaAuthors = useMemo(() => {
     if (!commentaryOptions) return [];
@@ -1347,21 +1288,101 @@ export function BookReader({
     }
   };
 
-  const toggleTOCAdhyay = (adhyayNumber: number) => {
-    const next = new Set(expandedTOCAdhyays);
-    if (next.has(adhyayNumber)) next.delete(adhyayNumber);
-    else next.add(adhyayNumber);
-    setExpandedTOCAdhyays(next);
-  };
-
-  const toggleTOCKhanda = (key: string) => {
-    const next = new Set(expandedTOCKhandas);
+  const toggleTOCNode = (path: number[]) => {
+    const key = path.join(".");
+    const next = new Set(expandedTOCNodes);
     if (next.has(key)) next.delete(key);
     else next.add(key);
-    setExpandedTOCKhandas(next);
+    setExpandedTOCNodes(next);
   };
 
-  if (showCoverPage && book && !isLoading && chapterViewAdhyay == null) {
+  /**
+   * One table-of-contents row and everything under it. Recurses so a grantha
+   * with four section levels expands all the way to its mantras, while a
+   * two-level one renders exactly as before.
+   */
+  const renderTOCNode = (node: SectionNode<VerseMeta>, depth: number) => {
+    const key = node.path.join(".");
+    const isExpanded = expandedTOCNodes.has(key);
+    const hasChildren = node.children.length > 0;
+    const titleTranslations = depth === 0 ? chapterTitleTranslations : sectionTitleTranslations;
+    const title = node.title || nodeLabel(node, tocHierarchy.levelLabels[depth] || t("section"));
+
+    return (
+      <div
+        key={key}
+        className={depth === 0
+          ? "rounded-lg border border-border/40 bg-card overflow-hidden"
+          : "rounded-md border border-border/30 bg-card/80 overflow-hidden"}
+      >
+        <div className="flex items-center w-full hover:bg-primary/5 transition-colors group">
+          <button
+            className={`flex items-center gap-3 flex-1 min-w-0 pr-4 text-left ${depth === 0 ? "px-4 py-3" : "py-2.5"}`}
+            style={depth > 0 ? { paddingLeft: `${1 + depth * 0.5}rem` } : undefined}
+            onClick={() => onSelectSection?.(node.path)}
+            data-testid={depth === 0 ? `toc-adhyay-${node.number}` : `toc-section-${key}`}
+          >
+            <div className={`rounded-full flex items-center justify-center shrink-0 ${
+              depth === 0 ? "w-8 h-8 bg-primary/15" : "w-6 h-6 bg-muted-foreground/10"
+            }`}>
+              <span className={depth === 0 ? "text-xs font-semibold text-primary" : "text-[10px] font-medium text-muted-foreground"}>
+                {depth === 0 ? node.number : key}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className={depth === 0
+                ? "text-sm font-semibold text-foreground block truncate"
+                : "text-xs sm:text-sm text-foreground/80 block truncate"}>
+                {tc(title, titleTranslations)}
+              </span>
+              <span className={depth === 0 ? "text-[11px] text-muted-foreground" : "text-[10px] text-muted-foreground"}>
+                {node.verses.length} {t("verses")}
+              </span>
+            </div>
+          </button>
+          <button
+            className={`shrink-0 px-3 self-stretch flex items-center ${depth === 0 ? "py-3" : "py-2.5"}`}
+            onClick={() => toggleTOCNode(node.path)}
+            data-testid={depth === 0 ? `toc-toggle-adhyay-${node.number}` : `toc-toggle-section-${key}`}
+          >
+            <ChevronRight className={`${depth === 0 ? "h-4 w-4 text-primary/50" : "h-3.5 w-3.5 text-muted-foreground/50"} group-hover:text-primary transition-all duration-200 ${isExpanded ? "rotate-90" : ""}`} />
+          </button>
+        </div>
+
+        {isExpanded && (
+          <div className={`${depth === 0 ? "bg-muted/20 dark:bg-muted/10 border-t border-border/20" : "bg-muted/15 dark:bg-muted/5 border-t border-border/10"} animate-in fade-in slide-in-from-top-1 duration-150`}>
+            {hasChildren && (
+              <div className="p-2 space-y-1.5">
+                {node.children.map((child) => renderTOCNode(child, depth + 1))}
+              </div>
+            )}
+            {node.directVerses.length > 0 && (
+              <div className="p-1.5 space-y-1">
+                {node.directVerses.map((v, idx) => (
+                  <button
+                    key={v.id}
+                    className="w-full flex items-center gap-3 pr-4 py-2 text-left rounded-md hover:bg-primary/5 transition-colors border border-transparent hover:border-border/30"
+                    style={{ paddingLeft: `${1 + (depth + 1) * 0.5}rem` }}
+                    onClick={() => handleTOCVerseClick(v.verseNumber)}
+                    data-testid={`toc-verse-${v.verseNumber}`}
+                  >
+                    <span className="font-mono text-[10px] text-muted-foreground/70 shrink-0">
+                      {verseLabelMap.get(v.verseNumber) || v.verseNumber}
+                    </span>
+                    <span className="text-xs text-muted-foreground truncate">
+                      {tc(v.sectionTitle, verseSectionTitleTranslations) || `${t("mantra")} ${idx + 1}`}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  if (showCoverPage && book && !isLoading && !inChapterView) {
     return (
       <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden focus:outline-none">
         <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain">
@@ -1409,7 +1430,7 @@ export function BookReader({
                 className="w-full gap-2"
                 onClick={() => {
                   if (tocHierarchy.groups.length > 0) {
-                    onSelectChapter?.(tocHierarchy.groups[0].adhyayNumber);
+                    onSelectSection?.(tocHierarchy.groups[0].path);
                   } else {
                     const firstNonIntroIdx = verses.findIndex(v => v.verseNumber !== 0 || v.sectionTitle?.toLowerCase().trim() !== "introduction");
                     setCurrentPage(firstNonIntroIdx >= 0 ? firstNonIntroIdx : 0);
@@ -1455,121 +1476,7 @@ export function BookReader({
                         <ChevronRight className="h-4 w-4 text-primary/50 shrink-0 group-hover:text-primary transition-colors" />
                       </button>
                     )}
-                    {tocHierarchy.groups.map((adhyay, index) => {
-                      const isExpanded = expandedTOCAdhyays.has(adhyay.adhyayNumber);
-                      const totalVerses = tocHierarchy.type === "three-level"
-                        ? adhyay.khandas.reduce((sum, k) => sum + k.verses.length, 0)
-                        : adhyay.verses.length;
-                      return (
-                        <div key={adhyay.adhyayNumber} className="rounded-lg border border-border/40 bg-card overflow-hidden">
-                          <div className="flex items-center w-full hover:bg-primary/5 transition-colors group">
-                            <button
-                              className="flex items-center gap-3 flex-1 min-w-0 px-4 py-3 text-left"
-                              onClick={() => {
-                                onSelectChapter?.(adhyay.adhyayNumber);
-                              }}
-                              data-testid={`toc-adhyay-${adhyay.adhyayNumber}`}
-                            >
-                              <div className="w-8 h-8 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-                                <span className="text-xs font-semibold text-primary">{adhyay.adhyayNumber}</span>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <span className="text-sm font-semibold text-foreground block truncate">{tc(adhyay.adhyayTitle, chapterTitleTranslations)}</span>
-                                <span className="text-[11px] text-muted-foreground">{totalVerses} {t("verses")}</span>
-                              </div>
-                            </button>
-                            {(tocHierarchy.type === "three-level" || adhyay.verses.length > 0) && (
-                              <button
-                                className="shrink-0 px-3 py-3 self-stretch flex items-center"
-                                onClick={() => toggleTOCAdhyay(adhyay.adhyayNumber)}
-                                data-testid={`toc-toggle-adhyay-${adhyay.adhyayNumber}`}
-                              >
-                                <ChevronRight className={`h-4 w-4 text-primary/50 group-hover:text-primary transition-all duration-200 ${isExpanded ? "rotate-90" : ""}`} />
-                              </button>
-                            )}
-                          </div>
-
-                          {isExpanded && (
-                            <div className="bg-muted/20 dark:bg-muted/10 border-t border-border/20 animate-in fade-in slide-in-from-top-1 duration-150">
-                              {tocHierarchy.type === "three-level" ? (
-                                <div className="p-2 space-y-1.5">
-                                  {adhyay.khandas.map(khanda => {
-                                    const khandaKey = `${adhyay.adhyayNumber}-${khanda.khandaNumber}`;
-                                    const isKhandaExpanded = expandedTOCKhandas.has(khandaKey);
-                                    return (
-                                      <div key={khandaKey} className="rounded-md border border-border/30 bg-card/80 overflow-hidden">
-                                        <div className="flex items-center w-full hover:bg-primary/5 transition-colors group/khanda">
-                                          <button
-                                            className="flex items-center gap-3 flex-1 min-w-0 pl-4 pr-4 py-2.5 text-left"
-                                            onClick={() => {
-                                              onSelectPart?.(adhyay.adhyayNumber, khanda.khandaNumber);
-                                            }}
-                                            data-testid={`toc-khanda-${adhyay.adhyayNumber}-${khanda.khandaNumber}`}
-                                          >
-                                            <div className="w-6 h-6 rounded-full bg-muted-foreground/10 flex items-center justify-center shrink-0">
-                                              <span className="text-[10px] font-medium text-muted-foreground">{adhyay.adhyayNumber}.{khanda.khandaNumber}</span>
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                              <span className="text-xs sm:text-sm text-foreground/80 block truncate">{tc(khanda.khandaTitle, sectionTitleTranslations)}</span>
-                                              <span className="text-[10px] text-muted-foreground">{khanda.verses.length} {t("verses")}</span>
-                                            </div>
-                                          </button>
-                                          <button
-                                            className="shrink-0 px-3 py-2.5 self-stretch flex items-center"
-                                            onClick={() => toggleTOCKhanda(khandaKey)}
-                                            data-testid={`toc-toggle-khanda-${adhyay.adhyayNumber}-${khanda.khandaNumber}`}
-                                          >
-                                            <ChevronRight className={`h-3.5 w-3.5 text-muted-foreground/50 group-hover/khanda:text-primary transition-all duration-200 ${isKhandaExpanded ? "rotate-90" : ""}`} />
-                                          </button>
-                                        </div>
-
-                                        {isKhandaExpanded && (
-                                          <div className="bg-muted/15 dark:bg-muted/5 border-t border-border/10 p-1.5 space-y-1 animate-in fade-in slide-in-from-top-1 duration-150">
-                                            {khanda.verses.map((v, idx) => (
-                                              <button
-                                                key={v.id}
-                                                className="w-full flex items-center gap-3 pl-6 pr-4 py-2 text-left rounded-md hover:bg-primary/5 transition-colors border border-transparent hover:border-border/30"
-                                                onClick={() => handleTOCVerseClick(v.verseNumber)}
-                                                data-testid={`toc-verse-${v.verseNumber}`}
-                                              >
-                                                <span className="font-mono text-[10px] text-muted-foreground/70 shrink-0 w-12">
-                                                  {adhyay.adhyayNumber}.{khanda.khandaNumber}.{idx + 1}
-                                                </span>
-                                                <span className="text-xs text-muted-foreground truncate">
-                                                  {tc(v.sectionTitle, verseSectionTitleTranslations) || `${t("mantra")} ${idx + 1}`}
-                                                </span>
-                                              </button>
-                                            ))}
-                                          </div>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              ) : (
-                                <div className="p-2 space-y-1">
-                                  {adhyay.verses.map((v, idx) => (
-                                    <button
-                                      key={v.id}
-                                      className="w-full flex items-center gap-3 pl-4 pr-4 py-2 text-left rounded-md hover:bg-primary/5 transition-colors border border-transparent hover:border-border/30"
-                                      onClick={() => handleTOCVerseClick(v.verseNumber)}
-                                      data-testid={`toc-verse-${v.verseNumber}`}
-                                    >
-                                      <span className="font-mono text-[10px] text-muted-foreground/70 shrink-0 w-10">
-                                        {adhyay.adhyayNumber}.{idx + 1}
-                                      </span>
-                                      <span className="text-xs sm:text-sm text-muted-foreground truncate">
-                                        {tc(v.sectionTitle, verseSectionTitleTranslations) || `${t("verse")} ${idx + 1}`}
-                                      </span>
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                    {tocHierarchy.groups.map((node) => renderTOCNode(node, 0))}
                   </div>
                 </div>
               </div>
@@ -1709,12 +1616,9 @@ export function BookReader({
     );
   }
 
-  if (chapterViewAdhyay != null && book) {
-    const chapterInfo = tocHierarchy.groups.find(g => g.adhyayNumber === chapterViewAdhyay);
-    const chapterTitle = chapterInfo?.adhyayTitle || `${t("chapterFull")} ${chapterViewAdhyay}`;
-    const selectedKhandaInfo = chapterViewKhanda != null && chapterInfo
-      ? chapterInfo.khandas.find(k => k.khandaNumber === chapterViewKhanda)
-      : null;
+  if (inChapterView && book && chapterViewPath) {
+    // The open section — any level of the hierarchy, not just an adhyāya.
+    const openSection = nodeAtPath(tocHierarchy.groups, chapterViewPath);
 
     const getChapterTranslation = (verse: VerseWithTranslations, langCode: string): string => {
       const matchCodes = LANG_ALIASES[langCode] || [langCode];
@@ -1755,10 +1659,8 @@ export function BookReader({
     const chapterFullByNum = new Map<number, VerseWithTranslations>(
       (chapterVerses || []).map(v => [v.verseNumber, v])
     );
-    const metaInAdhyay = verses.filter(v => v.adhyayNumber === chapterViewAdhyay);
-    const metaInScope = chapterViewKhanda != null
-      ? metaInAdhyay.filter(v => v.khandaNumber === chapterViewKhanda)
-      : metaInAdhyay;
+    const metaInScope = verses.filter(v =>
+      pathStartsWith(versePathMap.get(v.verseNumber) ?? [], chapterViewPath));
     const filteredChapterVerses: VerseWithTranslations[] = metaInScope.map(m => {
       const full = chapterFullByNum.get(m.verseNumber);
       return full
@@ -1766,20 +1668,15 @@ export function BookReader({
         : ({ ...m, translations: [], explanations: [] } as unknown as VerseWithTranslations);
     });
 
-    const groupedByKhanda = chapterViewKhanda == null && chapterInfo && tocHierarchy.type === "three-level"
-      ? chapterInfo.khandas.map(k => ({
-          khandaNumber: k.khandaNumber,
-          khandaTitle: k.khandaTitle,
-          verseNumbers: k.verses.map(v => v.verseNumber),
+    // When the open section still has sub-sections, show its verses grouped
+    // under each one (at any depth) with a heading that drills further in.
+    const subSectionGroups = openSection && openSection.children.length > 0
+      ? openSection.children.map(child => ({
+          path: child.path,
+          title: child.title || nodeLabel(child, tocHierarchy.levelLabels[child.path.length - 1] || t("section")),
+          verseNumbers: new Set(child.verseNumbers),
         }))
       : null;
-
-    const headerBadge = chapterViewKhanda != null
-      ? `${t("part")} ${chapterViewAdhyay}.${chapterViewKhanda}`
-      : `${t("chapter")} ${chapterViewAdhyay}`;
-    const headerSubtitle = selectedKhandaInfo
-      ? tc(selectedKhandaInfo.khandaTitle, sectionTitleTranslations)
-      : chapterTitle;
 
     return (
       <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
@@ -1814,12 +1711,12 @@ export function BookReader({
               </div>
             ) : filteredChapterVerses && filteredChapterVerses.length > 0 ? (
               <div>
-                {groupedByKhanda ? (
-                  groupedByKhanda.map((khanda, kIdx) => {
-                    const khandaVerses = filteredChapterVerses.filter(v => khanda.verseNumbers.includes(v.verseNumber));
+                {subSectionGroups ? (
+                  subSectionGroups.map((group, kIdx) => {
+                    const khandaVerses = filteredChapterVerses.filter(v => group.verseNumbers.has(v.verseNumber));
                     if (khandaVerses.length === 0) return null;
                     return (
-                      <div key={khanda.khandaNumber}>
+                      <div key={group.path.join(".")}>
                         {kIdx > 0 && (
                           <div className="my-8 sm:my-10 flex items-center gap-4">
                             <div className="h-px flex-1 bg-primary/20"></div>
@@ -1829,21 +1726,21 @@ export function BookReader({
                         )}
                         <div
                           className="text-center mb-6 sm:mb-8 cursor-pointer group"
-                          onClick={() => onSelectPart?.(chapterViewAdhyay!, khanda.khandaNumber)}
-                          data-testid={`chapter-view-khanda-${khanda.khandaNumber}`}
+                          onClick={() => onSelectSection?.(group.path)}
+                          data-testid={`chapter-view-section-${group.path.join("-")}`}
                         >
                           <span className="text-xs sm:text-sm font-body text-primary/60 tracking-wider uppercase group-hover:text-primary transition-colors">
-                            {t("part")} {chapterViewAdhyay}.{khanda.khandaNumber}
+                            {t("part")} {group.path.join(".")}
                           </span>
                           <h3 className="font-serif text-sm sm:text-base text-foreground/80 mt-1 group-hover:text-primary transition-colors">
-                            {tc(khanda.khandaTitle, sectionTitleTranslations)}
+                            {tc(group.title, sectionTitleTranslations)}
                           </h3>
                         </div>
                         {khandaVerses.map((verse, idx) => {
                           const devanagari = getChapterDevanagari(verse);
                           const translation = showTranslation ? getChapterTranslation(verse, chapterTransLang) : "";
                           const iast = showIast ? getChapterIast(verse) : null;
-                          const verseLabel = `${chapterViewAdhyay}.${khanda.khandaNumber}.${idx + 1}`;
+                          const verseLabel = verseLabelMap.get(verse.verseNumber) || `${group.path.join(".")}.${idx + 1}`;
                           return (
                             <div key={verse.id}>
                               <div
@@ -1899,9 +1796,7 @@ export function BookReader({
                     const devanagari = getChapterDevanagari(verse);
                     const translation = showTranslation ? getChapterTranslation(verse, chapterTransLang) : "";
                     const iast = showIast ? getChapterIast(verse) : null;
-                    const verseLabel = chapterViewKhanda != null
-                      ? `${chapterViewAdhyay}.${chapterViewKhanda}.${idx + 1}`
-                      : `${chapterViewAdhyay}.${idx + 1}`;
+                    const verseLabel = verseLabelMap.get(verse.verseNumber) || `${chapterViewPath.join(".")}.${idx + 1}`;
                     return (
                       <div key={verse.id}>
                         <div
@@ -1978,7 +1873,7 @@ export function BookReader({
     const introSanskrit = introExplanations?.find(e => e.languageCode === "devanagari" || e.languageCode === "sa")?.content;
     const startReadingFromIntro = () => {
       if (tocHierarchy.groups.length > 0) {
-        onSelectChapter?.(tocHierarchy.groups[0].adhyayNumber);
+        onSelectSection?.(tocHierarchy.groups[0].path);
       } else {
         const firstNonIntroIdx = verses.findIndex(v => v.verseNumber !== 0 || v.sectionTitle?.toLowerCase().trim() !== "introduction");
         if (firstNonIntroIdx >= 0) {

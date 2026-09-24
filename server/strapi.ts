@@ -10,6 +10,7 @@ import type {
   BookWithVerseMeta,
   VerseMeta,
   VerseWordMeaning,
+  SectionPathEntry,
 } from "@shared/schema";
 import { transliterateSanskrit, LANGUAGE_TO_SCHEME } from "./strapi-transliterate";
 import type { CommentaryOptions, CommentaryOption } from "./storage";
@@ -289,6 +290,42 @@ function buildSectionTree(sections: StrapiSection[]): StrapiSection[] {
   return roots;
 }
 
+/** One section as a path entry (number/title/type), as shipped to the reader. */
+function sectionPathEntry(section: StrapiSection | any): SectionPathEntry {
+  return {
+    number: section?.order ?? null,
+    title: section?.title || null,
+    type: section?.type || null,
+  };
+}
+
+/** Sub-sections in CMS order (`order` asc), tolerating unset orders. */
+function sortedSubSections(section: any): any[] {
+  return [...(section?.sub_sections || [])].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+}
+
+/**
+ * The legacy flat fields (adhyayNumber/khandaNumber and friends) mirror the
+ * first two levels of the section path, so two-level granthas keep behaving
+ * exactly as before while deeper ones (e.g. Adhyāya › Pāda › Sūtra) carry the
+ * remaining levels in `sectionPath`.
+ */
+function legacyLevelFields(path: SectionPathEntry[]) {
+  return {
+    adhyayNumber: path[0]?.number ?? null,
+    adhyayTitle: path[0]?.title ?? null,
+    adhyayType: path[0]?.type ?? null,
+    khandaNumber: path[1]?.number ?? null,
+    khandaTitle: path[1]?.title ?? null,
+    khandaType: path[1]?.type ?? null,
+  };
+}
+
+/** Stable key for a section path, used to de-duplicate manthras per section. */
+function sectionPathKey(path: SectionPathEntry[]): string {
+  return path.map((p) => p.number ?? "").join(".");
+}
+
 function isTransliteration(text: string, sanskritText: string, lang: string): boolean {
   if (!sanskritText || !text) return false;
   const scheme = LANGUAGE_TO_SCHEME[lang];
@@ -430,10 +467,7 @@ function mapManthraToVerse(
   m: any,
   bookId: string,
   globalIndex: number,
-  adhyayNumber: number | null,
-  adhyayTitle: string | null,
-  khandaNumber: number | null,
-  khandaTitle: string | null,
+  sectionPath: SectionPathEntry[],
   bhashyamAuthor: string,
   bhashyamName: string | null,
 ): VerseWithTranslations {
@@ -479,10 +513,8 @@ function mapManthraToVerse(
     bookId,
     verseNumber,
     sectionTitle,
-    adhyayNumber,
-    adhyayTitle,
-    khandaNumber,
-    khandaTitle,
+    ...legacyLevelFields(sectionPath),
+    sectionPath,
     translations,
     explanations,
     iastTransliteration,
@@ -775,62 +807,25 @@ async function _strapiGetBookByIdUncached(id: string): Promise<BookWithDetails |
 
     type LeafTask = {
       sectionDocId: string;
-      adhyayNum: number | null;
-      adhyayTitle: string | null;
-      khandaNum: number | null;
-      khandaTitle: string | null;
-      orderKey: [number, number];
+      /** Full ancestry of the leaf section, outermost first (any depth). */
+      path: SectionPathEntry[];
     };
     const leafTasks: LeafTask[] = [];
 
-    function collectLeafTasks(
-      section: any,
-      adhyayNum: number | null,
-      adhyayTitle: string | null,
-      khandaNum: number | null,
-      khandaTitle: string | null,
-      adhyayOrder: number,
-    ) {
-      const subs = (section.sub_sections || []).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+    // Manthras only ever hang off leaf sections, so walk to the bottom of each
+    // branch — however deep the grantha nests — and remember the way down.
+    function collectLeafTasks(section: any, ancestors: SectionPathEntry[]) {
+      const path = [...ancestors, sectionPathEntry(section)];
+      const subs = sortedSubSections(section);
       if (subs.length > 0) {
-        for (const sub of subs) {
-          collectLeafTasks(sub, adhyayNum, adhyayTitle, khandaNum || sub.order, khandaTitle || sub.title, adhyayOrder);
-        }
+        for (const sub of subs) collectLeafTasks(sub, path);
       } else {
-        leafTasks.push({
-          sectionDocId: section.documentId,
-          adhyayNum,
-          adhyayTitle,
-          khandaNum,
-          khandaTitle,
-          orderKey: [adhyayOrder, khandaNum ?? 0],
-        });
+        leafTasks.push({ sectionDocId: section.documentId, path });
       }
     }
 
-    for (const adhyay of sectionTree) {
-      const adhyayNum = adhyay.order ?? null;
-      const adhyayTitle = adhyay.title || null;
-      const adhyayOrder = adhyay.order ?? 0;
-
-      const khandas = (adhyay.sub_sections || []).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
-
-      if (khandas.length > 0) {
-        for (const khanda of khandas) {
-          const khandaNum = khanda.order ?? null;
-          const khandaTitle = khanda.title || null;
-          collectLeafTasks(khanda, adhyayNum, adhyayTitle, khandaNum, khandaTitle, adhyayOrder);
-        }
-      } else {
-        leafTasks.push({
-          sectionDocId: adhyay.documentId,
-          adhyayNum,
-          adhyayTitle,
-          khandaNum: null,
-          khandaTitle: null,
-          orderKey: [adhyayOrder, 0],
-        });
-      }
+    for (const root of sectionTree) {
+      collectLeafTasks(root, []);
     }
 
     const sectionFetchConcurrency = Math.max(
@@ -864,7 +859,7 @@ async function _strapiGetBookByIdUncached(id: string): Promise<BookWithDetails |
           droppedDuplicates++;
           continue;
         }
-        const numberKey = `${task.adhyayNum ?? ""}|${task.khandaNum ?? ""}|${m.ShlokaManthraNumber ?? ""}`;
+        const numberKey = `${sectionPathKey(task.path)}|${m.ShlokaManthraNumber ?? ""}`;
         if (m.ShlokaManthraNumber && seenManthraKeys.has(numberKey)) {
           droppedDuplicates++;
           continue;
@@ -879,12 +874,12 @@ async function _strapiGetBookByIdUncached(id: string): Promise<BookWithDetails |
         if (m.ShlokaManthraNumber) seenManthraKeys.add(numberKey);
         globalIndex++;
         verses.push(
-          mapManthraToVerse(m, book.id, globalIndex, task.adhyayNum, task.adhyayTitle, task.khandaNum, task.khandaTitle, bhashyamAuthor, bhashyamName)
+          mapManthraToVerse(m, book.id, globalIndex, task.path, bhashyamAuthor, bhashyamName)
         );
       }
     }
     if (droppedDuplicates > 0) {
-      console.warn(`[Strapi] Grantha ${id}: dropped ${droppedDuplicates} duplicate manthra(s) (same docId or same adhyay/khanda/ShlokaManthraNumber). Clean up duplicates in CMS.`);
+      console.warn(`[Strapi] Grantha ${id}: dropped ${droppedDuplicates} duplicate manthra(s) (same docId or same section-path/ShlokaManthraNumber). Clean up duplicates in CMS.`);
     }
     if (droppedEmpty > 0) {
       console.warn(`[Strapi] Grantha ${id}: dropped ${droppedEmpty} empty manthra row(s) (no shloka, bhashya, or teeka content). Delete them in CMS to remove these warnings.`);
@@ -945,24 +940,17 @@ async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWith
         khandaTitle: null,
         adhyayType: null,
         khandaType: null,
+        sectionPath: [],
       });
     }
 
-    function pushManthra(
-      m: any,
-      adhyayNum: number | null,
-      adhyayTitle: string | null,
-      khandaNum: number | null,
-      khandaTitle: string | null,
-      adhyayType: string | null,
-      khandaType: string | null,
-    ) {
+    function pushManthra(m: any, sectionPath: SectionPathEntry[]) {
       const docId = m.documentId || String(m.id);
       if (seenManthraDocIds.has(docId)) {
         droppedDuplicates++;
         return;
       }
-      const numberKey = `${adhyayNum ?? ""}|${khandaNum ?? ""}|${m.ShlokaManthraNumber ?? ""}`;
+      const numberKey = `${sectionPathKey(sectionPath)}|${m.ShlokaManthraNumber ?? ""}`;
       if (m.ShlokaManthraNumber && seenManthraKeys.has(numberKey)) {
         droppedDuplicates++;
         return;
@@ -981,64 +969,30 @@ async function _strapiGetBookWithVerseMetaUncached(id: string): Promise<BookWith
         bookId: book.id,
         verseNumber: globalIndex,
         sectionTitle: m.ShlokaManthraNumber ? `Mantra ${m.ShlokaManthraNumber}` : `Mantra ${globalIndex}`,
-        adhyayNumber: adhyayNum,
-        adhyayTitle,
-        khandaNumber: khandaNum,
-        khandaTitle,
-        adhyayType,
-        khandaType,
+        ...legacyLevelFields(sectionPath),
+        sectionPath,
         preview: previewMap.get(docId),
       });
     }
 
-    function collectVersesFromLeafSections(
-      section: any,
-      adhyayNum: number | null,
-      adhyayTitle: string | null,
-      khandaNum: number | null,
-      khandaTitle: string | null,
-      adhyayType: string | null,
-      khandaType: string | null,
-    ) {
-      const subs = (section.sub_sections || []).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+    // Descend the whole section tree, however deep it goes, and attach each
+    // manthra to the full path of sections above it.
+    function collectVersesFromLeafSections(section: any, ancestors: SectionPathEntry[]) {
+      const path = [...ancestors, sectionPathEntry(section)];
+      const subs = sortedSubSections(section);
       if (subs.length > 0) {
-        for (const sub of subs) {
-          collectVersesFromLeafSections(
-            sub, adhyayNum, adhyayTitle,
-            khandaNum || sub.order, khandaTitle || sub.title, adhyayType, khandaType || sub.type || null,
-          );
-        }
-      } else {
-        const manthraDocs = section.manthras || [];
-        const sortedManthras = [...manthraDocs].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
-        for (const m of sortedManthras) {
-          pushManthra(m, adhyayNum, adhyayTitle, khandaNum, khandaTitle, adhyayType, khandaType);
-        }
+        for (const sub of subs) collectVersesFromLeafSections(sub, path);
+        return;
+      }
+      const manthraDocs = section.manthras || [];
+      const sortedManthras = [...manthraDocs].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+      for (const m of sortedManthras) {
+        pushManthra(m, path);
       }
     }
 
-    for (const adhyay of sectionTree) {
-      const adhyayNum = adhyay.order ?? null;
-      const adhyayTitle = adhyay.title || null;
-      const adhyayType = adhyay.type || null;
-
-      const khandas = (adhyay.sub_sections || []).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
-
-      if (khandas.length > 0) {
-        for (const khanda of khandas) {
-          const khandaNum = khanda.order ?? null;
-          const khandaTitle = khanda.title || null;
-          const khandaType = khanda.type || null;
-          collectVersesFromLeafSections(khanda, adhyayNum, adhyayTitle, khandaNum, khandaTitle, adhyayType, khandaType);
-        }
-      } else {
-        const manthraDocs = adhyay.manthras || [];
-        const sortedManthras = [...manthraDocs].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
-
-        for (const m of sortedManthras) {
-          pushManthra(m, adhyayNum, adhyayTitle, null, null, adhyayType, null);
-        }
-      }
+    for (const root of sectionTree) {
+      collectVersesFromLeafSections(root, []);
     }
 
     if (droppedDuplicates > 0) {
@@ -1080,6 +1034,7 @@ function mapIntroductionVerse(grantha: any, bookId: string): VerseWithTranslatio
     adhyayTitle: null,
     khandaNumber: null,
     khandaTitle: null,
+    sectionPath: [],
     translations: [],
     explanations,
   };
@@ -1115,7 +1070,13 @@ export async function strapiGetVerseById(verseId: string): Promise<VerseWithTran
       "populate[6]": "BhashyamEntry.OtherTranslations",
       "populate[7]": "Teekas.TeekaEntry.OtherTranslations",
       "populate[8]": "Section.grantha",
+      // Ancestors, deepest-first: enough levels for the deepest granthas in the
+      // CMS today (e.g. Adhyāya › Pāda › Sūtra), so a verse opened directly
+      // still knows its full section path.
       "populate[9]": "Section.parent",
+      "populate[10]": "Section.parent.parent",
+      "populate[11]": "Section.parent.parent.parent",
+      "populate[12]": "Section.parent.parent.parent.parent",
     });
     if (!result.data) return undefined;
 
@@ -1126,31 +1087,14 @@ export async function strapiGetVerseById(verseId: string): Promise<VerseWithTran
     const bhashyamAuthor = grantha?.BhashyamAuthor || "Sri Shankaracharya";
     const bhashyamName = grantha?.BhashyamName || "Shankara Bhashyam";
 
-    let adhyayNumber: number | null = null;
-    let adhyayTitle: string | null = null;
-    let khandaNumber: number | null = null;
-    let khandaTitle: string | null = null;
-
-    if (section) {
-      if (section.type === "adhyay") {
-        adhyayNumber = section.order ?? null;
-        adhyayTitle = section.title || null;
-      } else if (section.type === "khanda" || section.type === "valli") {
-        khandaNumber = section.order ?? null;
-        khandaTitle = section.title || null;
-        if (section.parent) {
-          adhyayNumber = section.parent.order ?? null;
-          adhyayTitle = section.parent.title || null;
-        }
-      }
+    // Climb the populated parent chain so the path reads outermost-first, the
+    // same shape the book-level loaders produce.
+    const sectionPath: SectionPathEntry[] = [];
+    for (let node = section; node; node = node.parent) {
+      sectionPath.unshift(sectionPathEntry(node));
     }
 
-    const verse = mapManthraToVerse(
-      m, bookId, m.order ?? 0,
-      adhyayNumber, adhyayTitle,
-      khandaNumber, khandaTitle,
-      bhashyamAuthor, bhashyamName,
-    );
+    const verse = mapManthraToVerse(m, bookId, m.order ?? 0, sectionPath, bhashyamAuthor, bhashyamName);
     if (verse) setCache(verseCache, verseId, verse);
     return verse;
   } catch (err: any) {
