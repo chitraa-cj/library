@@ -25,19 +25,25 @@ function getPool(): pg.Pool {
   return pool;
 }
 
+// `aliases` carries the spellings the CMS links texts by ("Sri Shankarayacharya",
+// "Anandagiri"), which is what lets a book's author/teeka name resolve to a profile.
 const LIST_SQL = `
-  select slug, name_iast, name_devanagari, name_display, dates, lineage_order,
+  select slug, name_iast, name_devanagari, name_display, aliases, dates, lineage_order,
          category, avatar_url, bio_status,
          coalesce(jsonb_array_length(works_list), 0) as works_count,
          (bio_status = 'sourced') as has_bio
   from acharya_profiles
   order by lineage_order asc nulls last, id asc`;
 
+// `linked_grantha_doc_ids` holds the granthas a curator picked by hand in the CMS
+// portal (Strapi documentIds, which are the reader's book ids). Read through
+// to_jsonb so an older CMS database without that column still answers.
 const DETAIL_SQL = `
   select slug, name_iast, name_devanagari, name_display, aliases, dates,
          lineage_order, category, guru_devanagari, biography, works_list,
-         avatar_url, bio_status, source_url
-  from acharya_profiles
+         avatar_url, bio_status, source_url,
+         coalesce(to_jsonb(p) -> 'linked_grantha_doc_ids', '[]'::jsonb) as linked_grantha_doc_ids
+  from acharya_profiles p
   where slug = $1
   limit 1`;
 

@@ -2735,8 +2735,9 @@ function BookLandingPage({ book, landingData, chapters, onSelectBook, onSelectCh
                             <button
                               type="button"
                               onClick={() => onOpenAcharya!(c.slug)}
-                              className={`${nameClass} text-left bg-transparent border-none p-0 hover:underline underline-offset-2 cursor-pointer`}
-                              title="View acharya profile"
+                              className={`${nameClass} text-left bg-transparent border-none p-0 cursor-pointer underline decoration-dotted decoration-primary/40 underline-offset-[3px] transition-colors hover:text-primary hover:decoration-solid`}
+                              title={`View ${c.name}'s profile`}
+                              aria-label={`View ${c.name}'s profile`}
                               data-testid={`commentator-link-${idx}`}
                             >
                               {c.name}
@@ -3777,8 +3778,9 @@ function GitaChapterGrid({ book, chapters, onSelectBook, onSelectChapter, onGoBa
             <button
               type="button"
               onClick={() => onOpenAcharya!(c.slug)}
-              className={`${nameClass} text-left bg-transparent border-none p-0 hover:underline underline-offset-2 cursor-pointer`}
-              title="View acharya profile"
+              className={`${nameClass} text-left bg-transparent border-none p-0 cursor-pointer underline decoration-dotted decoration-primary/40 underline-offset-[3px] transition-colors hover:text-primary hover:decoration-solid`}
+              title={`View ${c.name}'s profile`}
+              aria-label={`View ${c.name}'s profile`}
             >
               {c.name}
             </button>

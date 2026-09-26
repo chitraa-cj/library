@@ -1,7 +1,10 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ChevronRight, BookText, User, Loader2, Link as LinkIcon } from "lucide-react";
+import { ArrowLeft, ChevronRight, BookOpen, BookText, User, Loader2, Link as LinkIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useTranslation } from "@/lib/translations";
+import type { AcharyaNameRef } from "@/lib/acharya-match";
+import { granthasForAcharya, type GranthaBookRef } from "@/lib/acharya-granthas";
 
 interface AcharyaListItem {
   slug: string;
@@ -31,6 +34,8 @@ interface BioSection {
 
 interface AcharyaDetail extends AcharyaListItem {
   aliases: string[] | null;
+  /** Granthas picked by hand under this acharya in the CMS portal. */
+  linked_grantha_doc_ids: string[] | null;
   guru_devanagari: string | null;
   biography: BioSection[] | null;
   works_list: Work[] | null;
@@ -41,17 +46,20 @@ interface AcharyaDetail extends AcharyaListItem {
 export function AcharyasPage({
   slug,
   onSelectAcharya,
+  onSelectGrantha,
   onBack,
   languageCode,
 }: {
   slug: string | null;
   onSelectAcharya: (slug: string) => void;
+  /** Opens one of the granthas listed under this acharya. */
+  onSelectGrantha?: (bookId: string) => void;
   onBack: () => void;
   languageCode?: string | null;
 }) {
   const { t } = useTranslation(languageCode ?? null);
   return slug ? (
-    <AcharyaDetailView slug={slug} onBack={() => onBack()} t={t} />
+    <AcharyaDetailView slug={slug} onSelectGrantha={onSelectGrantha} onBack={() => onBack()} t={t} />
   ) : (
     <AcharyaListView onSelectAcharya={onSelectAcharya} onBack={onBack} t={t} />
   );
@@ -147,10 +155,24 @@ function AcharyaListView({
   );
 }
 
-function AcharyaDetailView({ slug, onBack, t }: { slug: string; onBack: () => void; t: (k: any) => string }) {
+function AcharyaDetailView({ slug, onSelectGrantha, onBack, t }: {
+  slug: string;
+  onSelectGrantha?: (bookId: string) => void;
+  onBack: () => void;
+  t: (k: any) => string;
+}) {
   const { data, isLoading, isError } = useQuery<AcharyaDetail>({
     queryKey: ["/api/acharyas", slug],
   });
+
+  // The texts this acharya wrote on, derived from the library's own books so that
+  // every grantha listing this acharya is reachable from here, and vice versa.
+  const { data: books } = useQuery<GranthaBookRef[]>({ queryKey: ["/api/books"] });
+  const { data: acharyas } = useQuery<AcharyaNameRef[]>({ queryKey: ["/api/acharyas"] });
+  const granthas = useMemo(
+    () => granthasForAcharya(slug, books, acharyas, data?.linked_grantha_doc_ids),
+    [slug, books, acharyas, data?.linked_grantha_doc_ids],
+  );
 
   return (
     <PageShell>
@@ -212,6 +234,48 @@ function AcharyaDetailView({ slug, onBack, t }: { slug: string; onBack: () => vo
             <p className="text-sm text-muted-foreground italic py-2">
               {t("acharyaNoBio") || "A detailed biography for this acharya is not yet available."}
             </p>
+          )}
+
+          {granthas.length > 0 && (
+            <section className="mt-8 pt-6 border-t border-primary/15" data-testid="acharya-granthas">
+              <h2 className="font-serif text-lg font-semibold text-foreground mb-1 flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-primary" /> {t("granthasInLibrary") || "Granthas in this Library"} ({granthas.length})
+              </h2>
+              <p className="text-xs text-muted-foreground mb-4">
+                {t("granthasInLibraryHint") || "Texts in this library carrying this acharya's commentary — open one to read it."}
+              </p>
+              <ul className="space-y-2">
+                {granthas.map((g) => (
+                  <li key={`${g.book.id}-${g.role}`}>
+                    <button
+                      type="button"
+                      onClick={() => onSelectGrantha?.(g.book.id)}
+                      disabled={!onSelectGrantha}
+                      className="group flex w-full items-center gap-3 rounded-lg border border-border/50 bg-card px-4 py-3 text-left transition-colors hover:border-primary/40 hover:bg-primary/5 disabled:cursor-default disabled:hover:border-border/50 disabled:hover:bg-card"
+                      title={onSelectGrantha ? `Open ${g.book.title}` : undefined}
+                      data-testid={`acharya-grantha-${g.book.slug || g.book.id}`}
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span className="font-serif text-base text-foreground group-hover:text-primary transition-colors">
+                            {g.book.title}
+                          </span>
+                          <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${g.role === "bhashya" ? "bg-primary/10 text-primary" : "bg-accent text-muted-foreground"}`}>
+                            {g.role === "bhashya" ? "Bhāṣya" : g.role === "teeka" ? "Ṭīkā" : "Grantha"}
+                          </span>
+                        </span>
+                        {g.works.length > 0 && (
+                          <span className="mt-0.5 block text-[13px] italic text-muted-foreground leading-relaxed">
+                            {g.works.join(" · ")}
+                          </span>
+                        )}
+                      </span>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
           )}
 
           {data.works_list && data.works_list.length > 0 && (

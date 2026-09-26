@@ -1021,6 +1021,11 @@ function HomePageContent() {
                 <AcharyasPage
                   slug={selectedAcharyaSlug}
                   onSelectAcharya={(slug) => setSelectedAcharyaSlug(slug)}
+                  onSelectGrantha={(bookId) => {
+                    setShowAcharyas(false);
+                    setSelectedAcharyaSlug(null);
+                    handleBookSelect(bookId);
+                  }}
                   onBack={() => {
                     if (selectedAcharyaSlug) setSelectedAcharyaSlug(null);
                     else setShowAcharyas(false);
