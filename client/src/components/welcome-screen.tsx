@@ -1303,7 +1303,6 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
     "Shrimad Bodhendra Saraswati",
     "Sringeri Peetham",
     "Kanchi Peetham",
-    "Uttaradi Math",
     "Nirmohi Akhada",
   ];
 
