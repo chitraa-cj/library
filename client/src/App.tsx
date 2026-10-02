@@ -39,6 +39,7 @@ const TranslatePage = lazy(() => import("@/pages/translate-page"));
 import { useTranslation } from "@/lib/translations";
 import { translateContent, bookAuthorTranslations } from "@/lib/content-translations";
 import type { Book, Language } from "@shared/schema";
+import { fuzzyFilter } from "@/lib/fuzzy-search";
 
 interface CommentaryOption {
   authorName: string;
@@ -225,12 +226,7 @@ function HomePageContent() {
 
   const filteredHeaderLanguages = useMemo(() => {
     if (!langSearchQuery.trim()) return headerLanguages;
-    const q = langSearchQuery.toLowerCase().trim();
-    return headerLanguages.filter(lang =>
-      lang.name.toLowerCase().includes(q) ||
-      lang.searchTerms.toLowerCase().includes(q) ||
-      lang.code.toLowerCase().includes(q)
-    );
+    return fuzzyFilter(headerLanguages, langSearchQuery, lang => [lang.name, lang.searchTerms, lang.code]);
   }, [headerLanguages, langSearchQuery]);
 
   const currentLangLabel = useMemo(() => {

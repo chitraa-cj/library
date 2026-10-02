@@ -14,6 +14,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useTranslation } from "@/lib/translations";
+import { fuzzyMatch as fuzzySearchMatch } from "@/lib/fuzzy-search";
 import { translateContent, bookTitleTranslations, bookAuthorTranslations, chapterTitleTranslations, sectionTitleTranslations, verseSectionTitleTranslations } from "@/lib/content-translations";
 import type { Book, Verse } from "@shared/schema";
 
@@ -458,13 +459,21 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
     setExpandedKhandas(next);
   };
 
-  const fuzzyMatch = useCallback((text: string, query: string): boolean => {
-    const t = text.toLowerCase();
-    const q = query.toLowerCase();
-    if (t.includes(q)) return true;
-    const words = t.split(/[\s\-–—,.]+/);
-    return words.some(w => w.startsWith(q) || q.startsWith(w));
-  }, []);
+  // Typo- and transliteration-tolerant: "baridhi" finds "Vāridhi".
+  const fuzzyMatch = useCallback(
+    (text: string, query: string): boolean => fuzzySearchMatch(text, query),
+    [],
+  );
+
+  // A book is searchable by its English title and by the title as displayed.
+  const bookMatches = useCallback(
+    (book: Book, query: string): boolean =>
+      fuzzySearchMatch(book.title, query) ||
+      fuzzySearchMatch(tc(book.title, bookTitleTranslations), query) ||
+      fuzzySearchMatch(book.author, query),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sidebarLang],
+  );
 
   const filteredTree = useMemo(() => {
     if (!searchQuery.trim()) return CATALOG_TREE;
@@ -474,11 +483,11 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
       if (fuzzyMatch(cat.label, q)) return true;
       if (cat.children?.some(sub => fuzzyMatch(resolveLabel(sub, t), q) || fuzzyMatch(sub.label, q))) return true;
       const booksInCat = cat.children
-        ? cat.children.some(sub => booksBySubCategory[sub.id]?.some(b => fuzzyMatch(b.title, q)))
-        : booksBySubCategory[cat.id]?.some(b => fuzzyMatch(b.title, q));
+        ? cat.children.some(sub => booksBySubCategory[sub.id]?.some(b => bookMatches(b, q)))
+        : booksBySubCategory[cat.id]?.some(b => bookMatches(b, q));
       return booksInCat;
     });
-  }, [searchQuery, booksBySubCategory, fuzzyMatch, t]);
+  }, [searchQuery, booksBySubCategory, fuzzyMatch, bookMatches, t]);
 
   const filteredSubCategories = useMemo(() => {
     if (!searchQuery.trim() || !drillCategory?.children) return drillCategory?.children ?? [];
@@ -486,9 +495,9 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
     return drillCategory.children.filter(sub => {
       if (fuzzyMatch(resolveLabel(sub, t), q) || fuzzyMatch(sub.label, q)) return true;
       const subBooks = booksBySubCategory[sub.id] ?? [];
-      return subBooks.some(b => fuzzyMatch(b.title, q));
+      return subBooks.some(b => bookMatches(b, q));
     });
-  }, [searchQuery, drillCategory, booksBySubCategory, fuzzyMatch, t]);
+  }, [searchQuery, drillCategory, booksBySubCategory, bookMatches, fuzzyMatch, t]);
 
   const filteredBooks = useMemo(() => {
     if (!drillSubCategoryId) return [];
@@ -496,7 +505,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
     if (!searchQuery.trim()) return subBooks;
     const q = searchQuery.trim();
     return subBooks.filter(b => {
-      if (fuzzyMatch(b.title, q)) return true;
+      if (bookMatches(b, q)) return true;
       if (b.id === selectedBookId && hierarchy.length > 0) {
         return hierarchy.some(adhyay =>
           (adhyay.adhyayTitle && fuzzyMatch(adhyay.adhyayTitle, q)) ||
@@ -505,7 +514,7 @@ export function AppSidebar({ selectedBookId, onSelectBook, onSelectVerse, onSele
       }
       return false;
     });
-  }, [searchQuery, drillSubCategoryId, booksBySubCategory, selectedBookId, hierarchy, fuzzyMatch]);
+  }, [searchQuery, drillSubCategoryId, booksBySubCategory, selectedBookId, hierarchy, bookMatches, fuzzyMatch]);
 
   const filteredHierarchy = useMemo(() => {
     if (!searchQuery.trim() || hierarchy.length === 0) return hierarchy;

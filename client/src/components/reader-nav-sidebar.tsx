@@ -7,6 +7,7 @@ import { isBookmarked, toggleBookmark, subscribeBookmarks, type BookmarkEntry } 
 import { matchAcharyaSlug, type AcharyaNameRef } from "@/lib/acharya-match";
 import shankaracharyaImg from "@assets/image_1770455528511.png";
 
+import { fuzzyMatchAny } from "@/lib/fuzzy-search";
 import {
   buildSectionTree,
   completePath,
@@ -249,9 +250,9 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
 
   const mantraNumbers = useMemo(() => {
     let nums = (selectedNode?.verseNumbers || []).filter((vn) => vn !== 0);
-    const q = searchQuery.trim().toLowerCase();
+    const q = searchQuery.trim();
     if (q) {
-      nums = nums.filter((vn) => labelFor(vn).toLowerCase().includes(q) || (previewMap.get(vn) || "").toLowerCase().includes(q));
+      nums = nums.filter((vn) => fuzzyMatchAny([labelFor(vn), previewMap.get(vn)], q));
     }
     return nums;
     // eslint-disable-next-line react-hooks/exhaustive-deps

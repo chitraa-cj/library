@@ -63,6 +63,7 @@ import quickAccessScene from "@assets/quick-access-scene.png";
 import visionMandala from "@assets/vision-mandala.png";
 import traditionMandala from "@assets/tradition-mandala.png";
 import advaiticVisionMandala from "@assets/advaitic-vision-mandala.png";
+import { fuzzyFilter, fuzzyMatchAny } from "@/lib/fuzzy-search";
 import heroBgLight from "@assets/hero-bg-light.png";
 import heroBgDark from "@assets/hero-bg-dark.png";
 import featuredCollectionBg from "@assets/featured-collection-bg.png";
@@ -596,18 +597,25 @@ function HomeSearchBar({ books, onSelectBook, languageCode }: { books: Book[]; o
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Ranked and typo-tolerant, so "baridhi" still reaches "Vāridhi".
   const results = useMemo(() => {
     if (!query.trim()) return [];
-    const q = query.toLowerCase().trim();
-    return books.filter(b => {
-      const title = (b.title || "").toLowerCase();
-      const slug = (b.slug || "").toLowerCase();
-      const author = (b.author || "").toLowerCase();
-      const desc = (b.description || "").toLowerCase();
-      const category = (b.category || "").toLowerCase();
-      return title.includes(q) || slug.includes(q) || author.includes(q) || desc.includes(q) || category.includes(q);
-    }).slice(0, 8);
-  }, [query, books]);
+    return fuzzyFilter(
+      books,
+      query,
+      b => [
+        b.title,
+        tc(b.title, bookTitleTranslations),
+        b.slug?.replace(/-/g, " "),
+        b.author,
+        tc(b.author, bookAuthorTranslations),
+        b.category,
+        b.description,
+      ],
+      8,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, books, languageCode]);
 
   const showResults = focused && query.trim().length > 0;
 
@@ -720,9 +728,8 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
   // The Text column is category-scoped while browsing, but a typed query searches
   // across ALL texts (not just the selected category) so anything can be found.
   const bookResults = useMemo(() => {
-    const q = qBook.trim().toLowerCase();
-    if (!q) return catBooks;
-    return books.filter(b => tc(b.title).toLowerCase().includes(q));
+    if (!qBook.trim()) return catBooks;
+    return fuzzyFilter(books, qBook, b => [tc(b.title), b.title, b.slug?.replace(/-/g, " "), b.author]);
   }, [qBook, books, catBooks, welcomeLang]);
 
   // Levels worth their own column: one where the grantha actually branches.
@@ -888,7 +895,7 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
               </div>
               <div key={`${bookId || "none"}-${path.slice(0, level.depth).join(".")}`} className="flex-1 overflow-y-auto max-h-72 pr-1 space-y-0.5 animate-in fade-in-0 duration-300">
                 {options
-                  .filter(node => `${sectionLabel(node, level.depth)} ${node.number} ${label}`.toLowerCase().includes(query.toLowerCase()))
+                  .filter(node => !query.trim() || fuzzyMatchAny([`${sectionLabel(node, level.depth)} ${node.number} ${label}`, String(node.number)], query))
                   .map(node => (
                     <button
                       key={node.number}
@@ -912,11 +919,14 @@ function HomeTextNavigator({ books, onSelectBook, onSelectVerse, languageCode }:
           <div className={colHead}><List className="h-4 w-4 text-primary" /><span className="text-sm font-semibold">{visibleCols}. {hier.unit}</span></div>
           <div className={searchBox}><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" /><input className={searchInput} placeholder={`Search ${hier.unit.toLowerCase()}s...`} value={qMan} onChange={e => setQMan(e.target.value)} /></div>
           <div className="flex-1 overflow-y-auto max-h-72 pr-1 space-y-0.5">
-            {mantraNums.filter((_, i) => `${hier.unit} ${i + 1} mantra`.toLowerCase().includes(qMan.toLowerCase())).map((vn, i) => (
-              <button key={vn} type="button" onClick={() => setVerse(vn)} className={`${rowBase} ${verse === vn ? rowActive : rowIdle}`}>
-                <span className="truncate">{hier.unit} {i + 1}</span>
-              </button>
-            ))}
+            {mantraNums
+              .map((vn, i) => ({ vn, n: i + 1 }))
+              .filter(({ n }) => !qMan.trim() || fuzzyMatchAny([`${hier.unit} ${n} mantra`, String(n)], qMan))
+              .map(({ vn, n }) => (
+                <button key={vn} type="button" onClick={() => setVerse(vn)} className={`${rowBase} ${verse === vn ? rowActive : rowIdle}`}>
+                  <span className="truncate">{hier.unit} {n}</span>
+                </button>
+              ))}
             {mantraNums.length === 0 && (
               <p className="text-xs text-muted-foreground/50 px-2.5 py-2">
                 {!bookId ? "Select a text first." : visibleLevels.length > 0 ? `Select a ${levelLabel(visibleLevels[visibleLevels.length - 1].depth).toLowerCase()}.` : "No entries."}
@@ -1143,10 +1153,10 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
   const cards = TABS[tab] || TABS.Upanishads;
   const single = cards.length === 1;
   const triple = cards.length >= 3;
-  const ql = q.trim().toLowerCase();
+  const ql = q.trim();
 
   const renderCard = (card: Card) => {
-    const items = ql ? card.items.filter(i => i.label.toLowerCase().includes(ql)) : card.items;
+    const items = ql ? fuzzyFilter(card.items, ql, i => [i.label]) : card.items;
     return (
       <div key={card.title + card.kicker} className="rounded-2xl bg-[#fdf6ee] dark:bg-[#17100a] dark:border dark:border-primary/20 shadow-sm p-5 flex flex-col min-w-0">
         <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground text-center font-semibold">{card.kicker}</p>
