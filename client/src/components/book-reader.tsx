@@ -1,13 +1,16 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef, type MouseEvent as ReactMouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { cmsContentQueryOptions, getQueryFn } from "@/lib/queryClient";
+import { cmsContentQueryOptions, prefetchVerse, verseFetchKey } from "@/lib/queryClient";
+import { retainOnly, cancelGroup } from "@/lib/fetch-scheduler";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareText, StickyNote, List, Globe, Languages, Sparkles, Feather, ScrollText, Check, Lock, Copy, Share2, Bookmark, Volume2, VolumeX, ArrowLeftRight, Sun, Maximize2, Minimize2, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoPopup } from "@/components/video-popup";
+import { useBookVideos } from "@/lib/use-book-videos";
+import { videosForVerse, type VideoResource } from "@shared/video-resource";
 import {
   buildSectionTree,
   detectLevelLabels,
@@ -145,12 +148,66 @@ function buildTOCHierarchy(verses: VerseMeta[]): {
   return { groups, depth: sectionDepth(groups), levelLabels: detectLevelLabels(groups).levelLabels };
 }
 
+/**
+ * Legacy hardcoded intro videos, used only where the CMS has nothing. New
+ * videos belong in the CMS `video-resource` collection, which can target an
+ * individual mantra — see shared/video-resource.ts.
+ */
 const bookMediaConfig: Record<string, { videoId?: string; videoTitle?: string }> = {
   "isha-upanishad-bhashya": {
     videoId: "8ELHatzdtAk",
     videoTitle: "Introduction to Isha Upanishad",
   },
 };
+
+/**
+ * The videos to offer on a reader page: the open mantra's own if the CMS has
+ * any, otherwise the grantha's, otherwise the legacy per-slug intro. A mantra
+ * with its own video therefore shows that instead of the introduction, while
+ * mantras without one keep showing what they showed before.
+ */
+function VideoBar({
+  videos,
+  inherited,
+  verseLabel,
+  fallbackVideoId,
+  fallbackTitle,
+  buttonLabel,
+  introLabel,
+}: {
+  videos: VideoResource[];
+  inherited: boolean;
+  verseLabel?: string | null;
+  fallbackVideoId?: string;
+  fallbackTitle?: string;
+  buttonLabel: string;
+  introLabel: string;
+}) {
+  if (videos.length > 0) {
+    return (
+      <>
+        {videos.map((video, index) => (
+          <VideoPopup
+            key={video.id}
+            videoId={video.videoId}
+            startSeconds={video.startSeconds}
+            title={
+              video.title ||
+              (inherited
+                ? introLabel
+                : verseLabel
+                  ? `${introLabel.replace(/\s*video$/i, "")} ${verseLabel}`.trim()
+                  : introLabel)
+            }
+            buttonLabel={videos.length > 1 ? `${buttonLabel} ${index + 1}` : buttonLabel}
+          />
+        ))}
+      </>
+    );
+  }
+  if (!fallbackVideoId) return null;
+  return <VideoPopup videoId={fallbackVideoId} title={fallbackTitle || introLabel} buttonLabel={buttonLabel} />;
+}
 
 /** Fixed ~one-screen commentary panels; content scrolls inside the box. */
 const COMMENTARY_PANEL_SHELL_CLASS =
@@ -821,6 +878,9 @@ export function BookReader({
     ...cmsContentQueryOptions,
   });
 
+  // One request per grantha keeps every mantra's video ready before it's needed.
+  const bookVideos = useBookVideos(bookId);
+
   const verses = useMemo(
     () =>
       (book?.verses || []).map((v) =>
@@ -871,21 +931,44 @@ export function BookReader({
     ...cmsContentQueryOptions,
   });
 
-  // Warm the cache for the verses on either side of the current one so tapping
-  // next/previous renders the (heavy) bhashya + teeka content immediately
-  // instead of waiting on a fresh Strapi round-trip.
+  // Warm the verses around the open one so tapping next/previous renders the
+  // (heavy) bhashya + teeka content immediately instead of waiting on a fresh
+  // Strapi round-trip.
+  //
+  // The window is deliberately lopsided — reading goes forwards — and priority
+  // falls off with distance. Only the immediate neighbours are "high"; anything
+  // further is "idle", which the scheduler drops or cuts short the moment the
+  // reader asks for something they are actually waiting on. Each move also
+  // retires the previous plan, so prefetches for where the reader *was* can
+  // never delay where they now are.
   useEffect(() => {
     if (inChapterView || verses.length === 0) return;
-    const neighbours = [verses[currentPage + 1], verses[currentPage - 1]];
-    for (const neighbour of neighbours) {
-      if (!neighbour?.id) continue;
-      queryClient.prefetchQuery({
-        queryKey: ["/api/verses", neighbour.id],
-        queryFn: getQueryFn({ on401: "throw" }),
-        ...cmsContentQueryOptions,
-      });
+
+    const window: { offset: number; priority: "high" | "idle" }[] = [
+      { offset: 1, priority: "high" },
+      { offset: -1, priority: "high" },
+      { offset: 2, priority: "idle" },
+      { offset: 3, priority: "idle" },
+      { offset: -2, priority: "idle" },
+    ];
+
+    const planned: { id: string; priority: "high" | "idle" }[] = [];
+    for (const { offset, priority } of window) {
+      const verse = verses[currentPage + offset];
+      if (verse?.id) planned.push({ id: verse.id, priority });
     }
-  }, [currentPage, verses, inChapterView, queryClient]);
+
+    retainOnly(bookId, planned.map((v) => verseFetchKey(v.id)));
+    for (const { id, priority } of planned) {
+      prefetchVerse(id, { priority, group: bookId });
+    }
+  }, [currentPage, verses, inChapterView, bookId]);
+
+  // Leaving a grantha abandons everything still queued for it, so the text the
+  // reader just opened doesn't start out queued behind the one they closed.
+  useEffect(() => {
+    return () => cancelGroup(bookId);
+  }, [bookId]);
 
   useEffect(() => {
     setInitialized(false);
@@ -926,6 +1009,11 @@ export function BookReader({
 
   // Reference of the open verse, with one number per section level:
   // "2.18" (Gītā), "1.2.3" (Chāndogya), "1.1.31.4" (Adhyāya › Pāda › Sūtra).
+  const currentVerseVideos = useMemo(
+    () => videosForVerse(bookVideos, currentVerseMeta?.id),
+    [bookVideos, currentVerseMeta?.id],
+  );
+
   const currentNumericLabel = useMemo(() => {
     if (!currentVerse) return null;
     return verseLabelMap.get(currentVerse.verseNumber) ?? null;
@@ -1601,13 +1689,16 @@ export function BookReader({
           </div>
         </div>
 
-        {book?.slug && bookMediaConfig[book.slug]?.videoId && (
+        {(bookVideos.book.length > 0 || (book?.slug && bookMediaConfig[book.slug]?.videoId)) && (
           <div className="border-t border-border px-3 sm:px-8 py-2 sm:py-3 bg-background/80 backdrop-blur-sm">
-            <div className="max-w-4xl xl:max-w-5xl 2xl:max-w-6xl mx-auto flex items-center justify-center">
-              <VideoPopup
-                videoId={bookMediaConfig[book.slug].videoId!}
-                title={bookMediaConfig[book.slug].videoTitle || t("introductionVideo")}
+            <div className="max-w-4xl xl:max-w-5xl 2xl:max-w-6xl mx-auto flex items-center justify-center gap-2 flex-wrap">
+              <VideoBar
+                videos={bookVideos.book}
+                inherited
+                fallbackVideoId={book?.slug ? bookMediaConfig[book.slug]?.videoId : undefined}
+                fallbackTitle={book?.slug ? bookMediaConfig[book.slug]?.videoTitle : undefined}
                 buttonLabel={t("watchVideo")}
+                introLabel={t("introductionVideo")}
               />
             </div>
           </div>
@@ -2571,13 +2662,18 @@ export function BookReader({
             )}
           </div>
 
-          {book?.slug && bookMediaConfig[book.slug]?.videoId && (
+          {(currentVerseVideos.videos.length > 0 ||
+            (book?.slug && bookMediaConfig[book.slug]?.videoId)) && (
             <div className="border-t border-border mt-6 px-0 py-2">
-              <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto flex items-center justify-center">
-                <VideoPopup
-                  videoId={bookMediaConfig[book.slug].videoId!}
-                  title={bookMediaConfig[book.slug].videoTitle || t("introductionVideo")}
+              <div className="max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto flex items-center justify-center gap-2 flex-wrap">
+                <VideoBar
+                  videos={currentVerseVideos.videos}
+                  inherited={currentVerseVideos.inherited}
+                  verseLabel={currentNumericLabel}
+                  fallbackVideoId={book?.slug ? bookMediaConfig[book.slug]?.videoId : undefined}
+                  fallbackTitle={book?.slug ? bookMediaConfig[book.slug]?.videoTitle : undefined}
                   buttonLabel={t("watchVideo")}
+                  introLabel={t("introductionVideo")}
                 />
               </div>
             </div>

@@ -8,6 +8,8 @@ import { matchAcharyaSlug, type AcharyaNameRef } from "@/lib/acharya-match";
 import shankaracharyaImg from "@assets/image_1770455528511.png";
 
 import { fuzzyMatchAny } from "@/lib/fuzzy-search";
+import { useBookVideos } from "@/lib/use-book-videos";
+import { videosForVerse, youTubeEmbedUrl, youTubeThumbnailUrl } from "@shared/video-resource";
 import {
   buildSectionTree,
   completePath,
@@ -102,7 +104,11 @@ function SidebarSelect({ label, value, options, onChange, testId }: {
   );
 }
 
-/** Shown for every book unless a slug below overrides it. */
+/**
+ * Last-resort intro video, used only when the CMS has nothing for the open
+ * mantra or its grantha. (It is an Isha Upanishad talk, so it is a poor default
+ * for other texts — CMS `video-resource` rows are the way to fix that.)
+ */
 const DEFAULT_SIDEBAR_VIDEO = { videoId: "8ELHatzdtAk", minutes: 32 };
 
 /** Per-slug intro video overrides (falls back to DEFAULT_SIDEBAR_VIDEO). */
@@ -258,10 +264,49 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedNode, searchQuery, previewMap, verseLabelMap]);
 
-  const video = (bookData?.slug && SIDEBAR_VIDEO_BY_SLUG[bookData.slug]) || DEFAULT_SIDEBAR_VIDEO;
+  const bookVideos = useBookVideos(bookId);
 
-  // Stop playback when navigating to a different book.
-  useEffect(() => { setIsVideoPlaying(false); }, [bookId]);
+  /**
+   * What the video panel offers: the open mantra's own video when the CMS has
+   * one, otherwise a grantha-level video, otherwise the legacy intro. The label
+   * changes with it, so a mantra video isn't mislabelled "Introduction to ...".
+   */
+  const sidebarVideo = useMemo(() => {
+    const resolved = videosForVerse(bookVideos, verseIdMap.get(currentVerseNumber));
+    const first = resolved.videos[0];
+    if (first) {
+      const forThisMantra = !resolved.inherited;
+      return {
+        videoId: first.videoId,
+        startSeconds: first.startSeconds,
+        kicker: forThisMantra ? "Video for" : "Introduction to",
+        label: forThisMantra
+          ? first.title || `${labelFor(currentVerseNumber)}`
+          : first.title || bookTitle,
+        minutes: null as number | null,
+      };
+    }
+    // Once a grantha has any CMS videos, the CMS is the source of truth for it:
+    // showing the generic default (an Isha Upanishad talk) on its other mantras
+    // would be actively misleading, so those pages show no video instead.
+    const slugOverride = bookData?.slug ? SIDEBAR_VIDEO_BY_SLUG[bookData.slug] : undefined;
+    const granthaHasCmsVideos =
+      bookVideos.book.length > 0 || Object.keys(bookVideos.byVerseId).length > 0;
+    const legacy = slugOverride ?? (granthaHasCmsVideos ? undefined : DEFAULT_SIDEBAR_VIDEO);
+    if (!legacy) return null;
+    return {
+      videoId: legacy.videoId,
+      startSeconds: 0,
+      kicker: "Introduction to",
+      label: bookTitle,
+      minutes: legacy.minutes as number | null,
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookVideos, verseIdMap, currentVerseNumber, bookData?.slug, bookTitle, verseLabelMap]);
+
+  // Stop playback when navigating to a different book — or to a mantra with a
+  // different video, so the player can't keep playing the previous one.
+  useEffect(() => { setIsVideoPlaying(false); }, [bookId, sidebarVideo?.videoId]);
 
   return (
     <div className="h-full flex flex-col border-r border-border bg-card" data-testid="reader-nav-sidebar">
@@ -401,15 +446,15 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
         )}
       </div>
 
-      {/* Intro video (fixed) */}
-      {video && (
+      {/* Video for the open mantra, else the grantha's, else the legacy intro */}
+      {sidebarVideo && (
         <div className="shrink-0 border-t border-border/60 p-2.5 space-y-2">
           {isVideoPlaying ? (
             <>
               <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-black">
                 <iframe
-                  src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1`}
-                  title={`Introduction to ${bookTitle}`}
+                  src={youTubeEmbedUrl(sidebarVideo, { autoplay: true })}
+                  title={`${sidebarVideo.kicker} ${sidebarVideo.label}`}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                   className="absolute inset-0 w-full h-full"
@@ -418,8 +463,8 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
               </div>
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] text-muted-foreground leading-tight">Introduction to</p>
-                  <p className="text-xs font-semibold text-foreground truncate">{bookTitle}</p>
+                  <p className="text-[10px] text-muted-foreground leading-tight">{sidebarVideo.kicker}</p>
+                  <p className="text-xs font-semibold text-foreground truncate">{sidebarVideo.label}</p>
                 </div>
                 <button
                   type="button"
@@ -440,16 +485,17 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
               data-testid="reader-nav-video"
             >
               <div className="relative h-11 w-16 rounded-md overflow-hidden shrink-0 bg-muted">
-                <img src={`https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg`} alt="" className="h-full w-full object-cover" />
+                <img src={youTubeThumbnailUrl(sidebarVideo)} alt="" className="h-full w-full object-cover" />
                 <span className="absolute inset-0 flex items-center justify-center bg-black/30">
                   <Play className="h-4 w-4 text-white fill-white" />
                 </span>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] text-muted-foreground leading-tight">Introduction to</p>
-                <p className="text-xs font-semibold text-foreground truncate">{bookTitle}</p>
+                <p className="text-[10px] text-muted-foreground leading-tight">{sidebarVideo.kicker}</p>
+                <p className="text-xs font-semibold text-foreground truncate">{sidebarVideo.label}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
-                  {video.minutes} min &middot; <span className="text-primary font-semibold">WATCH NOW</span>
+                  {sidebarVideo.minutes != null ? `${sidebarVideo.minutes} min · ` : ""}
+                  <span className="text-primary font-semibold">WATCH NOW</span>
                 </p>
               </div>
             </button>

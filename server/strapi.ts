@@ -14,7 +14,16 @@ import type {
 } from "@shared/schema";
 import { transliterateSanskrit, LANGUAGE_TO_SCHEME } from "./strapi-transliterate";
 import type { CommentaryOptions, CommentaryOption } from "./storage";
+import {
+  parseYouTubeUrl,
+  EMPTY_BOOK_VIDEOS,
+  type BookVideos,
+  type VideoResource,
+  type VideoTargetType,
+} from "@shared/video-resource";
 import { Agent, fetch as undiciFetch } from "undici";
+import { withFetchSlot } from "./fetch-priority";
+import { createContentStore } from "./content-cache";
 
 const STRAPI_URL = (process.env.STRAPI_URL ?? "").trim().replace(/\/+$/, "");
 const STRAPI_API_TOKEN = (process.env.STRAPI_API_TOKEN ?? "").trim();
@@ -34,10 +43,26 @@ const strapiUserAgent =
   process.env.STRAPI_USER_AGENT?.trim() ||
   "Sacred-Script-Hub/1.0 (server; Strapi REST client)";
 
-function isStrapiTimeoutError(e: unknown): boolean {
-  const err = e as Error & { cause?: Error };
+/**
+ * Failures worth retrying: a timeout, or the CMS dropping the connection.
+ * Large cold loads fan out enough requests that the box intermittently resets
+ * sockets ("other side closed" / ECONNRESET); treating those as fatal turned a
+ * recoverable blip into an empty grantha.
+ */
+function isRetryableStrapiError(e: unknown): boolean {
+  const err = e as Error & { cause?: Error & { code?: string } };
   const msg = `${err?.message || ""} ${err?.cause?.message || ""}`.toLowerCase();
-  return msg.includes("timeout") || msg.includes("aborted");
+  const code = err?.cause?.code || "";
+  return (
+    msg.includes("timeout") ||
+    msg.includes("aborted") ||
+    msg.includes("other side closed") ||
+    msg.includes("socket") ||
+    code === "ECONNRESET" ||
+    code === "ECONNREFUSED" ||
+    code === "UND_ERR_SOCKET" ||
+    code === "EPIPE"
+  );
 }
 
 async function strapiHttpFetch(
@@ -49,14 +74,17 @@ async function strapiHttpFetch(
   let lastError: unknown;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      return await undiciFetch(url, {
-        headers: { "User-Agent": strapiUserAgent, ...headers },
-        signal: AbortSignal.timeout(timeoutMs),
-        ...(strapiTlsAgent ? { dispatcher: strapiTlsAgent } : {}),
-      } as RequestInit);
+      // Background warmers yield here while a reader has a request outstanding.
+      return await withFetchSlot(() =>
+        undiciFetch(url, {
+          headers: { "User-Agent": strapiUserAgent, ...headers },
+          signal: AbortSignal.timeout(timeoutMs),
+          ...(strapiTlsAgent ? { dispatcher: strapiTlsAgent } : {}),
+        } as RequestInit),
+      );
     } catch (e: unknown) {
       lastError = e;
-      if (attempt < maxRetries && isStrapiTimeoutError(e)) {
+      if (attempt < maxRetries && isRetryableStrapiError(e)) {
         await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
         continue;
       }
@@ -93,6 +121,28 @@ const explanationCache = new Map<string, CacheEntry<Explanation[]>>();
 const commentaryOptionsCache = new Map<string, CacheEntry<CommentaryOptions>>();
 const inflight = new Map<string, Promise<any>>();
 
+/**
+ * Disk-backed mirrors of the four caches that gate the reader's first paint.
+ *
+ * The `Map`s above stay the hot tier (no I/O, no JSON parse). These add
+ * restart-survival and stale-while-revalidate: after a payload has been built
+ * once, an expired entry is served instantly from disk while it refreshes in
+ * the background, so a reader stops paying for Strapi round-trips on every TTL
+ * boundary and every deploy. Cleared by the same webhook invalidation hooks.
+ */
+const bookMetaStore = createContentStore<BookWithVerseMeta>("book-meta");
+const bookDetailStore = createContentStore<BookWithDetails>("book-detail");
+const verseStore = createContentStore<VerseWithTranslations>("verse");
+const commentaryOptionsStore = createContentStore<CommentaryOptions>("commentary-options");
+/**
+ * Teaching videos change far more often than scripture (an editor adds a link
+ * and expects to see it), and the collection is small, so this gets a short TTL
+ * of its own rather than the 30-minute content default.
+ */
+const videoResourceStore = createContentStore<VideoResource[]>("video-resources", {
+  ttlMs: Number(process.env.VIDEO_CACHE_TTL_MS || 5 * 60 * 1000),
+});
+
 function getCached<T>(cache: Map<string, CacheEntry<T>>, key: string): T | undefined {
   const entry = cache.get(key);
   if (entry && Date.now() - entry.timestamp < CACHE_TTL) return entry.data;
@@ -115,12 +165,16 @@ async function dedup<T>(key: string, fn: () => Promise<T>): Promise<T> {
 export function invalidateVerseCache(verseId: string): void {
   verseCache.delete(verseId);
   explanationCache.delete(verseId);
+  verseStore.delete(verseId);
 }
 
 export function invalidateBookCache(bookId: string): void {
+  const verseIds = new Set<string>();
+
   const detailEntry = bookDetailCache.get(bookId);
   if (detailEntry) {
     for (const v of detailEntry.data.verses) {
+      verseIds.add(v.id);
       verseCache.delete(v.id);
       explanationCache.delete(v.id);
     }
@@ -129,6 +183,7 @@ export function invalidateBookCache(bookId: string): void {
   const metaEntry = bookVerseMetaCache.get(bookId);
   if (metaEntry) {
     for (const v of metaEntry.data.verses) {
+      verseIds.add(v.id);
       verseCache.delete(v.id);
       explanationCache.delete(v.id);
     }
@@ -142,7 +197,19 @@ export function invalidateBookCache(bookId: string): void {
   bookListCacheEntry = null;
   commentaryOptionsCache.delete(bookId);
 
+  bookDetailStore.delete(bookId);
+  bookMetaStore.delete(bookId);
+  commentaryOptionsStore.delete(bookId);
+  verseStore.delete(`${bookId}-intro`);
+  verseIds.forEach((verseId) => verseStore.delete(verseId));
+
   console.log(`[Strapi] Cache invalidated for grantha ${bookId}`);
+}
+
+/** Called when the CMS reports a video-resource change. */
+export function invalidateVideoResourceCache(): void {
+  videoResourceStore.delete(VIDEO_RESOURCES_KEY);
+  console.log("[Strapi] Video resource cache invalidated");
 }
 
 export function invalidateAllStrapiCaches(): void {
@@ -152,7 +219,14 @@ export function invalidateAllStrapiCaches(): void {
   verseCache.clear();
   explanationCache.clear();
   commentaryOptionsCache.clear();
-  console.log("[Strapi] All in-memory caches cleared");
+
+  bookDetailStore.clear();
+  bookMetaStore.clear();
+  verseStore.clear();
+  commentaryOptionsStore.clear();
+  videoResourceStore.clear();
+
+  console.log("[Strapi] All content caches cleared (memory + disk)");
 }
 
 interface StrapiResponse<T> {
@@ -219,23 +293,57 @@ async function strapiFetch<T = any>(endpoint: string, params: Record<string, str
   return response.json() as Promise<T>;
 }
 
-async function strapiFetchAll<T = any>(endpoint: string, params: Record<string, string> = {}, pageSize = 100): Promise<T[]> {
-  const allItems: T[] = [];
-  let page = 1;
+/**
+ * How many pages of one paginated CMS collection to fetch concurrently. Walking
+ * pages serially makes a large grantha cost the *sum* of 6+ round-trips of heavy
+ * rich text; fetching page 1 and then the rest in parallel turns that into
+ * roughly two waves.
+ *
+ * Kept deliberately low: the CMS box is the bottleneck, not the round-trip
+ * count, and it starts resetting sockets when pushed (hence the retry on
+ * connection errors above). Measured cold-load times on this box vary by 3-4x
+ * run to run, so this is tuned for not overloading it rather than for a proven
+ * speedup — the real win is that the caching layer keeps cold loads off a
+ * reader's request entirely. Override with STRAPI_PAGE_CONCURRENCY.
+ */
+const PAGE_FETCH_CONCURRENCY = Math.max(
+  1,
+  Math.min(8, Number(process.env.STRAPI_PAGE_CONCURRENCY || 3)),
+);
 
-  while (true) {
-    const result = await strapiFetch<StrapiResponse<T[]>>(endpoint, {
+async function strapiFetchAll<T = any>(endpoint: string, params: Record<string, string> = {}, pageSize = 100): Promise<T[]> {
+  const fetchPage = (page: number) =>
+    strapiFetch<StrapiResponse<T[]>>(endpoint, {
       ...params,
       "pagination[page]": String(page),
       "pagination[pageSize]": String(pageSize),
     });
-    if (!result.data || !Array.isArray(result.data)) break;
-    allItems.push(...result.data);
-    if (!result.meta?.pagination || page >= result.meta.pagination.pageCount) break;
-    page++;
-  }
 
-  return allItems;
+  const first = await fetchPage(1);
+  if (!first.data || !Array.isArray(first.data)) return [];
+
+  const pageCount = first.meta?.pagination?.pageCount ?? 1;
+  if (pageCount <= 1) return [...first.data];
+
+  // Keep results positional so the collection stays in the CMS sort order even
+  // though the pages come back out of order.
+  const pages: T[][] = new Array(pageCount).fill(null).map(() => []);
+  pages[0] = first.data;
+
+  let nextPage = 2;
+  const worker = async () => {
+    while (true) {
+      const page = nextPage++;
+      if (page > pageCount) return;
+      const result = await fetchPage(page);
+      pages[page - 1] = result.data && Array.isArray(result.data) ? result.data : [];
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(PAGE_FETCH_CONCURRENCY, pageCount - 1) }, () => worker()),
+  );
+
+  return pages.flat();
 }
 
 function slugify(name: string): string {
@@ -763,17 +871,24 @@ async function fetchManthraPreviewsForGrantha(granthaDocId: string): Promise<Map
   return previews;
 }
 
+function hydrateBookDetailCaches(result: BookWithDetails | undefined, id: string): void {
+  if (!result) return;
+  setCache(bookDetailCache, id, result);
+  for (const v of result.verses) {
+    setCache(verseCache, v.id, v);
+  }
+}
+
 export async function strapiGetBookById(id: string): Promise<BookWithDetails | undefined> {
   const cached = getCached(bookDetailCache, id);
   if (cached) return cached;
   return dedup(`bookDetail:${id}`, async () => {
-    const result = await _strapiGetBookByIdUncached(id);
-    if (result) {
-      setCache(bookDetailCache, id, result);
-      for (const v of result.verses) {
-        setCache(verseCache, v.id, v);
-      }
-    }
+    const result = await bookDetailStore.swr(id, async () => {
+      const fresh = await _strapiGetBookByIdUncached(id);
+      hydrateBookDetailCaches(fresh, id);
+      return fresh;
+    });
+    hydrateBookDetailCaches(result, id);
     return result;
   });
 }
@@ -896,7 +1011,11 @@ export async function strapiGetBookWithVerseMeta(id: string): Promise<BookWithVe
   const cached = getCached(bookVerseMetaCache, id);
   if (cached) return cached;
   return dedup(`bookMeta:${id}`, async () => {
-    const result = await _strapiGetBookWithVerseMetaUncached(id);
+    const result = await bookMetaStore.swr(id, async () => {
+      const fresh = await _strapiGetBookWithVerseMetaUncached(id);
+      if (fresh) setCache(bookVerseMetaCache, id, fresh);
+      return fresh;
+    });
     if (result) setCache(bookVerseMetaCache, id, result);
     return result;
   });
@@ -1040,16 +1159,40 @@ function mapIntroductionVerse(grantha: any, bookId: string): VerseWithTranslatio
   };
 }
 
+/**
+ * The Bhashyakara introduction, which the reader presents as verse 0.
+ *
+ * It used to be read out of a fully hydrated book, which meant that opening any
+ * grantha that *has* an introduction paid for every manthra, every bhashya and
+ * every teeka in the text before showing its first page — up to a 120s timeout
+ * on the largest ones. Everything the intro needs lives on the grantha record
+ * itself, so one small request does the job.
+ */
+async function fetchIntroVerse(verseId: string): Promise<VerseWithTranslations | undefined> {
+  const bookId = verseId.replace(/-intro$/, "");
+  try {
+    const result = await strapiFetch<StrapiResponse<any>>(`/granthas/${bookId}`, {
+      "populate[0]": "BhashyakaraIntroduction",
+      "populate[1]": "BhashyakaraIntroduction.OtherTranslations",
+    });
+    if (!result.data) return undefined;
+    return mapIntroductionVerse(result.data, bookId) ?? undefined;
+  } catch (err: any) {
+    console.warn(`[Strapi] intro verse fetch failed for ${bookId}:`, err.message);
+    return undefined;
+  }
+}
+
 export async function strapiGetVerseById(verseId: string): Promise<VerseWithTranslations | undefined> {
   const cached = getCached(verseCache, verseId);
   if (cached) return cached;
 
   if (verseId.endsWith("-intro")) {
-    const bookId = verseId.replace("-intro", "");
-    const book = await strapiGetBookById(bookId);
-    const verse = book?.verses.find((v) => v.id === verseId);
-    if (verse) setCache(verseCache, verseId, verse);
-    return verse;
+    return dedup(`verse:${verseId}`, async () => {
+      const value = await verseStore.swr(verseId, () => fetchIntroVerse(verseId));
+      if (value) setCache(verseCache, verseId, value);
+      return value;
+    });
   }
 
   for (const [, entry] of bookDetailCache) {
@@ -1059,6 +1202,15 @@ export async function strapiGetVerseById(verseId: string): Promise<VerseWithTran
     }
   }
 
+  return dedup(`verse:${verseId}`, async () => {
+    const value = await verseStore.swr(verseId, () => _strapiGetVerseByIdRemote(verseId));
+    if (value) setCache(verseCache, verseId, value);
+    return value;
+  });
+}
+
+/** One manthra straight from the CMS, with its full commentary set. */
+async function _strapiGetVerseByIdRemote(verseId: string): Promise<VerseWithTranslations | undefined> {
   try {
     const result = await strapiFetch<StrapiResponse<any>>(`/manthras/${verseId}`, {
       "populate[0]": "Section",
@@ -1099,6 +1251,8 @@ export async function strapiGetVerseById(verseId: string): Promise<VerseWithTran
     return verse;
   } catch (err: any) {
     console.warn("[Strapi] getVerseById failed:", err.message);
+    // Returning undefined (rather than throwing) keeps a transient CMS failure
+    // out of the cache, so the next request retries instead of serving a hole.
     return undefined;
   }
 }
@@ -1186,6 +1340,19 @@ function langCodesFromLightTat(tat: any): string[] {
  * slow — keeping only each translation's language code. Falls back to the
  * full-book derivation if the light scan fails.
  */
+/**
+ * Page size for the light commentary scan. Even trimmed to language codes, a
+ * page of 100 manthras with every bhashya and teeka attached exceeds the CMS's
+ * 120s budget on the largest texts (Brahma Sutra). The scan then fails and the
+ * caller falls back to hydrating the entire book — measured at over five
+ * minutes — so a page size that reliably returns is worth far more than a
+ * smaller number of round-trips.
+ */
+const COMMENTARY_SCAN_PAGE_SIZE = Math.max(
+  1,
+  Math.min(100, Number(process.env.STRAPI_COMMENTARY_SCAN_PAGE_SIZE || 40)),
+);
+
 async function commentaryOptionsFromLightScan(bookId: string): Promise<CommentaryOptions | null> {
   const grantha = await strapiFetch<StrapiResponse<any>>(`/granthas/${bookId}`, {
     "fields[0]": "BhashyamAuthor",
@@ -1205,7 +1372,7 @@ async function commentaryOptionsFromLightScan(bookId: string): Promise<Commentar
     "populate[Teekas][populate][TeekaEntry][fields][0]": "SanskritTextEntry",
     "populate[Teekas][populate][TeekaEntry][fields][1]": "EnglishTranslationText",
     "populate[Teekas][populate][TeekaEntry][populate][OtherTranslations][fields][0]": "LanguageOfTranslation",
-  }, 100);
+  }, COMMENTARY_SCAN_PAGE_SIZE);
   if (manthras.length === 0) return null;
 
   const authorMap = new Map<string, CommentaryAuthorAcc>();
@@ -1264,21 +1431,26 @@ export async function strapiGetCommentaryOptionsByBookId(bookId: string): Promis
   if (cached) return cached;
 
   return dedup(`commentaryOptions:${bookId}`, async () => {
-    let options: CommentaryOptions | null = null;
-    try {
-      options = await commentaryOptionsFromLightScan(bookId);
-    } catch (err: any) {
-      console.warn(`[Strapi] Light commentary-options scan failed for ${bookId}, falling back to full book:`, err?.message);
-    }
-    if (!options) {
+    const result = await commentaryOptionsStore.swr(bookId, async () => {
+      let options: CommentaryOptions | null = null;
       try {
-        options = await commentaryOptionsFromFullBook(bookId);
-      } catch {
-        options = null;
+        options = await commentaryOptionsFromLightScan(bookId);
+      } catch (err: any) {
+        console.warn(`[Strapi] Light commentary-options scan failed for ${bookId}, falling back to full book:`, err?.message);
       }
-    }
-    if (options) setCache(commentaryOptionsCache, bookId, options);
-    return options;
+      if (!options) {
+        try {
+          options = await commentaryOptionsFromFullBook(bookId);
+        } catch {
+          options = null;
+        }
+      }
+      if (options) setCache(commentaryOptionsCache, bookId, options);
+      // `undefined` (not `null`) tells the store there is nothing to persist.
+      return options ?? undefined;
+    });
+    if (result) setCache(commentaryOptionsCache, bookId, result);
+    return result ?? null;
   });
 }
 
@@ -1299,6 +1471,103 @@ export async function strapiGetAllAuthors(): Promise<string[]> {
   } catch {
     return [];
   }
+}
+
+const VIDEO_RESOURCES_KEY = "all";
+
+function mapVideoResource(row: any): VideoResource | null {
+  const parsed = parseYouTubeUrl(row?.youtube_url);
+  if (!parsed) return null;
+  const targetType = String(row.target_type || "").toLowerCase();
+  if (targetType !== "manthra" && targetType !== "section" && targetType !== "grantha") return null;
+  const targetDocId = row.target_doc_id ? String(row.target_doc_id) : "";
+  if (!targetDocId) return null;
+
+  // An explicit start_seconds on the row wins over a `t=` in the pasted URL.
+  const explicitStart = Number(row.start_seconds);
+  const startSeconds = Number.isFinite(explicitStart) && explicitStart > 0
+    ? Math.floor(explicitStart)
+    : parsed.startSeconds;
+
+  const sortOrder = Number(row.sort_order);
+  return {
+    id: row.documentId || String(row.id),
+    url: String(row.youtube_url),
+    videoId: parsed.videoId,
+    title: row.title ? String(row.title) : null,
+    startSeconds,
+    language: row.language ? String(row.language) : null,
+    sortOrder: Number.isFinite(sortOrder) ? sortOrder : 0,
+    targetType: targetType as VideoTargetType,
+    targetDocId,
+  };
+}
+
+/**
+ * Every video row in the CMS, normalised. The collection is small (a handful of
+ * rows today, a few hundred at most) and has no per-grantha filter that would
+ * let us narrow it server-side without knowing the target ids first, so we fetch
+ * it whole, cache it, and slice per book.
+ */
+async function fetchAllVideoResources(): Promise<VideoResource[] | undefined> {
+  try {
+    const rows = await strapiFetchAll<any>("/video-resources", { "sort[0]": "sort_order:asc" }, 200);
+    const mapped: VideoResource[] = [];
+    for (const row of rows) {
+      const video = mapVideoResource(row);
+      if (video) mapped.push(video);
+    }
+    return mapped;
+  } catch (err: any) {
+    // A missing content type or an API token without access to it should leave
+    // the reader working, just without videos.
+    console.warn("[Strapi] video-resources fetch failed:", err.message);
+    return undefined;
+  }
+}
+
+async function getAllVideoResources(): Promise<VideoResource[]> {
+  if (!isStrapiConfigured()) return [];
+  const cached = videoResourceStore.peekFresh(VIDEO_RESOURCES_KEY);
+  if (cached) return cached;
+  const value = await dedup(`videoResources`, () =>
+    videoResourceStore.swr(VIDEO_RESOURCES_KEY, fetchAllVideoResources),
+  );
+  return value ?? [];
+}
+
+/** Videos for one grantha, grouped by the verse they belong to. */
+export async function strapiGetBookVideos(bookId: string): Promise<BookVideos> {
+  if (!isStrapiConfigured()) return EMPTY_BOOK_VIDEOS;
+
+  const [all, meta] = await Promise.all([
+    getAllVideoResources(),
+    strapiGetBookWithVerseMeta(bookId).catch(() => undefined),
+  ]);
+  if (all.length === 0) return EMPTY_BOOK_VIDEOS;
+
+  const verseIds = new Set<string>();
+  for (const verse of meta?.verses ?? []) verseIds.add(verse.id);
+
+  const byVerseId: Record<string, VideoResource[]> = {};
+  const book: VideoResource[] = [];
+  for (const video of all) {
+    if (video.targetType === "grantha") {
+      if (video.targetDocId === bookId) book.push(video);
+      continue;
+    }
+    if (video.targetType !== "manthra") continue;
+    // Without the verse index we can't tell which grantha a manthra belongs to,
+    // so fall back to returning nothing rather than another grantha's videos.
+    if (verseIds.size > 0 && !verseIds.has(video.targetDocId)) continue;
+    (byVerseId[video.targetDocId] ??= []).push(video);
+  }
+
+  const bySortOrder = (a: VideoResource, b: VideoResource) => a.sortOrder - b.sortOrder;
+  for (const list of Object.values(byVerseId)) list.sort(bySortOrder);
+  book.sort(bySortOrder);
+
+  return { byVerseId, book };
 }
 
 export { STRAPI_URL };

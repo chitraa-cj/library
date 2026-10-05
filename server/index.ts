@@ -131,7 +131,12 @@ app.use((req, res, next) => {
     httpServer.listen(port, "0.0.0.0", () => {
       httpServer.removeListener("error", onError);
       log(`serving on port ${port}`);
+      // Seeding hits Postgres and the warm-up hits the CMS, so they don't
+      // contend. Previously the warm-up waited for every seed step to finish,
+      // which left the reader on cold caches for the first several minutes
+      // after a deploy — exactly when the content caches matter most.
       runSeedOperations();
+      prewarmAllBookCaches().catch(err => console.error("Pre-warm error:", err));
     });
   };
 
@@ -166,40 +171,80 @@ async function runSeedOperations() {
     log("All seed operations completed");
     await importTranslationDataFromFiles().catch(err => console.error("Translation data import error:", err));
     await syncSouthIndianBhashya().catch(err => console.error("South Indian bhashya sync error:", err));
-    prewarmAllBookCaches().catch(err => console.error("Pre-warm error:", err));
   } catch (err) {
     console.error("Seed operations failed:", err);
   }
 }
 
+/**
+ * Warms the CMS-derived content caches, newest-first across two phases.
+ *
+ * Phase 1 warms exactly what opening a grantha needs — the verse index, the
+ * commentary options and the opening verse — for every grantha, so the slowest
+ * thing a reader can do (open a text nobody has opened since the last deploy)
+ * is fast across the whole library quickly. Phase 2 then fills in the full
+ * hydration that chapter view and the commentary-options fallback rely on.
+ *
+ * All of it runs at background priority: every outbound CMS fetch yields while
+ * a reader has a request outstanding (see server/fetch-priority.ts), so warming
+ * can never be the reason a page is slow.
+ */
 async function prewarmAllBookCaches() {
   if (!process.env.STRAPI_URL || !process.env.STRAPI_API_TOKEN) return;
   try {
-    const { strapiGetAllBooks, strapiGetBookById } = await import("./strapi");
-    const books = await strapiGetAllBooks();
-    log(`[Pre-warm] Loading ${books.length} granthas into cache...`);
-    let done = 0;
-    const CONCURRENCY = Math.max(
-      1,
-      Math.min(3, Number(process.env.STRAPI_PREWARM_CONCURRENCY || 1)),
-    );
-    let nextIdx = 0;
-    async function worker() {
-      while (true) {
-        const i = nextIdx++;
-        if (i >= books.length) return;
-        const book = books[i];
-        try {
-          await strapiGetBookById(book.id);
-          done++;
-          log(`[Pre-warm] (${done}/${books.length}) ${book.title}`);
-        } catch (e: any) {
-          log(`[Pre-warm] failed ${book.title}: ${e.message}`);
-        }
-      }
-    }
-    await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
-    log(`[Pre-warm] All ${done} granthas cached and ready.`);
+    const { strapiGetAllBooks, strapiGetBookById, strapiGetBookWithVerseMeta, strapiGetCommentaryOptionsByBookId, strapiGetVerseById } =
+      await import("./strapi");
+    const { runBackground } = await import("./fetch-priority");
+    const { contentCacheStatus } = await import("./content-cache");
+
+    const cache = contentCacheStatus();
+    log(`[Pre-warm] content cache dir=${cache.dir} disk=${cache.disk ? "on" : "off"}`);
+
+    await runBackground(async () => {
+      const books = await strapiGetAllBooks();
+      const CONCURRENCY = Math.max(
+        1,
+        Math.min(4, Number(process.env.STRAPI_PREWARM_CONCURRENCY || 2)),
+      );
+
+      const runPhase = async (
+        label: string,
+        warmOne: (book: { id: string; title: string }) => Promise<void>,
+      ) => {
+        let done = 0;
+        let nextIdx = 0;
+        const worker = async () => {
+          while (true) {
+            const i = nextIdx++;
+            if (i >= books.length) return;
+            const book = books[i] as { id: string; title: string };
+            try {
+              await warmOne(book);
+              done++;
+            } catch (e: any) {
+              log(`[Pre-warm ${label}] failed ${book.title}: ${e?.message || e}`);
+            }
+          }
+        };
+        await Promise.all(Array.from({ length: Math.min(CONCURRENCY, books.length) }, () => worker()));
+        log(`[Pre-warm ${label}] ${done}/${books.length} granthas ready.`);
+      };
+
+      log(`[Pre-warm] ${books.length} granthas — phase 1 (open-a-grantha payloads)...`);
+      await runPhase("open", async (book) => {
+        const meta = await strapiGetBookWithVerseMeta(book.id);
+        const firstVerseId = meta?.verses?.[0]?.id;
+        await Promise.all([
+          strapiGetCommentaryOptionsByBookId(book.id),
+          firstVerseId ? strapiGetVerseById(firstVerseId) : Promise.resolve(undefined),
+        ]);
+      });
+
+      log("[Pre-warm] phase 2 (full hydration)...");
+      await runPhase("full", async (book) => {
+        await strapiGetBookById(book.id);
+      });
+    });
   } catch (e: unknown) {
     const err = e as Error & { cause?: Error };
     const detail = err?.cause?.message || err?.message || String(e);

@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { registerAcharyaRoutes } from "./acharyas";
 import { STRAPI_REPLACES_LOCAL } from "./strapi-merge-policy";
-import { testStrapiConnection, STRAPI_URL, invalidateBookCache, invalidateAllStrapiCaches, strapiGetVerseById } from "./strapi";
+import { testStrapiConnection, STRAPI_URL, invalidateBookCache, invalidateAllStrapiCaches, strapiGetVerseById, strapiGetBookVideos, invalidateVideoResourceCache } from "./strapi";
 import {
   applyCacheInvalidation,
   isWebhookAuthorized,
@@ -11,6 +11,8 @@ import {
 } from "./strapi-webhook";
 import { translateWord } from "./openai";
 import { translateWordRequestSchema } from "@shared/schema";
+import type { BookWithVerseMeta, VerseMeta } from "@shared/schema";
+import { runInteractive } from "./fetch-priority";
 import { isAuthenticated } from "./replit_integrations/auth";
 import { authStorage } from "./replit_integrations/auth/storage";
 import { z } from "zod";
@@ -52,11 +54,83 @@ function setContentApiCacheHeaders(res: import("express").Response): void {
   );
 }
 
+/**
+ * Read paths that a reader is actively waiting on. Requests to these are marked
+ * interactive so the CMS warm-up (and any stale-while-revalidate refresh) backs
+ * off for their duration instead of queueing ahead of them.
+ */
+const INTERACTIVE_CONTENT_PATH = /^\/(books|verses|acharyas|languages|authors)(\/|$)/;
+
+/**
+ * First thing a reader needs when a grantha opens.
+ *
+ * The hint may be a manthra documentId (`?verse=`) or a position (`?verseNumber=`,
+ * which is what the reader's URLs carry). Either way an unrecognised hint falls
+ * back to the opening verse rather than failing — a stale bookmark should still
+ * open the text.
+ */
+function pickBootstrapVerse(
+  book: BookWithVerseMeta,
+  requestedVerseId: string | undefined,
+  requestedVerseNumber: number | undefined,
+): VerseMeta | null {
+  const verses = book.verses || [];
+  if (verses.length === 0) return null;
+  if (requestedVerseId) {
+    const hinted = verses.find((v) => v.id === requestedVerseId);
+    if (hinted) return hinted;
+  }
+  if (requestedVerseNumber !== undefined) {
+    const hinted = verses.find((v) => v.verseNumber === requestedVerseNumber);
+    if (hinted) return hinted;
+  }
+  return verses[0];
+}
+
+/**
+ * Resolves to the promise's value, or to `null` if it takes longer than `ms`.
+ * The work keeps running and lands in the server-side cache, so the client's
+ * own follow-up request for the same thing is served from memory. Used to keep
+ * a slow secondary payload from holding back the content a reader is staring at.
+ */
+function withBudget<T>(promise: Promise<T>, ms: number): Promise<T | null> {
+  if (!(ms > 0)) return promise.catch(() => null);
+  return new Promise<T | null>((resolve) => {
+    const timer = setTimeout(() => resolve(null), ms);
+    timer.unref?.();
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      () => {
+        clearTimeout(timer);
+        resolve(null);
+      },
+    );
+  });
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  
+
+  // Must be registered before the content routes below so it wraps them.
+  app.use("/api", (req, res, next) => {
+    if (req.method !== "GET" || !INTERACTIVE_CONTENT_PATH.test(req.path)) return next();
+    void runInteractive(
+      () =>
+        new Promise<void>((resolve) => {
+          // Resolve on finish *or* close so an aborted request (reader navigated
+          // away) releases the gate instead of pinning it open.
+          res.once("finish", resolve);
+          res.once("close", resolve);
+          next();
+        }),
+    );
+  });
+
   setTimeout(() => restoreQueueFromFile(), 5000);
 
   app.get("/api/health", (_req, res) => {
@@ -167,6 +241,59 @@ export async function registerRoutes(
     }
   });
 
+  /**
+   * Everything the reader needs to paint a grantha, in one round trip:
+   * the verse index, the opening verse's full content, and (when it is ready in
+   * time) the commentary options.
+   *
+   * Previously the client had to fetch the book index, wait for it to learn the
+   * first verse's id, and only then fetch the verse — two serial CMS-backed
+   * round-trips before a single word appeared. `?verse=` lets the client ask for
+   * the position it is actually restoring to (e.g. "resume study") so the first
+   * paint is the right verse rather than verse 1.
+   */
+  app.get("/api/books/:id/bootstrap", async (req, res) => {
+    try {
+      setContentApiCacheHeaders(res);
+      const bookId = req.params.id;
+      const requestedVerseId =
+        typeof req.query.verse === "string" && req.query.verse ? req.query.verse : undefined;
+      const parsedVerseNumber = Number(req.query.verseNumber);
+      const requestedVerseNumber = Number.isFinite(parsedVerseNumber)
+        ? parsedVerseNumber
+        : undefined;
+
+      const book = await storage.getBookWithVerseMeta(bookId);
+      if (!book) {
+        return res.status(404).json({ error: "Book not found" });
+      }
+
+      const target = pickBootstrapVerse(book, requestedVerseId, requestedVerseNumber);
+      const optionsBudgetMs = Number(process.env.BOOTSTRAP_OPTIONS_BUDGET_MS || 1500);
+
+      const [verse, commentaryOptions] = await Promise.all([
+        target
+          ? storage.getVerseById(target.id).then(
+              (v) => v ?? null,
+              () => null,
+            )
+          : Promise.resolve(null),
+        withBudget(storage.getCommentaryOptionsByBookId(bookId), optionsBudgetMs),
+      ]);
+
+      res.json({
+        book,
+        verseId: target?.id ?? null,
+        verse,
+        // null means "not ready yet, ask separately" — never "none exist".
+        commentaryOptions,
+      });
+    } catch (error) {
+      console.error("Error bootstrapping book:", error);
+      res.status(500).json({ error: "Failed to bootstrap book" });
+    }
+  });
+
   app.get("/api/books/:id/commentary-options", async (req, res) => {
     try {
       setContentApiCacheHeaders(res);
@@ -175,6 +302,22 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching commentary options:", error);
       res.status(500).json({ error: "Failed to fetch commentary options" });
+    }
+  });
+
+  /**
+   * Teaching videos for a grantha, grouped by verse. One small request per
+   * grantha warms every mantra's video, so flipping pages never costs a fetch.
+   */
+  app.get("/api/books/:id/videos", async (req, res) => {
+    try {
+      setContentApiCacheHeaders(res);
+      const videos = await strapiGetBookVideos(req.params.id);
+      res.json(videos);
+    } catch (error) {
+      console.error("Error fetching book videos:", error);
+      // Videos are an enhancement — never fail the reader over them.
+      res.json({ byVerseId: {}, book: [] });
     }
   });
 
@@ -654,6 +797,14 @@ export async function registerRoutes(
     try {
       if (!isWebhookAuthorized(req.headers, req.body)) {
         return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const webhookModel = String(
+        (req.body as any)?.model ?? (req.body as any)?.uid ?? (req.body as any)?.contentType ?? "",
+      ).toLowerCase();
+      if (webhookModel.includes("video")) {
+        invalidateVideoResourceCache();
+        return res.json({ ok: true, invalidated: ["video-resources"] });
       }
 
       let target = resolveCacheInvalidationFromWebhook(req.body);

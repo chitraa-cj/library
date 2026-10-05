@@ -9,19 +9,26 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Play } from "lucide-react";
+import { youTubeEmbedUrl, youTubeThumbnailUrl } from "@shared/video-resource";
 
 interface VideoPopupProps {
   videoId?: string;
   title?: string;
   triggerClassName?: string;
   buttonLabel?: string;
+  /** Where to begin playback, for a talk that covers a whole chapter. */
+  startSeconds?: number;
+  /** Screen-reader description; defaults to the title. */
+  description?: string;
 }
 
 export function VideoPopup({ 
   videoId = "8ELHatzdtAk",
   title = "Introduction Video",
   triggerClassName = "",
-  buttonLabel = "Watch Video"
+  buttonLabel = "Watch Video",
+  startSeconds = 0,
+  description,
 }: VideoPopupProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -41,13 +48,11 @@ export function VideoPopup({
       <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden">
         <DialogHeader className="p-4 pb-0">
           <DialogTitle className="font-body">{title}</DialogTitle>
-          <DialogDescription className="sr-only">
-            Watch the introduction video about Isha Upanishad
-          </DialogDescription>
+          <DialogDescription className="sr-only">{description ?? title}</DialogDescription>
         </DialogHeader>
         <div className="relative w-full aspect-video">
           <iframe
-            src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
+            src={youTubeEmbedUrl({ videoId, startSeconds }, { autoplay: true })}
             title={title}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
@@ -63,12 +68,14 @@ interface VideoInlineProps {
   videoId?: string;
   title?: string;
   className?: string;
+  startSeconds?: number;
 }
 
 export function VideoInline({ 
   videoId = "8ELHatzdtAk",
   title = "Introduction Video",
-  className = ""
+  className = "",
+  startSeconds = 0,
 }: VideoInlineProps) {
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -91,11 +98,12 @@ export function VideoInline({
         data-testid="button-video-inline"
       >
         <img 
-          src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
+          src={youTubeThumbnailUrl({ videoId }, "maxres")}
           alt={title}
           className="w-full h-full object-cover"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+            // maxres doesn't exist for every upload; hq always does.
+            (e.target as HTMLImageElement).src = youTubeThumbnailUrl({ videoId }, "hq");
           }}
         />
         <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
@@ -113,7 +121,7 @@ export function VideoInline({
   return (
     <div className={`relative w-full aspect-video rounded-md overflow-hidden ${className}`}>
       <iframe
-        src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
+        src={youTubeEmbedUrl({ videoId, startSeconds }, { autoplay: true })}
         title={title}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
