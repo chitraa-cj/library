@@ -50,6 +50,10 @@ import {
   strapiGetBookTitlesByBookId,
   strapiGetWordMeaningsByVerseId,
   strapiGetChapterVerses,
+  peekBookWithVerseMeta,
+  peekVerse,
+  peekCommentaryOptions,
+  peekAllBooks,
 } from "./strapi";
 import {
   normalizeBookSlugForMerge,
@@ -431,6 +435,8 @@ export class HybridStorage implements IStorage {
   private db = new DatabaseStorage();
   private _strapiAvailable: boolean | null = null;
   private _lastStrapiCheck = 0;
+  private _strapiProbeInFlight = false;
+  private _strapiFirstCall = true;
   private readonly STRAPI_CHECK_INTERVAL = 60000;
   private _strapiToDbVerseIds = new Map<string, string>();
 
@@ -444,6 +450,11 @@ export class HybridStorage implements IStorage {
     return this._strapiToDbVerseIds.get(id) || id;
   }
 
+  /**
+   * Strapi-first with a cached-content tier in between: live CMS, then whatever
+   * the content caches still hold (even stale), then the local DB. Without the
+   * middle tier a CMS blip is indistinguishable from the content not existing.
+   */
   private async useStrapiFor<T>(
     strapiCall: () => Promise<T | null | undefined>,
     dbFallback: () => Promise<T>,
@@ -478,18 +489,51 @@ export class HybridStorage implements IStorage {
     return dbFallback();
   }
 
+  /**
+   * Last known CMS reachability, refreshed in the background.
+   *
+   * This used to await a live probe whenever the 60s window expired, which put
+   * a full CMS connect-timeout (measured: 6.9s when the CMS is unroutable) in
+   * front of a reader's request — even when the answer was sitting in cache. A
+   * health probe belongs off the critical path: callers get the last known
+   * answer immediately, and the probe updates it for the next caller.
+   */
   private async isStrapiAvailable(): Promise<boolean> {
     if (!isStrapiConfigured()) return false;
     const now = Date.now();
-    if (this._strapiAvailable !== null && now - this._lastStrapiCheck < this.STRAPI_CHECK_INTERVAL) {
-      return this._strapiAvailable;
+    const known = this._strapiAvailable;
+    const stale = now - this._lastStrapiCheck >= this.STRAPI_CHECK_INTERVAL;
+
+    if (stale && !this._strapiProbeInFlight) {
+      this._strapiProbeInFlight = true;
+      void isStrapiReachable()
+        .then((reachable) => {
+          if (reachable && this._strapiAvailable === false) {
+            console.log("[Strapi] Connection restored — using Strapi as primary source");
+          } else if (!reachable && this._strapiAvailable !== false) {
+            console.warn("[Strapi] Unreachable — serving cached content until it returns");
+          }
+          this._strapiAvailable = reachable;
+        })
+        .catch(() => {
+          this._strapiAvailable = false;
+        })
+        .finally(() => {
+          this._lastStrapiCheck = Date.now();
+          this._strapiProbeInFlight = false;
+        });
     }
-    this._strapiAvailable = await isStrapiReachable();
-    this._lastStrapiCheck = now;
-    if (this._strapiAvailable) {
-      console.log("[Strapi] Connection active — using Strapi as primary source");
+
+    // On the very first call there is nothing known yet; assume reachable so a
+    // cold start still populates the caches.
+    if (known === null) {
+      if (this._strapiFirstCall) {
+        this._strapiFirstCall = false;
+        return true;
+      }
+      return true;
     }
-    return this._strapiAvailable;
+    return known;
   }
 
   async getAllBooks(): Promise<Book[]> {
@@ -500,9 +544,13 @@ export class HybridStorage implements IStorage {
       const msg = err instanceof Error ? err.message : String(err);
       console.warn("[HybridStorage] getAllBooks DB query failed; continuing with Strapi if available:", msg);
     }
-    if (!(await this.isStrapiAvailable())) return dbBooks;
+    const available = await this.isStrapiAvailable();
     try {
-      const strapiBooks = await strapiGetAllBooks();
+      // When the CMS is down, the cached catalogue is the only source of CMS
+      // granthas — the local DB holds none of them.
+      const strapiBooks = available
+        ? await strapiGetAllBooks()
+        : ((await peekAllBooks().catch(() => undefined)) ?? []);
       const dbSlugSet = new Set(dbBooks.map((b) => normalizeBookSlugForMerge(b.slug)));
       const merged = [...dbBooks];
       for (const b of strapiBooks) {
@@ -552,6 +600,7 @@ export class HybridStorage implements IStorage {
   }
 
   async getBookWithVerseMeta(id: string): Promise<BookWithVerseMeta | undefined> {
+    const cachedMeta = await peekBookWithVerseMeta(id).catch(() => undefined);
     if (await this.isStrapiAvailable()) {
       try {
         const meta = await strapiGetBookWithVerseMeta(id);
@@ -570,6 +619,9 @@ export class HybridStorage implements IStorage {
         console.warn("[Strapi] getBookById fallback for verse meta failed:", msg);
       }
     }
+    // Either the CMS is unreachable or it failed. Cached content beats the local
+    // DB, which holds none of the CMS-sourced granthas.
+    if (cachedMeta) return cachedMeta;
     return this.db.getBookWithVerseMeta(id);
   }
 
@@ -616,7 +668,7 @@ export class HybridStorage implements IStorage {
   async getVerseById(id: string): Promise<VerseWithTranslations | undefined> {
     return this.useStrapiFor(
       () => strapiGetVerseById(id),
-      () => this.db.getVerseById(id),
+      async () => (await peekVerse(id).catch(() => undefined)) ?? this.db.getVerseById(id),
       "getVerseById"
     );
   }
@@ -660,7 +712,9 @@ export class HybridStorage implements IStorage {
   async getCommentaryOptionsByBookId(bookId: string): Promise<CommentaryOptions> {
     return this.useStrapiFor(
       () => strapiGetCommentaryOptionsByBookId(bookId),
-      () => this.db.getCommentaryOptionsByBookId(bookId),
+      async () =>
+        (await peekCommentaryOptions(bookId).catch(() => undefined)) ??
+        this.db.getCommentaryOptionsByBookId(bookId),
       "getCommentaryOptionsByBookId"
     );
   }

@@ -1,6 +1,7 @@
 import express, { type Express, type Response } from "express";
 import fs from "fs";
 import path from "path";
+import { registerShellRoutes } from "./shell";
 
 // One year, in seconds — the standard "cache forever" window for immutable assets.
 const ONE_YEAR = 60 * 60 * 24 * 365;
@@ -40,6 +41,11 @@ export function serveStatic(app: Express) {
   }
 
   app.use(express.static(distPath, { setHeaders: setAssetHeaders }));
+
+  // Grantha URLs get their critical content rendered into the HTML. Registered
+  // after express.static (so real files always win) and before the SPA
+  // catch-all (which it falls through to for every other route).
+  registerShellRoutes(app, distPath);
 
   // fall through to index.html if the file doesn't exist
   app.use("/{*path}", (_req, res) => {

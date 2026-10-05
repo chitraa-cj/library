@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ChevronRight, Globe, LogIn, LogOut, Settings, User, Search, Check, ChevronsUpDown, Menu, Plus, Minus } from "lucide-react";
 import { MyLibraryPanel } from "@/components/my-library-panel";
 import { setLastRead } from "@/lib/last-read";
+import { readPrerenderBootstrap } from "@/lib/prerender-bootstrap";
 import { getFontScale, setFontScale, MIN_FONT_SCALE, MAX_FONT_SCALE, FONT_SCALE_STEP } from "@/lib/font-scale";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -327,6 +328,24 @@ function HomePageContent() {
     : [];
   const chapterPathKey = chapterPathFromUrl.join(".");
   const verseNumberFromUrl = !isChapterUrl && urlParts[1] ? parseInt(urlParts[1], 10) : null;
+
+  // A pre-rendered grantha URL already carries its book id, so the deep link
+  // resolves on the first render instead of waiting for the 83KB catalogue.
+  // Without this, opening /panchadasi/1 rendered the *home* page first and only
+  // switched to the grantha once /api/books had landed — measured at 8.4s on
+  // fast 3G. See server/shell.ts.
+  useEffect(() => {
+    if (urlInitialized) return;
+    const pre = readPrerenderBootstrap();
+    if (!pre || !bookSlugFromUrl || pre.slug !== bookSlugFromUrl) return;
+    setSelectedBookId(pre.bookId);
+    if (verseNumberFromUrl !== null && !isNaN(verseNumberFromUrl)) {
+      setNavigateToVerse(verseNumberFromUrl);
+      setCurrentVerseNumber(verseNumberFromUrl);
+    }
+    setUrlInitialized(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlInitialized, bookSlugFromUrl, verseNumberFromUrl]);
 
   useEffect(() => {
     if (urlInitialized || !allBooks) return;

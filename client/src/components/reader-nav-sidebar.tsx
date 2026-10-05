@@ -9,6 +9,7 @@ import shankaracharyaImg from "@assets/image_1770455528511.png";
 
 import { fuzzyMatchAny } from "@/lib/fuzzy-search";
 import { useBookVideos } from "@/lib/use-book-videos";
+import { useBookPreviews } from "@/lib/use-book-previews";
 import { videosForVerse, youTubeEmbedUrl, youTubeThumbnailUrl } from "@shared/video-resource";
 import {
   buildSectionTree,
@@ -221,6 +222,9 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
   const selectedNode = useMemo(() => nodeAtPath(chapters, selectedPath), [chapters, selectedPath]);
 
   // Per-verse Devanagari preview + id lookups from the raw CMS verses.
+  // Snippets arrive separately so they can't delay the page being readable.
+  const previewsById = useBookPreviews(bookId);
+
   const { previewMap, verseIdMap } = useMemo(() => {
     const preview = new Map<number, string>();
     const ids = new Map<number, string>();
@@ -240,13 +244,14 @@ export function ReaderNavSidebar({ bookId, bookTitle, chapters, currentVerseNumb
     if (Array.isArray(verses)) {
       for (const v of verses) {
         if (v?.id != null) ids.set(v.verseNumber, v.id);
-        const raw = pickPreview(v);
+        // Prefer an inline preview; otherwise use the separately-fetched map.
+        const raw = pickPreview(v) || (v?.id != null ? previewsById[v.id] : "") || "";
         const plain = String(raw).replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
         if (plain) preview.set(v.verseNumber, plain);
       }
     }
     return { previewMap: preview, verseIdMap: ids };
-  }, [bookData]);
+  }, [bookData, previewsById]);
 
   // Reference label per verse — its section numbers plus its position in the
   // deepest section, e.g. "2.5" (Gītā), "1.2.3" (Chāndogya), "1.1.31.4" (four levels).

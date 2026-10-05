@@ -13,6 +13,13 @@ import { translateWord } from "./openai";
 import { translateWordRequestSchema } from "@shared/schema";
 import type { BookWithVerseMeta, VerseMeta } from "@shared/schema";
 import { runInteractive } from "./fetch-priority";
+import { encodeBookIndex } from "@shared/book-index-codec";
+import { incr, observe, renderPrometheus, routeLabel, snapshot, setGauge } from "./observability";
+import { rateLimit, concurrencyLimit, RATE_LIMITS, clientKey, rateLimiterStats } from "./resilience";
+import { fetchPriorityStats } from "./fetch-priority";
+import { cmsCircuitState } from "./strapi";
+import { contentCacheStatus } from "./content-cache";
+import { sendCached, invalidatePrecompressed, precompressedStats } from "./precompressed";
 import { isAuthenticated } from "./replit_integrations/auth";
 import { authStorage } from "./replit_integrations/auth/storage";
 import { z } from "zod";
@@ -116,6 +123,76 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
+  // --- Observability: times every API request, labelled by collapsed route. ---
+  app.use("/api", (req, res, next) => {
+    const startedAt = process.hrtime.bigint();
+    res.once("finish", () => {
+      const ms = Number(process.hrtime.bigint() - startedAt) / 1e6;
+      const route = routeLabel(req.method, req.path);
+      observe("ssh_http_request_ms", ms, { route });
+      incr("ssh_http_requests_total", {
+        route,
+        status: `${Math.floor(res.statusCode / 100)}xx`,
+      });
+      if (res.statusCode === 304) incr("ssh_http_not_modified_total", { route });
+    });
+    next();
+  });
+
+  setGauge("ssh_rate_limit_buckets", () => rateLimiterStats().buckets);
+  setGauge("ssh_precompress_entries", () => precompressedStats().entries);
+  setGauge("ssh_precompress_bytes", () => precompressedStats().bytes);
+  setGauge("ssh_interactive_demand", () => fetchPriorityStats().interactiveDemand);
+  setGauge("ssh_background_inflight", () => fetchPriorityStats().backgroundInFlight);
+  setGauge("ssh_background_waiting", () => fetchPriorityStats().backgroundWaiting);
+
+  /**
+   * Metrics. Not public: without a token it is reachable only from the box
+   * itself, which is what a local Prometheus/node_exporter sidecar needs.
+   */
+  app.get("/api/metrics", (req, res) => {
+    const token = (process.env.METRICS_TOKEN ?? "").trim();
+    const provided = req.headers["x-metrics-token"];
+    const fromLocalhost = ["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(
+      req.socket.remoteAddress ?? "",
+    );
+    const authorised = token ? provided === token : fromLocalhost;
+    if (!authorised) return res.status(404).end();
+
+    res.setHeader("Cache-Control", "no-store");
+    if (req.query.format === "json") return res.json(snapshot());
+    res.setHeader("Content-Type", "text/plain; version=0.0.4");
+    res.send(renderPrometheus());
+  });
+
+  // --- Rate limiting. Reading is generous; expensive work is tight. ---
+  // Applied per path class rather than globally so that a burst of page flips
+  // (which is what a fast reader with prefetching looks like) is never limited,
+  // while AI translation and CMS publish jobs are.
+  const EXPENSIVE_PREFIXES = [
+    "/api/translate",
+    "/api/translate-word",
+    "/api/gemini",
+    "/api/transliterate",
+    "/api/strapi/publish",
+  ];
+  const expensiveLimiter = rateLimit(RATE_LIMITS.expensive);
+  const expensiveConcurrency = concurrencyLimit({
+    name: "expensive",
+    max: Number(process.env.EXPENSIVE_MAX_CONCURRENCY || 4),
+    retryAfterSeconds: 5,
+  });
+  app.use((req, res, next) => {
+    if (!EXPENSIVE_PREFIXES.some((prefix) => req.path.startsWith(prefix))) return next();
+    expensiveLimiter(req, res, () => expensiveConcurrency(req, res, next));
+  });
+
+  const contentLimiter = rateLimit(RATE_LIMITS.content);
+  app.use("/api", (req, res, next) => {
+    if (req.method !== "GET" || !INTERACTIVE_CONTENT_PATH.test(req.path)) return next();
+    contentLimiter(req, res, next);
+  });
+
   // Must be registered before the content routes below so it wraps them.
   app.use("/api", (req, res, next) => {
     if (req.method !== "GET" || !INTERACTIVE_CONTENT_PATH.test(req.path)) return next();
@@ -133,8 +210,27 @@ export async function registerRoutes(
 
   setTimeout(() => restoreQueueFromFile(), 5000);
 
+  // Liveness: the process is up. Must stay trivial — a load balancer hitting a
+  // health check that touches the CMS or DB turns a dependency blip into every
+  // instance being marked unhealthy at once.
   app.get("/api/health", (_req, res) => {
+    res.setHeader("Cache-Control", "no-store");
     res.status(200).send("OK");
+  });
+
+  /**
+   * Readiness: can this instance serve content? Reports the CMS circuit state
+   * for visibility but stays ready while it is open, because the caches can
+   * still answer — an instance that marks itself unready during a CMS blip
+   * removes capacity exactly when it is needed most.
+   */
+  app.get("/api/ready", (_req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    res.status(200).json({
+      ready: true,
+      cms: cmsCircuitState(),
+      cache: contentCacheStatus(),
+    });
   });
 
   // Read-only acharya (guru-parampara) profiles, sourced from the CMS database.
@@ -143,6 +239,7 @@ export async function registerRoutes(
   app.get("/api/books", async (req, res) => {
     try {
       setContentApiCacheHeaders(res);
+      await sendCached(req, res, "books:list", async () => {
       const books = await storage.getAllBooks();
       const isLocalDb = (b: any) => typeof b.id === 'string' && b.id.includes('-') && b.id.length > 30;
       const presentIds = new Set(books.map(b => b.id as string));
@@ -157,7 +254,8 @@ export async function registerRoutes(
       }
       const localBooks = books.filter(b => isLocalDb(b) && !hideLocalIds.has(b.id as string));
       const strapiBooks = books.filter(b => !isLocalDb(b));
-      res.json([...localBooks, ...strapiBooks]);
+      return [...localBooks, ...strapiBooks];
+      });
     } catch (error) {
       console.error("Error fetching books:", error);
       res.status(500).json({ error: "Failed to fetch books" });
@@ -191,14 +289,52 @@ export async function registerRoutes(
     }
   });
 
+  /**
+   * The verse index in the compact wire format (see shared/book-index-codec.ts).
+   * This is what the reader actually fetches to open a grantha; `/api/books/:id`
+   * keeps returning the verbose shape for any other consumer.
+   *
+   * Previews are excluded — they are sidebar snippets, not page content, so they
+   * must not sit on the critical path. Fetch them from `/previews` instead.
+   */
+  app.get("/api/books/:id/index", async (req, res) => {
+    try {
+      setContentApiCacheHeaders(res);
+      const withPreviews = req.query.previews === "1";
+      await sendCached(req, res, `index:${req.params.id}:${withPreviews ? "p" : "n"}`, async () => {
+        const book = await storage.getBookWithVerseMeta(req.params.id);
+        if (!book) return null;
+        return encodeBookIndex(book, { includePreviews: withPreviews });
+      });
+    } catch (error) {
+      console.error("Error fetching book index:", error);
+      res.status(500).json({ error: "Failed to fetch book index" });
+    }
+  });
+
+  /** Sidebar snippets, keyed by verse id. Secondary content, fetched at low priority. */
+  app.get("/api/books/:id/previews", async (req, res) => {
+    try {
+      setContentApiCacheHeaders(res);
+      await sendCached(req, res, `previews:${req.params.id}`, async () => {
+        const book = await storage.getBookWithVerseMeta(req.params.id);
+        if (!book) return null;
+        const previews: Record<string, string> = {};
+        for (const verse of book.verses) {
+          if (verse.preview) previews[verse.id] = verse.preview;
+        }
+        return previews;
+      });
+    } catch (error) {
+      console.error("Error fetching previews:", error);
+      res.json({});
+    }
+  });
+
   app.get("/api/verses/:id", async (req, res) => {
     try {
       setContentApiCacheHeaders(res);
-      const verse = await storage.getVerseById(req.params.id);
-      if (!verse) {
-        return res.status(404).json({ error: "Verse not found" });
-      }
-      res.json(verse);
+      await sendCached(req, res, `verse:${req.params.id}`, () => storage.getVerseById(req.params.id));
     } catch (error) {
       console.error("Error fetching verse:", error);
       res.status(500).json({ error: "Failed to fetch verse" });
@@ -263,30 +399,41 @@ export async function registerRoutes(
         ? parsedVerseNumber
         : undefined;
 
-      const book = await storage.getBookWithVerseMeta(bookId);
-      if (!book) {
-        return res.status(404).json({ error: "Book not found" });
-      }
+      // Keyed on the request, not on the resolved verse, so a repeat request is
+      // answered from the pre-compressed cache without doing any of the work
+      // below. (Keying it on the resolved verse meant the work ran first and the
+      // cache could never help: measured 1.5s on every bootstrap.)
+      const cacheKey = `bootstrap:${bookId}:${requestedVerseId ?? requestedVerseNumber ?? "first"}`;
 
-      const target = pickBootstrapVerse(book, requestedVerseId, requestedVerseNumber);
-      const optionsBudgetMs = Number(process.env.BOOTSTRAP_OPTIONS_BUDGET_MS || 1500);
+      await sendCached(req, res, cacheKey, async () => {
+        const book = await storage.getBookWithVerseMeta(bookId);
+        if (!book) return null;
 
-      const [verse, commentaryOptions] = await Promise.all([
-        target
-          ? storage.getVerseById(target.id).then(
-              (v) => v ?? null,
-              () => null,
-            )
-          : Promise.resolve(null),
-        withBudget(storage.getCommentaryOptionsByBookId(bookId), optionsBudgetMs),
-      ]);
+        const target = pickBootstrapVerse(book, requestedVerseId, requestedVerseNumber);
+        const optionsBudgetMs = Number(process.env.BOOTSTRAP_OPTIONS_BUDGET_MS || 1500);
+        // The verse is the content, so it is worth waiting for — but not
+        // unboundedly. If the CMS is stalling and this verse isn't cached,
+        // return the index now (the TOC and navigation render) and let the
+        // client's own verse request supply the text, rather than holding the
+        // whole grantha open behind a 120s CMS timeout.
+        const verseBudgetMs = Number(process.env.BOOTSTRAP_VERSE_BUDGET_MS || 2500);
 
-      res.json({
-        book,
-        verseId: target?.id ?? null,
-        verse,
-        // null means "not ready yet, ask separately" — never "none exist".
-        commentaryOptions,
+        const [verse, commentaryOptions] = await Promise.all([
+          target
+            ? withBudget(storage.getVerseById(target.id).then((v) => v ?? null), verseBudgetMs)
+            : Promise.resolve(null),
+          withBudget(storage.getCommentaryOptionsByBookId(bookId), optionsBudgetMs),
+        ]);
+
+        return {
+          // Compact form, previews excluded: see shared/book-index-codec.ts. On
+          // Panchadasi this is 31KB brotli instead of 133KB gzip.
+          bookIndex: encodeBookIndex(book, { includePreviews: false }),
+          verseId: target?.id ?? null,
+          verse,
+          // null means "not ready yet, ask separately" — never "none exist".
+          commentaryOptions,
+        };
       });
     } catch (error) {
       console.error("Error bootstrapping book:", error);
@@ -297,8 +444,9 @@ export async function registerRoutes(
   app.get("/api/books/:id/commentary-options", async (req, res) => {
     try {
       setContentApiCacheHeaders(res);
-      const options = await storage.getCommentaryOptionsByBookId(req.params.id);
-      res.json(options);
+      await sendCached(req, res, `options:${req.params.id}`, () =>
+        storage.getCommentaryOptionsByBookId(req.params.id),
+      );
     } catch (error) {
       console.error("Error fetching commentary options:", error);
       res.status(500).json({ error: "Failed to fetch commentary options" });
@@ -312,8 +460,7 @@ export async function registerRoutes(
   app.get("/api/books/:id/videos", async (req, res) => {
     try {
       setContentApiCacheHeaders(res);
-      const videos = await strapiGetBookVideos(req.params.id);
-      res.json(videos);
+      await sendCached(req, res, `videos:${req.params.id}`, () => strapiGetBookVideos(req.params.id));
     } catch (error) {
       console.error("Error fetching book videos:", error);
       // Videos are an enhancement — never fail the reader over them.
@@ -804,6 +951,7 @@ export async function registerRoutes(
       ).toLowerCase();
       if (webhookModel.includes("video")) {
         invalidateVideoResourceCache();
+        invalidatePrecompressed("videos:");
         return res.json({ ok: true, invalidated: ["video-resources"] });
       }
 
@@ -816,6 +964,9 @@ export async function registerRoutes(
       }
 
       const { invalidated } = applyCacheInvalidation(target);
+      // Compressed bodies are derived from the caches just cleared, so they must
+      // go too or the webhook would appear to have had no effect.
+      invalidatePrecompressed();
       if (invalidated.length === 0) {
         console.log("[Strapi webhook] No cache target resolved; payload keys:", Object.keys(req.body || {}));
       }
@@ -837,10 +988,12 @@ export async function registerRoutes(
       const { bookId, all } = req.body || {};
       if (all) {
         invalidateAllStrapiCaches();
+        invalidatePrecompressed();
         return res.json({ invalidated: true, all: true });
       }
       if (!bookId) return res.status(400).json({ error: "bookId required (or all: true)" });
       invalidateBookCache(bookId);
+      invalidatePrecompressed();
       res.json({ invalidated: true, bookId });
     } catch (error: any) {
       res.status(500).json({ error: error.message });

@@ -18,6 +18,7 @@ import { importTranslationDataFromFiles } from "./import-translation-data";
 import { syncSouthIndianBhashya } from "./sync-south-indian-bhashya";
 import { ensureCanonicalLocalBooks } from "./ensure-canonical-books";
 import { repairUserTableForeignKeys, ensureAuthSchema } from "./repair-schema";
+import { rateLimit, RATE_LIMITS } from "./resilience";
 
 const app = express();
 const httpServer = createServer(app);
@@ -74,6 +75,18 @@ app.use((req, res, next) => {
   // column declared in shared/models/auth.ts fails every user query with 42703.
   await ensureAuthSchema();
   await setupAuth(app);
+  // Credential endpoints are the classic brute-force target, and they are the
+  // one part of the API that cannot be absorbed by a cache.
+  const authLimiter = rateLimit(RATE_LIMITS.auth);
+  app.use((req, res, next) => {
+    const p = req.path;
+    const isAuthAttempt =
+      req.method === "POST" &&
+      (p.startsWith("/api/login") || p.startsWith("/api/register") ||
+       p.startsWith("/api/auth") || p.includes("/password"));
+    if (!isAuthAttempt) return next();
+    authLimiter(req, res, next);
+  });
   registerAuthRoutes(app);
   await registerRoutes(httpServer, app);
 
@@ -131,6 +144,7 @@ app.use((req, res, next) => {
     httpServer.listen(port, "0.0.0.0", () => {
       httpServer.removeListener("error", onError);
       log(`serving on port ${port}`);
+      installGracefulShutdown();
       // Seeding hits Postgres and the warm-up hits the CMS, so they don't
       // contend. Previously the warm-up waited for every seed step to finish,
       // which left the reader on cold caches for the first several minutes
@@ -143,9 +157,44 @@ app.use((req, res, next) => {
   bind(basePort);
 })();
 
+/**
+ * Rolling deploys need the old process to drain rather than drop connections,
+ * and a health check must not go green before the server can actually serve.
+ */
+function installGracefulShutdown(): void {
+  let shuttingDown = false;
+  const drainMs = Math.max(0, Number(process.env.SHUTDOWN_DRAIN_MS || 10000));
+
+  const shutdown = (signal: string) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    log(`${signal} received — draining connections (max ${drainMs}ms)`);
+    // Stop accepting new connections; in-flight requests finish normally.
+    httpServer.close(() => {
+      log("drained cleanly, exiting");
+      process.exit(0);
+    });
+    const timer = setTimeout(() => {
+      log("drain timeout — exiting anyway");
+      process.exit(0);
+    }, drainMs);
+    timer.unref();
+  };
+
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("SIGINT", () => shutdown("SIGINT"));
+}
+
 let seedOperationsStarted = false;
 
 async function runSeedOperations() {
+  // Seeding is idempotent but slow, and it is pure setup work — not needed to
+  // serve a single read. Skipping it lets a replacement instance come up in
+  // seconds (and makes load testing measure the serving path, not seeding).
+  if (process.env.SKIP_SEED_OPERATIONS === "1") {
+    log("[express] SKIP_SEED_OPERATIONS=1 — skipping seed/migration pass");
+    return;
+  }
   if (seedOperationsStarted) {
     console.warn("[express] runSeedOperations() already invoked in this process — skipping duplicate call.");
     return;
@@ -191,6 +240,12 @@ async function runSeedOperations() {
  */
 async function prewarmAllBookCaches() {
   if (!process.env.STRAPI_URL || !process.env.STRAPI_API_TOKEN) return;
+  // Worth disabling on extra instances behind a warm shared cache, and in load
+  // tests where it would otherwise compete with the traffic being measured.
+  if (process.env.SKIP_PREWARM === "1") {
+    log("[Pre-warm] SKIP_PREWARM=1 — not warming caches in this instance");
+    return;
+  }
   try {
     const { strapiGetAllBooks, strapiGetBookById, strapiGetBookWithVerseMeta, strapiGetCommentaryOptionsByBookId, strapiGetVerseById } =
       await import("./strapi");

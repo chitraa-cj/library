@@ -24,6 +24,8 @@ import {
 import { Agent, fetch as undiciFetch } from "undici";
 import { withFetchSlot } from "./fetch-priority";
 import { createContentStore } from "./content-cache";
+import { createCircuitBreaker, CircuitOpenError } from "./resilience";
+import { incr, observe } from "./observability";
 
 const STRAPI_URL = (process.env.STRAPI_URL ?? "").trim().replace(/\/+$/, "");
 const STRAPI_API_TOKEN = (process.env.STRAPI_API_TOKEN ?? "").trim();
@@ -65,29 +67,56 @@ function isRetryableStrapiError(e: unknown): boolean {
   );
 }
 
+/**
+ * Trips when the CMS is consistently failing. While open, calls fail fast and
+ * the stale-while-revalidate caches answer instead, so a CMS outage degrades the
+ * reader to "slightly out of date" rather than "every request hangs for 120s".
+ */
+const cmsBreaker = createCircuitBreaker("cms");
+
+export function cmsCircuitState(): string {
+  return cmsBreaker.state();
+}
+
 async function strapiHttpFetch(
   url: string,
   headers: Record<string, string>,
   timeoutMs: number,
 ): Promise<Response> {
+  if (cmsBreaker.shouldReject()) {
+    incr("ssh_cms_rejected_total");
+    throw new CircuitOpenError("cms");
+  }
   const maxRetries = Math.max(0, Math.min(3, Number(process.env.STRAPI_FETCH_RETRIES ?? 2)));
   let lastError: unknown;
+  const startedAt = Date.now();
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       // Background warmers yield here while a reader has a request outstanding.
-      return await withFetchSlot(() =>
+      const response = await withFetchSlot(() =>
         undiciFetch(url, {
           headers: { "User-Agent": strapiUserAgent, ...headers },
           signal: AbortSignal.timeout(timeoutMs),
           ...(strapiTlsAgent ? { dispatcher: strapiTlsAgent } : {}),
         } as RequestInit),
       );
+      cmsBreaker.recordSuccess();
+      observe("ssh_cms_fetch_ms", Date.now() - startedAt);
+      incr("ssh_cms_fetch_total", { outcome: "ok" });
+      return response;
     } catch (e: unknown) {
       lastError = e;
       if (attempt < maxRetries && isRetryableStrapiError(e)) {
-        await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+        incr("ssh_cms_fetch_total", { outcome: "retry" });
+        // Exponential backoff with jitter, so concurrent failures don't all
+        // retry in lockstep and re-hammer a struggling CMS.
+        const base = 750 * Math.pow(2, attempt);
+        await new Promise((r) => setTimeout(r, base + Math.random() * base));
         continue;
       }
+      cmsBreaker.recordFailure();
+      observe("ssh_cms_fetch_ms", Date.now() - startedAt);
+      incr("ssh_cms_fetch_total", { outcome: "error" });
       throw e;
     }
   }
@@ -139,6 +168,10 @@ const commentaryOptionsStore = createContentStore<CommentaryOptions>("commentary
  * and expects to see it), and the collection is small, so this gets a short TTL
  * of its own rather than the 30-minute content default.
  */
+type BookListEntry = Book & { bhashyamName?: string; teekasList?: { name: string; author: string }[] };
+/** The catalogue — the home page's first request, and 248KB of it. */
+const bookListStore = createContentStore<BookListEntry[]>("book-list");
+
 const videoResourceStore = createContentStore<VideoResource[]>("video-resources", {
   ttlMs: Number(process.env.VIDEO_CACHE_TTL_MS || 5 * 60 * 1000),
 });
@@ -195,6 +228,7 @@ export function invalidateBookCache(bookId: string): void {
   bookDetailCache.delete(bookId);
   bookVerseMetaCache.delete(bookId);
   bookListCacheEntry = null;
+  bookListStore.delete(BOOK_LIST_KEY);
   commentaryOptionsCache.delete(bookId);
 
   bookDetailStore.delete(bookId);
@@ -222,6 +256,7 @@ export function invalidateAllStrapiCaches(): void {
 
   bookDetailStore.clear();
   bookMetaStore.clear();
+  bookListStore.clear();
   verseStore.clear();
   commentaryOptionsStore.clear();
   videoResourceStore.clear();
@@ -738,9 +773,23 @@ export async function testStrapiConnection(): Promise<{ connected: boolean; mess
   }
 }
 
-export async function strapiGetAllBooks(): Promise<(Book & { bhashyamName?: string; teekasList?: { name: string; author: string }[] })[]> {
+const BOOK_LIST_KEY = "all";
+
+/** Cache-only catalogue read, for when the CMS is unreachable. */
+export function peekAllBooks(): Promise<BookListEntry[] | undefined> {
+  if (bookListCacheEntry && Date.now() - bookListCacheEntry.timestamp < CACHE_TTL) {
+    return Promise.resolve(bookListCacheEntry.data);
+  }
+  return bookListStore.peekAny(BOOK_LIST_KEY);
+}
+
+export async function strapiGetAllBooks(): Promise<BookListEntry[]> {
   if (bookListCacheEntry && Date.now() - bookListCacheEntry.timestamp < CACHE_TTL) return bookListCacheEntry.data;
-  return dedup("allBooks", async () => {
+  return dedup("allBooks", () => bookListStore.swr(BOOK_LIST_KEY, _strapiGetAllBooksUncached) as Promise<BookListEntry[]>);
+}
+
+async function _strapiGetAllBooksUncached(): Promise<BookListEntry[] | undefined> {
+  try {
     const granthas = await strapiFetchAll("/granthas", {
       "populate[0]": "sections.manthras",
       "populate[1]": "sections.sub_sections.manthras",
@@ -752,7 +801,10 @@ export async function strapiGetAllBooks(): Promise<(Book & { bhashyamName?: stri
     const result = granthas.map(mapGranthaToBook);
     bookListCacheEntry = { data: result, timestamp: Date.now() };
     return result;
-  });
+  } catch (err: any) {
+    console.warn("[Strapi] getAllBooks failed:", err.message);
+    return undefined;
+  }
 }
 
 export async function strapiGetBookBySlug(slug: string): Promise<Book | undefined> {
@@ -1426,9 +1478,26 @@ async function commentaryOptionsFromFullBook(bookId: string): Promise<Commentary
   return buildCommentaryOptions(authorMap, languageSet);
 }
 
+/**
+ * "This grantha has no commentary" is a real, cacheable answer.
+ *
+ * Returning `undefined` for it meant the store treated it as a failed load and
+ * re-derived it on every request — and the derivation's fallback path is a full
+ * book hydration. Measured on Panchadasi (which genuinely has no commentary):
+ * every bootstrap spent the entire 1,500ms options budget re-hydrating 1,557
+ * verses, on every single request. Cached as an explicit empty result instead.
+ */
+const EMPTY_COMMENTARY_OPTIONS: CommentaryOptions = { authors: [], languages: [] };
+
+function isEmptyCommentaryOptions(options: CommentaryOptions | null | undefined): boolean {
+  return !options || (options.authors.length === 0 && options.languages.length === 0);
+}
+
 export async function strapiGetCommentaryOptionsByBookId(bookId: string): Promise<CommentaryOptions | null> {
   const cached = getCached(commentaryOptionsCache, bookId);
-  if (cached) return cached;
+  // Callers still receive null for "none", so a local-Postgres book can fall
+  // through to the DB; only the cache knows the difference.
+  if (cached) return isEmptyCommentaryOptions(cached) ? null : cached;
 
   return dedup(`commentaryOptions:${bookId}`, async () => {
     const result = await commentaryOptionsStore.swr(bookId, async () => {
@@ -1445,12 +1514,12 @@ export async function strapiGetCommentaryOptionsByBookId(bookId: string): Promis
           options = null;
         }
       }
-      if (options) setCache(commentaryOptionsCache, bookId, options);
-      // `undefined` (not `null`) tells the store there is nothing to persist.
-      return options ?? undefined;
+      const resolved = options ?? EMPTY_COMMENTARY_OPTIONS;
+      setCache(commentaryOptionsCache, bookId, resolved);
+      return resolved;
     });
     if (result) setCache(commentaryOptionsCache, bookId, result);
-    return result ?? null;
+    return isEmptyCommentaryOptions(result) ? null : result!;
   });
 }
 
@@ -1471,6 +1540,33 @@ export async function strapiGetAllAuthors(): Promise<string[]> {
   } catch {
     return [];
   }
+}
+
+/**
+ * Cache-only reads, for when the CMS is unreachable.
+ *
+ * `isStrapiAvailable()` in HybridStorage gates the whole Strapi path, which
+ * meant a CMS outage made the reader skip its own warm caches and fall through
+ * to a local Postgres that does not hold CMS content — returning 404 for
+ * granthas it had cached on disk moments earlier. These let the storage layer
+ * answer from cache before giving up.
+ */
+export function peekBookWithVerseMeta(id: string): Promise<BookWithVerseMeta | undefined> {
+  return bookMetaStore.peekAny(id);
+}
+
+export function peekVerse(verseId: string): Promise<VerseWithTranslations | undefined> {
+  const mem = getCached(verseCache, verseId);
+  if (mem) return Promise.resolve(mem);
+  return verseStore.peekAny(verseId);
+}
+
+export function peekCommentaryOptions(bookId: string): Promise<CommentaryOptions | undefined> {
+  return commentaryOptionsStore.peekAny(bookId);
+}
+
+export function peekBookDetail(id: string): Promise<BookWithDetails | undefined> {
+  return bookDetailStore.peekAny(id);
 }
 
 const VIDEO_RESOURCES_KEY = "all";

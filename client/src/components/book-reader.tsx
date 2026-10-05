@@ -10,6 +10,7 @@ import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareTe
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoPopup } from "@/components/video-popup";
 import { useBookVideos } from "@/lib/use-book-videos";
+import { dismissPrerender } from "@/lib/prerender-bootstrap";
 import { videosForVerse, type VideoResource } from "@shared/video-resource";
 import {
   buildSectionTree,
@@ -1009,6 +1010,15 @@ export function BookReader({
 
   // Reference of the open verse, with one number per section level:
   // "2.18" (Gītā), "1.2.3" (Chāndogya), "1.1.31.4" (Adhyāya › Pāda › Sūtra).
+  // Hand off from the server-rendered block the moment React has real verse
+  // content on screen, so there is never a blank gap between the two.
+  useEffect(() => {
+    if (inChapterView) return;
+    if (!currentVerseDetails && !isCurrentVerseIntro) return;
+    const raf = requestAnimationFrame(() => dismissPrerender());
+    return () => cancelAnimationFrame(raf);
+  }, [currentVerseDetails, isCurrentVerseIntro, inChapterView]);
+
   const currentVerseVideos = useMemo(
     () => videosForVerse(bookVideos, currentVerseMeta?.id),
     [bookVideos, currentVerseMeta?.id],

@@ -18,6 +18,7 @@ import os from "os";
 import path from "path";
 import crypto from "crypto";
 import { runBackground } from "./fetch-priority";
+import { incr } from "./observability";
 
 /** Entries newer than this are served without revalidating. */
 const DEFAULT_TTL_MS = 30 * 60 * 1000;
@@ -60,6 +61,12 @@ interface MemoryEntry<T> {
 export interface ContentStore<T> {
   /** Fresh value only — no disk read, no loader. Cheap enough for hot paths. */
   peekFresh(key: string): T | undefined;
+  /**
+   * Best available value from memory or disk, fresh or stale, without ever
+   * calling the loader. Used to keep serving readers when the upstream CMS is
+   * unreachable: out-of-date scripture is enormously better than a 404.
+   */
+  peekAny(key: string): Promise<T | undefined>;
   /**
    * Fresh hit → return it. Stale hit (memory or disk) → return the stale value
    * now and refresh in the background. Miss → await `loader`.
@@ -187,12 +194,27 @@ export function createContentStore<T>(
       return undefined;
     },
 
+    async peekAny(key) {
+      const mem = memory.get(key);
+      if (mem && Date.now() - mem.savedAt < maxStaleMs) return mem.value;
+      const disk = await readDisk(key);
+      if (disk && Date.now() - disk.savedAt < maxStaleMs) {
+        memory.set(key, disk);
+        return disk.value;
+      }
+      return undefined;
+    },
+
     async swr(key, loader) {
       const mem = memory.get(key);
       if (mem) {
         const age = Date.now() - mem.savedAt;
-        if (age < ttlMs) return mem.value;
+        if (age < ttlMs) {
+          incr("ssh_cache_total", { store: namespace, result: "memory_hit" });
+          return mem.value;
+        }
         if (age < maxStaleMs) {
+          incr("ssh_cache_total", { store: namespace, result: "memory_stale" });
           refreshInBackground(key, loader);
           return mem.value;
         }
@@ -205,11 +227,13 @@ export function createContentStore<T>(
         if (age < maxStaleMs) {
           // Promote into memory so later reads skip the file read + JSON parse.
           memory.set(key, disk);
+          incr("ssh_cache_total", { store: namespace, result: age >= ttlMs ? "disk_stale" : "disk_hit" });
           if (age >= ttlMs) refreshInBackground(key, loader);
           return disk.value;
         }
       }
 
+      incr("ssh_cache_total", { store: namespace, result: "miss" });
       return load(key, loader);
     },
 

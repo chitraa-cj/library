@@ -1,5 +1,6 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { schedule, type Priority } from "./fetch-scheduler";
+import { decodeBookIndex, type CompactBookIndex } from "@shared/book-index-codec";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -48,7 +49,7 @@ function bookIndexKey(queryKey: readonly unknown[]): string | null {
 }
 
 interface BootstrapResponse {
-  book: unknown;
+  bookIndex: CompactBookIndex;
   verseId: string | null;
   verse: unknown | null;
   commentaryOptions: unknown | null;
@@ -102,7 +103,9 @@ async function fetchBookViaBootstrap(bookId: string, signal: AbortSignal): Promi
       payload.commentaryOptions,
     );
   }
-  return payload.book;
+  // Expanded back to the exact shape every reader component already expects, so
+  // the wire format is an implementation detail of this function.
+  return decodeBookIndex(payload.bookIndex);
 }
 
 export const getQueryFn: <T>(options: {
