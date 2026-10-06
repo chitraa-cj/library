@@ -601,7 +601,9 @@ export class HybridStorage implements IStorage {
 
   async getBookWithVerseMeta(id: string): Promise<BookWithVerseMeta | undefined> {
     const cachedMeta = await peekBookWithVerseMeta(id).catch(() => undefined);
-    if (await this.isStrapiAvailable()) {
+    const strapiAvailable = await this.isStrapiAvailable();
+
+    const fromStrapi = async (): Promise<BookWithVerseMeta | undefined> => {
       try {
         const meta = await strapiGetBookWithVerseMeta(id);
         if (meta) return meta;
@@ -618,11 +620,26 @@ export class HybridStorage implements IStorage {
         const msg = err instanceof Error ? err.message : String(err);
         console.warn("[Strapi] getBookById fallback for verse meta failed:", msg);
       }
+      return undefined;
+    };
+
+    if (strapiAvailable) {
+      const live = await fromStrapi();
+      if (live) return live;
     }
+
     // Either the CMS is unreachable or it failed. Cached content beats the local
     // DB, which holds none of the CMS-sourced granthas.
     if (cachedMeta) return cachedMeta;
-    return this.db.getBookWithVerseMeta(id);
+    const local = await this.db.getBookWithVerseMeta(id);
+    if (local) return local;
+
+    // Every tier came up empty, so the reader is about to be told this grantha
+    // does not exist. A failed probe pins the CMS "unavailable" for a full
+    // minute — long enough to blank a grantha that is merely uncached — and the
+    // response is a 404 either way, so one live attempt is worth the latency.
+    if (!strapiAvailable) return fromStrapi();
+    return undefined;
   }
 
   async getBookBySlug(slug: string): Promise<Book | undefined> {

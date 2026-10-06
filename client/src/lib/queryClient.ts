@@ -2,10 +2,21 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { schedule, type Priority } from "./fetch-scheduler";
 import { decodeBookIndex, type CompactBookIndex } from "@shared/book-index-codec";
 
+/**
+ * A failed response, carrying its status so retry policy can tell a transient
+ * server-side failure from a final answer like 404.
+ */
+export class ApiError extends Error {
+  constructor(readonly status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    throw new ApiError(res.status, `${res.status}: ${text}`);
   }
 }
 
@@ -157,7 +168,28 @@ export const cmsContentQueryOptions = {
   staleTime: 5 * 60_000,
   gcTime: 60 * 60_000,
   refetchOnWindowFocus: false,
+  retry: retryTransient,
+  // Quick, because someone is staring at a loading state: ~0.4s, then ~0.8s.
+  retryDelay: (attempt: number) => Math.min(400 * 2 ** attempt, 2_000),
 } as const;
+
+/**
+ * One dropped request used to be terminal. With retries off globally, a single
+ * blip — a tab resumed from sleep, a server restart mid-flight, a CMS hiccup —
+ * left the reader on "Unable to load this text" until the reader reloaded the
+ * page, even though the very same request succeeded immediately afterwards.
+ *
+ * Only failures that another attempt could plausibly fix are retried: a 4xx is
+ * the server's considered answer, and an abort means nobody is waiting for this
+ * content any more (the scheduler preempted it, or the view went away).
+ */
+function retryTransient(failureCount: number, error: unknown): boolean {
+  if (failureCount >= 2) return false;
+  const name = (error as { name?: string } | null | undefined)?.name;
+  if (name === "AbortError" || name === "AbortedError") return false;
+  if (error instanceof ApiError && error.status >= 400 && error.status < 500) return false;
+  return true;
+}
 
 /**
  * localStorage-backed cache for slow, rarely-changing list endpoints (e.g. the

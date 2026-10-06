@@ -6,7 +6,7 @@ import { retainOnly, cancelGroup } from "@/lib/fetch-scheduler";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareText, StickyNote, List, Globe, Languages, Sparkles, Feather, ScrollText, Check, Lock, Copy, Share2, Bookmark, Volume2, VolumeX, ArrowLeftRight, Sun, Maximize2, Minimize2, X } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, ChevronDown, User, MessageSquareText, StickyNote, List, Globe, Languages, Sparkles, Feather, ScrollText, Check, Lock, Copy, Share2, Bookmark, Volume2, VolumeX, ArrowLeftRight, Sun, Maximize2, Minimize2, X, RefreshCw } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { VideoPopup } from "@/components/video-popup";
 import { useBookVideos } from "@/lib/use-book-videos";
@@ -869,7 +869,13 @@ export function BookReader({
 
   const queryClient = useQueryClient();
 
-  const { data: book, isLoading, error } = useQuery<BookWithVerseMeta>({
+  const {
+    data: book,
+    isLoading,
+    error,
+    refetch: refetchBook,
+    isFetching: isFetchingBook,
+  } = useQuery<BookWithVerseMeta>({
     queryKey: ["/api/books", bookId],
     ...cmsContentQueryOptions,
   });
@@ -1288,11 +1294,22 @@ export function BookReader({
   }
 
   if (error || !book) {
+    // The usual cause is a transient request failure, not missing content, so
+    // offer the retry here rather than making the reader reload the whole page.
     return (
       <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
         <div className="text-center space-y-4">
           <BookOpen className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mx-auto" />
-          <p className="text-muted-foreground">Unable to load this text</p>
+          <p className="text-muted-foreground">{t("readerLoadFailed")}</p>
+          <Button
+            variant="outline"
+            onClick={() => void refetchBook()}
+            disabled={isFetchingBook}
+            data-testid="button-retry-book"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isFetchingBook ? "animate-spin" : ""}`} />
+            {t("retry")}
+          </Button>
         </div>
       </div>
     );

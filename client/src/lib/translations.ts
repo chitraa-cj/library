@@ -226,6 +226,8 @@ const translations = {
     work: "work",
     works: "works",
     loading: "Loading…",
+    readerLoadFailed: "Couldn't load this text just now.",
+    retry: "Try again",
     source: "Source",
   },
   hi: {
@@ -403,6 +405,8 @@ const translations = {
     work: "कृति",
     works: "कृतियाँ",
     loading: "लोड हो रहा है…",
+    readerLoadFailed: "यह ग्रन्थ इस समय लोड नहीं हो सका।",
+    retry: "पुनः प्रयास करें",
     source: "स्रोत",
   },
   sa: {
@@ -575,6 +579,8 @@ const translations = {
     work: "कृतिः",
     works: "कृतयः",
     loading: "आपाद्यते…",
+    readerLoadFailed: "अयं ग्रन्थः सम्प्रति आपादितुं न शक्तः।",
+    retry: "पुनः प्रयत्नः",
     source: "स्रोतः",
   },
   kn: {
