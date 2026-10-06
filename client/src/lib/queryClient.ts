@@ -112,8 +112,9 @@ export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
   priority?: Priority;
   group?: string;
+  speculative?: boolean;
 }) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior, priority = "critical", group }) =>
+  ({ on401: unauthorizedBehavior, priority = "critical", group, speculative }) =>
   async ({ queryKey, signal }) => {
     const url = queryKey.join("/") as string;
     const bookId = bookIndexKey(queryKey);
@@ -122,6 +123,7 @@ export const getQueryFn: <T>(options: {
       key: bookId ? `bootstrap:${bookId}` : url,
       group: group ?? bookId ?? "content",
       priority,
+      speculative,
       run: async (schedulerSignal) => {
         // Honour whichever of the two cancels first: react-query unmounting the
         // query, or the scheduler preempting a speculative fetch.
@@ -214,7 +216,7 @@ export function prefetchVerse(
   void queryClient
     .prefetchQuery({
       queryKey: ["/api/verses", verseId],
-      queryFn: getQueryFn({ on401: "throw", priority, group }),
+      queryFn: getQueryFn({ on401: "throw", priority, group, speculative: true }),
       ...cmsContentQueryOptions,
     })
     .catch(() => {

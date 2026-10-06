@@ -35,6 +35,8 @@ interface Task {
   priority: Priority;
   /** Monotonic, so equal priorities keep FIFO order. */
   seq: number;
+  /** Speculative work the planner may retire wholesale — see `retainOnly`. */
+  speculative: boolean;
   run: (signal: AbortSignal) => Promise<unknown>;
   resolve: (value: unknown) => void;
   reject: (err: unknown) => void;
@@ -160,11 +162,14 @@ export interface ScheduleOptions {
   /** Cancellation scope, e.g. the grantha id. */
   group?: string;
   priority?: Priority;
+  /** True for guesses about what the reader will want next, which `retainOnly`
+   *  is free to abandon. Content someone has actually asked for must not set it. */
+  speculative?: boolean;
   run: (signal: AbortSignal) => Promise<unknown>;
 }
 
 export function schedule<T>(options: ScheduleOptions): Promise<T> {
-  const { key, group = "default", priority = "critical", run } = options;
+  const { key, group = "default", priority = "critical", speculative = false, run } = options;
 
   const existing = running.get(key) ?? queued.get(key);
   if (existing) {
@@ -193,6 +198,7 @@ export function schedule<T>(options: ScheduleOptions): Promise<T> {
       group,
       priority,
       seq: ++seqCounter,
+      speculative,
       run,
       resolve: resolve as (v: unknown) => void,
       reject,
@@ -218,6 +224,10 @@ export function demote(key: string, priority: Priority = "idle"): void {
  * Drops queued speculative work in `group` that is no longer worth doing.
  * Called when the reader moves, so yesterday's prefetch plan can't delay
  * today's. In-flight and critical tasks are never touched.
+ *
+ * Only tasks marked `speculative` are candidates: the group also carries
+ * low-priority fetches that nothing will ever re-request (the sidebar previews),
+ * and retiring those leaves the feature permanently missing rather than late.
  */
 export function retainOnly(group: string, keepKeys: Iterable<string>): void {
   const keep = new Set(keepKeys);
@@ -225,6 +235,7 @@ export function retainOnly(group: string, keepKeys: Iterable<string>): void {
   queued.forEach((t) => {
     if (t.group !== group) return;
     if (t.priority === "critical") return;
+    if (!t.speculative) return;
     if (!keep.has(t.key)) drop.push(t);
   });
   for (const t of drop) {
