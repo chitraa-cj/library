@@ -37,7 +37,7 @@ import { incr } from "./observability";
 import type { VerseWithTranslations } from "@shared/schema";
 
 /** Client routes that are not grantha slugs. */
-const RESERVED_SEGMENTS = new Set(["auth", "translate", "acharyas", "api", "assets", "images", "fonts"]);
+const RESERVED_SEGMENTS = new Set(["auth", "translate", "acharyas", "mutts", "api", "assets", "images", "fonts"]);
 
 function escapeHtml(value: string): string {
   return value

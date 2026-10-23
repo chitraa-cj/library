@@ -20,6 +20,7 @@ import { VideoInline } from "@/components/video-popup";
 import { CATALOG_TREE, type CatalogCategory } from "@/components/app-sidebar";
 import { useTranslation } from "@/lib/translations";
 import { matchAcharyaSlug } from "@/lib/acharya-match";
+import { MUTT_SECTIONS, PRINCIPAL_MUTTS, muttsPath } from "@/lib/advaita-mutts";
 import { translateContent, bookTitleTranslations, bookAuthorTranslations, bookCategoryTranslations, bookDescriptionTranslations } from "@/lib/content-translations";
 import { useProgressSummary } from "@/hooks/use-progress";
 import { resolveBookCoverImage } from "@/components/book-landing-cover-hero";
@@ -550,6 +551,8 @@ interface WelcomeScreenProps {
   onBrowseLibrary: () => void;
   onSelectSubCategory?: (categoryId: string, subCategoryId: string) => void;
   onOpenAcharya?: (slug?: string) => void;
+  /** Opens the mutt system page, optionally at /mutts/<section>/<mutt>. */
+  onOpenMutts?: (path?: string) => void;
   languageCode?: string | null;
 }
 
@@ -1023,13 +1026,15 @@ function LanguageMeaningWidget() {
 }
 
 /** "Quick Access to Library Collections" — tabbed collections with per-category content. */
-function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary, onSelectSubCategory, onOpenAcharya, languageCode }: {
+function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary, onSelectSubCategory, onOpenAcharya, onOpenMutts, languageCode }: {
   books: Book[];
   onSelectBook: (bookId: string) => void;
   onSelectChapter?: (bookId: string, adhyayNumber: number) => void;
   onBrowseLibrary: () => void;
   onSelectSubCategory?: (categoryId: string, subCategoryId: string) => void;
   onOpenAcharya?: (slug?: string) => void;
+  /** Opens the mutt system page, optionally at /mutts/<section>/<mutt>. */
+  onOpenMutts?: (path?: string) => void;
   languageCode?: string | null;
 }) {
   const [tab, setTab] = useState("Upanishads");
@@ -1148,8 +1153,14 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
     Acharyas: [
       { kicker: "The Lineage", title: "Acharyas", desc: "The guru-parampara — tap a master to read their profile and works.", items: acharyaItems },
     ],
+    ...(onOpenMutts ? { Mutts: [
+      { kicker: "Traditions of Advaita", title: "Advaita Mutts", desc: "The cardinal peethas and the wider network of mathas established by Adi Shankaracharya.", items: [
+        { label: "Explore the Advaita Mutt System", onClick: () => onOpenMutts() },
+        ...PRINCIPAL_MUTTS.mutts.map(m => ({ label: m.name, onClick: () => onOpenMutts(muttsPath(PRINCIPAL_MUTTS.id, m.name)) })),
+      ] },
+    ] } : {}),
   };
-  const TAB_KEYS = ["Popular", "Upanishads", "Bhagavad Gita", "Brahma Sutras", "Prakarana Granthas", "Bhakti", "Acharyas"];
+  const TAB_KEYS = ["Popular", "Upanishads", "Bhagavad Gita", "Brahma Sutras", "Prakarana Granthas", "Bhakti", "Acharyas", ...(onOpenMutts ? ["Mutts"] : [])];
   const cards = TABS[tab] || TABS.Upanishads;
   const single = cards.length === 1;
   const triple = cards.length >= 3;
@@ -1216,7 +1227,7 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
   );
 }
 
-export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChapter, onBrowseLibrary, onSelectSubCategory, onOpenAcharya, languageCode }: WelcomeScreenProps) {
+export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChapter, onBrowseLibrary, onSelectSubCategory, onOpenAcharya, onOpenMutts, languageCode }: WelcomeScreenProps) {
   const { t } = useTranslation(languageCode ?? null);
   const { theme } = useTheme();
   const mandalaImg = theme === "dark" ? homeMandalaDark : homeMandala;
@@ -1513,7 +1524,7 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
       </section>
 
       {/* ===== QUICK ACCESS TO LIBRARY COLLECTIONS ===== */}
-      <HomeCollections books={books} onSelectBook={onSelectBook} onSelectChapter={onSelectChapter} onBrowseLibrary={onBrowseLibrary} onSelectSubCategory={onSelectSubCategory} onOpenAcharya={onOpenAcharya} languageCode={languageCode} />
+      <HomeCollections books={books} onSelectBook={onSelectBook} onSelectChapter={onSelectChapter} onBrowseLibrary={onBrowseLibrary} onSelectSubCategory={onSelectSubCategory} onOpenAcharya={onOpenAcharya} onOpenMutts={onOpenMutts} languageCode={languageCode} />
 
       {/* ===== WISDOM WITHOUT LANGUAGE BARRIERS ===== */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
@@ -1611,6 +1622,9 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
         </button>
       </section>
 
+      {/* ===== THE ADVAITA MUTT SYSTEM ===== */}
+      {onOpenMutts && <HomeMuttsSection onOpenMutts={onOpenMutts} />}
+
       {/* ===== OUR VISION: SANSKRITIK EKTA ===== */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary to-[#b8460e] text-primary-foreground px-6 py-12 sm:px-12 sm:py-16">
@@ -1679,22 +1693,95 @@ export function WelcomeScreen({ books, onSelectBook, onSelectVerse, onSelectChap
         </div>
       </section>
 
-      {/* ===== FOOTER ===== */}
-      <footer className="dark:bg-background px-4 py-12 sm:py-14 text-center border-t border-border/40">
-        <div className="flex items-center justify-center gap-2.5 mb-8">
-          <img src="/favicon.png" alt="" aria-hidden="true" className="h-9 w-9 object-contain" />
-          <span className="font-page-heading text-xl sm:text-2xl text-primary">Advaita Vaaridhi</span>
-        </div>
-        <nav className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 mb-8 text-sm">
-          <button type="button" className="text-muted-foreground hover:text-primary transition-colors">Privacy Policy</button>
-          <button type="button" className="text-muted-foreground hover:text-primary transition-colors">Terms of Service</button>
-          <button type="button" className="text-muted-foreground hover:text-primary transition-colors">Contact Us</button>
-          <button type="button" onClick={onBrowseLibrary} className="text-muted-foreground hover:text-primary transition-colors">Library</button>
-        </nav>
-        <p className="text-sm text-muted-foreground/70 mb-8">Managed by the Acharya Shankar Sanskritik Ekta Nyas, Madhya Pradesh.</p>
-        <div className="font-hindi-reading text-primary/35 text-base tracking-[0.3em]">॥ सर्वं खल्विदं ब्रह्म ॥</div>
-      </footer>
+      <SiteFooter onBrowseLibrary={onBrowseLibrary} />
     </div>
+  );
+}
+
+/** Home-page teaser for the mutt system: the cardinal peethas, linking into /mutts. */
+function HomeMuttsSection({ onOpenMutts }: { onOpenMutts: (path?: string) => void }) {
+  const others = MUTT_SECTIONS.slice(1);
+  return (
+    <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-testid="home-mutts-section">
+      <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-[#fcf5f2] dark:bg-primary/[0.04]">
+        <img
+          src="/images/mutts/hero.webp"
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          className="pointer-events-none select-none absolute right-0 top-0 h-56 sm:h-64 w-full sm:w-[65%] object-cover object-right opacity-30 sm:opacity-90 dark:opacity-20"
+        />
+        <div className="relative px-5 sm:px-8 pt-8 pb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="text-[11px] uppercase tracking-[0.2em] font-semibold text-primary">Traditions of Advaita</span>
+            <span className="h-px w-12 bg-primary/40" />
+          </div>
+          <h2 className="font-page-heading text-3xl sm:text-4xl text-primary tracking-tight mb-3">The Advaita Mutt System</h2>
+          <p className="text-sm sm:text-base text-foreground/80 max-w-lg mb-6">
+            The cardinal peethas established by Adi Shankaracharya and the wider network of mathas that carry the tradition forward.
+          </p>
+
+          <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x lg:grid lg:grid-cols-7 lg:overflow-visible">
+            {PRINCIPAL_MUTTS.mutts.map((m) => (
+              <button
+                key={m.name}
+                type="button"
+                onClick={() => onOpenMutts(muttsPath(PRINCIPAL_MUTTS.id, m.name))}
+                className="group snap-start shrink-0 w-40 sm:w-44 lg:w-auto overflow-hidden rounded-lg border border-border/70 bg-card text-left shadow-sm hover:border-primary/50 transition-colors"
+                data-testid={`home-mutt-${m.name}`}
+              >
+                <img src={m.image} alt={m.name} loading="lazy" className="h-24 w-full object-cover bg-muted transition-transform duration-300 group-hover:scale-105" />
+                <span className="block px-2.5 py-2">
+                  <span className="block font-serif text-sm font-bold text-primary truncate">{m.name}</span>
+                  <span className="block text-[11px] text-muted-foreground truncate">{m.location}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-5 flex flex-wrap items-center gap-2">
+            {others.map((sec) => (
+              <button
+                key={sec.id}
+                type="button"
+                onClick={() => onOpenMutts(muttsPath(sec.id))}
+                className="rounded-full border border-primary/25 bg-background/70 px-3 py-1.5 text-xs text-foreground/80 hover:border-primary/50 hover:text-primary transition-colors"
+              >
+                {sec.title} <span className="text-primary/70">· {sec.mutts.length}</span>
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => onOpenMutts()}
+              className="ml-auto inline-flex items-center gap-1 text-sm font-medium text-primary hover:gap-1.5 transition-all"
+              data-testid="button-explore-mutts"
+            >
+              Explore all mutts <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** Site-wide footer shown at the bottom of the home page and standalone pages. */
+export function SiteFooter({ onBrowseLibrary }: { onBrowseLibrary: () => void }) {
+  return (
+    <footer className="dark:bg-background px-4 py-12 sm:py-14 text-center border-t border-border/40">
+      <div className="flex items-center justify-center gap-2.5 mb-8">
+        <img src="/favicon.png" alt="" aria-hidden="true" className="h-9 w-9 object-contain" />
+        <span className="font-page-heading text-xl sm:text-2xl text-primary">Advaita Vaaridhi</span>
+      </div>
+      <nav className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 mb-8 text-sm">
+        <button type="button" className="text-muted-foreground hover:text-primary transition-colors">Privacy Policy</button>
+        <button type="button" className="text-muted-foreground hover:text-primary transition-colors">Terms of Service</button>
+        <button type="button" className="text-muted-foreground hover:text-primary transition-colors">Contact Us</button>
+        <button type="button" onClick={onBrowseLibrary} className="text-muted-foreground hover:text-primary transition-colors">Library</button>
+      </nav>
+      <p className="text-sm text-muted-foreground/70 mb-8">Managed by the Acharya Shankar Sanskritik Ekta Nyas, Madhya Pradesh.</p>
+      <div className="font-hindi-reading text-primary/35 text-base tracking-[0.3em]">॥ सर्वं खल्विदं ब्रह्म ॥</div>
+    </footer>
   );
 }
 

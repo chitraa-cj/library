@@ -16,6 +16,9 @@ const AcharyasPage = lazy(() =>
 const BookReader = lazy(() =>
   import("@/components/book-reader").then((m) => ({ default: m.BookReader })),
 );
+const MuttsPage = lazy(() =>
+  import("@/components/mutts-page").then((m) => ({ default: m.MuttsPage })),
+);
 /** Warms the BookReader chunk ahead of the user opening a book. */
 export const prefetchReaderChunk = () => import("@/components/book-reader");
 import { ReaderNavSidebar, useBookChapters } from "@/components/reader-nav-sidebar";
@@ -41,6 +44,7 @@ import { useTranslation } from "@/lib/translations";
 import { translateContent, bookAuthorTranslations } from "@/lib/content-translations";
 import type { Book, Language } from "@shared/schema";
 import { fuzzyFilter } from "@/lib/fuzzy-search";
+import { MUTT_SECTIONS } from "@/lib/advaita-mutts";
 
 interface CommentaryOption {
   authorName: string;
@@ -320,7 +324,11 @@ function HomePageContent() {
   }, []);
 
   const urlParts = location.replace(/^\//, '').split('/').filter(Boolean);
-  const bookSlugFromUrl = urlParts[0] && urlParts[0] !== 'auth' ? urlParts[0] : null;
+  // /mutts is a standalone page, not a grantha slug.
+  const isMuttsUrl = urlParts[0] === 'mutts';
+  const muttsSectionFromUrl = isMuttsUrl ? urlParts[1] ?? null : null;
+  const muttFromUrl = isMuttsUrl ? urlParts[2] ?? null : null;
+  const bookSlugFromUrl = urlParts[0] && urlParts[0] !== 'auth' && !isMuttsUrl ? urlParts[0] : null;
   const isChapterUrl = urlParts[1] === 'chapter';
   // /<slug>/chapter/<n>[/<n>...] — one segment per section level, any depth.
   const chapterPathFromUrl = isChapterUrl
@@ -451,7 +459,8 @@ function HomePageContent() {
     }
   };
 
-  const handleGoHome = () => {
+  /** Clears every view-selecting piece of state, without touching the URL. */
+  const resetViews = () => {
     setSelectedBookId(null);
     setSelectedVerseId(null);
     setSelectedContent("");
@@ -465,6 +474,10 @@ function HomePageContent() {
     setSelectedSubCategoryId(null);
     setShowAcharyas(false);
     setSelectedAcharyaSlug(null);
+  };
+
+  const handleGoHome = () => {
+    resetViews();
     setLocation("/");
   };
 
@@ -484,6 +497,13 @@ function HomePageContent() {
     setShowLibraryCatalog(false);
     setSelectedAcharyaSlug(slug ?? null);
     setShowAcharyas(true);
+  };
+
+  // The Advaita mutt system lives at /mutts[/<section>[/<mutt>]], so the page and
+  // each mutt are linkable on their own and survive reloads / back-forward.
+  const handleOpenMutts = (path: string = "/mutts") => {
+    resetViews();
+    if (path !== location) setLocation(path);
   };
 
   useEffect(() => {
@@ -623,7 +643,7 @@ function HomePageContent() {
   }, [selectedBookId, getBookSlug, setLocation, chapterViewPath]);
 
   // The "My Library" button shows on every view except the pure home/welcome screen.
-  const isHomeScreen = !selectedBookId && !selectedCategoryId && !selectedSubCategoryId && !showAcharyas && !showLibraryCatalog;
+  const isHomeScreen = !selectedBookId && !selectedCategoryId && !selectedSubCategoryId && !showAcharyas && !showLibraryCatalog && !isMuttsUrl;
 
   return (
       <div className="flex h-screen w-full overflow-hidden">
@@ -646,6 +666,11 @@ function HomePageContent() {
                 const crumbs: { label: string; onClick?: () => void }[] = [];
 
                 crumbs.push({ label: t("home"), onClick: handleGoHome });
+                if (isMuttsUrl) {
+                  const muttsSection = MUTT_SECTIONS.find(s => s.id === muttsSectionFromUrl);
+                  crumbs.push({ label: "Advaita Mutts", onClick: muttsSection ? () => handleOpenMutts() : undefined });
+                  if (muttsSection) crumbs.push({ label: muttsSection.title });
+                }
 
                 if (selectedCategoryId) {
                   const cat = CATALOG_TREE.find(c => c.id === selectedCategoryId);
@@ -952,7 +977,17 @@ function HomePageContent() {
             </div>
           </header>
           <main className="flex flex-1 min-h-0 overflow-hidden">
-            {selectedBookId ? (
+            {isMuttsUrl ? (
+              <Suspense fallback={<ScreenFallback />}>
+                <MuttsPage
+                  sectionId={muttsSectionFromUrl}
+                  muttId={muttFromUrl}
+                  onNavigate={(path, opts) => setLocation(path, opts)}
+                  onBack={handleGoHome}
+                  onBrowseLibrary={() => { handleGoHome(); setShowLibraryCatalog(true); }}
+                />
+              </Suspense>
+            ) : selectedBookId ? (
               <>
                 {!isMobile && readerChapters.length > 0 && !readerNavCollapsed && (
                   <div className="w-72 xl:w-80 shrink-0 h-full" data-testid="reader-nav-sidebar-wrapper">
@@ -1074,6 +1109,7 @@ function HomePageContent() {
                   setSelectedSubCategoryId(subCategoryId);
                 }}
                 onOpenAcharya={handleOpenAcharya}
+                onOpenMutts={handleOpenMutts}
                 languageCode={selectedCommentaryLanguage}
               />
             )}
@@ -1133,6 +1169,9 @@ function Router() {
         <Route path="/" component={HomePage} />
         <Route path="/auth" component={AuthPage} />
         <Route path="/translate" component={TranslatePage} />
+        {/* Mutt system: /mutts, /mutts/<section>, /mutts/<section>/<mutt>. */}
+        <Route path="/mutts" component={HomePage} />
+        <Route path="/mutts/*" component={HomePage} />
         <Route path="/:bookSlug" component={HomePage} />
         {/* One segment per section level, so deeply nested granthas (e.g.
             Adhyāya › Pāda › Sūtra) get a URL for every level. */}
