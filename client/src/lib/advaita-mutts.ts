@@ -46,7 +46,7 @@ export const MUTT_SECTIONS: MuttSection[] = [
     id: "additional",
     title: "Additional Mathas",
     description:
-      "Listed under “Jagadguru Sankaracharya ka pitha aur upapitha” in the Kalyan magazine.",
+      "Listed under “Jagadguru Sankaracharya ka pitha aur upapitha”.",
     icon: "additional",
     mutts: [
       { name: "Kudali Matha", location: "Shimoga district, Mysore" },
