@@ -1709,7 +1709,7 @@ function HomeMuttsSection({ onOpenMutts }: { onOpenMutts: (path?: string) => voi
           alt=""
           aria-hidden="true"
           loading="lazy"
-          className="pointer-events-none select-none absolute right-0 top-0 h-56 sm:h-64 w-full sm:w-[65%] object-cover object-right opacity-30 sm:opacity-90 dark:opacity-20"
+          className="pointer-events-none select-none absolute right-0 top-0 h-56 sm:h-64 w-full sm:w-[65%] object-cover object-right mix-blend-multiply dark:mix-blend-normal opacity-30 sm:opacity-90 dark:opacity-20"
         />
         <div className="relative px-5 sm:px-8 pt-8 pb-6">
           <div className="flex items-center gap-3 mb-2">

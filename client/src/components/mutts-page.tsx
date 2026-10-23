@@ -99,7 +99,7 @@ export function MuttsPage({ sectionId, muttId, onNavigate, onBack, onBrowseLibra
           src="/images/mutts/hero.webp"
           alt=""
           aria-hidden="true"
-          className="pointer-events-none select-none absolute right-0 top-0 h-full w-full sm:w-[70%] object-cover object-right opacity-40 sm:opacity-100 dark:opacity-25"
+          className="pointer-events-none select-none absolute right-0 top-0 h-full w-full sm:w-[70%] object-cover object-right mix-blend-multiply dark:mix-blend-normal opacity-40 sm:opacity-100 dark:opacity-25"
         />
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-10 sm:pt-10 sm:pb-16">
           <button

@@ -1452,10 +1452,17 @@ async function commentaryOptionsFromLightScan(bookId: string): Promise<Commentar
   return buildCommentaryOptions(authorMap, languageSet);
 }
 
-/** Derive commentary options from a fully hydrated book (fallback, heavier). */
+/**
+ * Derive commentary options from a fully hydrated book (fallback, heavier).
+ *
+ * `strapiGetBookById` swallows Strapi errors and returns `undefined`, so a book we
+ * could not load must throw here — returning null would be cached as "this
+ * grantha has no commentary" and hide its commentary options after an outage.
+ */
 async function commentaryOptionsFromFullBook(bookId: string): Promise<CommentaryOptions | null> {
   const book = await strapiGetBookById(bookId);
-  if (!book || book.verses.length === 0) return null;
+  if (!book) throw new Error(`book ${bookId} could not be loaded from Strapi`);
+  if (book.verses.length === 0) return null;
 
   const authorMap = new Map<string, CommentaryAuthorAcc>();
   const languageSet = new Set<string>();
@@ -1500,24 +1507,25 @@ export async function strapiGetCommentaryOptionsByBookId(bookId: string): Promis
   if (cached) return isEmptyCommentaryOptions(cached) ? null : cached;
 
   return dedup(`commentaryOptions:${bookId}`, async () => {
-    const result = await commentaryOptionsStore.swr(bookId, async () => {
-      let options: CommentaryOptions | null = null;
-      try {
-        options = await commentaryOptionsFromLightScan(bookId);
-      } catch (err: any) {
-        console.warn(`[Strapi] Light commentary-options scan failed for ${bookId}, falling back to full book:`, err?.message);
-      }
-      if (!options) {
-        try {
-          options = await commentaryOptionsFromFullBook(bookId);
-        } catch {
-          options = null;
-        }
-      }
-      const resolved = options ?? EMPTY_COMMENTARY_OPTIONS;
-      setCache(commentaryOptionsCache, bookId, resolved);
-      return resolved;
-    });
+    let result: CommentaryOptions | undefined;
+    try {
+      result = await commentaryOptionsStore.swr(bookId, async () => {
+        // The full-book fallback is only for a light scan that SUCCEEDED and found
+        // nothing. A light scan that FAILED means Strapi is timing out, and answering
+        // that with a full-book hydration (every section, 6 at a time) multiplied the
+        // load — more timeouts, more fallbacks, a loop that kept Strapi saturated on
+        // 2026-10-23. Failures propagate instead: swr keeps serving the stale entry
+        // and a cold miss returns null below, with nothing cached.
+        let options = await commentaryOptionsFromLightScan(bookId);
+        if (!options) options = await commentaryOptionsFromFullBook(bookId);
+        const resolved = options ?? EMPTY_COMMENTARY_OPTIONS;
+        setCache(commentaryOptionsCache, bookId, resolved);
+        return resolved;
+      });
+    } catch (err: any) {
+      console.warn(`[Strapi] Commentary options unavailable for ${bookId} (not cached, will retry):`, err?.message);
+      return null;
+    }
     if (result) setCache(commentaryOptionsCache, bookId, result);
     return isEmptyCommentaryOptions(result) ? null : result!;
   });
