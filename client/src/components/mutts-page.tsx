@@ -1,11 +1,34 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ImgHTMLAttributes } from "react";
 import { ArrowLeft, ArrowUpRight, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Flower2, Landmark, MapPin, Church, Building2, TreePalm, Users } from "lucide-react";
-import { MUTT_SECTIONS, muttSlug, muttsPath, type Mutt, type MuttSection, type MuttSectionIcon } from "@/lib/advaita-mutts";
+import { MUTT_SECTIONS, muttSlug, muttsPath, preloadImages, preloadMuttThumbs, type Mutt, type MuttSection, type MuttSectionIcon } from "@/lib/advaita-mutts";
 import { MUTT_DETAILS, type MuttDetail, type MuttFacts } from "@/lib/advaita-mutt-details";
 import { SiteFooter } from "@/components/welcome-screen";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 
 type Navigate = (path: string, opts?: { replace?: boolean }) => void;
+
+// Start the hero + card images the moment this chunk loads (before first render),
+// so the open "principal peethas" section shows them complete, not mid-download.
+preloadMuttThumbs();
+
+/**
+ * An <img> that stays transparent until fully loaded, then fades in — no
+ * top-to-bottom partial paint. Cached images (see preloadImages) show at once.
+ */
+function FadeImage({ className = "", onLoad, ...props }: ImgHTMLAttributes<HTMLImageElement>) {
+  const [loaded, setLoaded] = useState(false);
+  // An image already in cache can finish before React attaches onLoad.
+  const ref = useCallback((el: HTMLImageElement | null) => { if (el?.complete && el.naturalWidth) setLoaded(true); }, []);
+  return (
+    <img
+      ref={ref}
+      decoding="async"
+      {...props}
+      onLoad={(e) => { setLoaded(true); onLoad?.(e); }}
+      className={`${className} transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+    />
+  );
+}
 
 /** Researched address usable as a map location (scriptural kshetras like Kailasa aren't). */
 const mappableAddress = (address?: string) => (address && !/scriptural/i.test(address) ? address : undefined);
@@ -99,6 +122,8 @@ export function MuttsPage({ sectionId, muttId, onNavigate, onBack, onBrowseLibra
           src="/images/mutts/hero.webp"
           alt=""
           aria-hidden="true"
+          fetchPriority="high"
+          decoding="async"
           className="pointer-events-none select-none absolute right-0 top-0 h-full w-full sm:w-[70%] object-cover object-right mix-blend-multiply dark:mix-blend-normal opacity-40 sm:opacity-100 dark:opacity-25"
         />
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-10 sm:pt-10 sm:pb-16">
@@ -238,8 +263,11 @@ const STRETCH = "text-left after:absolute after:inset-0 after:content-[''] focus
 
 function MuttImageCard({ mutt, onOpen }: { mutt: Mutt; onOpen: () => void }) {
   return (
-    <article className={`${CARD} flex-col shadow-sm`}>
-      <img src={mutt.image} alt={mutt.name} loading="lazy" className="h-36 w-full object-cover bg-muted" />
+    // Warm the drawer's large image on intent, so it's ready when the drawer opens.
+    <article className={`${CARD} flex-col shadow-sm`} onPointerEnter={() => preloadImages([mutt.image])} onFocus={() => preloadImages([mutt.image])}>
+      <div className="h-36 w-full bg-muted">
+        <FadeImage src={mutt.thumb} alt={mutt.name} fetchPriority="high" className="h-full w-full object-cover" />
+      </div>
       <div className="flex flex-1 flex-col px-3 py-3">
         <h3 className="font-serif text-base font-bold text-primary">
           <button type="button" onClick={onOpen} className={STRETCH}>{mutt.name}</button>
@@ -341,7 +369,10 @@ function MuttDetailSheet({ section, mutt, detail, onNavigate, onClose }: {
       <SheetContent side="right" className="w-full sm:max-w-lg p-0 flex flex-col gap-0 overflow-hidden" data-testid="mutt-detail-sheet">
         <div className="flex-1 overflow-y-auto">
           {mutt.image ? (
-            <img src={mutt.image} alt={mutt.name} className="h-48 sm:h-56 w-full object-cover bg-muted" />
+            // The (already cached) thumbnail fills in while the full-size image loads.
+            <div className="h-48 sm:h-56 w-full bg-muted bg-cover bg-center" style={mutt.thumb ? { backgroundImage: `url(${mutt.thumb})` } : undefined}>
+              <FadeImage key={mutt.image} src={mutt.image} alt={mutt.name} fetchPriority="high" className="h-full w-full object-cover" />
+            </div>
           ) : (
             <div className="h-24 bg-gradient-to-br from-primary/15 via-primary/5 to-transparent" />
           )}

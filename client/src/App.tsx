@@ -21,6 +21,8 @@ const MuttsPage = lazy(() =>
 );
 /** Warms the BookReader chunk ahead of the user opening a book. */
 export const prefetchReaderChunk = () => import("@/components/book-reader");
+/** Warms the mutts page chunk, whose load also preloads its card images. */
+const prefetchMuttsChunk = () => import("@/components/mutts-page");
 import { ReaderNavSidebar, useBookChapters } from "@/components/reader-nav-sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
@@ -158,10 +160,10 @@ function HomePageContent() {
       cancelIdleCallback?: (id: number) => void;
     };
     if (w.requestIdleCallback) {
-      const id = w.requestIdleCallback(() => { void prefetchReaderChunk(); }, { timeout: 3000 });
+      const id = w.requestIdleCallback(() => { void prefetchReaderChunk(); void prefetchMuttsChunk(); }, { timeout: 3000 });
       return () => w.cancelIdleCallback?.(id);
     }
-    const t = setTimeout(() => { void prefetchReaderChunk(); }, 1500);
+    const t = setTimeout(() => { void prefetchReaderChunk(); void prefetchMuttsChunk(); }, 1500);
     return () => clearTimeout(t);
   }, [selectedBookId]);
 

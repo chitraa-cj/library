@@ -11,8 +11,10 @@ export interface Mutt {
   note?: string;
   /** Where the mutt is; also used for the "open in maps" link. */
   location?: string;
-  /** Card image under /images/mutts (principal peethas only). */
+  /** Detail-drawer image (1200w) under /images/mutts (principal peethas only). */
   image?: string;
+  /** Card-sized (640w) version of `image`. */
+  thumb?: string;
 }
 
 export type MuttSectionIcon = "peetha" | "additional" | "parampara" | "puri" | "kasi" | "kerala";
@@ -33,13 +35,13 @@ export const MUTT_SECTIONS: MuttSection[] = [
       "The principal peethas established by Adi Shankaracharya, forming the spiritual and geographical foundation of the Advaita tradition.",
     icon: "peetha",
     mutts: [
-      { name: "Sringeri Matha", aliases: "Sarada Peeth / Pitha", location: "Sringeri, Karnataka (Mysore)", image: "/images/mutts/sringeri.webp" },
-      { name: "Kamakoti Pitha", aliases: "Sarvagna Peeta", location: "Kanchi / Kanchipuram, Tamil Nadu", image: "/images/mutts/kamakoti.webp" },
-      { name: "Badari Matha", aliases: "Badrikasrama / Joshi Mutt / Jyotir-pitha", location: "North (Himalayas)", image: "/images/mutts/badari.webp" },
-      { name: "Puri Matha", aliases: "Jagannath / Govardhana-pitha", location: "Puri, Odisha (East)", image: "/images/mutts/puri.webp" },
-      { name: "Dwaraka Matha", aliases: "Sarada Matha / Pitha", location: "Dwaraka, Gujarat (West)", image: "/images/mutts/dwaraka.webp" },
-      { name: "Kasi / Benares", note: "Five mutts were established here — four for disciples and one for himself.", location: "Kasi (Varanasi), Uttar Pradesh", image: "/images/mutts/kasi.webp" },
-      { name: "Srinagar", note: "Mentioned as a “far-flung spiritual capital” by Dr. C.P. Ramaswami Iyer.", location: "Srinagar", image: "/images/mutts/srinagar.webp" },
+      { name: "Sringeri Matha", aliases: "Sarada Peeth / Pitha", location: "Sringeri, Karnataka (Mysore)", image: "/images/mutts/sringeri-1200.webp", thumb: "/images/mutts/sringeri-640.webp" },
+      { name: "Kamakoti Pitha", aliases: "Sarvagna Peeta", location: "Kanchi / Kanchipuram, Tamil Nadu", image: "/images/mutts/kamakoti-1200.webp", thumb: "/images/mutts/kamakoti-640.webp" },
+      { name: "Badari Matha", aliases: "Badrikasrama / Joshi Mutt / Jyotir-pitha", location: "North (Himalayas)", image: "/images/mutts/badari-1200.webp", thumb: "/images/mutts/badari-640.webp" },
+      { name: "Puri Matha", aliases: "Jagannath / Govardhana-pitha", location: "Puri, Odisha (East)", image: "/images/mutts/puri-1200.webp", thumb: "/images/mutts/puri-640.webp" },
+      { name: "Dwaraka Matha", aliases: "Sarada Matha / Pitha", location: "Dwaraka, Gujarat (West)", image: "/images/mutts/dwaraka-1200.webp", thumb: "/images/mutts/dwaraka-640.webp" },
+      { name: "Kasi / Benares", note: "Five mutts were established here — four for disciples and one for himself.", location: "Kasi (Varanasi), Uttar Pradesh", image: "/images/mutts/kasi-1200.webp", thumb: "/images/mutts/kasi-640.webp" },
+      { name: "Srinagar", note: "Mentioned as a “far-flung spiritual capital” by Dr. C.P. Ramaswami Iyer.", location: "Srinagar", image: "/images/mutts/srinagar-1200.webp", thumb: "/images/mutts/srinagar-640.webp" },
     ],
   },
   {
@@ -147,3 +149,24 @@ export const muttsPath = (sectionId?: string, muttName?: string) =>
   "/mutts" + (sectionId ? `/${sectionId}` : "") + (sectionId && muttName ? `/${muttSlug(muttName)}` : "");
 
 export const PRINCIPAL_MUTTS = MUTT_SECTIONS[0];
+
+const warmed = new Set<string>();
+
+/**
+ * Fetches and decodes images ahead of render, so they appear whole the moment
+ * their <img> mounts instead of painting in progressively. Idempotent per URL.
+ */
+export function preloadImages(urls: (string | undefined)[]) {
+  for (const url of urls) {
+    if (!url || warmed.has(url)) continue;
+    warmed.add(url);
+    const img = new Image();
+    img.decoding = "async";
+    img.src = url;
+    img.decode?.().catch(() => { /* speculative — the real <img> retries */ });
+  }
+}
+
+/** Card thumbnails of every mutt that has one (the page's above-the-fold images). */
+export const preloadMuttThumbs = () =>
+  preloadImages(["/images/mutts/hero.webp", ...MUTT_SECTIONS.flatMap((s) => s.mutts.map((m) => m.thumb))]);
