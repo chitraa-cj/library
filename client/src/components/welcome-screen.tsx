@@ -1705,7 +1705,7 @@ function HomeMuttsSection({ onOpenMutts }: { onOpenMutts: (path?: string) => voi
     <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8" data-testid="home-mutts-section">
       <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-[#fcf5f2] dark:bg-primary/[0.04]">
         <img
-          src="/images/mutts/hero.webp"
+          src="/images/mutts/hero-v2.webp"
           alt=""
           aria-hidden="true"
           loading="lazy"

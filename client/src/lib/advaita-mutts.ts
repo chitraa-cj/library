@@ -169,4 +169,4 @@ export function preloadImages(urls: (string | undefined)[]) {
 
 /** Card thumbnails of every mutt that has one (the page's above-the-fold images). */
 export const preloadMuttThumbs = () =>
-  preloadImages(["/images/mutts/hero.webp", ...MUTT_SECTIONS.flatMap((s) => s.mutts.map((m) => m.thumb))]);
+  preloadImages(["/images/mutts/hero-v2.webp", ...MUTT_SECTIONS.flatMap((s) => s.mutts.map((m) => m.thumb))]);

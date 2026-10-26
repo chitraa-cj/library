@@ -119,7 +119,7 @@ export function MuttsPage({ sectionId, muttId, onNavigate, onBack, onBrowseLibra
       {/* ===== HERO ===== */}
       <section className="relative overflow-hidden">
         <img
-          src="/images/mutts/hero.webp"
+          src="/images/mutts/hero-v2.webp"
           alt=""
           aria-hidden="true"
           fetchPriority="high"
