@@ -54,6 +54,17 @@ const detailFor = (sectionId: string, m: Mutt): MuttDetail | undefined => {
   return substantive ? { ...d, overview, facts } : undefined;
 };
 
+/** Long-form detail text; blank lines separate paragraphs. */
+function Paragraphs({ text }: { text: string }) {
+  return (
+    <div className="space-y-3">
+      {text.split(/\n\s*\n/).map((para, i) => (
+        <p key={i} className="text-sm leading-relaxed text-foreground/90">{para}</p>
+      ))}
+    </div>
+  );
+}
+
 const SECTION_ICONS: Record<MuttSectionIcon, typeof Landmark> = {
   peetha: Landmark,
   additional: Flower2,
@@ -392,14 +403,14 @@ function MuttDetailSheet({ section, mutt, detail, onNavigate, onClose }: {
             {detail.overview && (
               <>
                 <h4 className="mt-6 mb-1.5 text-xs uppercase tracking-[0.15em] font-semibold text-muted-foreground">Overview</h4>
-                <p className="text-sm leading-relaxed text-foreground/90">{detail.overview}</p>
+                <Paragraphs text={detail.overview} />
               </>
             )}
 
                 {detail.history && (
                   <>
                     <h4 className="mt-5 mb-1.5 text-xs uppercase tracking-[0.15em] font-semibold text-muted-foreground">History</h4>
-                    <p className="text-sm leading-relaxed text-foreground/90">{detail.history}</p>
+                    <Paragraphs text={detail.history} />
                   </>
                 )}
 

@@ -36,7 +36,7 @@ export const MUTT_SECTIONS: MuttSection[] = [
     icon: "peetha",
     mutts: [
       { name: "Sringeri Matha", aliases: "Sarada Peeth / Pitha", location: "Sringeri, Karnataka (Mysore)", image: "/images/mutts/sringeri-1200.webp", thumb: "/images/mutts/sringeri-640.webp" },
-      { name: "Kamakoti Pitha", aliases: "Sarvagna Peeta", location: "Kanchi / Kanchipuram, Tamil Nadu", image: "/images/mutts/kamakoti-1200.webp", thumb: "/images/mutts/kamakoti-640.webp" },
+      { name: "Kamakoti Pitha", aliases: "Sarvajna Peetha", location: "Kanchi / Kanchipuram, Tamil Nadu", image: "/images/mutts/kamakoti-1200.webp", thumb: "/images/mutts/kamakoti-640.webp" },
       { name: "Badari Matha", aliases: "Badrikasrama / Joshi Mutt / Jyotir-pitha", location: "North (Himalayas)", image: "/images/mutts/badari-1200.webp", thumb: "/images/mutts/badari-640.webp" },
       { name: "Puri Matha", aliases: "Jagannath / Govardhana-pitha", location: "Puri, Odisha (East)", image: "/images/mutts/puri-1200.webp", thumb: "/images/mutts/puri-640.webp" },
       { name: "Dwaraka Matha", aliases: "Sarada Matha / Pitha", location: "Dwaraka, Gujarat (West)", image: "/images/mutts/dwaraka-1200.webp", thumb: "/images/mutts/dwaraka-640.webp" },
