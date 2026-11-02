@@ -59,21 +59,30 @@
   --chart-3: 8 65% 50%;
   --chart-4: 28 75% 50%;
   --chart-5: 35 70% 52%;
-  /* Design system typefaces (see "font usage" spec).
-   * Each stack lists the Latin face first and the matching Devanagari face next,
-   * so the browser's per-glyph fallback renders Devanagari in the right typeface:
-   *   body/reading  -> Libre Franklin (Latin) + Tiro Devanagari Hindi (Devanagari)
-   *   headings      -> Noto Serif (Latin) + Amita (Devanagari) */
-  --font-sans: 'Libre Franklin', 'Tiro Devanagari Hindi', system-ui, -apple-system, sans-serif;
-  --font-serif: 'Noto Serif', 'Amita', Georgia, serif;
+  /* Design system typefaces (see "font usage" spec, revised after the
+   * 2026-11 readability survey of Ambuda, Vedabase, IITK, Sefaria, 84000 etc.).
+   * Each stack lists the Latin face first and the matching Indic face next,
+   * so the browser's per-glyph fallback renders each script in the right typeface:
+   *   UI / body      -> Libre Franklin (Latin) + Tiro Devanagari Sanskrit
+   *   reading        -> Noto Serif (Latin, full IAST incl. ṝ ḹ ṁ) + Tiro Devanagari Sanskrit
+   *                     + Noto Serif per regional script (Google serves them by
+   *                     unicode-range, so each downloads only when that script is shown)
+   *   headings       -> Noto Serif (Latin) + Noto Serif Devanagari (real bold weights)
+   * The pre-survey set is kept below under [data-typography="classic"] for rollback. */
+  --font-indic-reading: 'Tiro Devanagari Sanskrit', 'Noto Serif Devanagari', 'Noto Serif Tamil', 'Noto Serif Telugu',
+    'Noto Serif Kannada', 'Noto Serif Malayalam', 'Noto Serif Bengali', 'Noto Serif Gujarati',
+    'Noto Serif Gurmukhi', 'Noto Serif Oriya';
+  --font-sans: 'Libre Franklin', var(--font-indic-reading), system-ui, -apple-system, sans-serif;
+  --font-serif: 'Noto Serif', 'Noto Serif Devanagari', Georgia, serif;
   --font-mono: Menlo, monospace;
 
   /* Semantic font roles */
-  --font-page-heading: 'Sallenas Grandes', 'Noto Serif', 'Amita', Georgia, serif;      /* Page Heading */
-  --font-section-heading: 'Noto Serif', 'Amita', Georgia, serif;                        /* Section heading */
-  --font-body: 'Libre Franklin', 'Tiro Devanagari Hindi', system-ui, sans-serif;        /* Body text */
-  --font-hindi-heading: 'Amita', 'Noto Serif', serif;                                   /* Hindi/Devanagari heading */
-  --font-hindi-reading: 'Tiro Devanagari Hindi', 'Noto Serif', serif;                   /* Hindi/Devanagari reading */
+  --font-page-heading: 'Sallenas Grandes', 'Noto Serif', 'Noto Serif Devanagari', Georgia, serif; /* Page Heading */
+  --font-section-heading: var(--font-serif);                                            /* Section heading */
+  --font-body: 'Libre Franklin', var(--font-indic-reading), system-ui, sans-serif;      /* UI / body text */
+  --font-reading: 'Noto Serif', var(--font-indic-reading), Georgia, serif;              /* Translation, IAST, commentary */
+  --font-hindi-heading: 'Amita', 'Noto Serif Devanagari', 'Noto Serif', serif;          /* Hindi/Devanagari display heading */
+  --font-hindi-reading: var(--font-indic-reading), 'Noto Serif', serif;                 /* Mantra / Devanagari reading */
   --radius: .5rem;
   --shadow-2xs: 0px 2px 0px 0px hsl(30 8% 12% / 0.00);
   --shadow-xs: 0px 2px 0px 0px hsl(30 8% 12% / 0.00);
@@ -114,6 +123,19 @@
   --destructive-border: hsl(var(--destructive));
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 }
+/* Rollback: the pre-survey font set. Enable with <html data-typography="classic">
+ * (index.html sets it from localStorage "typography" or ?typography=classic). */
+:root[data-typography="classic"] {
+  --font-sans: 'Libre Franklin', 'Tiro Devanagari Hindi', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Noto Serif', 'Amita', Georgia, serif;
+  --font-page-heading: 'Sallenas Grandes', 'Noto Serif', 'Amita', Georgia, serif;
+  --font-section-heading: 'Noto Serif', 'Amita', Georgia, serif;
+  --font-body: 'Libre Franklin', 'Tiro Devanagari Hindi', system-ui, sans-serif;
+  --font-reading: var(--font-body);
+  --font-hindi-heading: 'Amita', 'Noto Serif', serif;
+  --font-hindi-reading: 'Tiro Devanagari Hindi', 'Noto Serif', serif;
+}
+
 
 .dark {
   --button-outline: rgba(255,255,255, .10);

@@ -6,17 +6,30 @@
     <title>Ekatma Dham - Isha Upanishad with Shankaracharya Bhashya</title>
     <meta name="description" content="Explore the Isha Upanishad with complete Shankaracharya Bhashya (commentary) in multiple languages. Ekatma Dham celebrates Sanatana Dharma and the legacy of Adi Shankaracharya." />
     <link rel="icon" type="image/png" href="/favicon.png" />
+    <!-- Typography rollback: localStorage "typography"="classic" or ?typography=classic restores
+         the pre-survey font set (see :root[data-typography="classic"] in index.css). -->
+    <script>
+      try {
+        var q = new URLSearchParams(location.search).get("typography");
+        if (q) localStorage.setItem("typography", q);
+        var ty = q || localStorage.getItem("typography");
+        if (ty && ty !== "default") document.documentElement.dataset.typography = ty;
+      } catch (e) {}
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Design system fonts: Noto Serif (section headings), Libre Franklin (body),
-         Amita (Hindi/Devanagari headings), Tiro Devanagari Hindi (Hindi/Devanagari reading).
+    <!-- Design system fonts: Noto Serif (headings + reading text), Libre Franklin (UI),
+         Tiro Devanagari Sanskrit (mantra/Devanagari reading), Noto Serif Devanagari (Devanagari
+         headings/bold), Amita (display Hindi headings), Noto Serif <script> for regional
+         transliterations. Google serves each by unicode-range, so a face only downloads when
+         its glyphs are on screen. Tiro Devanagari Hindi stays for the "classic" rollback set.
          Page-heading font "Sallenas Grandes" is self-hosted via @font-face in index.css.
          Loaded non-render-blocking: preload the stylesheet, then flip it to a real
          stylesheet on load so it never delays first paint (display=swap keeps text
          visible in a fallback face until the web font arrives). -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Amita:wght@400;700&family=Libre+Franklin:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Noto+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Tiro+Devanagari+Hindi:ital@0;1&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Amita:wght@400;700&family=Libre+Franklin:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Noto+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Noto+Serif+Devanagari:wght@400..700&family=Tiro+Devanagari+Sanskrit:ital@0;1&family=Tiro+Devanagari+Hindi:ital@0;1&family=Noto+Serif+Tamil:wght@400;600&family=Noto+Serif+Telugu:wght@400;600&family=Noto+Serif+Kannada:wght@400;600&family=Noto+Serif+Malayalam:wght@400;600&family=Noto+Serif+Bengali:wght@400;600&family=Noto+Serif+Gujarati:wght@400;600&family=Noto+Serif+Gurmukhi:wght@400;600&family=Noto+Serif+Oriya:wght@400;600&display=swap" onload="this.onload=null;this.rel='stylesheet'">
     <noscript>
-      <link href="https://fonts.googleapis.com/css2?family=Amita:wght@400;700&family=Libre+Franklin:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Noto+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Tiro+Devanagari+Hindi:ital@0;1&display=swap" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Amita:wght@400;700&family=Libre+Franklin:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Noto+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Noto+Serif+Devanagari:wght@400..700&family=Tiro+Devanagari+Sanskrit:ital@0;1&family=Tiro+Devanagari+Hindi:ital@0;1&family=Noto+Serif+Tamil:wght@400;600&family=Noto+Serif+Telugu:wght@400;600&family=Noto+Serif+Kannada:wght@400;600&family=Noto+Serif+Malayalam:wght@400;600&family=Noto+Serif+Bengali:wght@400;600&family=Noto+Serif+Gujarati:wght@400;600&family=Noto+Serif+Gurmukhi:wght@400;600&family=Noto+Serif+Oriya:wght@400;600&display=swap" rel="stylesheet">
     </noscript>
   </head>
   <body>

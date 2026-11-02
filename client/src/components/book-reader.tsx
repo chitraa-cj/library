@@ -303,7 +303,7 @@ function EnglishTranslationToggle({ englishContent }: { englishContent: string }
       </button>
       {showTranslation && (
         <div className="mt-2 p-3 rounded-md bg-muted/50 border border-border/30">
-          <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/80 font-body" data-testid="text-english-translation">
+          <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground/80 font-reading" data-testid="text-english-translation">
             {englishContent}
           </p>
         </div>
@@ -446,7 +446,7 @@ function VerseExplanation({
                   </Badge>
                 </div>
               )}
-              <div className="font-body text-base leading-relaxed whitespace-pre-wrap break-words text-foreground/90 pl-6" data-testid={`commentary-text-${explanation.languageCode}-${idx}`}>
+              <div className="font-reading text-base sm:text-[17px] leading-[1.8] whitespace-pre-wrap break-words text-foreground/90 pl-6" data-testid={`commentary-text-${explanation.languageCode}-${idx}`}>
                 <WordTooltip
                   content={explanation.content}
                   sourceLanguage={explanation.languageCode}
@@ -1875,7 +1875,7 @@ export function BookReader({
                                 data-testid={`chapter-verse-${verse.verseNumber}`}
                               >
                                 {devanagari && (
-                                  <div className="font-hindi-reading text-base sm:text-xl leading-loose sm:leading-loose text-center px-2 sm:px-8 group-hover:text-primary transition-colors whitespace-pre-line">
+                                  <div className="font-hindi-reading text-lg sm:text-xl leading-loose sm:leading-loose text-center px-2 sm:px-8 group-hover:text-primary transition-colors whitespace-pre-line">
                                     {devanagari}
                                   </div>
                                 )}
@@ -1888,12 +1888,12 @@ export function BookReader({
                                   </div>
                                 )}
                                 {iast && (
-                                  <div className="mt-2 sm:mt-3 font-body text-xs sm:text-sm leading-relaxed text-center px-4 sm:px-12 text-primary/70 italic whitespace-pre-line">
+                                  <div className="mt-2 sm:mt-3 font-reading text-sm sm:text-base leading-relaxed text-center px-4 sm:px-12 text-primary/80 italic whitespace-pre-line">
                                     {iast}
                                   </div>
                                 )}
                                 {translation && (
-                                  <div className="mt-3 sm:mt-4 text-xs sm:text-sm leading-relaxed text-center px-4 sm:px-12 text-muted-foreground">
+                                  <div className="mt-3 sm:mt-4 font-reading text-sm sm:text-base leading-relaxed text-center px-4 sm:px-12 text-muted-foreground">
                                     {translation}
                                   </div>
                                 )}
@@ -1931,7 +1931,7 @@ export function BookReader({
                           data-testid={`chapter-verse-${verse.verseNumber}`}
                         >
                           {devanagari && (
-                            <div className="font-hindi-reading text-base sm:text-xl leading-loose sm:leading-loose text-center px-2 sm:px-8 group-hover:text-primary transition-colors whitespace-pre-line">
+                            <div className="font-hindi-reading text-lg sm:text-xl leading-loose sm:leading-loose text-center px-2 sm:px-8 group-hover:text-primary transition-colors whitespace-pre-line">
                               {devanagari}
                             </div>
                           )}
@@ -1944,12 +1944,12 @@ export function BookReader({
                             </div>
                           )}
                           {iast && (
-                            <div className="mt-2 sm:mt-3 font-body text-xs sm:text-sm leading-relaxed text-center px-4 sm:px-12 text-primary/70 italic whitespace-pre-line">
+                            <div className="mt-2 sm:mt-3 font-reading text-sm sm:text-base leading-relaxed text-center px-4 sm:px-12 text-primary/80 italic whitespace-pre-line">
                               {iast}
                             </div>
                           )}
                           {translation && (
-                            <div className="mt-3 sm:mt-4 text-xs sm:text-sm leading-relaxed text-center px-4 sm:px-12 text-muted-foreground">
+                            <div className="mt-3 sm:mt-4 font-reading text-sm sm:text-base leading-relaxed text-center px-4 sm:px-12 text-muted-foreground">
                               {translation}
                             </div>
                           )}
@@ -2077,7 +2077,7 @@ export function BookReader({
 
             {introSanskrit && effectiveLang !== "devanagari" && effectiveLang !== "sa" && (
               <div className="mb-6 sm:mb-8 p-4 sm:p-6 rounded-lg bg-primary/5 border border-primary/10">
-                <div className="font-body text-sm sm:text-base leading-relaxed sm:leading-loose text-foreground/90" data-testid="text-intro-sanskrit">
+                <div className="font-reading text-sm sm:text-base leading-relaxed sm:leading-loose text-foreground/90" data-testid="text-intro-sanskrit">
                   <WordTooltip
                     content={introSanskrit}
                     commentaryContent={introCommentaryContext}
@@ -2091,7 +2091,7 @@ export function BookReader({
 
             <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none" data-testid="text-intro-content">
               {introTextForLang ? (
-                <div className="font-body text-sm sm:text-base leading-relaxed sm:leading-loose text-foreground/80">
+                <div className="font-reading text-sm sm:text-base leading-relaxed sm:leading-loose text-foreground/80">
                   <WordTooltip
                     content={introTextForLang}
                     commentaryContent={introCommentaryContext}
@@ -2326,7 +2326,7 @@ export function BookReader({
 
                       {verseTransliteration && (
                         <div
-                          className="relative font-body text-sm sm:text-base leading-relaxed text-center text-primary/60 dark:text-primary/50 italic whitespace-pre-line mt-3 pt-3 border-t border-primary/15"
+                          className="relative font-reading text-sm sm:text-base leading-relaxed text-center text-primary/75 dark:text-primary/65 italic whitespace-pre-line mt-3 pt-3 border-t border-primary/15"
                           data-testid={`text-transliteration-${currentVerse.verseNumber}`}
                         >
                           {verseTransliteration}
@@ -2361,7 +2361,7 @@ export function BookReader({
                                 </span>
                               )}
                               <div
-                                className="text-sm sm:text-base leading-relaxed text-foreground/80 font-body"
+                                className="text-sm sm:text-base leading-relaxed text-foreground/80 font-reading"
                                 data-testid={`text-translation-${translation.languageCode}-${currentVerse.verseNumber}`}
                               >
                                 <WordTooltip
@@ -2407,7 +2407,7 @@ export function BookReader({
                 </div>
                 {verseTransliteration && (
                   <div
-                    className="relative font-body text-sm sm:text-base leading-relaxed text-center text-primary/60 dark:text-primary/50 italic whitespace-pre-line mt-3 pt-3 border-t border-primary/15"
+                    className="relative font-reading text-sm sm:text-base leading-relaxed text-center text-primary/75 dark:text-primary/65 italic whitespace-pre-line mt-3 pt-3 border-t border-primary/15"
                     data-testid={`text-transliteration-${currentVerse.verseNumber}`}
                   >
                     {verseTransliteration}
@@ -2442,7 +2442,7 @@ export function BookReader({
                           </span>
                         )}
                         <div
-                          className="text-sm sm:text-base leading-relaxed text-foreground/80 font-body"
+                          className="text-sm sm:text-base leading-relaxed text-foreground/80 font-reading"
                           data-testid={`text-translation-${translation.languageCode}-${currentVerse.verseNumber}`}
                         >
                           <WordTooltip

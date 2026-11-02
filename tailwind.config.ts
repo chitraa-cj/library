@@ -90,6 +90,7 @@ export default {
         "page-heading": ["var(--font-page-heading)"],
         "section-heading": ["var(--font-section-heading)"],
         body: ["var(--font-body)"],
+        reading: ["var(--font-reading)"],
         "hindi-heading": ["var(--font-hindi-heading)"],
         "hindi-reading": ["var(--font-hindi-reading)"],
       },
