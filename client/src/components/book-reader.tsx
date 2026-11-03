@@ -37,6 +37,7 @@ import shankaracharyaImg from "@assets/image_1770455528511.png";
 import shishyasImg from "@assets/shishyas.png";
 import mantraMandalaImg from "@assets/mantra-mandala.png";
 import readerIllustration from "@assets/reader-shankaracharya-standing.jpg";
+import { isPrakaranaType } from "@/lib/prakarana-categories";
 
 const LANG_ALIASES: Record<string, string[]> = {
   "english": ["english", "en"],
@@ -2185,7 +2186,7 @@ export function BookReader({
   const activeCommentaryMode = commentaryMode === "teeka" && teekaAvailable ? "teeka" : "bhashyam";
   const commentaryLanguageList = commentaryOptions?.languages ?? [];
   // The illustration showcase layout is reserved for Independent Advaita Works (Prakarana Grantha) only.
-  const isIndependentAdvaitaWork = (book?.category || "").trim().toLowerCase() === "prakarana grantha";
+  const isIndependentAdvaitaWork = isPrakaranaType(book?.category);
 
   return (
     <div

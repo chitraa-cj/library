@@ -1,3 +1,18 @@
+// Prakarana sub-category per CMS GranthaType (= Book.category). Plain "Prakarana Grantha"
+// is still valid and falls back to the documentId map below, then to "pg-other".
+export const PRAKARANA_SUBCATEGORY_BY_TYPE: Record<string, string> = {
+  "Prakarana - Gitas": "pg-gitas",
+  "Prakarana - Shankara Granthas": "pg-shankara",
+  "Prakarana - Siddhi Granthas": "pg-siddhi",
+  "Prakarana - Mimamsa Granthas": "pg-mimamsa",
+  "Prakarana - Other Granthas": "pg-other",
+};
+
+export function isPrakaranaType(category: string | null | undefined): boolean {
+  const c = (category || "").trim();
+  return c === "Prakarana Grantha" || c in PRAKARANA_SUBCATEGORY_BY_TYPE;
+}
+
 // Prakarana Grantha sub-category per Strapi grantha documentId (= Book.id).
 // Granthas typed "Prakarana Grantha" but missing here fall back to "pg-other".
 export const PRAKARANA_SUBCATEGORY_BY_ID: Record<string, string> = {

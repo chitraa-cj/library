@@ -75,6 +75,7 @@ import forYouUpanishad from "@assets/foryou-upanishad.png";
 import forYouGita from "@assets/foryou-gita.png";
 import forYouBrahmaSutra from "@assets/foryou-brahma-sutra.png";
 import forYouStotra from "@assets/foryou-stotra.png";
+import { isPrakaranaType } from "@/lib/prakarana-categories";
 
 // ===== FEATURED COLLECTION ("Beyond the Mainstream") =====
 const FEATURED_BOOKS = [
@@ -1104,7 +1105,10 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
   const otherUpItems: Item[] = upBooks
     .filter(b => !principalUpIds.has(b.id))
     .map(b => ({ label: b.title, onClick: () => onSelectBook(b.id) }));
-  const prakaranaItems = catItems(["Prakarana Grantha"]);
+  const prakaranaItems = books
+    .filter(b => isPrakaranaType(b.category))
+    .sort((a, b) => (a.title || "").localeCompare(b.title || ""))
+    .map(b => ({ label: b.title, onClick: () => onSelectBook(b.id) }));
   const bhaktiItems = catItems(["Bhakthi Grantha", "Bhakti Grantha", "Bhakthi Stotra"]);
   const TABS: Record<string, Card[]> = {
     Popular: [

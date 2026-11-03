@@ -69,7 +69,8 @@ export type InsertLanguage = z.infer<typeof insertLanguageSchema>;
 export type Language = typeof languages.$inferSelect;
 
 export type InsertBook = z.infer<typeof insertBookSchema>;
-export type Book = typeof books.$inferSelect;
+// subCategory comes from Strapi (e.g. PrakaranaCategory); not stored in the local books table.
+export type Book = typeof books.$inferSelect & { subCategory?: string | null };
 
 export type InsertVerse = z.infer<typeof insertVerseSchema>;
 export type Verse = typeof verses.$inferSelect;

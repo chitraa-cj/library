@@ -727,6 +727,7 @@ function mapGranthaToBook(g: any): Book & { bhashyamName?: string; teekasList?: 
     author: g.BhashyamAuthor || null,
     description: richTextToString(g.IntroductionToTextEnglish) || null,
     category: g.GranthaType || "Uncategorized",
+    subCategory: g.PrakaranaCategory?.trim() || null,
     coverImage: g.coverImage?.url ? `${STRAPI_URL}${g.coverImage.url}` : null,
     totalVerses,
     bhashyamName: g.BhashyamName || undefined,

@@ -17,7 +17,7 @@ import { useTranslation } from "@/lib/translations";
 import { fuzzyMatch as fuzzySearchMatch } from "@/lib/fuzzy-search";
 import { translateContent, bookTitleTranslations, bookAuthorTranslations, chapterTitleTranslations, sectionTitleTranslations, verseSectionTitleTranslations } from "@/lib/content-translations";
 import type { Book, Verse } from "@shared/schema";
-import { PRAKARANA_SUBCATEGORY_BY_ID } from "@/lib/prakarana-categories";
+import { PRAKARANA_SUBCATEGORY_BY_ID, PRAKARANA_SUBCATEGORY_BY_TYPE } from "@/lib/prakarana-categories";
 
 interface CatalogSubCategory {
   id: string;
@@ -93,8 +93,21 @@ function matchesCategory(matcher: string | undefined, altMatcher: string | undef
   return false;
 }
 
+// "2. Shankara Granthas", "shankara granthas" and "Shankara Granthas" all match the same sub-category.
+function normalizeSubCategory(value: string): string {
+  return value.replace(/^\s*\d+[.)]\s*/, "").trim().toLowerCase();
+}
+
 function findBookPath(book: Book): { categoryId: string; subCategoryId: string | null } | null {
-  const prakaranaSub = PRAKARANA_SUBCATEGORY_BY_ID[book.id];
+  if (book.subCategory) {
+    const wanted = normalizeSubCategory(book.subCategory);
+    for (const cat of CATALOG_TREE) {
+      const sub = cat.children?.find(s => normalizeSubCategory(s.label) === wanted);
+      if (sub) return { categoryId: cat.id, subCategoryId: sub.id };
+    }
+  }
+  // Fallback until every grantha has PrakaranaCategory set in Strapi.
+  const prakaranaSub = PRAKARANA_SUBCATEGORY_BY_TYPE[book.category] ?? PRAKARANA_SUBCATEGORY_BY_ID[book.id];
   if (prakaranaSub) return { categoryId: "prakarana-granthas", subCategoryId: prakaranaSub };
   for (const cat of CATALOG_TREE) {
     if (cat.children) {
