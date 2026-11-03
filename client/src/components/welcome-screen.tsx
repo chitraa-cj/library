@@ -1055,7 +1055,7 @@ function HomeCollections({ books, onSelectBook, onSelectChapter, onBrowseLibrary
   const openGita = () => (gitaBook ? onSelectBook(gitaBook.id) : onBrowseLibrary());
   const openBrahma = () => (brahmaBook ? onSelectBook(brahmaBook.id) : onBrowseLibrary());
   const openUps = () => onSelectSubCategory?.("prasthana-thraya", "pt-upanishad");
-  const openPrakarana = () => onSelectSubCategory?.("prakarana-granthas", "pg-independent");
+  const openPrakarana = () => onSelectSubCategory?.("prakarana-granthas", "pg-shankara");
   const openBook = (slugs: string[], fallback: () => void) => () => { const b = findBySlug(slugs); b ? onSelectBook(b.id) : fallback(); };
   const openGitaCh = (num: number) => () => (gitaBook && onSelectChapter ? onSelectChapter(gitaBook.id, num) : openGita());
   const openBrahmaCh = (num: number) => () => (brahmaBook && onSelectChapter ? onSelectChapter(brahmaBook.id, num) : openBrahma());

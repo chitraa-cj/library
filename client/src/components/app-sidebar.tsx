@@ -17,6 +17,7 @@ import { useTranslation } from "@/lib/translations";
 import { fuzzyMatch as fuzzySearchMatch } from "@/lib/fuzzy-search";
 import { translateContent, bookTitleTranslations, bookAuthorTranslations, chapterTitleTranslations, sectionTitleTranslations, verseSectionTitleTranslations } from "@/lib/content-translations";
 import type { Book, Verse } from "@shared/schema";
+import { PRAKARANA_SUBCATEGORY_BY_ID } from "@/lib/prakarana-categories";
 
 interface CatalogSubCategory {
   id: string;
@@ -62,10 +63,11 @@ const CATALOG_TREE: CatalogCategory[] = [
     description: "Foundational texts authored by Acharyas to explain the core tenets of Advaita.",
     descriptionKey: "prakaranaGranthasDescription",
     children: [
-      { id: "pg-independent", label: "Independent Advaita Works", labelKey: "independentAdvaitaWorks", categoryMatch: "Prakarana Grantha" },
-      { id: "pg-other-gitas", label: "Other Gitas", labelKey: "otherGitas" },
-      { id: "pg-bhakthi", label: "Bhakthi Granthas", labelKey: "bhakthiGranthas" },
-      { id: "pg-other-languages", label: "Advaita in Other Languages", labelKey: "advaitaInOtherLanguages" },
+      { id: "pg-gitas", label: "Gitas", labelKey: "prakaranaGitas" },
+      { id: "pg-shankara", label: "Shankara Granthas", labelKey: "shankaraGranthas" },
+      { id: "pg-siddhi", label: "Siddhi Granthas", labelKey: "siddhiGranthas" },
+      { id: "pg-mimamsa", label: "Mimamsa Granthas", labelKey: "mimamsaGranthas" },
+      { id: "pg-other", label: "Other Granthas", labelKey: "otherGranthas", categoryMatch: "Prakarana Grantha" },
     ],
   },
   {
@@ -92,6 +94,8 @@ function matchesCategory(matcher: string | undefined, altMatcher: string | undef
 }
 
 function findBookPath(book: Book): { categoryId: string; subCategoryId: string | null } | null {
+  const prakaranaSub = PRAKARANA_SUBCATEGORY_BY_ID[book.id];
+  if (prakaranaSub) return { categoryId: "prakarana-granthas", subCategoryId: prakaranaSub };
   for (const cat of CATALOG_TREE) {
     if (cat.children) {
       for (const sub of cat.children) {
