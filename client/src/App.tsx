@@ -5,7 +5,7 @@ import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider, useTheme } from "@/components/theme-provider";
-import { CATALOG_TREE, findBookPath, matchesCategory } from "@/components/app-sidebar";
+import { CATALOG_TREE, findBookPath } from "@/components/app-sidebar";
 import { WelcomeScreen, LibraryCatalogView, CategoryDetailView, SubCategoryDetailView } from "@/components/welcome-screen";
 // Heavy, route-specific screens are code-split so the home page paints without
 // downloading the reader/acharya code. They load on demand (and are prefetched
@@ -766,7 +766,7 @@ function HomePageContent() {
                           // case; keep it when the subcategory holds many texts (e.g.
                           // "Upanishad"), where it's a genuinely distinct list page.
                           const subBookCount = sub
-                            ? (allBooks ?? []).filter(b => matchesCategory(sub.categoryMatch, sub.categoryAltMatch, b.category)).length
+                            ? (allBooks ?? []).filter(b => findBookPath(b)?.subCategoryId === sub.id).length
                             : 0;
                           if (sub && subBookCount !== 1) {
                             crumbs.push({

@@ -17,7 +17,7 @@ import {
 import { getRecentReads, subscribeLastRead, type LastReadEntry } from "@/lib/last-read";
 import { useAuth } from "@/hooks/use-auth";
 import { VideoInline } from "@/components/video-popup";
-import { CATALOG_TREE, type CatalogCategory } from "@/components/app-sidebar";
+import { CATALOG_TREE, findBookPath, type CatalogCategory } from "@/components/app-sidebar";
 import { useTranslation } from "@/lib/translations";
 import { matchAcharyaSlug } from "@/lib/acharya-match";
 import { MUTT_SECTIONS, PRINCIPAL_MUTTS, muttsPath } from "@/lib/advaita-mutts";
@@ -564,23 +564,13 @@ const bookVideoConfig: Record<string, { videoId: string; videoTitle: string }> =
   },
 };
 
-function getBooksForSubCategory(books: Book[], categoryMatch?: string, categoryAltMatch?: string): Book[] {
-  if (!categoryMatch && !categoryAltMatch) return [];
-  return books.filter(b => matchesCategory(categoryMatch, categoryAltMatch, b.category));
+// Same placement as the sidebar (findBookPath), so Prakarana types and the documentId fallback apply here too.
+function getBooksForSubCategory(books: Book[], subCategoryId: string): Book[] {
+  return books.filter(b => findBookPath(b)?.subCategoryId === subCategoryId);
 }
 
 function getBooksForCategory(books: Book[], cat: CatalogCategory): Book[] {
-  if (cat.categoryMatch) {
-    return books.filter(b => b.category === cat.categoryMatch);
-  }
-  if (cat.children) {
-    const matched: Book[] = [];
-    for (const sub of cat.children) {
-      matched.push(...getBooksForSubCategory(books, sub.categoryMatch, sub.categoryAltMatch));
-    }
-    return matched;
-  }
-  return [];
+  return books.filter(b => findBookPath(b)?.categoryId === cat.id);
 }
 
 function HomeSearchBar({ books, onSelectBook, languageCode }: { books: Book[]; onSelectBook: (bookId: string) => void; languageCode: string | null }) {
@@ -1789,12 +1779,6 @@ export function SiteFooter({ onBrowseLibrary }: { onBrowseLibrary: () => void })
   );
 }
 
-function matchesCategory(matcher: string | undefined, altMatcher: string | undefined, bookCategory: string): boolean {
-  if (matcher && bookCategory === matcher) return true;
-  if (altMatcher && bookCategory === altMatcher) return true;
-  return false;
-}
-
 function getTranslatedLabel(item: { label: string; labelKey?: string }, t: (key: any) => string): string {
   if (item.labelKey) {
     const translated = t(item.labelKey);
@@ -1996,7 +1980,7 @@ export function LibraryCatalogView({ books, onSelectBook, onSelectCategory, onSe
                 <div className="border-t border-primary/10 flex-1 px-4 sm:px-5 py-3 sm:py-4 space-y-1">
                   {cat.children ? (
                     cat.children.map(sub => {
-                      const subBooks = getBooksForSubCategory(books, sub.categoryMatch, sub.categoryAltMatch);
+                      const subBooks = getBooksForSubCategory(books, sub.id);
                       const hasSubBooks = subBooks.length > 0;
                       return (
                         <button
@@ -2214,20 +2198,12 @@ export function CategoryDetailView({ categoryId, books, onSelectBook, onSelectSu
   const booksBySubCategory: Record<string, Book[]> = {};
   const allCatBooks: Book[] = [];
   for (const book of books) {
-    if (category.children) {
-      for (const sub of category.children) {
-        if (matchesCategory(sub.categoryMatch, sub.categoryAltMatch, book.category)) {
-          if (!booksBySubCategory[sub.id]) booksBySubCategory[sub.id] = [];
-          booksBySubCategory[sub.id].push(book);
-          allCatBooks.push(book);
-        }
-      }
-    }
-    if (category.categoryMatch && book.category === category.categoryMatch) {
-      if (!booksBySubCategory[category.id]) booksBySubCategory[category.id] = [];
-      booksBySubCategory[category.id].push(book);
-      allCatBooks.push(book);
-    }
+    const path = findBookPath(book);
+    if (path?.categoryId !== category.id) continue;
+    const key = path.subCategoryId ?? category.id;
+    if (!booksBySubCategory[key]) booksBySubCategory[key] = [];
+    booksBySubCategory[key].push(book);
+    allCatBooks.push(book);
   }
 
   if (categoryId === "prasthana-thraya" && onSelectSubCategory) {
@@ -4065,7 +4041,7 @@ export function SubCategoryDetailView({ categoryId, subCategoryId, books, onSele
   const lang = languageCode || "en";
   const tc = (text: string | null | undefined, map: Record<string, Record<string, string>>) => translateContent(text, map, lang);
 
-  const subBooks = books.filter(b => matchesCategory(subCategory.categoryMatch, subCategory.categoryAltMatch, b.category));
+  const subBooks = getBooksForSubCategory(books, subCategory.id);
 
   const landingData = BOOK_LANDING_DATA[subCategoryId];
   const primaryBook = subBooks.length > 0 ? subBooks[0] : null;
